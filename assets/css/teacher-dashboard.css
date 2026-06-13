@@ -1,0 +1,3224 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+.hover-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+:root {
+    --app-font-title: "Inter", "Segoe UI", system-ui, sans-serif;
+    --app-font-display: var(--app-font-title);
+    --app-font-section: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --app-font-body: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --app-font-sans: var(--app-font-body);
+    --app-font-numeric: "IBM Plex Mono", "Cascadia Code", Consolas, monospace;
+}
+
+body[data-view="teacher/course_create"],
+body[data-view="teacher/course_edit"] {
+    --app-font-title: "Space Grotesk", "Manrope", "Segoe UI", system-ui, sans-serif;
+    --app-font-display: var(--app-font-title);
+    --app-font-section: "Manrope", "Segoe UI", system-ui, sans-serif;
+    --app-font-body: "Manrope", "Segoe UI", system-ui, sans-serif;
+    --app-font-sans: var(--app-font-body);
+}
+
+.font-body,
+.font-sans {
+    font-family: var(--app-font-body);
+}
+
+.font-display {
+    font-family: var(--app-font-display);
+}
+
+.font-numeric {
+    font-family: var(--app-font-numeric);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.08);
+}
+
+.gradient-text {
+    background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.dark .gradient-text {
+    background: linear-gradient(135deg, #60a5fa 0%, #22d3ee 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.app-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+}
+
+.app-icon > svg {
+    width: 1rem;
+    height: 1rem;
+    stroke: currentColor;
+}
+
+.shadow-soft {
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+}
+
+.shadow-glow {
+    box-shadow: 0 0 30px -5px rgba(59, 130, 246, 0.22);
+}
+
+.shadow-card {
+    box-shadow: 0 16px 34px -22px rgba(15, 23, 42, 0.28);
+}
+
+.animate-fade-up {
+    animation: teacherFadeUp 0.5s ease-out both;
+}
+
+@keyframes teacherFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+body[data-view="teacher/dashboard"] {
+    --teacher-topbar-height: 4rem;
+    --teacher-sidebar-width: 18rem;
+    --teacher-sidebar-width-current: var(--teacher-sidebar-width);
+}
+
+html[data-view^="teacher/"] {
+    font-size: 14.5px;
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+body[data-view^="teacher/"] {
+    --teacher-topbar-height: 4rem;
+    --teacher-sidebar-width: 18rem;
+    --teacher-sidebar-width-current: var(--teacher-sidebar-width);
+    --teacher-page-bg: linear-gradient(180deg, #eef2f7 0%, #f8fafc 44%, #edf2f7 100%);
+    --teacher-surface: rgba(255, 255, 255, 0.98);
+    --teacher-surface-soft: rgba(248, 250, 252, 0.94);
+    --teacher-surface-muted: rgba(241, 245, 249, 0.9);
+    --teacher-border: rgba(148, 163, 184, 0.34);
+    --teacher-border-strong: rgba(100, 116, 139, 0.46);
+    --teacher-text: #0f172a;
+    --teacher-muted: #475569;
+    --teacher-subtle: #64748b;
+    --teacher-card-shadow: 0 18px 40px -30px rgba(15, 23, 42, 0.38);
+    --teacher-card-shadow-strong: 0 24px 54px -34px rgba(15, 23, 42, 0.42);
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+html.dark body[data-view^="teacher/"],
+html[data-theme="dark"] body[data-view^="teacher/"] {
+    --teacher-page-bg: linear-gradient(180deg, #0f172a 0%, #111827 46%, #0b1220 100%);
+    --teacher-surface: rgba(30, 41, 59, 0.88);
+    --teacher-surface-soft: rgba(15, 23, 42, 0.72);
+    --teacher-surface-muted: rgba(15, 23, 42, 0.58);
+    --teacher-border: rgba(100, 116, 139, 0.62);
+    --teacher-border-strong: rgba(148, 163, 184, 0.48);
+    --teacher-text: #f8fafc;
+    --teacher-muted: #cbd5e1;
+    --teacher-subtle: #94a3b8;
+    --teacher-card-shadow: 0 26px 50px -36px rgba(2, 6, 23, 0.82);
+    --teacher-card-shadow-strong: 0 30px 60px -38px rgba(2, 6, 23, 0.88);
+}
+
+@media (min-width: 640px) {
+    body[data-view="teacher/dashboard"] {
+        --teacher-topbar-height: 4.5rem;
+    }
+
+    body[data-view^="teacher/"] {
+        --teacher-topbar-height: 4.5rem;
+    }
+}
+
+.teacher-nav-link.is-active-nav {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(6, 182, 212, 0.08));
+    color: #1d4ed8;
+    box-shadow: 0 10px 20px -12px rgba(37, 99, 235, 0.35);
+}
+
+.dark .teacher-nav-link.is-active-nav {
+    color: #bfdbfe;
+    background: rgba(37, 99, 235, 0.18);
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-topbar {
+    left: 0;
+    width: 100%;
+    height: var(--teacher-topbar-height);
+    overflow: visible;
+    isolation: isolate;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-topbar {
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: var(--teacher-topbar-height);
+    overflow: visible;
+    isolation: isolate;
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-topbar__actions {
+    flex-wrap: nowrap;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-topbar__actions {
+    flex-wrap: nowrap;
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-topbar__actions > * {
+    flex-shrink: 0;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-topbar__actions > * {
+    flex-shrink: 0;
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-title {
+    line-height: 1.35;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-title {
+    line-height: 1.35;
+    font-size: 1.125rem;
+}
+
+@media (min-width: 640px) {
+    body[data-view^="teacher/"] .teacher-dashboard-title {
+        font-size: 1.25rem;
+    }
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-layout {
+    min-width: 0;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-layout {
+    min-width: 0;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: clip;
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-main {
+    min-width: 0;
+    overscroll-behavior: contain;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-main {
+    min-width: 0;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: clip;
+    overscroll-behavior: contain;
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-sidebar {
+    overscroll-behavior: contain;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar {
+    overflow: hidden;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar > div:first-child {
+    padding: 1rem !important;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar > div:first-child .w-9 {
+    width: 2.05rem !important;
+    height: 2.05rem !important;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar > div:first-child .text-xl {
+    font-size: 1.05rem !important;
+    line-height: 1.25rem !important;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar > div:nth-child(2) {
+    padding: 0.85rem 1rem !important;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar > div:nth-child(2) :is(img, .w-12) {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar > div:nth-child(2) .mt-3 {
+    margin-top: 0.65rem !important;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar > div:nth-child(2) .gap-2 {
+    gap: 0.35rem !important;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar > div:nth-child(2) span {
+    padding-top: 0.18rem !important;
+    padding-bottom: 0.18rem !important;
+    line-height: 1.1rem !important;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar nav {
+    padding: 0.85rem 1rem !important;
+    scrollbar-width: thin;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar nav > * + * {
+    margin-top: 0.7rem !important;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar nav .space-y-2 > * + * {
+    margin-top: 0.35rem !important;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar nav .space-y-1 > * + * {
+    margin-top: 0.2rem !important;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar nav p {
+    padding-left: 0.65rem !important;
+    font-size: 0.62rem !important;
+    letter-spacing: 0.17em !important;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar nav a {
+    min-height: 2.35rem;
+    padding: 0.52rem 0.72rem !important;
+    border-radius: 0.75rem !important;
+    font-size: 0.92rem;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar nav a .w-5,
+body[data-view^="teacher/"] #teacher-dashboard-sidebar nav a i {
+    width: 1rem !important;
+    min-width: 1rem;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar > div:last-child {
+    padding: 0.75rem 1rem !important;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar > div:last-child :is(button, a) {
+    min-height: 2.35rem;
+    padding: 0.5rem 0.72rem !important;
+    border-radius: 0.75rem !important;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-sidebar {
+    width: var(--teacher-sidebar-width-current, var(--teacher-sidebar-width)) !important;
+    max-width: var(--teacher-sidebar-width-current, var(--teacher-sidebar-width));
+    overscroll-behavior: contain;
+}
+
+@media (min-width: 768px) {
+    body[data-view^="teacher/"] .teacher-dashboard-topbar {
+        left: var(--teacher-sidebar-width-current);
+        width: calc(100% - var(--teacher-sidebar-width-current));
+    }
+
+    body[data-view^="teacher/"] .teacher-dashboard-layout {
+        padding-left: var(--teacher-sidebar-width-current);
+    }
+
+    body[data-view^="teacher/"] .teacher-dashboard-sidebar {
+        top: 0;
+        height: 100vh;
+    }
+}
+
+body[data-view="teacher/dashboard"].sidebar-open .teacher-dashboard-main {
+    overflow: hidden !important;
+}
+
+body[data-view="teacher/dashboard"].sidebar-open .teacher-dashboard-sidebar {
+    z-index: 60;
+}
+
+body[data-view="teacher/dashboard"] .student-user-menu > summary {
+    list-style: none;
+}
+
+body[data-view="teacher/dashboard"] .student-user-menu > summary::-webkit-details-marker {
+    display: none;
+}
+
+body[data-view="teacher/dashboard"] .student-user-menu__panel {
+    opacity: 0;
+    transform: translateY(-0.5rem) scale(0.98);
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+body[data-view="teacher/dashboard"] .student-user-menu[open] .student-user-menu__panel {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu {
+    position: relative;
+    z-index: 3;
+    flex-shrink: 0;
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu[open] {
+    z-index: 35;
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-user-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.9rem;
+    height: 2.9rem;
+    min-width: 2.9rem;
+    min-height: 2.9rem;
+    padding: 0;
+    border: 2px solid rgba(96, 165, 250, 0.36);
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+    color: #ffffff;
+    box-shadow: 0 12px 26px -18px rgba(37, 99, 235, 0.68);
+    overflow: hidden;
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-user-trigger:hover {
+    border-color: rgba(96, 165, 250, 0.58);
+    transform: translateY(-1px);
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-user-trigger:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.22), 0 12px 26px -18px rgba(37, 99, 235, 0.68);
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-user-trigger::-webkit-details-marker,
+body[data-view="teacher/dashboard"] .teacher-dashboard-user-trigger::marker,
+body[data-view="teacher/dashboard"] .app-user-menu__caret {
+    display: none;
+    content: "";
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-user-trigger .app-user-menu__avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    overflow: hidden;
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-user-trigger .app-user-menu__avatar-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-user-trigger .app-user-menu__avatar-fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    background: transparent;
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-user-trigger .app-user-menu__trigger-badge {
+    display: none;
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__panel {
+    position: absolute;
+    top: calc(100% + 0.65rem);
+    right: 0;
+    width: min(23.75rem, calc(100vw - 1rem));
+    display: grid;
+    gap: 0.55rem;
+    padding: 0.8rem;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 1.6rem;
+    background: rgba(255, 255, 255, 0.985);
+    box-shadow: 0 30px 72px -28px rgba(15, 23, 42, 0.32);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transform-origin: top right;
+    opacity: 0;
+    transform: translateY(-0.5rem) scale(0.98);
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+html.dark body[data-view="teacher/dashboard"] .app-user-menu__panel,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .app-user-menu__panel {
+    background: rgba(15, 23, 42, 0.96);
+    border-color: rgba(51, 65, 85, 0.72);
+    box-shadow: 0 28px 72px -28px rgba(0, 0, 0, 0.7);
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu[open] .app-user-menu__panel {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.95rem 1rem;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-radius: 1.25rem;
+    background: rgba(248, 250, 252, 0.96);
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__header-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__header-copy {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: grid;
+    gap: 0.12rem;
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__header-name {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__header-email {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.86rem;
+    line-height: 1.35;
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__header-pill {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.32rem 0.72rem;
+    border-radius: 999px;
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    background: rgba(37, 99, 235, 0.08);
+    color: #2563eb;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    max-width: 9.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+html.dark body[data-view="teacher/dashboard"] .app-user-menu__header-name,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .app-user-menu__header-name {
+    color: #ffffff;
+}
+
+html.dark body[data-view="teacher/dashboard"] .app-user-menu__header-email,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .app-user-menu__header-email {
+    color: #94a3b8;
+}
+
+html.dark body[data-view="teacher/dashboard"] .app-user-menu__header-pill,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .app-user-menu__header-pill {
+    border-color: rgba(96, 165, 250, 0.22);
+    background: rgba(96, 165, 250, 0.12);
+    color: #93c5fd;
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__list {
+    display: grid;
+    gap: 0.45rem;
+    width: 100%;
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__separator {
+    height: 1px;
+    margin: 0.05rem 0;
+    background: rgba(148, 163, 184, 0.18);
+    width: 100%;
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.92rem 0.98rem;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 1.08rem;
+    background: rgba(248, 250, 252, 0.96);
+    color: #1d4ed8;
+    text-decoration: none;
+    transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__item:hover {
+    border-color: rgba(37, 99, 235, 0.18);
+    background: #eff6ff;
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__item:focus-visible {
+    outline: none;
+    border-color: rgba(37, 99, 235, 0.3);
+    background: #eff6ff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__item:active {
+    transform: translateY(1px);
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__item-copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__item-icon {
+    width: 2.05rem;
+    height: 2.05rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    background: rgba(37, 99, 235, 0.1);
+    color: #2563eb;
+    flex: 0 0 auto;
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__item-label {
+    font-size: 0.94rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__item--danger {
+    color: #ef4444;
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__item--danger .app-user-menu__item-icon {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__item--danger:hover {
+    border-color: rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.06);
+}
+
+body[data-view="teacher/dashboard"] .app-user-menu__item--danger:focus-visible {
+    border-color: rgba(239, 68, 68, 0.32);
+    background: rgba(239, 68, 68, 0.08);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.14);
+}
+
+html.dark body[data-view="teacher/dashboard"] .app-user-menu__header,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .app-user-menu__header {
+    border-color: rgba(51, 65, 85, 0.72);
+    background: rgba(30, 41, 59, 0.72);
+}
+
+html.dark body[data-view="teacher/dashboard"] .app-user-menu__header-name,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .app-user-menu__header-name {
+    color: #ffffff;
+}
+
+html.dark body[data-view="teacher/dashboard"] .app-user-menu__header-email,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .app-user-menu__header-email {
+    color: #94a3b8;
+}
+
+html.dark body[data-view="teacher/dashboard"] .app-user-menu__item,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .app-user-menu__item {
+    border-color: rgba(51, 65, 85, 0.7);
+    background: rgba(30, 41, 59, 0.76);
+    color: #bfdbfe;
+}
+
+html.dark body[data-view="teacher/dashboard"] .app-user-menu__item:hover,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .app-user-menu__item:hover,
+html.dark body[data-view="teacher/dashboard"] .app-user-menu__item:focus-visible,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .app-user-menu__item:focus-visible {
+    border-color: rgba(96, 165, 250, 0.24);
+    background: rgba(37, 99, 235, 0.14);
+}
+
+html.dark body[data-view="teacher/dashboard"] .app-user-menu__item-icon,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .app-user-menu__item-icon {
+    background: rgba(37, 99, 235, 0.14);
+    color: #93c5fd;
+}
+
+html.dark body[data-view="teacher/dashboard"] .app-user-menu__item--danger,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .app-user-menu__item--danger {
+    color: #f87171;
+}
+
+html.dark body[data-view="teacher/dashboard"] .app-user-menu__item--danger .app-user-menu__item-icon,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .app-user-menu__item--danger .app-user-menu__item-icon {
+    background: rgba(239, 68, 68, 0.14);
+    color: #f87171;
+}
+
+html.dark body[data-view="teacher/dashboard"] .app-user-menu__item--danger:hover,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .app-user-menu__item--danger:hover,
+html.dark body[data-view="teacher/dashboard"] .app-user-menu__item--danger:focus-visible,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .app-user-menu__item--danger:focus-visible {
+    border-color: rgba(248, 113, 113, 0.24);
+    background: rgba(127, 29, 29, 0.18);
+}
+
+html.dark body[data-view="teacher/dashboard"] .app-user-menu__separator,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .app-user-menu__separator {
+    background: rgba(51, 65, 85, 0.72);
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-support-fab {
+    right: 1rem;
+    bottom: 1rem;
+    gap: 0.8rem;
+    padding: 0.85rem 1rem;
+    max-width: calc(100vw - 1rem);
+    border-radius: 9999px;
+    box-shadow: 0 26px 56px -28px rgba(37, 99, 235, 0.78);
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-support-fab .app-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-support-label {
+    white-space: nowrap;
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-content {
+    max-width: 100%;
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-hero {
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+body[data-view="teacher/dashboard"] .teacher-dashboard-card,
+body[data-view="teacher/dashboard"] .teacher-course-card {
+    border-color: rgba(148, 163, 184, 0.2) !important;
+    box-shadow: 0 18px 38px -28px rgba(15, 23, 42, 0.34);
+}
+
+body[data-view="teacher/dashboard"] .teacher-kpi-card {
+    min-height: 9rem;
+}
+
+body[data-view^="teacher/"] :is(
+    .teacher-kpi-card p[class*="text-xl"][class*="font-bold"],
+    .teacher-kpi-card p[class*="text-2xl"][class*="font-bold"],
+    .teacher-course-card [class*="text-primary-"][class*="font-bold"],
+    .app-kpi-card__value,
+    .teacher-metric-card__value,
+    .font-numeric
+) {
+    font-family: var(--app-font-numeric);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+}
+
+body[data-view="teacher/dashboard"] .teacher-course-cover {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 7;
+    overflow: hidden;
+    background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 45%, #f8fafc 100%);
+}
+
+body[data-view="teacher/dashboard"] .teacher-course-cover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0) 48%, rgba(15, 23, 42, 0.16) 100%);
+    pointer-events: none;
+}
+
+body[data-view="teacher/dashboard"] .teacher-course-cover--fallback {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    color: #1d4ed8;
+}
+
+body[data-view="teacher/dashboard"] .teacher-course-cover__initial {
+    display: inline-flex;
+    width: 3.5rem;
+    height: 3.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1.05rem;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 14px 26px -20px rgba(15, 23, 42, 0.5);
+    color: #2563eb;
+    font-size: 1.65rem;
+    font-weight: 800;
+}
+
+body[data-view="teacher/dashboard"] .teacher-course-cover__label {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #475569;
+}
+
+body[data-view="teacher/dashboard"] .teacher-chart-frame,
+body[data-view="teacher/dashboard"] .teacher-chart-empty {
+    min-height: 12rem;
+}
+
+body[data-view="teacher/dashboard"] .teacher-review-card {
+    min-height: 8.25rem;
+}
+
+html.dark body[data-view="teacher/dashboard"] .teacher-dashboard-card,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .teacher-dashboard-card,
+html.dark body[data-view="teacher/dashboard"] .teacher-course-card,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .teacher-course-card {
+    border-color: rgba(100, 116, 139, 0.48) !important;
+    background-color: #1f2937 !important;
+    box-shadow: 0 22px 48px -28px rgba(0, 0, 0, 0.72);
+}
+
+html.dark body[data-view="teacher/dashboard"] .teacher-course-cover,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .teacher-course-cover {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 55%, #111827 100%);
+}
+
+html.dark body[data-view="teacher/dashboard"] .teacher-course-cover__initial,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .teacher-course-cover__initial {
+    background: rgba(96, 165, 250, 0.14);
+    color: #bfdbfe;
+}
+
+html.dark body[data-view="teacher/dashboard"] .teacher-course-cover__label,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .teacher-course-cover__label {
+    color: #cbd5e1;
+}
+
+html.dark body[data-view="teacher/dashboard"] :is(.text-gray-400, .text-gray-500),
+html[data-theme="dark"] body[data-view="teacher/dashboard"] :is(.text-gray-400, .text-gray-500) {
+    color: #cbd5e1 !important;
+}
+
+html.dark body[data-view="teacher/dashboard"] :is(.text-gray-600, .text-gray-700),
+html[data-theme="dark"] body[data-view="teacher/dashboard"] :is(.text-gray-600, .text-gray-700) {
+    color: #e2e8f0 !important;
+}
+
+body[data-view="teacher/dashboard"] .web-scroll-top {
+    position: fixed;
+    right: 1.1rem;
+    bottom: 1.1rem;
+    z-index: 45;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 0;
+    border-radius: 9999px;
+    background: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 18px 35px -15px rgba(37, 99, 235, 0.9);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(0.5rem);
+    transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+body[data-view="teacher/dashboard"] .web-scroll-top:hover {
+    background: #1d4ed8;
+    box-shadow: 0 20px 40px -16px rgba(37, 99, 235, 0.95);
+}
+
+body[data-view="teacher/dashboard"] .web-scroll-top.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+body.teacher-dashboard-page[data-view="teacher/dashboard"] :is(.teacher-dashboard-support-fab, [data-support-fab], [data-support-fab="1"]) {
+    right: 1.1rem !important;
+    bottom: 1.1rem !important;
+    width: 3.05rem !important;
+    height: 3.05rem !important;
+    min-width: 3.05rem !important;
+    min-height: 3.05rem !important;
+}
+
+body.teacher-dashboard-page[data-view="teacher/dashboard"] :is(.teacher-dashboard-support-fab, [data-support-fab], [data-support-fab="1"]) .app-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+body[data-view="teacher/dashboard"] .web-scroll-top[data-scroll-top] {
+    bottom: 4.65rem !important;
+}
+
+body[data-view="teacher/withdrawals"] {
+    --teacher-topbar-height: 4rem;
+    --teacher-sidebar-width: 18rem;
+    --teacher-sidebar-width-current: var(--teacher-sidebar-width);
+}
+
+@media (min-width: 640px) {
+    body[data-view="teacher/withdrawals"] {
+        --teacher-topbar-height: 4.5rem;
+    }
+}
+
+body[data-view="teacher/withdrawals"] .teacher-dashboard-topbar {
+    left: 0;
+    width: 100%;
+    height: var(--teacher-topbar-height);
+    overflow: visible;
+    isolation: isolate;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-dashboard-topbar__actions {
+    flex-wrap: nowrap;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-dashboard-topbar__actions > * {
+    flex-shrink: 0;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-dashboard-title {
+    line-height: 1.35;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-dashboard-layout {
+    min-width: 0;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-dashboard-main {
+    min-width: 0;
+    overscroll-behavior: contain;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-dashboard-sidebar {
+    overscroll-behavior: contain;
+}
+
+body[data-view="teacher/withdrawals"].sidebar-open .teacher-dashboard-main {
+    overflow: hidden !important;
+}
+
+body[data-view="teacher/withdrawals"].sidebar-open .teacher-dashboard-sidebar {
+    z-index: 60;
+}
+
+body[data-view="teacher/withdrawals"] .student-user-menu > summary {
+    list-style: none;
+}
+
+body[data-view="teacher/withdrawals"] .student-user-menu > summary::-webkit-details-marker {
+    display: none;
+}
+
+body[data-view="teacher/withdrawals"] .student-user-menu__panel {
+    opacity: 0;
+    transform: translateY(-0.5rem) scale(0.98);
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+body[data-view="teacher/withdrawals"] .student-user-menu[open] .student-user-menu__panel {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+body[data-view="teacher/withdrawals"] .app-user-menu {
+    position: relative;
+    z-index: 3;
+    flex-shrink: 0;
+}
+
+body[data-view="teacher/withdrawals"] .app-user-menu[open] {
+    z-index: 35;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-dashboard-user-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0;
+    border: 2px solid rgba(96, 165, 250, 0.36);
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+    box-shadow: 0 12px 28px -16px rgba(37, 99, 235, 0.72);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-dashboard-user-trigger:hover {
+    transform: translateY(-1px);
+    border-color: rgba(96, 165, 250, 0.56);
+    box-shadow: 0 16px 32px -16px rgba(37, 99, 235, 0.78);
+}
+
+body[data-view="teacher/withdrawals"] .teacher-dashboard-user-trigger img,
+body[data-view="teacher/withdrawals"] .teacher-dashboard-user-trigger span {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-dashboard-user-trigger img {
+    object-fit: cover;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-dashboard-user-trigger span {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-dashboard-notification {
+    box-shadow: 0 10px 24px -16px rgba(37, 99, 235, 0.45);
+}
+
+body[data-view="teacher/withdrawals"] .teacher-dashboard-notification:hover {
+    box-shadow: 0 14px 28px -18px rgba(37, 99, 235, 0.52);
+}
+
+body[data-view="teacher/withdrawals"] .teacher-dashboard-support-fab {
+    right: 1rem;
+    bottom: 1rem;
+    gap: 0.8rem;
+    padding: 0.85rem 1rem;
+    max-width: calc(100vw - 1rem);
+    border-radius: 9999px;
+    box-shadow: 0 26px 56px -28px rgba(37, 99, 235, 0.78);
+}
+
+body[data-view="teacher/withdrawals"] .teacher-dashboard-support-fab .app-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-period-tabs .period-btn {
+    min-height: 2.2rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    background: rgba(148, 163, 184, 0.12);
+    color: rgb(71, 85, 105);
+    box-shadow: none;
+    font-size: 0.74rem;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-period-tabs .period-btn:hover {
+    background: rgba(59, 130, 246, 0.12);
+    color: rgb(29, 78, 216);
+}
+
+body[data-view="teacher/withdrawals"] .teacher-period-tabs {
+    gap: 0.35rem;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-period-tabs .period-btn--active {
+    border-color: rgba(37, 99, 235, 0.28);
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.92), rgba(6, 182, 212, 0.9));
+    color: #ffffff;
+    box-shadow: 0 10px 20px -14px rgba(37, 99, 235, 0.55);
+}
+
+body[data-view="teacher/withdrawals"] .teacher-period-tabs .period-btn--inactive {
+    color: rgb(71, 85, 105);
+}
+
+body[data-view="teacher/withdrawals"] .period-custom-fields {
+    display: none;
+}
+
+body[data-view="teacher/withdrawals"] form[data-period-custom="true"] .period-custom-fields,
+body[data-view="teacher/withdrawals"] .period-custom-fields.is-visible {
+    display: grid;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-dashboard-support-label {
+    white-space: nowrap;
+}
+
+body[data-view="teacher/withdrawals"] .web-scroll-top {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 45;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border: 0;
+    border-radius: 9999px;
+    background: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 18px 35px -15px rgba(37, 99, 235, 0.9);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(0.5rem);
+    transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+body[data-view="teacher/withdrawals"] .web-scroll-top:hover {
+    background: #1d4ed8;
+    box-shadow: 0 20px 40px -16px rgba(37, 99, 235, 0.95);
+}
+
+body[data-view="teacher/withdrawals"] .web-scroll-top.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+body[data-view="teacher/withdrawals"] .teacher-dashboard-support-fab,
+body[data-view="teacher/withdrawals"] .web-scroll-top {
+    display: none !important;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-withdrawal-toast {
+    position: fixed;
+    top: calc(var(--teacher-topbar-height, 4.5rem) + 0.75rem);
+    right: 0.75rem;
+    left: 0.75rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    width: auto;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 1.05rem;
+    padding: 0.95rem 1rem 0.95rem;
+    background: rgba(15, 23, 42, 0.96);
+    color: #dbeafe;
+    box-shadow: 0 28px 60px -30px rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    pointer-events: none;
+    overflow: hidden;
+    animation:
+        teacher-withdrawal-toast-in 180ms ease-out both,
+        teacher-withdrawal-toast-out 220ms ease-in 3200ms forwards;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-withdrawal-toast--success {
+    border-color: rgba(52, 211, 153, 0.28);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(8, 47, 73, 0.96));
+    color: #d1fae5;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-withdrawal-toast--error {
+    border-color: rgba(248, 113, 113, 0.3);
+    background: linear-gradient(135deg, rgba(24, 28, 47, 0.98), rgba(127, 29, 29, 0.96));
+    color: #fee2e2;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-withdrawal-toast__copy {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-withdrawal-toast__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.15rem;
+    height: 2.15rem;
+    flex: 0 0 auto;
+    border-radius: 9999px;
+    background: rgba(16, 185, 129, 0.16);
+    color: #34d399;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-withdrawal-toast--error .teacher-withdrawal-toast__icon {
+    background: rgba(239, 68, 68, 0.18);
+    color: #fca5a5;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-withdrawal-toast__title {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: inherit;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-withdrawal-toast__message,
+body[data-view="teacher/withdrawals"] .teacher-withdrawal-toast__list {
+    margin-top: 0.3rem;
+    min-width: 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.42;
+    word-break: break-word;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-withdrawal-toast__list {
+    padding-left: 1rem;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-withdrawal-toast__bar {
+    display: block;
+    width: 100%;
+    height: 3px;
+    border-radius: 9999px;
+    background: rgba(148, 163, 184, 0.18);
+    overflow: hidden;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-withdrawal-toast__bar::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    transform-origin: left center;
+    animation: teacher-withdrawal-toast-bar 3200ms linear forwards;
+}
+
+body[data-view="teacher/withdrawals"] .teacher-withdrawal-toast--success .teacher-withdrawal-toast__bar::before {
+    background: linear-gradient(90deg, #34d399 0%, #10b981 45%, #059669 100%);
+}
+
+body[data-view="teacher/withdrawals"] .teacher-withdrawal-toast--error .teacher-withdrawal-toast__bar::before {
+    background: linear-gradient(90deg, #fda4af 0%, #fb7185 45%, #ef4444 100%);
+}
+
+@keyframes teacher-withdrawal-toast-in {
+    from {
+        opacity: 0;
+        transform: translateY(-0.5rem) scale(0.985);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes teacher-withdrawal-toast-out {
+    to {
+        opacity: 0;
+        transform: translateY(-0.25rem) scale(0.985);
+        pointer-events: none;
+    }
+}
+
+@keyframes teacher-withdrawal-toast-bar {
+    from {
+        transform: scaleX(1);
+    }
+    to {
+        transform: scaleX(0);
+    }
+}
+
+@media (min-width: 768px) {
+    body[data-view="teacher/withdrawals"] .teacher-withdrawal-toast {
+        left: auto;
+        width: min(28rem, calc(100vw - 1.5rem));
+    }
+}
+
+@media (max-width: 767px) {
+    body[data-view="teacher/withdrawals"] .teacher-withdrawal-toast {
+        top: calc(var(--teacher-topbar-height, 4rem) + 0.6rem);
+        right: 0.75rem;
+        left: 0.75rem;
+    }
+}
+
+body[data-view="teacher/promotions"] .teacher-withdrawal-toast {
+    position: fixed !important;
+    top: calc(var(--teacher-topbar-height, 4.5rem) + 0.75rem);
+    right: 0.75rem;
+    left: 0.75rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    width: auto;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 1.05rem;
+    padding: 0.95rem 1rem 0.95rem;
+    background: rgba(15, 23, 42, 0.96);
+    color: #dbeafe;
+    box-shadow: 0 28px 60px -30px rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    pointer-events: none;
+    overflow: hidden;
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    animation:
+        teacher-withdrawal-toast-in 180ms ease-out both,
+        teacher-withdrawal-toast-out 220ms ease-in 3200ms forwards;
+}
+
+body[data-view="teacher/promotions"] .teacher-withdrawal-toast--success {
+    border-color: rgba(52, 211, 153, 0.28);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(8, 47, 73, 0.96));
+    color: #d1fae5;
+}
+
+body[data-view="teacher/promotions"] .teacher-withdrawal-toast--error {
+    border-color: rgba(248, 113, 113, 0.3);
+    background: linear-gradient(135deg, rgba(24, 28, 47, 0.98), rgba(127, 29, 29, 0.96));
+    color: #fee2e2;
+}
+
+body[data-view="teacher/promotions"] .teacher-withdrawal-toast__copy {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+body[data-view="teacher/promotions"] .teacher-withdrawal-toast__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.15rem;
+    height: 2.15rem;
+    flex: 0 0 auto;
+    border-radius: 9999px;
+    background: rgba(16, 185, 129, 0.16);
+    color: #34d399;
+}
+
+body[data-view="teacher/promotions"] .teacher-withdrawal-toast--error .teacher-withdrawal-toast__icon {
+    background: rgba(239, 68, 68, 0.18);
+    color: #fca5a5;
+}
+
+body[data-view="teacher/promotions"] .teacher-withdrawal-toast__title {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: inherit;
+}
+
+body[data-view="teacher/promotions"] .teacher-withdrawal-toast__message,
+body[data-view="teacher/promotions"] .teacher-withdrawal-toast__list {
+    margin-top: 0.3rem;
+    min-width: 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.42;
+    word-break: break-word;
+}
+
+body[data-view="teacher/promotions"] .teacher-withdrawal-toast__list {
+    padding-left: 1rem;
+}
+
+body[data-view="teacher/promotions"] .teacher-withdrawal-toast__bar {
+    display: block;
+    width: 100%;
+    height: 3px;
+    border-radius: 9999px;
+    background: rgba(148, 163, 184, 0.18);
+    overflow: hidden;
+}
+
+body[data-view="teacher/promotions"] .teacher-withdrawal-toast__bar::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    transform-origin: left center;
+    animation: teacher-withdrawal-toast-bar 3200ms linear forwards;
+}
+
+body[data-view="teacher/promotions"] .teacher-withdrawal-toast--success .teacher-withdrawal-toast__bar::before {
+    background: linear-gradient(90deg, #34d399 0%, #10b981 45%, #059669 100%);
+}
+
+body[data-view="teacher/promotions"] .teacher-withdrawal-toast--error .teacher-withdrawal-toast__bar::before {
+    background: linear-gradient(90deg, #fda4af 0%, #fb7185 45%, #ef4444 100%);
+}
+
+@media (min-width: 768px) {
+    body[data-view="teacher/promotions"] .teacher-withdrawal-toast {
+        left: auto;
+        width: min(28rem, calc(100vw - 1.5rem));
+    }
+}
+
+@media (max-width: 767px) {
+    body[data-view="teacher/promotions"] .teacher-withdrawal-toast {
+        top: calc(var(--teacher-topbar-height, 4rem) + 0.6rem);
+        right: 0.75rem;
+        left: 0.75rem;
+    }
+}
+
+@media (min-width: 640px) {
+    body[data-view="teacher/withdrawals"] .teacher-dashboard-topbar {
+        left: 0;
+        width: 100%;
+    }
+    body[data-view="teacher/withdrawals"] .teacher-dashboard-support-fab {
+        right: 1.25rem;
+        bottom: 1.25rem;
+    }
+}
+
+@media (min-width: 768px) {
+    body[data-view="teacher/withdrawals"] .teacher-dashboard-topbar {
+        left: var(--teacher-sidebar-width-current);
+        width: calc(100% - var(--teacher-sidebar-width-current));
+    }
+    body[data-view="teacher/withdrawals"] .teacher-dashboard-layout {
+        padding-left: var(--teacher-sidebar-width-current);
+    }
+}
+
+body[data-view="teacher/dashboard"] .teacher-notification-toast {
+    position: fixed;
+    top: calc(var(--teacher-topbar-height, 4.5rem) + 0.75rem);
+    left: 50%;
+    z-index: 9999;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    width: min(42rem, calc(100vw - 1rem));
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 1.1rem;
+    padding: 0.95rem 1rem 0.95rem;
+    background: rgba(15, 23, 42, 0.96);
+    color: #dbeafe;
+    box-shadow: 0 28px 60px -30px rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    transform: translateX(-50%);
+    animation:
+        teacher-notification-toast-in 180ms ease-out both,
+        teacher-notification-toast-out 220ms ease-in 3200ms forwards;
+}
+
+body[data-view="teacher/dashboard"] .teacher-notification-toast--success {
+    border-color: rgba(52, 211, 153, 0.28);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(8, 47, 73, 0.96));
+    color: #d1fae5;
+}
+
+body[data-view="teacher/dashboard"] .teacher-notification-toast__copy {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+body[data-view="teacher/dashboard"] .teacher-notification-toast__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex: 0 0 auto;
+    border-radius: 9999px;
+    background: rgba(16, 185, 129, 0.16);
+    color: #34d399;
+}
+
+body[data-view="teacher/dashboard"] .teacher-notification-toast__message {
+    min-width: 0;
+    flex: 1 1 auto;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.35;
+    word-break: break-word;
+}
+
+body[data-view="teacher/dashboard"] .teacher-notification-toast__bar {
+    display: block;
+    width: 100%;
+    height: 3px;
+    border-radius: 9999px;
+    background: rgba(148, 163, 184, 0.18);
+    overflow: hidden;
+}
+
+body[data-view="teacher/dashboard"] .teacher-notification-toast__bar::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    transform-origin: left center;
+    background: linear-gradient(90deg, #34d399 0%, #10b981 45%, #059669 100%);
+    animation: teacher-notification-toast-bar 3200ms linear forwards;
+}
+
+@keyframes teacher-notification-toast-in {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-0.5rem) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+}
+
+@keyframes teacher-notification-toast-out {
+    to {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-0.25rem) scale(0.98);
+        pointer-events: none;
+    }
+}
+
+@keyframes teacher-notification-toast-bar {
+    from {
+        transform: scaleX(1);
+    }
+    to {
+        transform: scaleX(0);
+    }
+}
+
+html.dark body[data-view="teacher/dashboard"] .web-scroll-top,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .web-scroll-top {
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+html.dark body[data-view="teacher/dashboard"] .web-scroll-top:hover,
+html[data-theme="dark"] body[data-view="teacher/dashboard"] .web-scroll-top:hover {
+    background: #2563eb;
+}
+
+@media (max-width: 640px) {
+    body[data-view="teacher/dashboard"] .teacher-dashboard-topbar {
+        padding: 0.75rem 0.75rem;
+    }
+
+    body[data-view="teacher/dashboard"] .teacher-dashboard-title {
+        font-size: 1.05rem;
+        line-height: 1.35rem;
+    }
+
+    body[data-view="teacher/dashboard"] .teacher-dashboard-user-trigger {
+        width: 2.5rem;
+        height: 2.5rem;
+        min-width: 2.5rem;
+        min-height: 2.5rem;
+    }
+
+    body[data-view="teacher/dashboard"] .app-user-menu__panel {
+        width: min(19.25rem, calc(100vw - 0.75rem));
+        padding: 0.72rem;
+    }
+
+    body[data-view="teacher/dashboard"] .teacher-dashboard-support-fab {
+        right: 0.75rem;
+        bottom: 0.75rem;
+        gap: 0.7rem;
+        padding: 0.75rem 0.92rem;
+    }
+}
+
+@media (min-width: 640px) {
+    body[data-view="teacher/dashboard"] .web-scroll-top {
+        width: 2.75rem;
+        height: 2.75rem;
+    }
+}
+
+@media (min-width: 768px) {
+    body[data-view="teacher/dashboard"] .teacher-dashboard-topbar {
+        left: var(--teacher-sidebar-width-current);
+        width: calc(100% - var(--teacher-sidebar-width-current));
+    }
+
+    body[data-view="teacher/dashboard"] .teacher-dashboard-layout {
+        padding-left: var(--teacher-sidebar-width-current);
+    }
+
+    body[data-view="teacher/dashboard"] .teacher-dashboard-sidebar {
+        top: 0;
+        height: 100vh;
+    }
+
+    body.sidebar-collapsed .teacher-shell-sidebar {
+        width: 5.75rem;
+    }
+
+    body.sidebar-collapsed .teacher-sidebar-brand-copy,
+    body.sidebar-collapsed .teacher-sidebar-profile-copy,
+    body.sidebar-collapsed .teacher-sidebar-footer-copy,
+    body.sidebar-collapsed .teacher-sidebar-label,
+    body.sidebar-collapsed .teacher-sidebar-meta,
+    body.sidebar-collapsed .teacher-sidebar-badge {
+        display: none;
+    }
+
+    body.sidebar-collapsed .teacher-sidebar-brand,
+    body.sidebar-collapsed .teacher-sidebar-profile,
+    body.sidebar-collapsed .teacher-sidebar-footer,
+    body.sidebar-collapsed .teacher-nav-link {
+        justify-content: center;
+    }
+
+    body.sidebar-collapsed .teacher-sidebar-nav {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    body.sidebar-collapsed .teacher-nav-link {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    body.sidebar-collapsed .teacher-sidebar-footer button,
+    body.sidebar-collapsed .teacher-sidebar-footer form button {
+        justify-content: center;
+    }
+}
+
+html[data-view="teacher/statistics"] {
+    font-size: 14.5px;
+}
+
+body[data-view="teacher/statistics"] {
+    --teacher-topbar-height: 4rem;
+    --teacher-sidebar-width: 18rem;
+    --teacher-sidebar-width-current: var(--teacher-sidebar-width);
+}
+
+@media (min-width: 640px) {
+    body[data-view="teacher/statistics"] {
+        --teacher-topbar-height: 4.5rem;
+    }
+}
+
+body[data-view="teacher/statistics"] .teacher-dashboard-topbar {
+    left: 0;
+    width: 100%;
+    height: var(--teacher-topbar-height);
+    overflow: visible;
+    isolation: isolate;
+}
+
+body[data-view="teacher/statistics"] .teacher-dashboard-topbar__actions {
+    flex-wrap: nowrap;
+}
+
+body[data-view="teacher/statistics"] .teacher-dashboard-topbar__actions > * {
+    flex-shrink: 0;
+}
+
+body[data-view="teacher/statistics"] .teacher-dashboard-title {
+    line-height: 1.35;
+}
+
+body[data-view="teacher/statistics"] .teacher-dashboard-layout {
+    min-width: 0;
+}
+
+body[data-view="teacher/statistics"] .teacher-dashboard-main {
+    min-width: 0;
+    overscroll-behavior: contain;
+}
+
+body[data-view="teacher/statistics"] .teacher-dashboard-sidebar {
+    overscroll-behavior: contain;
+}
+
+body[data-view="teacher/statistics"].sidebar-open .teacher-dashboard-main {
+    overflow: hidden !important;
+}
+
+body[data-view="teacher/statistics"].sidebar-open .teacher-dashboard-sidebar {
+    z-index: 60;
+}
+
+body[data-view="teacher/statistics"] .student-user-menu > summary {
+    list-style: none;
+}
+
+body[data-view="teacher/statistics"] .student-user-menu > summary::-webkit-details-marker {
+    display: none;
+}
+
+body[data-view="teacher/statistics"] .student-user-menu__panel {
+    opacity: 0;
+    transform: translateY(-0.5rem) scale(0.98);
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+body[data-view="teacher/statistics"] .student-user-menu[open] .student-user-menu__panel {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+body[data-view="teacher/statistics"] .app-user-menu {
+    position: relative;
+    z-index: 3;
+    flex-shrink: 0;
+}
+
+body[data-view="teacher/statistics"] .app-user-menu[open] {
+    z-index: 35;
+}
+
+body[data-view="teacher/statistics"] .teacher-dashboard-user-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.9rem;
+    height: 2.9rem;
+    min-width: 2.9rem;
+    min-height: 2.9rem;
+    padding: 0;
+    border: 2px solid rgba(96, 165, 250, 0.36);
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+    color: #ffffff;
+    box-shadow: 0 12px 26px -18px rgba(37, 99, 235, 0.68);
+    overflow: hidden;
+}
+
+body[data-view="teacher/statistics"] .teacher-dashboard-user-trigger:hover {
+    border-color: rgba(96, 165, 250, 0.58);
+    transform: translateY(-1px);
+}
+
+body[data-view="teacher/statistics"] .teacher-dashboard-user-trigger:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.22), 0 12px 26px -18px rgba(37, 99, 235, 0.68);
+}
+
+body[data-view="teacher/statistics"] .teacher-dashboard-user-trigger::-webkit-details-marker,
+body[data-view="teacher/statistics"] .teacher-dashboard-user-trigger::marker,
+body[data-view="teacher/statistics"] .app-user-menu__caret {
+    display: none;
+    content: "";
+}
+
+body[data-view="teacher/statistics"] .teacher-dashboard-user-trigger .app-user-menu__avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    overflow: hidden;
+}
+
+body[data-view="teacher/statistics"] .teacher-dashboard-user-trigger .app-user-menu__avatar-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+body[data-view="teacher/statistics"] .teacher-dashboard-user-trigger .app-user-menu__avatar-fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    background: transparent;
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+body[data-view="teacher/statistics"] .teacher-dashboard-user-trigger .app-user-menu__trigger-badge {
+    display: none;
+}
+
+body[data-view="teacher/statistics"] .app-user-menu__panel {
+    position: absolute;
+    top: calc(100% + 0.65rem);
+    right: 0;
+    width: min(23.75rem, calc(100vw - 1rem));
+    display: grid;
+    gap: 0.55rem;
+    padding: 0.8rem;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 1.6rem;
+    background: rgba(255, 255, 255, 0.985);
+    box-shadow: 0 30px 72px -28px rgba(15, 23, 42, 0.32);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transform-origin: top right;
+    opacity: 0;
+    transform: translateY(-0.5rem) scale(0.98);
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+html.dark body[data-view="teacher/statistics"] .app-user-menu__panel,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .app-user-menu__panel {
+    background: rgba(15, 23, 42, 0.96);
+    border-color: rgba(51, 65, 85, 0.72);
+    box-shadow: 0 28px 72px -28px rgba(0, 0, 0, 0.7);
+}
+
+body[data-view="teacher/statistics"] .app-user-menu[open] .app-user-menu__panel {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+body[data-view="teacher/statistics"] .app-user-menu__header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.95rem 1rem;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-radius: 1.25rem;
+    background: rgba(248, 250, 252, 0.96);
+}
+
+body[data-view="teacher/statistics"] .app-user-menu__header-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+body[data-view="teacher/statistics"] .app-user-menu__header-copy {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: grid;
+    gap: 0.12rem;
+}
+
+body[data-view="teacher/statistics"] .app-user-menu__header-name {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+body[data-view="teacher/statistics"] .app-user-menu__header-email {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.86rem;
+    line-height: 1.35;
+}
+
+body[data-view="teacher/statistics"] .app-user-menu__header-pill {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.32rem 0.72rem;
+    border-radius: 999px;
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    background: rgba(37, 99, 235, 0.08);
+    color: #2563eb;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    max-width: 9.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+html.dark body[data-view="teacher/statistics"] .app-user-menu__header-name,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .app-user-menu__header-name {
+    color: #ffffff;
+}
+
+html.dark body[data-view="teacher/statistics"] .app-user-menu__header-email,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .app-user-menu__header-email {
+    color: #94a3b8;
+}
+
+html.dark body[data-view="teacher/statistics"] .app-user-menu__header-pill,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .app-user-menu__header-pill {
+    border-color: rgba(96, 165, 250, 0.22);
+    background: rgba(96, 165, 250, 0.12);
+    color: #93c5fd;
+}
+
+body[data-view="teacher/statistics"] .app-user-menu__list {
+    display: grid;
+    gap: 0.45rem;
+    width: 100%;
+}
+
+body[data-view="teacher/statistics"] .app-user-menu__separator {
+    height: 1px;
+    margin: 0.05rem 0;
+    background: rgba(148, 163, 184, 0.18);
+    width: 100%;
+}
+
+body[data-view="teacher/statistics"] .app-user-menu__item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.92rem 0.98rem;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 1.08rem;
+    background: rgba(248, 250, 252, 0.96);
+    color: #1d4ed8;
+    text-decoration: none;
+    transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+body[data-view="teacher/statistics"] .app-user-menu__item:hover {
+    border-color: rgba(37, 99, 235, 0.18);
+    background: #eff6ff;
+}
+
+body[data-view="teacher/statistics"] .app-user-menu__item:focus-visible {
+    outline: none;
+    border-color: rgba(37, 99, 235, 0.3);
+    background: #eff6ff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
+body[data-view="teacher/statistics"] .app-user-menu__item--danger {
+    color: #dc2626;
+}
+
+body[data-view="teacher/statistics"] .app-user-menu__item--danger .app-user-menu__item-icon {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+html.dark body[data-view="teacher/statistics"] .app-user-menu__item,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .app-user-menu__item {
+    background: rgba(30, 41, 59, 0.96);
+    border-color: rgba(71, 85, 105, 0.24);
+    color: #cbd5e1;
+}
+
+html.dark body[data-view="teacher/statistics"] .app-user-menu__item:hover,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .app-user-menu__item:hover,
+html.dark body[data-view="teacher/statistics"] .app-user-menu__item:focus-visible,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .app-user-menu__item:focus-visible {
+    background: rgba(37, 99, 235, 0.18);
+    color: #ffffff;
+}
+
+html.dark body[data-view="teacher/statistics"] .app-user-menu__item--danger,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .app-user-menu__item--danger {
+    color: #f87171;
+}
+
+html.dark body[data-view="teacher/statistics"] .app-user-menu__item--danger .app-user-menu__item-icon,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .app-user-menu__item--danger .app-user-menu__item-icon {
+    background: rgba(239, 68, 68, 0.14);
+    color: #f87171;
+}
+
+html.dark body[data-view="teacher/statistics"] .app-user-menu__item--danger:hover,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .app-user-menu__item--danger:hover,
+html.dark body[data-view="teacher/statistics"] .app-user-menu__item--danger:focus-visible,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .app-user-menu__item--danger:focus-visible {
+    border-color: rgba(248, 113, 113, 0.24);
+    background: rgba(127, 29, 29, 0.18);
+}
+
+html.dark body[data-view="teacher/statistics"] .app-user-menu__separator,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .app-user-menu__separator {
+    background: rgba(51, 65, 85, 0.72);
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) {
+    --teacher-topbar-height: 4rem;
+    --teacher-sidebar-width: 18rem;
+    --teacher-sidebar-width-current: var(--teacher-sidebar-width);
+}
+
+@media (min-width: 640px) {
+    body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) {
+        --teacher-topbar-height: 4.5rem;
+    }
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-dashboard-topbar__actions {
+    flex-wrap: nowrap;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-dashboard-topbar__actions > * {
+    flex-shrink: 0;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-dashboard-title {
+    line-height: 1.35;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-dashboard-layout {
+    min-width: 0;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-dashboard-main {
+    min-width: 0;
+    overscroll-behavior: contain;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-dashboard-sidebar {
+    overscroll-behavior: contain;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]).sidebar-open .teacher-dashboard-main {
+    overflow: hidden !important;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]).sidebar-open .teacher-dashboard-sidebar {
+    z-index: 60;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .student-user-menu > summary {
+    list-style: none;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .student-user-menu > summary::-webkit-details-marker {
+    display: none;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .student-user-menu__panel {
+    opacity: 0;
+    transform: translateY(-0.5rem) scale(0.98);
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .student-user-menu[open] .student-user-menu__panel {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-dashboard-support-fab {
+    right: 1rem;
+    bottom: 1rem;
+    gap: 0.8rem;
+    padding: 0.85rem 1rem;
+    max-width: calc(100vw - 1rem);
+    border-radius: 9999px;
+    box-shadow: 0 26px 56px -28px rgba(37, 99, 235, 0.78);
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-dashboard-support-fab .app-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-dashboard-support-label {
+    white-space: nowrap;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .web-scroll-top {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 45;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border: 0;
+    border-radius: 9999px;
+    background: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 18px 35px -15px rgba(37, 99, 235, 0.9);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(0.5rem);
+    transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .web-scroll-top:hover {
+    background: #1d4ed8;
+    box-shadow: 0 20px 40px -16px rgba(37, 99, 235, 0.95);
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .web-scroll-top.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-period-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-period-tabs .period-btn {
+    min-height: 2.2rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    background: rgba(148, 163, 184, 0.12);
+    color: rgb(71, 85, 105);
+    box-shadow: none;
+    font-size: 0.74rem;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-period-tabs .period-btn:hover {
+    background: rgba(59, 130, 246, 0.12);
+    color: rgb(29, 78, 216);
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-period-tabs .period-btn--active {
+    border-color: rgba(37, 99, 235, 0.28);
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.92), rgba(6, 182, 212, 0.9));
+    color: #ffffff;
+    box-shadow: 0 10px 20px -14px rgba(37, 99, 235, 0.55);
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-period-tabs .period-btn--inactive {
+    color: rgb(71, 85, 105);
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .period-custom-fields {
+    display: none;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) form[data-period-custom="true"] .period-custom-fields,
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .period-custom-fields.is-visible {
+    display: grid;
+}
+
+body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .period-filter-toggle--active {
+    border-color: rgba(37, 99, 235, 0.28);
+    background: rgba(37, 99, 235, 0.12);
+    color: rgb(29, 78, 216);
+}
+
+html.dark body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .student-user-menu__panel,
+html[data-theme="dark"] body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .student-user-menu__panel {
+    background: rgba(15, 23, 42, 0.96);
+    border-color: rgba(51, 65, 85, 0.72);
+    box-shadow: 0 28px 72px -28px rgba(0, 0, 0, 0.7);
+}
+
+@media (min-width: 768px) {
+    body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-dashboard-main {
+        min-width: 0;
+        overscroll-behavior: contain;
+    }
+
+    body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-dashboard-sidebar {
+        overscroll-behavior: contain;
+    }
+}
+
+@media (max-width: 767.98px) {
+    body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-dashboard-support-fab,
+    body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .web-scroll-top {
+        bottom: 1rem;
+        right: 1rem;
+    }
+
+    body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-dashboard-support-label {
+        display: none;
+    }
+
+    body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .teacher-period-tabs .period-btn {
+        min-height: 2rem;
+        padding: 0.3rem 0.7rem;
+    }
+
+    body:is([data-view="teacher/promotions"], [data-view="teacher/coupons"]) .period-custom-fields {
+        gap: 0.6rem;
+    }
+}
+
+body[data-view="teacher/statistics"] .teacher-dashboard-support-fab {
+    right: 1rem;
+    bottom: 1rem;
+    gap: 0.8rem;
+    padding: 0.85rem 1rem;
+    max-width: calc(100vw - 1rem);
+    border-radius: 9999px;
+    box-shadow: 0 26px 56px -28px rgba(37, 99, 235, 0.78);
+}
+
+body[data-view="teacher/statistics"] .teacher-dashboard-support-fab .app-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+body[data-view="teacher/statistics"] .teacher-dashboard-support-label {
+    white-space: nowrap;
+}
+
+body[data-view="teacher/statistics"] .teacher-statistics-content {
+    background:
+        linear-gradient(180deg, rgba(241, 245, 249, 0.95) 0%, rgba(248, 250, 252, 0.94) 42%, rgba(241, 245, 249, 0.98) 100%);
+}
+
+html.dark body[data-view="teacher/statistics"] .teacher-statistics-content,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .teacher-statistics-content {
+    background: #111827;
+}
+
+body[data-view="teacher/statistics"] .analytics-card,
+body[data-view="teacher/statistics"] .analytics-filter-bar,
+body[data-view="teacher/statistics"] .analytics-smart-summary {
+    box-shadow: 0 18px 38px -24px rgba(15, 23, 42, 0.34);
+}
+
+body[data-view="teacher/statistics"] .analytics-filter-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+body[data-view="teacher/statistics"] .analytics-filter-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+body[data-view="teacher/statistics"] .analytics-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(12rem, 1.1fr) repeat(4, minmax(9.5rem, 1fr));
+    gap: 0.62rem;
+    min-width: 0;
+}
+
+body[data-view="teacher/statistics"] .analytics-period-control {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+}
+
+body[data-view="teacher/statistics"] .analytics-filter-kicker {
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+body[data-view="teacher/statistics"] .analytics-period-segmented {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+    min-width: 0;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 999px;
+    background: #f1f5f9;
+    padding: 0.2rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+body[data-view="teacher/statistics"] .analytics-period-segmented::-webkit-scrollbar {
+    display: none;
+}
+
+body[data-view="teacher/statistics"] .analytics-period-option {
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #475569;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 800;
+    line-height: 1;
+    min-height: 2rem;
+    padding: 0.44rem 0.8rem;
+    transition: background-color 0.18s ease, box-shadow 0.18s ease, color 0.18s ease, transform 0.18s ease;
+    white-space: nowrap;
+}
+
+body[data-view="teacher/statistics"] .analytics-period-option:hover {
+    background: rgba(255, 255, 255, 0.72);
+    color: #1d4ed8;
+}
+
+body[data-view="teacher/statistics"] .analytics-period-option.is-active {
+    background: #2563eb;
+    box-shadow: 0 10px 24px -16px rgba(37, 99, 235, 0.8);
+    color: #ffffff;
+}
+
+html.dark body[data-view="teacher/statistics"] .analytics-card,
+html.dark body[data-view="teacher/statistics"] .analytics-filter-bar,
+html.dark body[data-view="teacher/statistics"] .analytics-smart-summary,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-card,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-filter-bar,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-smart-summary {
+    border-color: rgba(71, 85, 105, 0.95);
+    box-shadow: 0 24px 44px -28px rgba(0, 0, 0, 0.78);
+}
+
+html.dark body[data-view="teacher/statistics"] .analytics-period-control,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-period-control {
+    background: transparent;
+}
+
+html.dark body[data-view="teacher/statistics"] .analytics-filter-kicker,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-filter-kicker {
+    color: #cbd5e1;
+}
+
+html.dark body[data-view="teacher/statistics"] .analytics-period-segmented,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-period-segmented {
+    border-color: rgba(100, 116, 139, 0.62);
+    background: rgba(2, 6, 23, 0.3);
+}
+
+html.dark body[data-view="teacher/statistics"] .analytics-period-option,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-period-option {
+    color: #dbeafe;
+}
+
+html.dark body[data-view="teacher/statistics"] .analytics-period-option:hover,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-period-option:hover {
+    background: rgba(30, 41, 59, 0.9);
+    color: #bfdbfe;
+}
+
+html.dark body[data-view="teacher/statistics"] .analytics-period-option.is-active,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-period-option.is-active {
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+body[data-view="teacher/statistics"] .analytics-filter-field {
+    display: grid;
+    gap: 0.32rem;
+    min-width: 0;
+}
+
+body[data-view="teacher/statistics"] .analytics-filter-field span {
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+body[data-view="teacher/statistics"] .analytics-filter-field select {
+    width: 100%;
+    min-height: 2.35rem;
+    border: 1px solid rgba(148, 163, 184, 0.34);
+    border-radius: 0.85rem;
+    background: #f8fafc;
+    color: #0f172a;
+    font-size: 0.82rem;
+    font-weight: 700;
+    outline: none;
+    padding: 0.45rem 0.7rem;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+body[data-view="teacher/statistics"] .analytics-filter-field select:focus {
+    border-color: rgba(37, 99, 235, 0.48);
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+body[data-view="teacher/statistics"] .analytics-export-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    flex: 0 0 auto;
+    justify-content: flex-end;
+}
+
+body[data-view="teacher/statistics"] .analytics-export-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.42rem;
+    min-height: 2.35rem;
+    border: 1px solid rgba(148, 163, 184, 0.34);
+    border-radius: 0.85rem;
+    background: #ffffff;
+    color: #334155;
+    font-size: 0.8rem;
+    font-weight: 800;
+    padding: 0.48rem 0.78rem;
+    text-decoration: none;
+    transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+body[data-view="teacher/statistics"] .analytics-export-btn:hover {
+    border-color: rgba(37, 99, 235, 0.28);
+    color: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+body[data-view="teacher/statistics"] .analytics-export-btn--pdf {
+    border-color: rgba(220, 38, 38, 0.24);
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+body[data-view="teacher/statistics"] .analytics-export-btn--pdf:hover {
+    border-color: rgba(220, 38, 38, 0.42);
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+body[data-view="teacher/statistics"] .analytics-export-btn--excel {
+    border-color: rgba(22, 163, 74, 0.24);
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+body[data-view="teacher/statistics"] .analytics-export-btn--excel:hover {
+    border-color: rgba(22, 163, 74, 0.42);
+    background: #dcfce7;
+    color: #166534;
+}
+
+body[data-view="teacher/statistics"] .analytics-export-btn--primary {
+    border-color: transparent;
+    background: #2563eb;
+    color: #ffffff;
+}
+
+body[data-view="teacher/statistics"] .analytics-export-btn--primary:hover {
+    background: #1d4ed8;
+    color: #ffffff;
+}
+
+html.dark body[data-view="teacher/statistics"] .analytics-filter-field span,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-filter-field span {
+    color: #cbd5e1;
+}
+
+html.dark body[data-view="teacher/statistics"] .analytics-filter-field select,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-filter-field select {
+    border-color: rgba(100, 116, 139, 0.72);
+    background: rgba(15, 23, 42, 0.68);
+    color: #f8fafc;
+}
+
+html.dark body[data-view="teacher/statistics"] .analytics-filter-field select:focus,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-filter-field select:focus {
+    border-color: rgba(96, 165, 250, 0.52);
+    background: rgba(15, 23, 42, 0.92);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.16);
+}
+
+html.dark body[data-view="teacher/statistics"] .analytics-export-btn,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-export-btn {
+    border-color: rgba(100, 116, 139, 0.7);
+    background: rgba(15, 23, 42, 0.72);
+    color: #dbeafe;
+}
+
+html.dark body[data-view="teacher/statistics"] .analytics-export-btn:hover,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-export-btn:hover {
+    border-color: rgba(96, 165, 250, 0.36);
+    color: #bfdbfe;
+}
+
+html.dark body[data-view="teacher/statistics"] .analytics-export-btn--pdf,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-export-btn--pdf {
+    border-color: rgba(248, 113, 113, 0.38);
+    background: rgba(127, 29, 29, 0.22);
+    color: #fecaca;
+}
+
+html.dark body[data-view="teacher/statistics"] .analytics-export-btn--pdf:hover,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-export-btn--pdf:hover {
+    border-color: rgba(248, 113, 113, 0.62);
+    background: rgba(153, 27, 27, 0.32);
+    color: #fee2e2;
+}
+
+html.dark body[data-view="teacher/statistics"] .analytics-export-btn--excel,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-export-btn--excel {
+    border-color: rgba(74, 222, 128, 0.36);
+    background: rgba(20, 83, 45, 0.24);
+    color: #bbf7d0;
+}
+
+html.dark body[data-view="teacher/statistics"] .analytics-export-btn--excel:hover,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-export-btn--excel:hover {
+    border-color: rgba(74, 222, 128, 0.6);
+    background: rgba(22, 101, 52, 0.34);
+    color: #dcfce7;
+}
+
+html.dark body[data-view="teacher/statistics"] .analytics-export-btn--primary,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .analytics-export-btn--primary {
+    border-color: transparent;
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+body[data-view="teacher/statistics"] .analytics-chart-insight {
+    line-height: 1.45;
+}
+
+body[data-view="teacher/statistics"] .web-scroll-top {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 45;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border: 0;
+    border-radius: 9999px;
+    background: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 18px 35px -15px rgba(37, 99, 235, 0.9);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(0.5rem);
+    transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+body[data-view="teacher/statistics"] .web-scroll-top:hover {
+    background: #1d4ed8;
+    box-shadow: 0 20px 40px -16px rgba(37, 99, 235, 0.95);
+}
+
+body[data-view="teacher/statistics"] .web-scroll-top.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+html.dark body[data-view="teacher/statistics"] .web-scroll-top,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .web-scroll-top {
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+html.dark body[data-view="teacher/statistics"] .web-scroll-top:hover,
+html[data-theme="dark"] body[data-view="teacher/statistics"] .web-scroll-top:hover {
+    background: #2563eb;
+}
+
+@media (max-width: 640px) {
+    body[data-view="teacher/statistics"] .teacher-dashboard-topbar {
+        padding: 0.75rem 0.75rem;
+    }
+
+    body[data-view="teacher/statistics"] .teacher-dashboard-title {
+        font-size: 1.05rem;
+        line-height: 1.35rem;
+    }
+
+    body[data-view="teacher/statistics"] .teacher-dashboard-user-trigger {
+        width: 2.5rem;
+        height: 2.5rem;
+        min-width: 2.5rem;
+        min-height: 2.5rem;
+    }
+
+    body[data-view="teacher/statistics"] .app-user-menu__panel {
+        width: min(19.25rem, calc(100vw - 0.75rem));
+        padding: 0.72rem;
+    }
+
+    body[data-view="teacher/statistics"] .teacher-dashboard-support-fab {
+        right: 0.75rem;
+        bottom: 0.75rem;
+        gap: 0.7rem;
+        padding: 0.75rem 0.92rem;
+    }
+}
+
+@media (min-width: 640px) {
+    body[data-view="teacher/statistics"] .web-scroll-top {
+        width: 3.25rem;
+        height: 3.25rem;
+    }
+}
+
+@media print {
+    body[data-view="teacher/statistics"] {
+        background: #ffffff !important;
+        color: #0f172a !important;
+    }
+
+    body[data-view="teacher/statistics"] .teacher-dashboard-sidebar,
+    body[data-view="teacher/statistics"] .teacher-dashboard-topbar,
+    body[data-view="teacher/statistics"] .analytics-filter-bar,
+    body[data-view="teacher/statistics"] .teacher-dashboard-support-fab,
+    body[data-view="teacher/statistics"] .web-scroll-top {
+        display: none !important;
+    }
+
+    body[data-view="teacher/statistics"] .teacher-dashboard-layout {
+        padding-left: 0 !important;
+        padding-top: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    body[data-view="teacher/statistics"] .teacher-dashboard-main {
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        background: #ffffff !important;
+    }
+}
+
+@media (max-width: 1279px) {
+    body[data-view="teacher/statistics"] .analytics-filter-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    body[data-view="teacher/statistics"] .analytics-period-control {
+        align-items: center;
+        width: 100%;
+    }
+
+    body[data-view="teacher/statistics"] .analytics-period-segmented {
+        width: 100%;
+    }
+
+    body[data-view="teacher/statistics"] .analytics-period-option {
+        flex: 1 0 auto;
+    }
+
+    body[data-view="teacher/statistics"] .analytics-filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    body[data-view="teacher/statistics"] .analytics-export-actions {
+        align-items: stretch;
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 640px) {
+    body[data-view="teacher/statistics"] .analytics-period-control {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    body[data-view="teacher/statistics"] .analytics-filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    body[data-view="teacher/statistics"] .analytics-export-btn {
+        flex: 1 1 auto;
+    }
+}
+
+@media (min-width: 768px) {
+    body[data-view="teacher/statistics"] .teacher-dashboard-topbar {
+        left: var(--teacher-sidebar-width-current);
+        width: calc(100% - var(--teacher-sidebar-width-current));
+    }
+
+    body[data-view="teacher/statistics"] .teacher-dashboard-layout {
+        padding-left: var(--teacher-sidebar-width-current);
+    }
+
+    body[data-view="teacher/statistics"] .teacher-dashboard-sidebar {
+        top: 0;
+        height: 100vh;
+    }
+}
+
+body[data-view^="teacher/"] {
+    background: var(--teacher-page-bg) !important;
+    color: var(--teacher-text);
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-main {
+    background: var(--teacher-page-bg) !important;
+    color: var(--teacher-text);
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-topbar {
+    border-color: var(--teacher-border) !important;
+    background: color-mix(in srgb, var(--teacher-surface) 92%, transparent) !important;
+    box-shadow: 0 16px 34px -28px rgba(15, 23, 42, 0.36) !important;
+}
+
+html.dark body[data-view^="teacher/"] .teacher-dashboard-topbar,
+html[data-theme="dark"] body[data-view^="teacher/"] .teacher-dashboard-topbar {
+    box-shadow: 0 18px 36px -30px rgba(2, 6, 23, 0.9) !important;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-main :is(
+    .teacher-dashboard-card,
+    .teacher-kpi-card,
+    .teacher-review-card,
+    .teacher-dashboard-panel,
+    .teacher-period-card,
+    .teacher-meeting-card,
+    .teacher-notification-card,
+    .teacher-withdrawal-card,
+    .analytics-card,
+    .analytics-filter-bar,
+    .analytics-smart-summary
+) {
+    border-color: var(--teacher-border) !important;
+    background: var(--teacher-surface) !important;
+    box-shadow: var(--teacher-card-shadow) !important;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-main :is(.grid, .teacher-dashboard-content, .teacher-statistics-content, .teacher-referrals-page, .teacher-promotions-grid) > :is(
+    section[class*="rounded"][class*="border"],
+    article[class*="rounded"][class*="border"],
+    div[class*="rounded"][class*="border"]
+) {
+    border-color: var(--teacher-border) !important;
+    background: var(--teacher-surface) !important;
+    box-shadow: var(--teacher-card-shadow) !important;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-main :is(.bg-slate-50, .bg-gray-50, .bg-white\/70, .bg-slate-100) {
+    background: var(--teacher-surface-soft) !important;
+}
+
+html.dark body[data-view^="teacher/"] .teacher-dashboard-main :is(.dark\:bg-slate-900, .dark\:bg-slate-800, .dark\:bg-gray-900, .bg-slate-900, .bg-slate-800),
+html[data-theme="dark"] body[data-view^="teacher/"] .teacher-dashboard-main :is(.dark\:bg-slate-900, .dark\:bg-slate-800, .dark\:bg-gray-900, .bg-slate-900, .bg-slate-800) {
+    background: var(--teacher-surface) !important;
+}
+
+body[data-view^="teacher/"] :is(.text-slate-900, .text-gray-900, .text-slate-800, .text-gray-800) {
+    color: var(--teacher-text) !important;
+}
+
+body[data-view^="teacher/"] :is(.text-slate-600, .text-gray-600, .text-slate-500, .text-gray-500) {
+    color: var(--teacher-muted) !important;
+}
+
+html.dark body[data-view^="teacher/"] :is(.text-slate-500, .text-slate-400, .text-gray-500, .text-gray-400, .dark\:text-slate-400, .dark\:text-gray-400),
+html[data-theme="dark"] body[data-view^="teacher/"] :is(.text-slate-500, .text-slate-400, .text-gray-500, .text-gray-400, .dark\:text-slate-400, .dark\:text-gray-400) {
+    color: var(--teacher-muted) !important;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-main :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) {
+    border-color: var(--teacher-border) !important;
+    background: var(--teacher-surface-soft) !important;
+    color: var(--teacher-text) !important;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-main :is(input, select, textarea)::placeholder {
+    color: color-mix(in srgb, var(--teacher-muted) 78%, transparent) !important;
+}
+
+body[data-view^="teacher/"] :is(.teacher-dashboard-support-fab, [data-support-fab], [data-support-fab="1"]) {
+    width: 3.5rem !important;
+    height: 3.5rem !important;
+    min-width: 3.5rem !important;
+    min-height: 3.5rem !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    overflow: hidden;
+    justify-content: center;
+    align-items: center;
+    border-radius: 9999px !important;
+    background: #2563eb !important;
+    box-shadow: 0 20px 40px -18px rgba(37, 99, 235, 0.78) !important;
+}
+
+body[data-view^="teacher/"] :is(.teacher-dashboard-support-fab, [data-support-fab], [data-support-fab="1"]) > :first-child {
+    display: inline-flex;
+    width: 100% !important;
+    height: 100% !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: inherit;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+body[data-view^="teacher/"] :is(.teacher-dashboard-support-fab, [data-support-fab], [data-support-fab="1"]) .teacher-dashboard-support-label {
+    display: none !important;
+}
+
+body[data-view^="teacher/"] :is(.teacher-dashboard-support-fab, [data-support-fab], [data-support-fab="1"]) .app-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+body[data-view^="teacher/"] :is(.teacher-dashboard-support-fab, [data-support-fab], [data-support-fab="1"]) .app-icon > svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+body[data-view="teacher/referrals"] .teacher-withdrawal-toast {
+    position: fixed !important;
+    top: calc(var(--teacher-topbar-height, 4.5rem) + 0.75rem);
+    right: 0.75rem;
+    left: 0.75rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    width: auto;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 1.05rem;
+    padding: 0.95rem 1rem 0.95rem;
+    background: rgba(15, 23, 42, 0.96);
+    color: #dbeafe;
+    box-shadow: 0 28px 60px -30px rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    pointer-events: none;
+    overflow: hidden;
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    animation:
+        teacher-withdrawal-toast-in 180ms ease-out both,
+        teacher-withdrawal-toast-out 220ms ease-in 3200ms forwards;
+}
+
+body[data-view="teacher/referrals"] .teacher-withdrawal-toast--success {
+    border-color: rgba(52, 211, 153, 0.28);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(8, 47, 73, 0.96));
+    color: #d1fae5;
+}
+
+body[data-view="teacher/referrals"] .teacher-withdrawal-toast--error {
+    border-color: rgba(248, 113, 113, 0.3);
+    background: linear-gradient(135deg, rgba(24, 28, 47, 0.98), rgba(127, 29, 29, 0.96));
+    color: #fee2e2;
+}
+
+body[data-view="teacher/referrals"] .teacher-withdrawal-toast__copy {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+body[data-view="teacher/referrals"] .teacher-withdrawal-toast__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.15rem;
+    height: 2.15rem;
+    flex: 0 0 auto;
+    border-radius: 9999px;
+    background: rgba(16, 185, 129, 0.16);
+    color: #34d399;
+}
+
+body[data-view="teacher/referrals"] .teacher-withdrawal-toast--error .teacher-withdrawal-toast__icon {
+    background: rgba(239, 68, 68, 0.18);
+    color: #fca5a5;
+}
+
+body[data-view="teacher/referrals"] .teacher-withdrawal-toast__title {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: inherit;
+}
+
+body[data-view="teacher/referrals"] .teacher-withdrawal-toast__message,
+body[data-view="teacher/referrals"] .teacher-withdrawal-toast__list {
+    margin-top: 0.3rem;
+    min-width: 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.42;
+    word-break: break-word;
+}
+
+body[data-view="teacher/referrals"] .teacher-withdrawal-toast__list {
+    padding-left: 1rem;
+}
+
+body[data-view="teacher/referrals"] .teacher-withdrawal-toast__bar {
+    display: block;
+    width: 100%;
+    height: 3px;
+    border-radius: 9999px;
+    background: rgba(148, 163, 184, 0.18);
+    overflow: hidden;
+}
+
+body[data-view="teacher/referrals"] .teacher-withdrawal-toast__bar::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    transform-origin: left center;
+    animation: teacher-withdrawal-toast-bar 3200ms linear forwards;
+}
+
+body[data-view="teacher/referrals"] .teacher-withdrawal-toast--success .teacher-withdrawal-toast__bar::before {
+    background: linear-gradient(90deg, #34d399 0%, #10b981 45%, #059669 100%);
+}
+
+body[data-view="teacher/referrals"] .teacher-withdrawal-toast--error .teacher-withdrawal-toast__bar::before {
+    background: linear-gradient(90deg, #fda4af 0%, #fb7185 45%, #ef4444 100%);
+}
+
+@media (min-width: 768px) {
+    body[data-view="teacher/referrals"] .teacher-withdrawal-toast {
+        left: auto;
+        width: min(28rem, calc(100vw - 1.5rem));
+    }
+}
+
+@media (max-width: 767px) {
+    body[data-view="teacher/referrals"] .teacher-withdrawal-toast {
+        top: calc(var(--teacher-topbar-height, 4rem) + 0.6rem);
+        right: 0.75rem;
+        left: 0.75rem;
+    }
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast {
+    position: fixed !important;
+    top: calc(var(--teacher-topbar-height, 4.5rem) + 0.75rem);
+    right: 0.75rem;
+    left: 0.75rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    width: auto;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 1.05rem;
+    padding: 0.95rem 1rem 0.95rem;
+    background: rgba(15, 23, 42, 0.96);
+    color: #dbeafe;
+    box-shadow: 0 28px 60px -30px rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    pointer-events: none;
+    overflow: hidden;
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    animation:
+        teacher-withdrawal-toast-in 180ms ease-out both,
+        teacher-withdrawal-toast-out 220ms ease-in 3200ms forwards;
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast--success {
+    border-color: rgba(52, 211, 153, 0.28);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(8, 47, 73, 0.96));
+    color: #d1fae5;
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast--error {
+    border-color: rgba(248, 113, 113, 0.3);
+    background: linear-gradient(135deg, rgba(24, 28, 47, 0.98), rgba(127, 29, 29, 0.96));
+    color: #fee2e2;
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast--warning {
+    border-color: rgba(245, 158, 11, 0.28);
+    background: linear-gradient(135deg, rgba(24, 28, 47, 0.98), rgba(120, 53, 15, 0.96));
+    color: #fef3c7;
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast--info {
+    border-color: rgba(96, 165, 250, 0.28);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 64, 175, 0.96));
+    color: #dbeafe;
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast__copy {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.15rem;
+    height: 2.15rem;
+    flex: 0 0 auto;
+    border-radius: 9999px;
+    background: rgba(16, 185, 129, 0.16);
+    color: #34d399;
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast--error .teacher-withdrawal-toast__icon {
+    background: rgba(239, 68, 68, 0.18);
+    color: #fca5a5;
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast--warning .teacher-withdrawal-toast__icon {
+    background: rgba(245, 158, 11, 0.18);
+    color: #fbbf24;
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast--info .teacher-withdrawal-toast__icon {
+    background: rgba(59, 130, 246, 0.18);
+    color: #93c5fd;
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast__title {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: inherit;
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast__message,
+body[data-view^="teacher/"] .teacher-withdrawal-toast__list {
+    margin-top: 0.3rem;
+    min-width: 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.42;
+    word-break: break-word;
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast__list {
+    padding-left: 1rem;
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast__bar {
+    display: block;
+    width: 100%;
+    height: 3px;
+    border-radius: 9999px;
+    background: rgba(148, 163, 184, 0.18);
+    overflow: hidden;
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast__bar::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    transform-origin: left center;
+    animation: teacher-withdrawal-toast-bar 3200ms linear forwards;
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast--success .teacher-withdrawal-toast__bar::before {
+    background: linear-gradient(90deg, #34d399 0%, #10b981 45%, #059669 100%);
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast--error .teacher-withdrawal-toast__bar::before {
+    background: linear-gradient(90deg, #fda4af 0%, #fb7185 45%, #ef4444 100%);
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast--warning .teacher-withdrawal-toast__bar::before {
+    background: linear-gradient(90deg, #fde68a 0%, #f59e0b 45%, #d97706 100%);
+}
+
+body[data-view^="teacher/"] .teacher-withdrawal-toast--info .teacher-withdrawal-toast__bar::before {
+    background: linear-gradient(90deg, #93c5fd 0%, #3b82f6 45%, #1d4ed8 100%);
+}
+
+@media (min-width: 768px) {
+    body[data-view^="teacher/"] .teacher-withdrawal-toast {
+        left: auto;
+        width: min(28rem, calc(100vw - 1.5rem));
+    }
+}
+
+@media (max-width: 767px) {
+    body[data-view^="teacher/"] .teacher-withdrawal-toast {
+        top: calc(var(--teacher-topbar-height, 4rem) + 0.6rem);
+        right: 0.75rem;
+        left: 0.75rem;
+    }
+}
+
+body[data-view="teacher/exams_manage"] {
+    --teacher-border: rgba(100, 116, 139, 0.42);
+    --teacher-card-shadow: 0 20px 42px -30px rgba(15, 23, 42, 0.46);
+}
+
+html.dark body[data-view="teacher/exams_manage"],
+html[data-theme="dark"] body[data-view="teacher/exams_manage"] {
+    --teacher-border: rgba(71, 85, 105, 0.48);
+    --teacher-muted: #d1d5db;
+    --teacher-subtle: #aab4c2;
+}
+
+body[data-view="teacher/exams_manage"] .teacher-dashboard-main :is(.rounded-lg, .rounded-xl, .rounded-2xl)[class*="border"] {
+    border-color: var(--teacher-border) !important;
+}
+
+body[data-view="teacher/exams_manage"] [data-exam-search-item].hidden {
+    display: none !important;
+}
+
+body[data-view="teacher/exams_manage"] :is(.teacher-dashboard-support-fab, [data-support-fab], [data-support-fab="1"]) {
+    right: 0.9rem !important;
+    bottom: 0.9rem !important;
+    width: 3rem !important;
+    height: 3rem !important;
+    min-width: 3rem !important;
+    min-height: 3rem !important;
+    opacity: 0.92;
+}
+
+body[data-view="teacher/exams_manage"] :is(.teacher-dashboard-support-fab, [data-support-fab], [data-support-fab="1"]) .app-icon,
+body[data-view="teacher/exams_manage"] :is(.teacher-dashboard-support-fab, [data-support-fab], [data-support-fab="1"]) .app-icon > svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* Typography calibration for teacher dashboards. */
+body[data-view^="teacher/"] {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-main :is(input, select, textarea)::placeholder {
+    color: color-mix(in srgb, var(--teacher-muted) 90%, var(--teacher-text) 10%) !important;
+    opacity: 1;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar > div:first-child .text-xl {
+    font-weight: 700 !important;
+    letter-spacing: 0 !important;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar nav p {
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em !important;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar nav a {
+    font-weight: 500 !important;
+}
+
+body[data-view^="teacher/"] #teacher-dashboard-sidebar nav a[aria-current="page"],
+body[data-view^="teacher/"] #teacher-dashboard-sidebar nav a.is-active-nav {
+    font-weight: 600 !important;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-title {
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+}
+
+body[data-view="teacher/promotions"] .teacher-dashboard-main section:first-of-type p {
+    line-height: 1.5;
+}
+
+body[data-view="teacher/promotions"] .teacher-dashboard-main section.grid article p:first-child {
+    font-size: 0.9rem !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+}
+
+body[data-view="teacher/promotions"] .teacher-dashboard-main section.grid article .text-3xl {
+    font-weight: 780 !important;
+    letter-spacing: 0;
+}
+
+body[data-view="teacher/promotions"] .teacher-dashboard-main table th {
+    color: var(--teacher-muted) !important;
+    font-size: 0.86rem !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+}
+
+body[data-view="teacher/promotions"] .teacher-dashboard-main table td {
+    line-height: 1.45;
+}
+
+body[data-view="teacher/promotions"] .teacher-dashboard-main :is(.tab-btn, .tab-count, .tab-active-pill) {
+    font-weight: 650 !important;
+}

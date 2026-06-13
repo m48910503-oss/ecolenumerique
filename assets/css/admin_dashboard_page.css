@@ -1,0 +1,98 @@
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.5s ease-out both;
+}
+
+.hover-lift {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.hover-lift:hover {
+  box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.dark .gradient-text {
+  background: linear-gradient(135deg, #60a5fa 0%, #22d3ee 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.admin-dashboard-page {
+  min-height: 100vh;
+}
+
+.admin-dashboard-sidebar {
+  transition: transform 0.25s ease;
+}
+
+.admin-dashboard-backdrop {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.admin-dashboard-page.sidebar-open .admin-dashboard-sidebar {
+  transform: translateX(0) !important;
+}
+
+.admin-dashboard-page.sidebar-open .admin-dashboard-backdrop {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.admin-chart-canvas {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.admin-avatar-fallback {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.admin-dashboard-scrollbar {
+  scrollbar-color: rgba(148, 163, 184, 0.55) transparent;
+  scrollbar-width: thin;
+}
+
+.admin-dashboard-scrollbar::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.admin-dashboard-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.55);
+  border-radius: 999px;
+}
+
+@media (min-width: 1024px) {
+  .admin-dashboard-sidebar {
+    transform: none !important;
+  }
+
+  .admin-dashboard-backdrop {
+    display: none;
+  }
+}

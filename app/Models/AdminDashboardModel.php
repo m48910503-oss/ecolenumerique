@@ -1,0 +1,690 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Core\Model;
+
+final class AdminDashboardModel extends Model
+{
+    private ?bool $hasAnnouncementColumn = null;
+
+    public function countUnreadNotifications(int $userId): int
+    {
+        $sql = 'SELECT COUNT(*) AS unread FROM notifications WHERE user_id = :uid AND is_read = 0';
+        if ($this->hasAnnouncementColumn()) {
+            $sql .= ' AND (announcement_id IS NULL OR announcement_id = 0)';
+        }
+
+        return $this->intQuery($sql, [':uid' => $userId]);
+    }
+
+    private function hasAnnouncementColumn(): bool
+    {
+        if ($this->hasAnnouncementColumn !== null) {
+            return $this->hasAnnouncementColumn;
+        }
+
+        try {
+            $this->hasAnnouncementColumn = $this->columnExists('notifications', 'announcement_id');
+        } catch (\Throwable $e) {
+            $this->hasAnnouncementColumn = false;
+        }
+
+        return $this->hasAnnouncementColumn;
+    }
+
+    public function countOpenSupportTickets(): int
+    {
+        if (!$this->tableExistsSafe('support_conversations')) {
+            return 0;
+        }
+        return $this->intQuery(
+            'SELECT COUNT(*) FROM support_conversations WHERE status IN ("open","waiting_support","waiting_user")'
+        );
+    }
+
+    public function countHighPrioritySupportTickets(): int
+    {
+        if (!$this->tableExistsSafe('support_conversations')) {
+            return 0;
+        }
+        return $this->intQuery(
+            'SELECT COUNT(*) FROM support_conversations WHERE status IN ("open","waiting_support") AND priority = "high"'
+        );
+    }
+
+    public function averageFirstResponseMinutes(int $lookbackDays = 14): int
+    {
+        if (!$this->tableExistsSafe('support_conversations') || !$this->tableExistsSafe('support_messages')) {
+            return 0;
+        }
+
+        $days = max(1, min(90, $lookbackDays));
+        $sql = 'SELECT COALESCE(AVG(TIMESTAMPDIFF(MINUTE, c.created_at, fr.first_reply_at)), 0)
+                FROM support_conversations c
+                JOIN (
+                    SELECT m.conversation_id, MIN(m.created_at) AS first_reply_at
+                    FROM support_messages m
+                    JOIN support_conversations c2 ON c2.id = m.conversation_id
+                    WHERE m.sender_id <> c2.created_by
+                    GROUP BY m.conversation_id
+                ) fr ON fr.conversation_id = c.id
+                WHERE c.created_at >= DATE_SUB(NOW(), INTERVAL ' . $days . ' DAY)';
+
+        return (int) round($this->floatQuery($sql));
+    }
+
+    public function countPendingCourses(): int
+    {
+        if (!$this->tableExistsSafe('courses')) {
+            return 0;
+        }
+        return $this->intQuery(
+            'SELECT COUNT(*) FROM courses WHERE status = "submitted" AND (deleted_at IS NULL)'
+        );
+    }
+
+    public function countPublishedCourses(): int
+    {
+        if (!$this->tableExistsSafe('courses')) {
+            return 0;
+        }
+        return $this->intQuery(
+            'SELECT COUNT(*) FROM courses WHERE status = "approved" AND (deleted_at IS NULL)'
+        );
+    }
+
+    public function countPendingWithdrawals(): int
+    {
+        if (!$this->tableExistsSafe('withdrawals')) {
+            return 0;
+        }
+        return $this->intQuery(
+            'SELECT COUNT(*) FROM withdrawals WHERE status IN ("requested","approved")'
+        );
+    }
+
+    public function countRequestedWithdrawals(): int
+    {
+        if (!$this->tableExistsSafe('withdrawals')) {
+            return 0;
+        }
+        return $this->intQuery(
+            'SELECT COUNT(*) FROM withdrawals WHERE status = "requested"'
+        );
+    }
+
+    public function countPendingTeacherApplications(): int
+    {
+        if (!$this->tableExistsSafe('teacher_applications')) {
+            return 0;
+        }
+        return $this->intQuery(
+            'SELECT COUNT(*) FROM teacher_applications WHERE status = "pending"'
+        );
+    }
+
+    public function countFailedPayments(): int
+    {
+        if (!$this->tableExistsSafe('payments')) {
+            return 0;
+        }
+        return $this->intQuery('SELECT COUNT(*) FROM payments WHERE status = "failed"');
+    }
+
+    public function countPendingPayments(): int
+    {
+        if (!$this->tableExistsSafe('payments')) {
+            return 0;
+        }
+        return $this->intQuery('SELECT COUNT(*) FROM payments WHERE status = "pending"');
+    }
+
+    public function countPaidOrders(): int
+    {
+        if (!$this->tableExistsSafe('orders')) {
+            return 0;
+        }
+        return $this->intQuery('SELECT COUNT(*) FROM orders WHERE status = "paid"');
+    }
+
+    public function countFailedPushJobs(): int
+    {
+        if (!$this->tableExistsSafe('push_notification_queue')) {
+            return 0;
+        }
+        return $this->intQuery('SELECT COUNT(*) FROM push_notification_queue WHERE status = "failed"');
+    }
+
+    public function countPendingPushJobs(): int
+    {
+        if (!$this->tableExistsSafe('push_notification_queue')) {
+            return 0;
+        }
+        return $this->intQuery('SELECT COUNT(*) FROM push_notification_queue WHERE status IN ("pending","processing")');
+    }
+
+    public function oldestPendingPushDelayMinutes(): int
+    {
+        if (!$this->tableExistsSafe('push_notification_queue')) {
+            return 0;
+        }
+        return $this->intQuery(
+            'SELECT COALESCE(MAX(TIMESTAMPDIFF(MINUTE, next_attempt_at, NOW())), 0)
+             FROM push_notification_queue
+             WHERE status IN ("pending","processing")'
+        );
+    }
+
+    /**
+     * @return array<int,array<string,mixed>>
+     */
+    public function fetchSupportPriorityCandidates(int $limit = 6): array
+    {
+        if (!$this->tableExistsSafe('support_conversations')) {
+            return [];
+        }
+        $safeLimit = max(1, min(20, $limit));
+        return $this->rowsQuery(
+            'SELECT id, subject, priority, status, last_message_at, created_at
+             FROM support_conversations
+             WHERE status IN ("open","waiting_support","waiting_user")
+             ORDER BY
+                CASE priority
+                    WHEN "high" THEN 0
+                    WHEN "normal" THEN 1
+                    ELSE 2
+                END ASC,
+                last_message_at ASC
+             LIMIT ' . $safeLimit
+        );
+    }
+
+    /**
+     * @return array<int,array<string,mixed>>
+     */
+    public function fetchCoursePriorityCandidates(int $limit = 6): array
+    {
+        if (!$this->tableExistsSafe('courses')) {
+            return [];
+        }
+        $safeLimit = max(1, min(20, $limit));
+        return $this->rowsQuery(
+            'SELECT id, title, submitted_at, updated_at
+             FROM courses
+             WHERE status = "submitted" AND deleted_at IS NULL
+             ORDER BY submitted_at ASC, updated_at ASC
+             LIMIT ' . $safeLimit
+        );
+    }
+
+    /**
+     * @return array<int,array<string,mixed>>
+     */
+    public function fetchWithdrawalPriorityCandidates(int $limit = 6): array
+    {
+        if (!$this->tableExistsSafe('withdrawals')) {
+            return [];
+        }
+        $safeLimit = max(1, min(20, $limit));
+        return $this->rowsQuery(
+            'SELECT id, user_id, amount_xof, status, created_at
+             FROM withdrawals
+             WHERE status IN ("requested","approved")
+             ORDER BY created_at ASC
+             LIMIT ' . $safeLimit
+        );
+    }
+
+    /**
+     * @param array{from:string,to:string,admin_id:int,module:string} $filters
+     * @return array<int,array<string,mixed>>
+     */
+    public function fetchRecentAuditLogs(array $filters, int $limit = 20): array
+    {
+        if (!$this->tableExistsSafe('audit_logs')) {
+            return [];
+        }
+
+        $safeLimit = max(1, min(100, $limit));
+        $where = [];
+        $params = [];
+
+        $from = trim((string) ($filters['from'] ?? ''));
+        if ($from !== '') {
+            $where[] = 'al.created_at >= :from_at';
+            $params[':from_at'] = $from . ' 00:00:00';
+        }
+
+        $to = trim((string) ($filters['to'] ?? ''));
+        if ($to !== '') {
+            $where[] = 'al.created_at <= :to_at';
+            $params[':to_at'] = $to . ' 23:59:59';
+        }
+
+        $adminId = (int) ($filters['admin_id'] ?? 0);
+        if ($adminId > 0) {
+            $where[] = 'al.user_id = :admin_id';
+            $params[':admin_id'] = $adminId;
+        }
+
+        $module = trim((string) ($filters['module'] ?? ''));
+        if ($module !== '') {
+            $where[] = 'al.target_type = :module';
+            $params[':module'] = $module;
+        }
+
+        $whereSql = $where !== [] ? ('WHERE ' . implode(' AND ', $where)) : '';
+        $sql = 'SELECT
+                    al.id,
+                    al.action,
+                    al.target_type,
+                    al.target_id,
+                    al.created_at,
+                    u.id AS actor_id,
+                    u.first_name AS actor_first_name,
+                    u.last_name AS actor_last_name
+                FROM audit_logs al
+                LEFT JOIN users u ON u.id = al.user_id
+                ' . $whereSql . '
+                ORDER BY al.created_at DESC
+                LIMIT ' . $safeLimit;
+
+        return $this->rowsQuery($sql, $params);
+    }
+
+    /**
+     * @return array<int,array<string,mixed>>
+     */
+    public function fetchAuditActors(int $limit = 25): array
+    {
+        if (!$this->tableExistsSafe('audit_logs')) {
+            return [];
+        }
+        $safeLimit = max(1, min(100, $limit));
+        return $this->rowsQuery(
+            'SELECT
+                u.id,
+                u.first_name,
+                u.last_name,
+                COUNT(*) AS action_count
+             FROM audit_logs al
+             JOIN users u ON u.id = al.user_id
+             GROUP BY u.id, u.first_name, u.last_name
+             ORDER BY action_count DESC, u.last_name ASC
+             LIMIT ' . $safeLimit
+        );
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    public function fetchAuditModules(int $limit = 30): array
+    {
+        if (!$this->tableExistsSafe('audit_logs')) {
+            return [];
+        }
+        $safeLimit = max(1, min(100, $limit));
+        $rows = $this->rowsQuery(
+            'SELECT DISTINCT target_type
+             FROM audit_logs
+             WHERE target_type IS NOT NULL AND target_type <> ""
+             ORDER BY target_type ASC
+             LIMIT ' . $safeLimit
+        );
+        $modules = [];
+        foreach ($rows as $row) {
+            $module = trim((string) ($row['target_type'] ?? ''));
+            if ($module !== '') {
+                $modules[] = $module;
+            }
+        }
+        return $modules;
+    }
+
+    /**
+     * @param array<int,string> $permissionKeys
+     * @return array{secondary_total:int,permission_counts:array<string,int>,support_agents:int}
+     */
+    public function fetchPermissionCoverage(array $permissionKeys): array
+    {
+        $counts = [];
+        foreach ($permissionKeys as $permission) {
+            if (is_string($permission) && $permission !== '') {
+                $counts[$permission] = 0;
+            }
+        }
+
+        $secondaryTotal = 0;
+        if ($counts !== [] && $this->tableExistsSafe('admin_secondary_permissions')) {
+            $rows = $this->rowsQuery(
+                'SELECT permissions_json
+                 FROM admin_secondary_permissions
+                 WHERE is_active = 1'
+            );
+            $secondaryTotal = count($rows);
+            foreach ($rows as $row) {
+                $decoded = json_decode((string) ($row['permissions_json'] ?? '[]'), true);
+                if (!is_array($decoded)) {
+                    continue;
+                }
+                foreach ($decoded as $permission) {
+                    if (is_string($permission) && array_key_exists($permission, $counts)) {
+                        $counts[$permission]++;
+                    }
+                }
+            }
+        }
+
+        $supportAgents = 0;
+        if ($this->tableExistsSafe('users')) {
+            $supportAgents = $this->intQuery(
+                'SELECT COUNT(*)
+                 FROM users
+                 WHERE status = "active" AND roles_json LIKE \'%"support"%\''
+            );
+        }
+
+        return [
+            'secondary_total' => $secondaryTotal,
+            'permission_counts' => $counts,
+            'support_agents' => $supportAgents,
+        ];
+    }
+
+    public function countRecentNotifications(int $hours = 24): int
+    {
+        if (!$this->tableExistsSafe('notifications')) {
+            return 0;
+        }
+        $safeHours = max(1, min(168, $hours));
+        return $this->intQuery(
+            'SELECT COUNT(*) FROM notifications WHERE created_at >= DATE_SUB(NOW(), INTERVAL ' . $safeHours . ' HOUR)'
+        );
+    }
+
+    public function sumPaidOrdersTotalXof(): int
+    {
+        if (!$this->tableExistsSafe('orders')) {
+            return 0;
+        }
+        return $this->intQuery(
+            'SELECT COALESCE(SUM(total_xof), 0) FROM orders WHERE status = "paid"'
+        );
+    }
+
+    public function commissionPercent(float $default = 20.0): float
+    {
+        if (!$this->tableExistsSafe('platform_settings')) {
+            return $default;
+        }
+        $raw = trim((string) $this->scalarQuery(
+            'SELECT setting_value FROM platform_settings WHERE setting_key = "commission_percent" LIMIT 1'
+        ));
+        if ($raw === '' || !is_numeric($raw)) {
+            return $default;
+        }
+        $value = (float) $raw;
+        if ($value < 0 || $value > 100) {
+            return $default;
+        }
+        return $value;
+    }
+
+    public function countRegisteredUsers(): int
+    {
+        if (!$this->tableExistsSafe('users')) {
+            return 0;
+        }
+        return $this->intQuery(
+            'SELECT COUNT(*) FROM users WHERE status IN ("active","pending_email")'
+        );
+    }
+
+    public function countActiveUsersByRole(string $role): int
+    {
+        $normalizedRole = trim($role);
+        if ($normalizedRole === '' || !$this->tableExistsSafe('users')) {
+            return 0;
+        }
+        return $this->intQuery(
+            'SELECT COUNT(*)
+             FROM users
+             WHERE status = "active"
+               AND roles_json LIKE :role_pattern',
+            [':role_pattern' => '%"' . $normalizedRole . '"%']
+        );
+    }
+
+    public function countActiveCompanies(): int
+    {
+        if (!$this->tableExistsSafe('companies')) {
+            return 0;
+        }
+        return $this->intQuery(
+            'SELECT COUNT(*) FROM companies WHERE status = "active"'
+        );
+    }
+
+    public function countUsersCreatedSince(string $date): int
+    {
+        if (!$this->tableExistsSafe('users') || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            return 0;
+        }
+        return $this->intQuery(
+            'SELECT COUNT(*) FROM users WHERE DATE(created_at) >= :date_from',
+            [':date_from' => $date]
+        );
+    }
+
+    /**
+     * @return array<int,array<string,mixed>>
+     */
+    public function fetchPendingCourseCards(int $limit = 3): array
+    {
+        if (!$this->tableExistsSafe('courses') || !$this->tableExistsSafe('users')) {
+            return [];
+        }
+
+        $safeLimit = max(1, min(12, $limit));
+        return $this->rowsQuery(
+            'SELECT
+                c.id,
+                c.title,
+                c.cover_path,
+                c.submitted_at,
+                c.updated_at,
+                u.first_name,
+                u.last_name,
+                cat.name AS category_name
+             FROM courses c
+             JOIN users u ON u.id = c.teacher_id
+             LEFT JOIN categories cat ON cat.id = c.category_id
+             WHERE c.status = "submitted" AND c.deleted_at IS NULL
+             ORDER BY c.submitted_at ASC, c.id ASC
+             LIMIT ' . $safeLimit
+        );
+    }
+
+    /**
+     * @return array<int,array<string,mixed>>
+     */
+    public function fetchRecentUsers(int $limit = 4): array
+    {
+        if (!$this->tableExistsSafe('users')) {
+            return [];
+        }
+
+        $safeLimit = max(1, min(12, $limit));
+        return $this->rowsQuery(
+            'SELECT id, first_name, last_name, email, roles_json, status, created_at
+             FROM users
+             ORDER BY created_at DESC, id DESC
+             LIMIT ' . $safeLimit
+        );
+    }
+
+    /**
+     * @return array<int,array<string,mixed>>
+     */
+    public function fetchRecentTransactions(int $limit = 5): array
+    {
+        if (!$this->tableExistsSafe('orders') || !$this->tableExistsSafe('users')) {
+            return [];
+        }
+
+        $safeLimit = max(1, min(20, $limit));
+        return $this->rowsQuery(
+            'SELECT
+                o.id,
+                o.reference,
+                o.total_xof,
+                o.status,
+                o.provider,
+                o.created_at,
+                u.first_name AS buyer_first,
+                u.last_name AS buyer_last,
+                GROUP_CONCAT(c.title ORDER BY oi.id SEPARATOR ", ") AS course_titles
+             FROM orders o
+             JOIN users u ON u.id = o.user_id
+             LEFT JOIN order_items oi ON oi.order_id = o.id
+             LEFT JOIN courses c ON c.id = oi.course_id
+             GROUP BY
+                o.id,
+                o.reference,
+                o.total_xof,
+                o.status,
+                o.provider,
+                o.created_at,
+                u.first_name,
+                u.last_name
+             ORDER BY o.created_at DESC, o.id DESC
+             LIMIT ' . $safeLimit
+        );
+    }
+
+    /**
+     * @return array<int,array{label:string,value:int}>
+     */
+    public function fetchMonthlyRegistrationCounts(int $months = 6): array
+    {
+        if (!$this->tableExistsSafe('users')) {
+            return [];
+        }
+
+        $safeMonths = max(1, min(12, $months));
+        $intervalMonths = max(0, $safeMonths - 1);
+        $rows = $this->rowsQuery(
+            'SELECT DATE_FORMAT(created_at, "%Y-%m-01") AS month_key, COUNT(*) AS total
+             FROM users
+             WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL ' . $intervalMonths . ' MONTH), "%Y-%m-01")
+             GROUP BY month_key
+             ORDER BY month_key ASC'
+        );
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $key = (string) ($row['month_key'] ?? '');
+            if ($key !== '') {
+                $counts[$key] = (int) ($row['total'] ?? 0);
+            }
+        }
+
+        $monthLabels = [
+            1 => 'Jan',
+            2 => 'Fév',
+            3 => 'Mar',
+            4 => 'Avr',
+            5 => 'Mai',
+            6 => 'Juin',
+            7 => 'Juil',
+            8 => 'Août',
+            9 => 'Sep',
+            10 => 'Oct',
+            11 => 'Nov',
+            12 => 'Déc',
+        ];
+
+        $result = [];
+        $current = new \DateTimeImmutable('first day of this month');
+        for ($i = $safeMonths - 1; $i >= 0; $i--) {
+            $month = $current->modify('-' . $i . ' months');
+            $key = $month->format('Y-m-01');
+            $monthNumber = (int) $month->format('n');
+            $result[] = [
+                'label' => $monthLabels[$monthNumber] ?? $month->format('M'),
+                'value' => (int) ($counts[$key] ?? 0),
+            ];
+        }
+
+        return $result;
+    }
+
+    private function tableExistsSafe(string $table): bool
+    {
+        try {
+            return $this->tableExists($table);
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * @param array<string,mixed> $params
+     */
+    private function intQuery(string $sql, array $params = []): int
+    {
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            return (int) $stmt->fetchColumn();
+        } catch (\Throwable $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * @param array<string,mixed> $params
+     */
+    private function floatQuery(string $sql, array $params = []): float
+    {
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            return (float) $stmt->fetchColumn();
+        } catch (\Throwable $e) {
+            return 0.0;
+        }
+    }
+
+    /**
+     * @param array<string,mixed> $params
+     */
+    private function scalarQuery(string $sql, array $params = []): string
+    {
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            $value = $stmt->fetchColumn();
+            return $value === false ? '' : (string) $value;
+        } catch (\Throwable $e) {
+            return '';
+        }
+    }
+
+    /**
+     * @param array<string,mixed> $params
+     * @return array<int,array<string,mixed>>
+     */
+    private function rowsQuery(string $sql, array $params = []): array
+    {
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll() ?: [];
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+}

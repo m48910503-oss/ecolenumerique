@@ -1,0 +1,40 @@
+# Local environment and secrets
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.crt
+oauth_token*.json
+service-account*.json
+
+# Runtime storage
+/storage/*
+!/storage/drive/
+/storage/drive/*
+!/storage/drive/*.example.json
+*.log
+
+# Local databases
+/database/*.sqlite
+/database/*.sqlite-shm
+/database/*.sqlite-wal
+/database/*.db
+
+# Dependencies and local tooling
+/vendor/
+/node_modules/
+/.npm-cache/
+/.codex-playwright/
+/.tools/
+/.sixth/
+
+# Editor and OS files
+/.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary verification artifacts
+/tmp_*
+/chrome_course*.png

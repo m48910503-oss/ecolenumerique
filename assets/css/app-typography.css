@@ -1,0 +1,1388 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
+:root {
+  --app-font-title: "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --app-font-display: var(--app-font-title);
+  --app-font-section: var(--app-font-title);
+  --app-font-ui: var(--app-font-title);
+  --app-font-sans: var(--app-font-title);
+  --app-font-body: var(--app-font-title);
+  --app-font-serif: "Times New Roman", Times, Georgia, serif;
+  --app-font-accent: var(--app-font-serif);
+  --app-font-mono: "IBM Plex Mono", "Cascadia Code", Consolas, monospace;
+  --app-font-numeric: var(--app-font-mono);
+  --app-type-text: #0f172a;
+  --app-type-muted: #64748b;
+  --app-type-secondary: #475569;
+  --app-type-heading-weight: 700;
+  --app-type-card-title-weight: 600;
+  --app-type-control-weight: 600;
+  --app-type-label-weight: 580;
+  --app-type-table-head-weight: 500;
+  --app-type-table-emphasis-weight: 500;
+  --app-type-section-letter-spacing: 0.08em;
+  --app-ui-page-bg: linear-gradient(180deg, #f4f7fb 0%, #eef3f8 46%, #edf2f7 100%);
+  --app-ui-surface: rgba(255, 255, 255, 0.98);
+  --app-ui-surface-solid: #ffffff;
+  --app-ui-surface-soft: rgba(248, 250, 252, 0.94);
+  --app-ui-border: rgba(148, 163, 184, 0.34);
+  --app-ui-border-strong: rgba(100, 116, 139, 0.44);
+  --app-ui-shadow: 0 18px 42px -30px rgba(15, 23, 42, 0.42);
+  --app-ui-shadow-strong: 0 24px 54px -34px rgba(15, 23, 42, 0.48);
+  --app-ui-radius-card: 1.25rem;
+  --app-ui-radius-control: 0.9rem;
+  --app-ui-primary: #2563eb;
+  --app-ui-cyan: #0891b2;
+  --app-ui-emerald: #059669;
+  --app-ui-rose: #e11d48;
+  --app-ui-amber: #d97706;
+  --app-ui-violet: #7c3aed;
+  --app-ui-card-accent: var(--app-ui-primary);
+  --app-ui-card-tint: rgba(37, 99, 235, 0.08);
+  --app-copy-max-width: 44rem;
+}
+
+html.dark,
+html[data-theme="dark"] {
+  --app-type-text: #f8fafc;
+  --app-type-muted: #94a3b8;
+  --app-type-secondary: #cbd5e1;
+  --app-ui-page-bg: linear-gradient(180deg, #0f172a 0%, #111827 46%, #0b1220 100%);
+  --app-ui-surface: rgba(30, 41, 59, 0.9);
+  --app-ui-surface-solid: #1e293b;
+  --app-ui-surface-soft: rgba(15, 23, 42, 0.72);
+  --app-ui-border: rgba(100, 116, 139, 0.62);
+  --app-ui-border-strong: rgba(148, 163, 184, 0.48);
+  --app-ui-shadow: 0 26px 50px -36px rgba(2, 6, 23, 0.84);
+  --app-ui-shadow-strong: 0 30px 60px -38px rgba(2, 6, 23, 0.9);
+  --app-ui-card-tint: rgba(96, 165, 250, 0.12);
+}
+
+html {
+  font-family: var(--app-font-body);
+  -webkit-font-smoothing: antialiased;
+  font-optical-sizing: auto;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--app-font-body) !important;
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+:is(.font-sans, .font-body, .font-display, .font-heading, .font-ui) {
+  font-family: var(--app-font-body) !important;
+}
+
+:is(.font-serif, .app-serif, .app-serif-accent, .app-copy-accent) {
+  font-family: var(--app-font-accent) !important;
+}
+
+:is(.font-numeric, [class*="font-mono"]) {
+  font-family: var(--app-font-numeric) !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0 !important;
+}
+
+:is(h1, .text-4xl, .text-5xl) {
+  font-family: var(--app-font-title) !important;
+  font-weight: var(--app-type-heading-weight) !important;
+  line-height: 1.16;
+  letter-spacing: 0 !important;
+}
+
+:is(h2, .text-3xl) {
+  font-family: var(--app-font-title) !important;
+  font-weight: var(--app-type-heading-weight) !important;
+  line-height: 1.22;
+  letter-spacing: 0 !important;
+}
+
+:is(h3, .text-2xl, .text-xl) {
+  font-family: var(--app-font-title) !important;
+  font-weight: var(--app-type-card-title-weight) !important;
+  line-height: 1.3;
+  letter-spacing: 0 !important;
+}
+
+:is(p, li, td, input, select, textarea, button, a, label, summary) {
+  letter-spacing: 0;
+}
+
+:is(input, select, textarea)::placeholder {
+  color: color-mix(in srgb, var(--app-type-muted) 88%, var(--app-type-secondary) 12%) !important;
+  opacity: 1;
+}
+
+:is(button, .button, .btn, [class*="btn"], [class*="button"], .app-btn, .admin-shell-button, .course-action-btn, .course-action-link) {
+  font-family: var(--app-font-body) !important;
+  font-weight: var(--app-type-control-weight) !important;
+}
+
+:is(.font-black, .font-extrabold) {
+  font-weight: 700 !important;
+}
+
+:is(.font-bold) {
+  font-weight: 620 !important;
+}
+
+:is(.font-semibold) {
+  font-weight: 580 !important;
+}
+
+:is(.font-medium) {
+  font-weight: 500 !important;
+}
+
+:is(.badge, [class*="badge"], [class*="Badge"], .pill, [class*="pill"], [class*="chip"], [class*="Chip"], .app-status-pill, .admin-shell-badge) {
+  font-size: 0.78rem;
+  font-weight: 600 !important;
+  line-height: 1.1;
+  letter-spacing: 0 !important;
+}
+
+:is(table th, .admin-shell-table th, [class*="table"] th) {
+  color: var(--app-type-secondary);
+  font-size: 0.84rem !important;
+  font-weight: var(--app-type-table-head-weight) !important;
+  line-height: 1.35;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+:is(table td, .admin-shell-table td) {
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+body[data-view] :is(.admin-shell-main, .teacher-dashboard-main, .student-dashboard-main, .company-dashboard-main, main) :is(table th, .admin-shell-table th, [class*="table"] th) {
+  color: var(--app-type-secondary) !important;
+  font-size: 0.84rem !important;
+  font-weight: var(--app-type-table-head-weight) !important;
+  line-height: 1.35;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+body[data-view] :is(.admin-shell-main, .teacher-dashboard-main, .student-dashboard-main, .company-dashboard-main, main) :is(table td, .admin-shell-table td, [class*="table"] td) {
+  font-weight: 400 !important;
+  line-height: 1.45;
+}
+
+body[data-view] :is(.admin-shell-main, .teacher-dashboard-main, .student-dashboard-main, .company-dashboard-main, main) :is(
+  table td,
+  .admin-shell-table td,
+  [class*="table"] td
+) :is(p, span, small, a, div) {
+  font-weight: 400 !important;
+}
+
+body[data-view] :is(.admin-shell-main, .teacher-dashboard-main, .student-dashboard-main, .company-dashboard-main, main) :is(
+  table th,
+  .admin-shell-table th,
+  [class*="table"] th
+) :is(p, span, small, a, div, strong, b, .font-medium, .font-semibold, .font-bold, .font-extrabold, .font-black) {
+  font-weight: var(--app-type-table-head-weight) !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+body[data-view] :is(.admin-shell-main, .teacher-dashboard-main, .student-dashboard-main, .company-dashboard-main, main) :is(
+  table th,
+  table td,
+  .admin-shell-table th,
+  .admin-shell-table td,
+  [class*="table"] th,
+  [class*="table"] td
+):is(.font-medium, .font-semibold, .font-bold, .font-extrabold, .font-black),
+body[data-view] :is(.admin-shell-main, .teacher-dashboard-main, .student-dashboard-main, .company-dashboard-main, main) :is(
+  table td,
+  .admin-shell-table td,
+  [class*="table"] td
+) :is(strong, b, .font-medium, .font-semibold, .font-bold, .font-extrabold, .font-black) {
+  font-weight: var(--app-type-table-emphasis-weight) !important;
+}
+
+body[data-view] :is(.admin-shell-main, .teacher-dashboard-main, .student-dashboard-main, .company-dashboard-main, main) :is(
+  table td,
+  .admin-shell-table td,
+  [class*="table"] td
+) :is(button, .button, .btn, [class*="btn"], [class*="button"], .badge, [class*="badge"], .pill, [class*="pill"], [class*="chip"], .app-status-pill, .admin-shell-badge) {
+  font-weight: 600 !important;
+}
+
+:is(
+  .admin-shell-section-title,
+  .admin-shell-label,
+  .app-kpi-card__head,
+  .analytics-filter-kicker,
+  .analytics-filter-field span,
+  .course-library-hero__eyebrow,
+  .teacher-withdrawal-toast__title
+) {
+  font-size: 0.84rem !important;
+  font-weight: var(--app-type-label-weight) !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+:is(
+  .admin-sidebar-section__title,
+  .app-shell-sidebar__summary-label,
+  .app-shell-sidebar__aux-label,
+  .app-shell-toolbar__eyebrow,
+  .student-dashboard-topbar p[class*="uppercase"],
+  .teacher-dashboard-topbar p[class*="uppercase"],
+  .public-mobile-panel__section-label
+) {
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  letter-spacing: var(--app-type-section-letter-spacing) !important;
+  text-transform: uppercase;
+}
+
+:is(.app-shell-brand-title, .mk-brand__title) {
+  font-family: var(--app-font-title) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+}
+
+:is(.app-shell-brand-title span, .mk-brand__title span) {
+  color: #2563eb;
+}
+
+html.dark :is(.app-shell-brand-title span, .mk-brand__title span),
+html[data-theme="dark"] :is(.app-shell-brand-title span, .mk-brand__title span) {
+  color: #60a5fa;
+}
+
+:is(.app-page-hero__summary, .course-library-hero__subtitle, .student-dashboard-hero p, .admin-teachers-hero p) {
+  max-width: 45rem;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+}
+
+:is(.text-secondary, .text-muted, .app-section-head__desc, .admin-shell-metric__meta, .admin-kpi-note, .admin-stats-kpi-meta) {
+  font-weight: 400 !important;
+  line-height: 1.5;
+}
+
+:is(blockquote, cite, q, .quote, .testimonial, .mk-footer__lead) {
+  font-family: var(--app-font-accent) !important;
+  font-style: italic;
+}
+
+/* Unified UI layer inspired by the teacher withdrawals page. */
+body[data-view]:not([data-view="web/certificate"]) {
+  color: var(--app-type-text);
+  background: var(--app-ui-page-bg) !important;
+}
+
+body[data-view] :is(
+  .admin-shell-main,
+  .teacher-dashboard-main,
+  .student-dashboard-main,
+  .company-dashboard-main,
+  .standalone-dashboard-page main,
+  main
+) {
+  background: transparent;
+}
+
+body[data-view] :is(
+  .admin-shell-topbar,
+  .teacher-dashboard-topbar,
+  .student-dashboard-topbar,
+  .company-dashboard-topbar,
+  header[class*="topbar"]
+) {
+  border-color: var(--app-ui-border) !important;
+  background: color-mix(in srgb, var(--app-ui-surface-solid) 92%, transparent) !important;
+  box-shadow: 0 18px 36px -32px rgba(15, 23, 42, 0.46) !important;
+  backdrop-filter: blur(18px);
+}
+
+html.dark body[data-view] :is(
+  .admin-shell-topbar,
+  .teacher-dashboard-topbar,
+  .student-dashboard-topbar,
+  .company-dashboard-topbar,
+  header[class*="topbar"]
+),
+html[data-theme="dark"] body[data-view] :is(
+  .admin-shell-topbar,
+  .teacher-dashboard-topbar,
+  .student-dashboard-topbar,
+  .company-dashboard-topbar,
+  header[class*="topbar"]
+) {
+  background: color-mix(in srgb, var(--app-ui-surface-solid) 88%, transparent) !important;
+}
+
+body[data-view] :is(
+  .admin-shell-sidebar,
+  .teacher-dashboard-sidebar,
+  .student-dashboard-sidebar,
+  .company-dashboard-sidebar,
+  aside[class*="sidebar"]
+) {
+  border-color: var(--app-ui-border) !important;
+  background: var(--app-ui-surface) !important;
+  box-shadow: 16px 0 42px -42px rgba(15, 23, 42, 0.42);
+}
+
+body[data-view] :is(
+  .admin-shell-main,
+  .teacher-dashboard-main,
+  .student-dashboard-main,
+  .company-dashboard-main,
+  .standalone-dashboard-page main,
+  main
+) :is(
+  .admin-shell-card,
+  .admin-shell-panel,
+  .admin-kpi-card,
+  .admin-dashboard-card,
+  .admin-stats-kpi,
+  .admin-teacher-card,
+  .analytics-card,
+  .analytics-filter-bar,
+  .analytics-smart-summary,
+  .teacher-dashboard-card,
+  .teacher-dashboard-panel,
+  .teacher-kpi-card,
+  .teacher-review-card,
+  .teacher-period-card,
+  .teacher-meeting-card,
+  .teacher-notification-card,
+  .teacher-withdrawal-card,
+  .student-dashboard-card,
+  .student-dashboard-panel,
+  .student-course-card,
+  .course-library-card,
+  .company-dashboard-card,
+  .course-content-card,
+  .exam-create-card,
+  .exam-create-subpanel,
+  .support-card,
+  .profile-card
+),
+body[data-view] :is(
+  .admin-shell-main,
+  .teacher-dashboard-main,
+  .student-dashboard-main,
+  .company-dashboard-main,
+  .standalone-dashboard-page main,
+  main
+) > :is(section, article)[class*="rounded"][class*="border"],
+body[data-view] :is(
+  .admin-shell-main,
+  .teacher-dashboard-main,
+  .student-dashboard-main,
+  .company-dashboard-main,
+  main
+) :is(.grid, dl) > :is(div, article, section)[class*="rounded"][class*="border"]:not([class*="bg-emerald"]):not([class*="bg-green"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-blue-"]):not([class*="bg-primary-"]):not([class*="bg-cyan"]):not([class*="bg-sky"]) {
+  position: relative;
+  border-color: var(--app-ui-border) !important;
+  border-radius: var(--app-ui-radius-card) !important;
+  background: var(--app-ui-surface) !important;
+  box-shadow: var(--app-ui-shadow) !important;
+}
+
+body[data-view] :is(
+  .admin-shell-main,
+  .teacher-dashboard-main,
+  .student-dashboard-main,
+  .company-dashboard-main,
+  main
+) :is(.grid, dl) > :is(div, article, section)[class*="rounded"][class*="border"]:nth-child(6n + 1) {
+  --app-ui-card-accent: var(--app-ui-primary);
+  --app-ui-card-tint: rgba(37, 99, 235, 0.1);
+}
+
+body[data-view] :is(
+  .admin-shell-main,
+  .teacher-dashboard-main,
+  .student-dashboard-main,
+  .company-dashboard-main,
+  main
+) :is(.grid, dl) > :is(div, article, section)[class*="rounded"][class*="border"]:nth-child(6n + 2) {
+  --app-ui-card-accent: var(--app-ui-emerald);
+  --app-ui-card-tint: rgba(5, 150, 105, 0.1);
+}
+
+body[data-view] :is(
+  .admin-shell-main,
+  .teacher-dashboard-main,
+  .student-dashboard-main,
+  .company-dashboard-main,
+  main
+) :is(.grid, dl) > :is(div, article, section)[class*="rounded"][class*="border"]:nth-child(6n + 3) {
+  --app-ui-card-accent: var(--app-ui-amber);
+  --app-ui-card-tint: rgba(217, 119, 6, 0.12);
+}
+
+body[data-view] :is(
+  .admin-shell-main,
+  .teacher-dashboard-main,
+  .student-dashboard-main,
+  .company-dashboard-main,
+  main
+) :is(.grid, dl) > :is(div, article, section)[class*="rounded"][class*="border"]:nth-child(6n + 4) {
+  --app-ui-card-accent: var(--app-ui-violet);
+  --app-ui-card-tint: rgba(124, 58, 237, 0.1);
+}
+
+body[data-view] :is(
+  .admin-shell-main,
+  .teacher-dashboard-main,
+  .student-dashboard-main,
+  .company-dashboard-main,
+  main
+) :is(.grid, dl) > :is(div, article, section)[class*="rounded"][class*="border"]:nth-child(6n + 5) {
+  --app-ui-card-accent: var(--app-ui-cyan);
+  --app-ui-card-tint: rgba(8, 145, 178, 0.1);
+}
+
+body[data-view] :is(
+  .admin-shell-main,
+  .teacher-dashboard-main,
+  .student-dashboard-main,
+  .company-dashboard-main,
+  main
+) :is(.grid, dl) > :is(div, article, section)[class*="rounded"][class*="border"]:nth-child(6n) {
+  --app-ui-card-accent: var(--app-ui-rose);
+  --app-ui-card-tint: rgba(225, 29, 72, 0.1);
+}
+
+body[data-view] :is(
+  .admin-shell-main,
+  .teacher-dashboard-main,
+  .student-dashboard-main,
+  .company-dashboard-main,
+  main
+) :is(
+  [class*="metric"],
+  [class*="kpi"],
+  [class*="stat"],
+  [class*="summary"]
+)[class*="rounded"],
+body[data-view] :is(
+  .admin-shell-main,
+  .teacher-dashboard-main,
+  .student-dashboard-main,
+  .company-dashboard-main,
+  main
+) :is(.grid, dl) > :is(div, article, section)[class*="rounded"][class*="border"] {
+  border-color: color-mix(in srgb, var(--app-ui-card-accent) 18%, var(--app-ui-border)) !important;
+}
+
+body[data-view] :is(
+  .admin-shell-main,
+  .teacher-dashboard-main,
+  .student-dashboard-main,
+  .company-dashboard-main,
+  main
+) :is(
+  [class*="metric"],
+  [class*="kpi"],
+  [class*="stat"],
+  [class*="summary"]
+)[class*="rounded"] :is(.text-3xl, .text-4xl, .text-5xl),
+body[data-view] :is(
+  .admin-shell-main,
+  .teacher-dashboard-main,
+  .student-dashboard-main,
+  .company-dashboard-main,
+  main
+) :is(.grid, dl) > :is(div, article, section)[class*="rounded"][class*="border"] :is(dd, .text-2xl, .text-3xl, .text-4xl) {
+  font-family: var(--app-font-title) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view] :is(
+  .admin-shell-main,
+  .teacher-dashboard-main,
+  .student-dashboard-main,
+  .company-dashboard-main,
+  main
+) :is(
+  .bg-gray-50,
+  .bg-slate-50,
+  .bg-gray-100,
+  .bg-slate-100,
+  .bg-white\/60,
+  .bg-white\/70,
+  .bg-white\/80
+) {
+  background: var(--app-ui-surface-soft) !important;
+}
+
+body[data-view] :is(input, select, textarea) {
+  border-color: var(--app-ui-border) !important;
+  border-radius: var(--app-ui-radius-control) !important;
+  background: color-mix(in srgb, var(--app-ui-surface-solid) 90%, var(--app-ui-surface-soft) 10%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+body[data-view] :is(input, select, textarea):focus {
+  border-color: var(--app-ui-primary) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16) !important;
+  outline: 0;
+}
+
+body[data-view] :is(button, a)[class*="bg-primary-600"],
+body[data-view] :is(button, a)[class*="bg-blue-600"] {
+  background: var(--app-ui-primary) !important;
+  box-shadow: 0 16px 30px -22px rgba(37, 99, 235, 0.85) !important;
+}
+
+body[data-view] :is(button, a)[class*="bg-violet-600"],
+body[data-view] :is(button, a)[class*="bg-purple-600"] {
+  background: var(--app-ui-violet) !important;
+  box-shadow: 0 16px 30px -22px rgba(124, 58, 237, 0.8) !important;
+}
+
+body[data-view] :is(button, a)[class*="border"][class*="bg-white"] {
+  border-color: var(--app-ui-border) !important;
+  background: var(--app-ui-surface) !important;
+}
+
+body[data-view] :is(table, .admin-shell-table) {
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border-color: var(--app-ui-border) !important;
+  background: var(--app-ui-surface) !important;
+}
+
+body[data-view] :is(table thead, .admin-shell-table thead) {
+  background: var(--app-ui-surface-soft) !important;
+}
+
+body[data-view] :is(table tbody tr, .admin-shell-table tbody tr) {
+  transition: background-color 0.16s ease;
+}
+
+body[data-view] :is(table tbody tr:hover, .admin-shell-table tbody tr:hover) {
+  background: color-mix(in srgb, var(--app-ui-primary) 5%, transparent) !important;
+}
+
+body:is(.app-role-admin, .app-role-teacher, .app-role-student, .app-role-company) :is(
+  .app-page-hero__summary,
+  .app-section-head__desc,
+  .course-library-hero__subtitle,
+  .teacher-courses-hero__subtitle,
+  .course-content-card__subtitle,
+  .exam-create-card__subtitle,
+  .exam-create-subpanel__note,
+  .exam-create-builder__panel-label,
+  .exam-create-tool-card__hint,
+  .admin-kpi-note,
+  .admin-stats-kpi-meta,
+  .admin-teachers-hero p,
+  p[class*="max-w-2xl"][class*="leading-7"],
+  p[class*="max-w-3xl"][class*="leading-7"]
+) {
+  max-width: var(--app-copy-max-width);
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-weight: 400 !important;
+  line-height: 1.48 !important;
+}
+
+body[data-view] :is(
+  .app-page-hero__summary,
+  .app-section-head__desc,
+  .course-library-hero__subtitle,
+  .teacher-courses-hero__subtitle,
+  .course-content-card__subtitle,
+  .exam-create-card__subtitle,
+  .exam-create-subpanel__note,
+  .auth-form-v2__hint,
+  .mk-section__description,
+  .mk-footer__lead
+) {
+  font-family: var(--app-font-accent) !important;
+  font-style: italic;
+  font-size: 1.02em;
+}
+
+body[data-view] :is(table, .admin-shell-table, input, select, textarea, button, .btn, .app-btn, nav, aside) :is(
+  .app-page-hero__summary,
+  .app-section-head__desc,
+  .course-library-hero__subtitle,
+  .teacher-courses-hero__subtitle,
+  .course-content-card__subtitle,
+  .exam-create-card__subtitle,
+  .exam-create-subpanel__note,
+  .auth-form-v2__hint,
+  .mk-section__description,
+  .mk-footer__lead
+) {
+  font-family: var(--app-font-body) !important;
+  font-style: normal;
+}
+
+body:is(.app-role-admin, .app-role-teacher, .app-role-student, .app-role-company) :is(
+  .text-xs[class*="uppercase"],
+  .text-sm[class*="uppercase"],
+  [class*="tracking-"][class*="uppercase"]
+) {
+  letter-spacing: var(--app-type-section-letter-spacing) !important;
+  font-weight: 600 !important;
+}
+
+body.app-role-web :is(h1, .text-5xl, .text-6xl) {
+  line-height: 1.08;
+}
+
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+
+  :is(input, select, textarea, button) {
+    font-size: 16px;
+  }
+
+  :is(h1, .text-4xl, .text-5xl, .text-6xl) {
+    line-height: 1.15;
+  }
+}
+
+/* Teacher area final polish. Loaded globally after page CSS for consistent rendering. */
+body.app-role-teacher[data-view^="teacher/"],
+body.app-role-teacher.support-page,
+body.app-role-teacher.profile-modern-page {
+  --teacher-page-bg: linear-gradient(180deg, #f8fbff 0%, #edf3f8 100%);
+  --teacher-surface: rgba(255, 255, 255, 0.98);
+  --teacher-surface-soft: rgba(248, 250, 252, 0.92);
+  --teacher-surface-tint: rgba(239, 246, 255, 0.82);
+  --teacher-border: rgba(148, 163, 184, 0.30);
+  --teacher-text: #0f172a;
+  --teacher-muted: #475569;
+  --teacher-subtle: #64748b;
+  --teacher-blue: #2563eb;
+  --teacher-shadow: 0 18px 42px -34px rgba(15, 23, 42, 0.38);
+  background: var(--teacher-page-bg) !important;
+  color: var(--teacher-text) !important;
+  font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", Arial, sans-serif) !important;
+  font-weight: 400;
+}
+
+html.dark body.app-role-teacher[data-view^="teacher/"],
+html.dark body.app-role-teacher.support-page,
+html.dark body.app-role-teacher.profile-modern-page,
+html[data-theme="dark"] body.app-role-teacher[data-view^="teacher/"],
+html[data-theme="dark"] body.app-role-teacher.support-page,
+html[data-theme="dark"] body.app-role-teacher.profile-modern-page {
+  --teacher-page-bg: linear-gradient(180deg, #0f1726 0%, #0b1321 100%);
+  --teacher-surface: rgba(30, 41, 59, 0.92);
+  --teacher-surface-soft: rgba(15, 23, 42, 0.72);
+  --teacher-surface-tint: rgba(15, 34, 56, 0.76);
+  --teacher-border: rgba(125, 145, 170, 0.34);
+  --teacher-text: #f8fafc;
+  --teacher-muted: #cbd5e1;
+  --teacher-subtle: #94a3b8;
+  --teacher-shadow: none;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(
+  strong,
+  b,
+  .font-semibold,
+  .font-bold,
+  .font-extrabold,
+  .font-black
+),
+body.app-role-teacher.support-page :is(
+  strong,
+  b,
+  .font-semibold,
+  .font-bold,
+  .font-extrabold,
+  .font-black
+),
+body.app-role-teacher.profile-modern-page :is(
+  strong,
+  b,
+  .font-semibold,
+  .font-bold,
+  .font-extrabold,
+  .font-black
+) {
+  font-weight: 600 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(
+  h1,
+  h2,
+  h3,
+  .teacher-dashboard-title,
+  .teacher-courses-card__title,
+  .profile-modern-hero h2
+),
+body.app-role-teacher.support-page :is(h1, h2, h3),
+body.app-role-teacher.profile-modern-page :is(h1, h2, h3, .profile-modern-hero h2) {
+  font-family: var(--app-font-title, "Plus Jakarta Sans", "Inter", Arial, sans-serif) !important;
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(
+  .teacher-dashboard-main,
+  .teacher-dashboard-content,
+  .teacher-courses-main
+),
+body.app-role-teacher.support-page .support-dashboard-content,
+body.app-role-teacher.profile-modern-page .profile-modern {
+  background: var(--teacher-page-bg) !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(
+  #teacher-dashboard-sidebar,
+  .teacher-dashboard-topbar,
+  .teacher-dashboard-card,
+  .teacher-dashboard-panel,
+  .teacher-kpi-card,
+  .teacher-review-card,
+  .teacher-meeting-card,
+  .teacher-courses-card,
+  .teacher-courses-filter-card,
+  .teacher-courses-hero-stat,
+  .teacher-course-stats-modal__panel,
+  .teacher-notifications-panel,
+  .teacher-notifications-sidebar,
+  .teacher-notifications-card,
+  .teacher-empty-state,
+  .support-card,
+  .support-ticket-card,
+  section[class*="rounded"][class*="border"],
+  article[class*="rounded"][class*="border"],
+  div[class*="rounded"][class*="border"]
+),
+body.app-role-teacher.support-page :is(.support-card, .support-ticket-card),
+body.app-role-teacher.profile-modern-page :is(.profile-modern-hero, .profile-modern-card, .profile-modern-tabs) {
+  background: var(--teacher-surface) !important;
+  border-color: var(--teacher-border) !important;
+  border-radius: 1.05rem !important;
+  box-shadow: var(--teacher-shadow) !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] #teacher-dashboard-sidebar nav a,
+body.app-role-teacher.support-page #teacher-dashboard-sidebar nav a,
+body.app-role-teacher.profile-modern-page #teacher-dashboard-sidebar nav a {
+  font-weight: 500 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] #teacher-dashboard-sidebar nav a[aria-current="page"],
+body.app-role-teacher[data-view^="teacher/"] #teacher-dashboard-sidebar nav a.bg-primary-50,
+body.app-role-teacher.support-page #teacher-dashboard-sidebar nav a[aria-current="page"],
+body.app-role-teacher.profile-modern-page #teacher-dashboard-sidebar nav a[aria-current="page"] {
+  font-weight: 600 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] #teacher-dashboard-sidebar nav p,
+body.app-role-teacher.support-page #teacher-dashboard-sidebar nav p,
+body.app-role-teacher.profile-modern-page #teacher-dashboard-sidebar nav p {
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.12em !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(
+  .teacher-dashboard-main p,
+  .teacher-courses-main p,
+  .teacher-dashboard-main li,
+  .teacher-courses-main li,
+  .teacher-notifications-card p,
+  .support-ticket-card p
+),
+body.app-role-teacher.support-page :is(.support-card p, .support-ticket-card p),
+body.app-role-teacher.profile-modern-page :is(.profile-modern-intro, .profile-modern-card p) {
+  color: var(--teacher-muted) !important;
+  font-weight: 400 !important;
+  line-height: 1.48 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(
+  .teacher-dashboard-main > section:first-of-type p,
+  .teacher-courses-hero__subtitle,
+  .profile-modern-intro
+),
+body.app-role-teacher.support-page .support-card > p:first-of-type,
+body.app-role-teacher.profile-modern-page .profile-modern-intro {
+  font-family: var(--app-font-accent, "Times New Roman", Times, serif) !important;
+  font-style: italic;
+  max-width: 54rem;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(.text-3xl, .text-4xl, dd, .teacher-stat-value, .teacher-metric-value),
+body.app-role-teacher.support-page :is(.text-3xl, .text-4xl, dd),
+body.app-role-teacher.profile-modern-page :is(.text-3xl, .text-4xl, dd) {
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(table th, .teacher-dashboard-table th) {
+  color: var(--teacher-muted) !important;
+  font-size: 0.78rem !important;
+  font-weight: 520 !important;
+  letter-spacing: 0.03em !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(table td, .teacher-dashboard-table td) {
+  color: var(--teacher-muted) !important;
+  font-size: 0.86rem !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(table td, .teacher-dashboard-table td) :is(strong, b, .font-semibold, .font-bold) {
+  color: var(--teacher-text) !important;
+  font-weight: 560 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(
+  button,
+  .btn,
+  .app-btn,
+  .teacher-courses-btn,
+  .teacher-courses-card__button,
+  .teacher-notification-mark-all,
+  a[class*="btn"],
+  a[class*="button"]
+),
+body.app-role-teacher.support-page :is(button, .btn, .app-btn),
+body.app-role-teacher.profile-modern-page :is(button, .btn, .app-btn, .profile-tab) {
+  border-radius: 0.82rem !important;
+  font-weight: 580 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(input, select, textarea),
+body.app-role-teacher.support-page :is(input, select, textarea),
+body.app-role-teacher.profile-modern-page :is(input, select, textarea, .profile-modern-field) {
+  min-height: 2.6rem !important;
+  border-color: var(--teacher-border) !important;
+  border-radius: 0.78rem !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(.rounded-full, .badge, [class*="badge"], [class*="pill"]) {
+  font-weight: 560 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view="teacher/courses"] .teacher-courses-card__cover {
+  aspect-ratio: 16 / 9 !important;
+  min-height: 10rem;
+  max-height: 12rem;
+}
+
+body.app-role-teacher[data-view="teacher/courses"] :is(
+  .teacher-courses-card__title,
+  .teacher-courses-card__meta,
+  .teacher-courses-card__metric,
+  .teacher-course-stats-modal__metric small
+) {
+  font-weight: 500 !important;
+}
+
+body.app-role-teacher[data-view="teacher/courses"] .teacher-course-stats-modal__metric strong {
+  font-weight: 650 !important;
+}
+
+body.app-role-teacher[data-view="teacher/reviews"] :is(.teacher-dashboard-main p, .teacher-dashboard-main .text-sm) {
+  max-width: 58rem;
+}
+
+body.app-role-teacher[data-view="teacher/notifications"] .teacher-notifications-card,
+body.app-role-teacher[data-view="teacher/promotions"] table tbody tr,
+body.app-role-teacher[data-view="teacher/exams_manage"] table tbody tr {
+  box-shadow: none !important;
+}
+
+body.app-role-teacher[data-view="teacher/notifications"] .teacher-notifications-card p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+body.app-role-teacher[data-view="teacher/referrals"] :is(.font-mono, input[readonly]) {
+  font-size: 0.84rem !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.app-role-teacher.profile-modern-page .profile-modern-hero {
+  max-width: 78rem;
+  min-height: 0 !important;
+  padding: 1rem 1.1rem !important;
+}
+
+body.app-role-teacher.profile-modern-page .profile-modern-hero__avatar {
+  width: 3.3rem !important;
+  height: 3.3rem !important;
+  border-width: 0.18rem !important;
+  font-size: 1.15rem !important;
+}
+
+body.app-role-teacher.profile-modern-page .profile-modern-tabs .profile-tab {
+  min-height: 2.35rem !important;
+  padding: 0.55rem 0.85rem !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .profile-modern-page :is(
+  .profile-modern-hero,
+  .profile-modern-card,
+  .profile-modern-tabs
+) {
+  background: var(--teacher-surface) !important;
+  border-color: var(--teacher-border) !important;
+  border-radius: 1.05rem !important;
+  box-shadow: var(--teacher-shadow) !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .profile-modern-page .profile-modern-hero {
+  max-width: 78rem;
+  min-height: 0 !important;
+  padding: 1rem 1.1rem !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .profile-modern-page .profile-modern-hero__avatar {
+  width: 3.3rem !important;
+  height: 3.3rem !important;
+  border-width: 0.18rem !important;
+  font-size: 1.15rem !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .profile-modern-page .profile-modern-tabs .profile-tab {
+  min-height: 2.35rem !important;
+  padding: 0.55rem 0.85rem !important;
+}
+
+body.app-role-teacher .teacher-dashboard-support-fab {
+  width: 3.2rem !important;
+  height: 3.2rem !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+}
+
+body.app-role-teacher .teacher-dashboard-support-fab .teacher-dashboard-support-label {
+  display: none !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .app-icon > i,
+body.app-role-teacher.support-page .app-icon > i,
+body.app-role-teacher.profile-modern-page .app-icon > i {
+  display: inline-flex;
+  min-width: 1em;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* Final role polish for student, admin and company pages. */
+body.app-role-student[data-view^="student/"],
+body.app-role-student.support-page,
+body.app-role-student.profile-modern-page {
+  --role-page-bg: linear-gradient(180deg, #f8fbff 0%, #eef5fb 52%, #edf4fa 100%);
+  --role-surface: rgba(255, 255, 255, 0.98);
+  --role-surface-soft: rgba(248, 250, 252, 0.94);
+  --role-border: rgba(148, 163, 184, 0.34);
+  --role-text: #0f172a;
+  --role-muted: #475569;
+  --role-shadow: 0 20px 46px -34px rgba(15, 23, 42, 0.48);
+}
+
+body.app-role-admin[data-view^="admin/"],
+body.app-role-admin.support-page,
+body.app-role-admin.profile-modern-page {
+  --role-page-bg: linear-gradient(180deg, #f8fafc 0%, #eef3f7 50%, #eaf1f6 100%);
+  --role-surface: rgba(255, 255, 255, 0.98);
+  --role-surface-soft: rgba(248, 250, 252, 0.95);
+  --role-border: rgba(148, 163, 184, 0.34);
+  --role-text: #0f172a;
+  --role-muted: #475569;
+  --role-shadow: 0 20px 46px -34px rgba(15, 23, 42, 0.5);
+}
+
+body.app-role-company[data-view^="company/"],
+body.app-role-company.support-page,
+body.app-role-company.profile-modern-page {
+  --role-page-bg: linear-gradient(180deg, #f7fbfb 0%, #edf7f3 48%, #edf4f7 100%);
+  --role-surface: rgba(255, 255, 255, 0.98);
+  --role-surface-soft: rgba(248, 250, 252, 0.95);
+  --role-border: rgba(127, 156, 170, 0.34);
+  --role-text: #0f172a;
+  --role-muted: #475569;
+  --role-shadow: 0 20px 46px -34px rgba(15, 23, 42, 0.48);
+}
+
+html.dark body.app-role-student[data-view^="student/"],
+html.dark body.app-role-student.support-page,
+html.dark body.app-role-student.profile-modern-page,
+html[data-theme="dark"] body.app-role-student[data-view^="student/"],
+html[data-theme="dark"] body.app-role-student.support-page,
+html[data-theme="dark"] body.app-role-student.profile-modern-page,
+html.dark body.app-role-admin[data-view^="admin/"],
+html.dark body.app-role-admin.support-page,
+html.dark body.app-role-admin.profile-modern-page,
+html[data-theme="dark"] body.app-role-admin[data-view^="admin/"],
+html[data-theme="dark"] body.app-role-admin.support-page,
+html[data-theme="dark"] body.app-role-admin.profile-modern-page,
+html.dark body.app-role-company[data-view^="company/"],
+html.dark body.app-role-company.support-page,
+html.dark body.app-role-company.profile-modern-page,
+html[data-theme="dark"] body.app-role-company[data-view^="company/"],
+html[data-theme="dark"] body.app-role-company.support-page,
+html[data-theme="dark"] body.app-role-company.profile-modern-page {
+  --role-page-bg: linear-gradient(180deg, #0f172a 0%, #111827 48%, #0b1220 100%);
+  --role-surface: rgba(30, 41, 59, 0.9);
+  --role-surface-soft: rgba(15, 23, 42, 0.72);
+  --role-border: rgba(100, 116, 139, 0.62);
+  --role-text: #f8fafc;
+  --role-muted: #cbd5e1;
+  --role-shadow: 0 26px 52px -38px rgba(2, 6, 23, 0.9);
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) {
+  color: var(--role-text) !important;
+  background: var(--role-page-bg) !important;
+  font-family: var(--app-font-body) !important;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) :is(
+  .student-dashboard-main,
+  .admin-shell-main,
+  .company-dashboard-main,
+  .company-content-main,
+  .support-dashboard-content,
+  .profile-modern,
+  main
+) {
+  background: transparent !important;
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) :is(
+  .student-dashboard-sidebar,
+  .admin-shell-sidebar,
+  .company-dashboard-sidebar,
+  .app-shell-sidebar,
+  aside[class*="sidebar"],
+  .student-dashboard-topbar,
+  .admin-shell-topbar,
+  .admin-dashboard-topbar,
+  .company-dashboard-topbar,
+  .company-shell-toolbar,
+  .app-shell-toolbar,
+  header[class*="topbar"]
+) {
+  border-color: var(--role-border) !important;
+  background: color-mix(in srgb, var(--role-surface) 94%, transparent) !important;
+  color: var(--role-text) !important;
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) :is(
+  .student-dashboard-panel,
+  .student-dashboard-stat-card,
+  .student-dashboard-course-card,
+  .course-library-card,
+  .student-referrals-stat-card,
+  .admin-shell-card,
+  .admin-shell-panel,
+  .admin-kpi-card,
+  .admin-dashboard-card,
+  .admin-stats-kpi,
+  .admin-teacher-card,
+  .analytics-card,
+  .analytics-filter-bar,
+  .analytics-smart-summary,
+  .company-dashboard-card,
+  .company-shell-card,
+  .course-content-card,
+  .exam-create-card,
+  .exam-create-subpanel,
+  .support-card,
+  .support-ticket-card,
+  .profile-modern-hero,
+  .profile-modern-card,
+  .profile-modern-tabs
+) {
+  border-color: var(--role-border) !important;
+  border-radius: 1.05rem !important;
+  background: var(--role-surface) !important;
+  box-shadow: var(--role-shadow) !important;
+  color: var(--role-text) !important;
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) :is(
+  .student-dashboard-content,
+  .admin-shell-content,
+  .company-content-main,
+  .support-dashboard-content,
+  .profile-modern
+) > :is(section, article, div)[class*="rounded"][class*="border"]:not([class*="bg-gradient"]):not([class*="bg-blue-"]):not([class*="bg-primary-"]):not([class*="bg-cyan"]):not([class*="bg-sky"]):not([class*="bg-emerald"]):not([class*="bg-green"]):not([class*="bg-red"]):not([class*="bg-rose"]):not([class*="bg-amber"]):not([class*="bg-yellow"]):not([class*="bg-violet"]):not([class*="bg-purple"]) {
+  border-color: var(--role-border) !important;
+  border-radius: 1.05rem !important;
+  background: var(--role-surface) !important;
+  box-shadow: var(--role-shadow) !important;
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) :is(
+  .student-dashboard-hero,
+  .admin-teachers-hero,
+  .app-page-hero,
+  .course-library-hero
+) {
+  border-radius: 1.15rem !important;
+  box-shadow: 0 22px 46px -36px rgba(37, 99, 235, 0.72) !important;
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) :is(
+  h1,
+  h2,
+  h3,
+  .text-2xl,
+  .text-3xl,
+  .text-4xl,
+  .student-dashboard-title,
+  .app-shell-toolbar__title,
+  .profile-modern-hero h2
+) {
+  font-family: var(--app-font-title) !important;
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) :is(
+  p,
+  li,
+  td,
+  label,
+  input,
+  select,
+  textarea,
+  .text-sm,
+  .text-base
+) {
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.46;
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) :is(
+  .student-dashboard-hero p:not([class*="uppercase"]),
+  .course-library-hero__subtitle,
+  .app-page-hero__summary,
+  .admin-teachers-hero p,
+  .company-shell-toolbar__summary,
+  .support-card > p,
+  .profile-modern-intro
+) {
+  max-width: 46rem;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-family: var(--app-font-accent) !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+  line-height: 1.42 !important;
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) :is(
+  .font-bold,
+  .font-semibold,
+  strong,
+  b,
+  table td .font-bold,
+  table td .font-semibold,
+  .admin-shell-table td .font-bold,
+  .admin-shell-table td .font-semibold
+) {
+  font-weight: 560 !important;
+  letter-spacing: 0 !important;
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) :is(
+  .text-xs[class*="uppercase"],
+  .text-sm[class*="uppercase"],
+  [class*="tracking-"][class*="uppercase"],
+  .admin-shell-section-title,
+  .admin-shell-label,
+  .app-shell-toolbar__eyebrow,
+  .company-shell-toolbar__eyebrow,
+  .profile-modern-kicker
+) {
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) :is(table, .admin-shell-table, .student-orders-table) {
+  border-color: var(--role-border) !important;
+  background: var(--role-surface) !important;
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) :is(table thead, .admin-shell-table thead, .student-orders-table thead) {
+  background: var(--role-surface-soft) !important;
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) :is(table th, .admin-shell-table th, .student-orders-table th) {
+  color: var(--role-muted) !important;
+  font-size: 0.78rem !important;
+  font-weight: 520 !important;
+  letter-spacing: 0.03em !important;
+  text-transform: uppercase !important;
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) :is(table td, .admin-shell-table td, .student-orders-table td) {
+  color: var(--role-muted) !important;
+  font-size: 0.86rem !important;
+  font-weight: 400 !important;
+  line-height: 1.42 !important;
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) :is(
+  button,
+  .btn,
+  .app-btn,
+  .admin-shell-button,
+  .profile-tab,
+  a[class*="btn"],
+  a[class*="button"]
+) {
+  border-radius: 0.82rem !important;
+  font-weight: 580 !important;
+  letter-spacing: 0 !important;
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) :is(input, select, textarea, .profile-modern-field, .admin-shell-input) {
+  min-height: 2.58rem !important;
+  border-color: var(--role-border) !important;
+  border-radius: 0.78rem !important;
+  background: color-mix(in srgb, var(--role-surface) 90%, var(--role-surface-soft) 10%) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) :is(.badge, [class*="badge"], [class*="Badge"], .pill, [class*="pill"], [class*="chip"], [class*="Chip"], .app-status-pill, .admin-shell-badge, .rounded-full) {
+  font-weight: 560 !important;
+  letter-spacing: 0 !important;
+}
+
+body:is(.app-role-student, .app-role-admin, .app-role-company):is([data-view^="student/"], [data-view^="admin/"], [data-view^="company/"], .support-page, .profile-modern-page) :is(
+  i[class^="fa"],
+  i[class*=" fa-"],
+  .app-icon > i
+) {
+  display: inline-flex;
+  min-width: 1em;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+body.app-role-company[data-view^="company/"] .student-dashboard-hero p:not([class*="uppercase"]) {
+  font-family: var(--app-font-accent) !important;
+  font-style: italic !important;
+}
+
+body.app-role-company.app-view :is(.company-shell-toolbar__summary, .company-content-main p[class*="leading-"]) {
+  max-width: 46rem;
+  font-family: var(--app-font-accent) !important;
+  font-style: italic;
+}
+
+body.app-role-admin[data-view^="admin/"] :is(.admin-shell-card > p, .admin-shell-panel > p, .admin-dashboard-card p, .admin-kpi-note) {
+  max-width: 46rem;
+  line-height: 1.45 !important;
+}
+
+/* FontAwesome local fallback: keep icons visible when the CDN is not used. */
+@font-face {
+  font-family: "Font Awesome 6 Free";
+  font-style: normal;
+  font-weight: 900;
+  font-display: block;
+  src: url("../vendor/fontawesome/webfonts/fa-solid-900.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Font Awesome 6 Free";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("../vendor/fontawesome/webfonts/fa-regular-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Font Awesome 6 Brands";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("../vendor/fontawesome/webfonts/fa-brands-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Font Awesome 5 Free";
+  font-style: normal;
+  font-weight: 900;
+  font-display: block;
+  src: url("../vendor/fontawesome/webfonts/fa-solid-900.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Font Awesome 5 Free";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("../vendor/fontawesome/webfonts/fa-regular-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Font Awesome 5 Brands";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("../vendor/fontawesome/webfonts/fa-brands-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "FontAwesome";
+  font-style: normal;
+  font-weight: 900;
+  font-display: block;
+  src: url("../vendor/fontawesome/webfonts/fa-solid-900.woff2") format("woff2");
+}
+
+:is(.fa, .fas, .fa-solid) {
+  font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", "FontAwesome" !important;
+  font-weight: 900 !important;
+}
+
+:is(.far, .fa-regular) {
+  font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", "FontAwesome" !important;
+  font-weight: 400 !important;
+}
+
+:is(.fab, .fa-brands) {
+  font-family: "Font Awesome 6 Brands", "Font Awesome 5 Brands" !important;
+  font-weight: 400 !important;
+}

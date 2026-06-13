@@ -1,0 +1,7 @@
+{
+  "access_token": "replace-me",
+  "refresh_token": "replace-me",
+  "expires_at": 0,
+  "scope": "https://www.googleapis.com/auth/drive.file",
+  "token_type": "Bearer"
+}

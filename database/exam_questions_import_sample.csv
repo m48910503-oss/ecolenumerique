@@ -1,0 +1,13 @@
+﻿variant;question;type;option_a;option_b;option_c;option_d;correct
+1;Excel est un tableur ?;single;Oui;Non;;;A
+1;Quelle fonction calcule une somme ?;single;MOYENNE;SOMME;MAX;MIN;B
+1;Selectionnez les references absolues;multiple;$A$1;A1;B$2;$C$3;A|D
+1;Donnez un exemple d usage d un tableau croise dynamique;text;;;;;
+2;Word sert a faire des feuilles de calcul ?;single;Oui;Non;;;B
+2;Quel raccourci copie dans la plupart des apps ?;single;Ctrl+V;Ctrl+C;Ctrl+X;Ctrl+Z;B
+2;Quels formats sont des documents texte ?;multiple;DOCX;PDF;XLSX;TXT;A|B|D
+2;Expliquez la difference entre enregistrer et enregistrer sous;text;;;;;
+3;PowerPoint est surtout utilise pour;single;Bases de donnees;Presentations;Montage video;Messagerie;B
+3;Quel outil sert a filtrer des lignes dans Excel ?;single;Filtre;Pinceau;Transition;Publipostage;A
+3;Parmi ces elements, lesquels sont des navigateurs web ?;multiple;Chrome;Excel;Firefox;Edge;A|C|D
+3;Citez 2 bonnes pratiques de securite numerique;text;;;;;
