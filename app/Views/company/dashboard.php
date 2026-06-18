@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 $companySimplePage = 'dashboard';
 $companySimpleTitle = 'Tableau de bord entreprise';
-$companySimpleSubtitle = 'Le fonctionnement est volontairement simple : invitez, achetez des places, attribuez-les et suivez les accès.';
+$companySimpleSubtitle = 'Invitez, achetez des places, attribuez-les et suivez les accès.';
 $memberSummary = is_array($memberSummary ?? null) ? $memberSummary : [];
 $inviteSummary = is_array($inviteSummary ?? null) ? $inviteSummary : [];
 $seatSummary = is_array($seatSummary ?? null) ? $seatSummary : [];
@@ -54,7 +54,7 @@ require __DIR__ . '/_simple_flash.php';
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">Procédure simple</p>
-          <h3 class="mt-1 text-lg font-bold text-gray-900 dark:text-white">Comment utiliser le compte entreprise</h3>
+          <h3 class="app-inline-title mt-1 text-lg font-bold text-gray-900 dark:text-white"><?php echo dashboard_title_icon('building'); ?><span>Comment utiliser le compte entreprise</span></h3>
         </div>
         <a href="<?php echo e(site_url('catalogue')); ?>" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">Acheter des places</a>
       </div>
@@ -78,7 +78,7 @@ require __DIR__ . '/_simple_flash.php';
 
     <article class="rounded-2xl border border-gray-100 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
       <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">Invitation rapide</p>
-      <h3 class="mt-1 text-lg font-bold text-gray-900 dark:text-white">Inviter un collaborateur</h3>
+      <h3 class="app-inline-title mt-1 text-lg font-bold text-gray-900 dark:text-white"><?php echo dashboard_title_icon('user-plus'); ?><span>Inviter un collaborateur</span></h3>
       <form method="post" class="mt-4 space-y-3">
         <input type="hidden" name="_csrf" value="<?php echo e($csrfToken); ?>">
         <input type="hidden" name="action" value="invite_member">
@@ -95,7 +95,7 @@ require __DIR__ . '/_simple_flash.php';
   <section class="grid grid-cols-1 gap-4 lg:grid-cols-2 sm:gap-6">
     <article class="rounded-2xl border border-gray-100 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
       <div class="mb-4 flex items-center justify-between gap-3">
-        <h3 class="font-bold text-gray-900 dark:text-white">Collaborateurs récents</h3>
+        <h3 class="app-inline-title font-bold text-gray-900 dark:text-white"><?php echo dashboard_title_icon('users'); ?><span>Collaborateurs récents</span></h3>
         <a href="<?php echo e(site_url('company/members')); ?>" class="text-sm font-semibold text-blue-600 hover:underline">Voir tout</a>
       </div>
       <div class="space-y-3">
@@ -116,7 +116,7 @@ require __DIR__ . '/_simple_flash.php';
 
     <article class="rounded-2xl border border-gray-100 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
       <div class="mb-4 flex items-center justify-between gap-3">
-        <h3 class="font-bold text-gray-900 dark:text-white">Formations achetées</h3>
+        <h3 class="app-inline-title font-bold text-gray-900 dark:text-white"><?php echo dashboard_title_icon('book-open'); ?><span>Formations achetées</span></h3>
         <a href="<?php echo e(site_url('company/seats')); ?>" class="text-sm font-semibold text-blue-600 hover:underline">Attribuer</a>
       </div>
       <div class="space-y-3">

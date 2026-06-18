@@ -100,7 +100,6 @@ final class ApiSupportModel extends Model
         int $createdBy,
         string $subject,
         string $status,
-        string $priority,
         string $category = 'other'
     ): int
     {
@@ -108,13 +107,12 @@ final class ApiSupportModel extends Model
         $id = $this->generatePrimaryId($table);
         $usesAutoIncrement = $this->usesAutoIncrement($table);
 
-        $columns = ['created_by', 'subject', 'status', 'priority'];
-        $values = [':uid', ':subject', ':status', ':priority'];
+        $columns = ['created_by', 'subject', 'status'];
+        $values = [':uid', ':subject', ':status'];
         $params = [
             ':uid' => $createdBy,
             ':subject' => $subject,
             ':status' => $status,
-            ':priority' => $priority,
         ];
 
         if ($this->hasConversationCategoryColumn()) {

@@ -35,14 +35,14 @@ final class CertificateService extends Service
             return $this->abort(
                 404,
                 'Certificat introuvable',
-                "Le lien du certificat est incomplet ou le code demande n'existe pas."
+                "Le lien du certificat est incomplet ou le code demandé n'existe pas."
             );
         }
         if (!$this->certificates->hasCertificatesTable()) {
             return $this->abort(
                 404,
                 'Certificat indisponible',
-                "Le service de verification des certificats n'est pas disponible pour le moment."
+                "Le service de vérification des certificats n'est pas disponible pour le moment."
             );
         }
 
@@ -52,7 +52,7 @@ final class CertificateService extends Service
             return $this->abort(
                 404,
                 'Certificat introuvable',
-                "Aucun certificat valide ne correspond a ce code de verification."
+                "Aucun certificat valide ne correspond à ce code de vérification."
             );
         }
 
@@ -66,11 +66,18 @@ final class CertificateService extends Service
         }
 
         $siteLogoUrl = $this->siteLogoUrl();
+        $siteName = trim($this->settings->get('site_name', 'École Numérique'));
+        if ($siteName === '') {
+            $siteName = 'École Numérique';
+        }
         $teacherSignaturePath = $hasSignatureColumn ? (string) ($cert['teacher_signature_path'] ?? '') : '';
         $teacherSignatureUrl = $this->toAssetUrl($teacherSignaturePath);
         $dgSignaturePath = trim($this->settings->get('platform_dg_signature_path', ''));
         $dgSignatureUrl = $this->toAssetUrl($dgSignaturePath);
-        $dgName = trim($this->settings->get('platform_dg_name', 'Directeur general'));
+        $dgName = trim($this->settings->get('platform_dg_name', 'Directeur général'));
+        if ($dgName === '') {
+            $dgName = 'Directeur général';
+        }
 
         $issuedAt = (string) ($cert['issued_at'] ?? '');
         $issuedLabel = '';
@@ -91,6 +98,7 @@ final class CertificateService extends Service
             'abortMessage' => null,
             'view' => [
                 'cert' => $cert,
+                'siteName' => $siteName,
                 'fullName' => $fullName,
                 'teacherName' => $teacherName,
                 'dgName' => $dgName,

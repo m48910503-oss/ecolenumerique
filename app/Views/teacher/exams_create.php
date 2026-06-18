@@ -256,7 +256,7 @@ $typeCards = [
     <title><?php echo e($pageHeading); ?> - École Numérique</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time()))); ?>">
     <script src="<?php echo e(site_url('assets/vendor/xlsx.full.min.js')); ?>" defer></script>
@@ -277,6 +277,13 @@ $typeCards = [
             <?php require __DIR__ . '/_topbar.php'; ?>
 
             <main class="teacher-workflow-main mx-auto max-w-7xl px-4 py-6 md:px-6 xl:px-8 space-y-6">
+                <?php $teacherWelcomeTitle = $pageHeading; ?>
+                <?php $teacherWelcomeSummary = $pageLead . ' · ' . $courseTitle; ?>
+                <?php $teacherWelcomeActionUrl = $returnUrl; ?>
+                <?php $teacherWelcomeActionLabel = 'Retour'; ?>
+                <?php $teacherWelcomeActionIcon = 'arrow-left'; ?>
+                <?php require __DIR__ . '/_welcome_hero.php'; ?>
+
                 <?php if ($errors !== []): ?>
                     <section class="exam-create-alert exam-create-alert--danger" role="alert" aria-live="assertive">
                         <span class="exam-create-alert__icon app-icon" aria-hidden="true"><?php echo dashboard_icon_svg('alert-circle'); ?></span>

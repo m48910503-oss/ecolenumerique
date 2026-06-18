@@ -52,6 +52,11 @@ $favoritesSyncBadge = $schemaReady ? 'Synchronisation auto' : 'Configuration req
 $favoritesDecisionBadge = $favoritesListCount > 1
     ? 'Prêts à comparer'
     : ($favoritesListCount === 1 ? '1 choix à finaliser' : 'Ajouts en attente');
+$studentWelcomeSummary = $favoritesHeroSubtitle;
+$studentWelcomeTitle = 'Cours enregistrés';
+$studentWelcomeActionUrl = $catalogueUrl;
+$studentWelcomeActionLabel = 'Explorer le catalogue';
+$studentWelcomeActionIcon = 'search';
 ?>
 <!DOCTYPE html>
 <html lang="fr" class="light" data-default-theme="light">
@@ -93,29 +98,7 @@ $favoritesDecisionBadge = $favoritesListCount > 1
         <?php require __DIR__ . '/_topbar.php'; ?>
 
         <div class="student-dashboard-content p-4 pb-24 space-y-5 animate-fade-up sm:p-6 sm:pb-24 sm:space-y-6 lg:space-y-8">
-          <section class="student-dashboard-hero rounded-[1.5rem] bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 p-4 text-white shadow-glow sm:rounded-2xl sm:p-6">
-            <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div class="max-w-3xl">
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-blue-100/80">Sélection personnelle</p>
-                <h2 class="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Cours enregistrés</h2>
-                <p class="mt-2 text-sm text-blue-100 sm:text-base"><?php echo e($favoritesHeroSubtitle); ?></p>
-              </div>
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20">
-                  <i class="fas fa-heart text-[10px]"></i>
-                  <?php echo e((string) $favoritesListCount); ?> favori<?php echo $favoritesListCount > 1 ? 's' : ''; ?>
-                </span>
-                <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20">
-                  <i class="fas fa-sync-alt text-[10px]"></i>
-                  <?php echo e($favoritesSyncBadge); ?>
-                </span>
-                <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20">
-                  <i class="fas fa-filter text-[10px]"></i>
-                  <?php echo e($favoritesDecisionBadge); ?>
-                </span>
-              </div>
-            </div>
-          </section>
+          <?php require __DIR__ . '/_welcome_hero.php'; ?>
 
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <article class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border border-gray-100 dark:border-gray-700 hover-lift">
@@ -186,7 +169,7 @@ $favoritesDecisionBadge = $favoritesListCount > 1
             <?php if ($favoritesList === []): ?>
               <section class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-6 py-12 text-center shadow-sm dark:border-gray-700 dark:bg-gray-900/40">
                 <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">
-                  <i class="fas fa-heart text-2xl"></i>
+                  <?php echo dashboard_icon_svg('heart', 'class="h-7 w-7 shrink-0"'); ?>
                 </div>
                 <h4 class="mt-4 text-lg font-bold text-gray-900 dark:text-white">Liste vide</h4>
                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Ajoutez des cours depuis le catalogue.</p>

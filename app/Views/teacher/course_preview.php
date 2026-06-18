@@ -155,7 +155,7 @@ $showSupportFab = true;
     <title>Aperçu du cours - <?php echo e($courseTitle); ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time()))); ?>">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/course_preview_teacher.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/course_preview_teacher.css') ?: time()))); ?>">
@@ -171,7 +171,14 @@ $showSupportFab = true;
         <div class="min-w-0">
             <?php require __DIR__ . '/_topbar.php'; ?>
 
-            <main class="course-preview-reader relative mx-auto w-full max-w-[104rem] px-4 py-5 sm:px-6 lg:px-7">
+            <main class="course-preview-reader relative mx-auto w-full max-w-[104rem] space-y-5 px-4 py-5 sm:px-6 lg:px-7">
+                <?php $teacherWelcomeTitle = $courseTitle; ?>
+                <?php $teacherWelcomeSummary = "Visualisation proche de l'expérience apprenant, avec vos informations, modules, ressources, rendez-vous et examens."; ?>
+                <?php $teacherWelcomeActionUrl = $backUrl; ?>
+                <?php $teacherWelcomeActionLabel = 'Mes cours'; ?>
+                <?php $teacherWelcomeActionIcon = 'arrow-left'; ?>
+                <?php require __DIR__ . '/_welcome_hero.php'; ?>
+
                 <section class="course-preview-shell rounded-[1.75rem] border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 sm:p-5">
                     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div class="min-w-0">

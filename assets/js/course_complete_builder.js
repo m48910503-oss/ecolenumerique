@@ -112,6 +112,12 @@
     return "fa-video";
   }
 
+  function lessonTypeLabel(type) {
+    if (type === "document") return "Document";
+    if (type === "appointment") return "Rendez-vous";
+    return "Vidéo";
+  }
+
   function defaultModule() {
     return {
       title: "",
@@ -176,16 +182,14 @@
       var fileLabel = safeFileName !== "" ? safeFileName : "Importer le document";
       return '' +
         '<label class="course-builder-field course-builder-field--file">' +
-          '<span><i class="fa-solid fa-cloud-arrow-up"></i> Document / exercice à uploader *</span>' +
+          '<span><i class="fa-solid fa-cloud-arrow-up"></i> Document / exercice *</span>' +
           '<div class="course-builder-file-drop' + (hasExistingResource ? ' has-file' : '') + '" data-lesson-file-shell>' +
             '<input type="file" name="lesson_files[' + safeKey + ']" class="lesson-file-input" data-lesson-file-input accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar,.txt,.csv,image/*,application/pdf">' +
             '<span class="course-builder-file-icon"><i class="fa-solid fa-file-arrow-up"></i></span>' +
             '<span class="course-builder-file-copy">' +
               '<b class="lesson-file-name" data-file-name="' + safeFileName + '">' + fileLabel + '</b>' +
-              '<small>' + (hasExistingResource ? "Fichier déjà associé. Choisissez un fichier seulement pour le remplacer." : (safeFileName !== "" ? "Sélectionnez à nouveau ce fichier après rechargement." : "PDF, Word, PowerPoint, Excel, ZIP ou image")) + '</small>' +
             '</span>' +
           '</div>' +
-          '<span class="course-builder-file-help">Le fichier sera envoyé vers Google Drive, ou stocké localement si Drive n’est pas prêt.</span>' +
         '</label>' +
         '<input type="hidden" class="lesson-resource" value="' + (hasExistingResource ? safeResource : safeFileName) + '">';
     }
@@ -205,7 +209,6 @@
       '<label class="course-builder-field">' +
         '<span><i class="fa-brands fa-youtube"></i> Lien YouTube *</span>' +
         '<input type="url" inputmode="url" autocomplete="off" pattern="https?://((www|m)\\.)?youtube\\.com/.+|https?://youtu\\.be/.+" title="Collez uniquement un lien YouTube valide." placeholder="https://www.youtube.com/watch?v=... ou https://youtu.be/..." value="' + value + '" class="lesson-resource course-builder-input lesson-resource--youtube">' +
-        '<small class="course-builder-required-help">Seuls les liens YouTube sont acceptés pour les vidéos.</small>' +
       '</label>';
   }
 
@@ -248,7 +251,9 @@
   function lessonHtml(item) {
     var type = mapLessonTypeToUi(clean(item && item.type) || "video");
     var title = escapeHtml(item && item.title ? item.title : "");
+    var summaryTitle = escapeHtml(clean(item && item.title) || "Nouvelle leçon");
     var resource = item && item.resource ? item.resource : "";
+    var descriptionText = clean(item && item.description);
     var description = escapeHtml(item && item.description ? item.description : "");
     var duration = numberValue(item && item.duration_min, type === "appointment" ? 60 : (type === "video" ? 15 : 0));
     var fileKey = clean(item && item.file_key) || makeLessonFileKey();
@@ -256,13 +261,23 @@
 
     return '' +
       '<div class="lesson-item course-builder-lesson" data-lesson-type="' + type + '" data-file-key="' + escapeHtml(fileKey) + '">' +
-        '<div class="course-builder-lesson-index"><span class="lesson-number">1.</span></div>' +
+        '<div class="course-builder-lesson-head">' +
+          '<span class="lesson-number course-builder-lesson-number">1.</span>' +
+          '<div class="course-builder-lesson-summary">' +
+            '<strong class="lesson-summary-title">' + summaryTitle + '</strong>' +
+            '<span class="lesson-summary-subtitle">Leçon du module</span>' +
+          '</div>' +
+          '<div class="course-builder-lesson-head-meta">' +
+            '<span class="lesson-type-pill"><i class="fa-solid ' + lessonTypeIcon(type) + '"></i> ' + lessonTypeLabel(type) + '</span>' +
+            '<span class="lesson-duration-pill' + (type === "appointment" ? " hidden" : "") + '"><i class="fa-regular fa-clock"></i> ' + String(duration) + ' min</span>' +
+            '<button type="button" data-remove-lesson class="course-builder-icon-button course-builder-icon-button--danger" aria-label="Supprimer la leçon"><i class="fa-solid fa-xmark"></i></button>' +
+          '</div>' +
+        '</div>' +
         '<div class="course-builder-lesson-body">' +
           '<div class="course-builder-lesson-top">' +
             '<label class="course-builder-field course-builder-field--title">' +
-              '<span><i class="fa-solid fa-heading"></i> Titre de la leçon *</span>' +
+              '<span><i class="fa-solid fa-heading"></i> Titre *</span>' +
               '<input type="text" value="' + title + '" class="lesson-title course-builder-input course-builder-input--strong" placeholder="Ex: Bienvenue, Installation, Quiz de révision">' +
-              '<small class="course-builder-required-help">Nom visible dans le plan du cours.</small>' +
             '</label>' +
             '<label class="course-builder-field course-builder-field--type">' +
               '<span><i class="fa-solid ' + lessonTypeIcon(type) + '"></i> Type</span>' +
@@ -276,16 +291,47 @@
               '<span><i class="fa-regular fa-clock"></i> Durée</span>' +
               '<input type="number" min="0" value="' + String(duration) + '" class="lesson-duration course-builder-input" placeholder="15">' +
             '</label>' +
-            '<button type="button" data-remove-lesson class="course-builder-icon-button course-builder-icon-button--danger" aria-label="Supprimer la leçon"><i class="fa-solid fa-xmark"></i></button>' +
           '</div>' +
-          '<textarea rows="2" class="lesson-description course-builder-textarea" placeholder="Description, objectifs ou consignes de cette leçon">' + description + '</textarea>' +
           '<div class="lesson-dynamic course-builder-dynamic">' + lessonDynamicHtml(type, resource, item && item.mode, fileKey, fileName) + '</div>' +
+          '<details class="course-builder-lesson-notes' + (descriptionText !== "" ? " has-content" : "") + '">' +
+            '<summary><span><i class="fa-regular fa-note-sticky"></i> Description / consignes</span><small class="lesson-description-preview">' + escapeHtml(descriptionText || "Optionnelle") + '</small><i class="fa-solid fa-chevron-down"></i></summary>' +
+            '<textarea rows="2" class="lesson-description course-builder-textarea" placeholder="Objectifs, consignes ou contexte de cette leçon">' + description + '</textarea>' +
+          '</details>' +
         '</div>' +
       '</div>';
   }
 
+  function syncLessonSummary(lesson, fallbackIndex) {
+    if (!lesson) return;
+    var title = clean(q(".lesson-title", lesson) && q(".lesson-title", lesson).value);
+    var type = q(".lesson-type-select", lesson) ? q(".lesson-type-select", lesson).value : "video";
+    var duration = Math.max(0, numberValue(q(".lesson-duration", lesson) && q(".lesson-duration", lesson).value, type === "appointment" ? 60 : (type === "video" ? 15 : 0)));
+    var summaryTitle = q(".lesson-summary-title", lesson);
+    var summarySubtitle = q(".lesson-summary-subtitle", lesson);
+    var typePill = q(".lesson-type-pill", lesson);
+    var durationPill = q(".lesson-duration-pill", lesson);
+    var lessonNumber = q(".lesson-number", lesson);
+    var notes = q(".course-builder-lesson-notes", lesson);
+    var descriptionPreview = q(".lesson-description-preview", lesson);
+    var description = clean(q(".lesson-description", lesson) && q(".lesson-description", lesson).value);
+
+    if (summaryTitle) summaryTitle.textContent = title || "Nouvelle leçon";
+    if (summarySubtitle) summarySubtitle.textContent = "Leçon " + String((fallbackIndex || 0) + 1);
+    if (lessonNumber) lessonNumber.textContent = String((fallbackIndex || 0) + 1) + ".";
+    if (typePill) {
+      typePill.innerHTML = '<i class="fa-solid ' + lessonTypeIcon(type) + '"></i> ' + lessonTypeLabel(type);
+    }
+    if (durationPill) {
+      durationPill.classList.toggle("hidden", type === "appointment");
+      durationPill.innerHTML = '<i class="fa-regular fa-clock"></i> ' + String(duration) + ' min';
+    }
+    if (notes) notes.classList.toggle("has-content", description !== "");
+    if (descriptionPreview) descriptionPreview.textContent = description || "Optionnelle";
+  }
+
   function moduleHtml(module) {
     moduleSeq += 1;
+    var moduleDescription = clean(module && module.description);
     return '' +
       '<div class="module-item course-builder-module animate-fadeIn" data-module-id="' + moduleSeq + '">' +
         '<div class="course-builder-module-header" data-toggle-module>' +
@@ -296,7 +342,6 @@
               '<label class="course-builder-module-title-field">' +
                 '<span><i class="fa-solid fa-layer-group"></i> Titre du module *</span>' +
                 '<input type="text" value="' + escapeHtml(module.title || "") + '" class="module-title course-builder-module-title" placeholder="Ex: Introduction au cours">' +
-                '<small class="course-builder-module-title-help">Nom visible dans la progression de l’apprenant.</small>' +
               '</label>' +
               '<div class="course-builder-module-meta">' +
                 '<span class="module-status-badge course-builder-status course-builder-status--incomplete">Incomplet</span>' +
@@ -312,10 +357,27 @@
           '</div>' +
         '</div>' +
         '<div class="course-builder-module-content">' +
-          '<textarea rows="2" class="module-description course-builder-textarea course-builder-textarea--module" placeholder="Description du module">' + escapeHtml(module.description || "") + '</textarea>' +
+          '<details class="course-builder-module-notes' + (moduleDescription !== "" ? " has-content" : "") + '">' +
+            '<summary>' +
+              '<span><i class="fa-regular fa-note-sticky"></i> Description du module</span>' +
+              '<small class="module-description-preview">' + escapeHtml(moduleDescription || "Optionnelle") + '</small>' +
+              '<i class="fa-solid fa-chevron-down"></i>' +
+            '</summary>' +
+            '<textarea rows="2" class="module-description course-builder-textarea course-builder-textarea--module" placeholder="Résumé, objectifs ou consignes du module">' + escapeHtml(module.description || "") + '</textarea>' +
+          '</details>' +
           '<div class="module-lessons course-builder-lessons"></div>' +
         '</div>' +
       '</div>';
+  }
+
+  function syncModuleDescriptionPreview(module) {
+    if (!module) return;
+    var details = q(".course-builder-module-notes", module);
+    var preview = q(".module-description-preview", module);
+    var textarea = q(".module-description", module);
+    var value = clean(textarea && textarea.value);
+    if (preview) preview.textContent = value || "Optionnelle";
+    if (details) details.classList.toggle("has-content", value !== "");
   }
 
   function updateModuleSummary(module) {
@@ -325,7 +387,7 @@
     var totalMinutes = 0;
     var isComplete = clean(q(".module-title", module) && q(".module-title", module).value) !== "" && lessonCount > 0;
 
-    lessons.forEach(function (lesson) {
+    lessons.forEach(function (lesson, lessonIndex) {
       var type = q(".lesson-type-select", lesson) ? q(".lesson-type-select", lesson).value : "video";
       var title = clean(q(".lesson-title", lesson) && q(".lesson-title", lesson).value);
       var resource = clean(q(".lesson-resource", lesson) && q(".lesson-resource", lesson).value);
@@ -334,6 +396,7 @@
       var hasUploadedDocument = fileInput && fileInput.files && fileInput.files.length;
       var hasExistingDocument = uploadedResourceLooksValid(resource);
       totalMinutes += duration;
+      syncLessonSummary(lesson, lessonIndex);
 
       if (title === "") {
         isComplete = false;
@@ -351,6 +414,7 @@
     var status = q(".module-status-badge", module);
     if (lessonsCount) lessonsCount.textContent = String(lessonCount);
     if (durationTotal) durationTotal.textContent = String(totalMinutes);
+    syncModuleDescriptionPreview(module);
     module.classList.toggle("is-ready", isComplete);
     module.classList.toggle("is-incomplete", !isComplete);
     if (status) {
@@ -369,8 +433,7 @@
       var number = q(".module-number", module);
       if (number) number.textContent = String(moduleIndex + 1);
       qa(".lesson-item", module).forEach(function (lesson, lessonIndex) {
-        var lessonNumber = q(".lesson-number", lesson);
-        if (lessonNumber) lessonNumber.textContent = String(lessonIndex + 1) + ".";
+        syncLessonSummary(lesson, lessonIndex);
       });
       updateModuleSummary(module);
     });
@@ -1263,12 +1326,14 @@
         '<input type="text" name="' + name + '[]" placeholder="' + escapeHtml(placeholder) + '" class="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500">' +
         '<button type="button" data-remove-simple-row class="text-slate-400 hover:text-red-500 transition" aria-label="Supprimer"><i class="fa-solid fa-trash-can"></i></button>' +
       '</div>');
+    updatePedagogyCount(false);
     scheduleLocalDraftSave();
   }
 
   window.removeItem = function (button) {
     var row = button && button.closest(".flex.items-center.gap-2");
     if (row) row.remove();
+    updatePedagogyCount(false);
     scheduleLocalDraftSave();
   };
 
@@ -1608,7 +1673,23 @@
 
   window.publishCourse = function () {
     var form = q("[data-course-create-form]");
+    var submitButton = form ? q('button[type="submit"][name="submit_action"][value="submit"]', form) : null;
     serializeBuilders();
+    if (form && form.requestSubmit && submitButton) {
+      form.requestSubmit(submitButton);
+      return;
+    }
+    if (form && !submitButton) {
+      var fallbackAction = q('input[name="submit_action"][data-publish-fallback="1"]', form);
+      if (!fallbackAction) {
+        fallbackAction = document.createElement("input");
+        fallbackAction.type = "hidden";
+        fallbackAction.name = "submit_action";
+        fallbackAction.setAttribute("data-publish-fallback", "1");
+        form.appendChild(fallbackAction);
+      }
+      fallbackAction.value = "submit";
+    }
     if (form && form.requestSubmit) form.requestSubmit();
     else if (form) form.submit();
   };
@@ -1635,6 +1716,20 @@
     return qa("#" + containerId + " input").some(function (input) {
       return clean(input.value) !== "";
     });
+  }
+
+  function updatePedagogyCount(openWhenFilled) {
+    var count = ["objectives-container", "prerequisites-container", "equipment-container"].reduce(function (total, containerId) {
+      return total + simpleRowValues(containerId).length;
+    }, 0);
+    var label = q("[data-pedagogy-count]");
+    if (label) {
+      label.textContent = count + (count > 1 ? " éléments" : " élément");
+    }
+    if (openWhenFilled && count > 0) {
+      var details = label && label.closest ? label.closest("details") : null;
+      if (details) details.open = true;
+    }
   }
 
   function firstBlockingIssue() {
@@ -1691,6 +1786,7 @@
           '<button type="button" data-remove-simple-row class="text-slate-400 hover:text-red-500 transition" aria-label="Supprimer"><i class="fa-solid fa-trash-can"></i></button>' +
         '</div>');
     });
+    updatePedagogyCount(true);
   }
 
   function readLocalDraft(form) {
@@ -2000,6 +2096,7 @@
     serializeBuilders();
     syncEnterprisePricing();
     syncReferralToggleUi();
+    updatePedagogyCount(localDraft.restored);
     autosaveReady = true;
     showStep(localDraft.step || 1, false);
     if (localDraft.restored) {
@@ -2012,6 +2109,9 @@
       }
       if (event.target && (event.target.matches("#enterprise_pricing_mode") || event.target.matches("#enterprise_price_xof") || event.target.matches("#enterprise_discount_percent"))) {
         syncEnterprisePricing();
+      }
+      if (event.target && event.target.closest && event.target.closest("#objectives-container, #prerequisites-container, #equipment-container")) {
+        updatePedagogyCount(false);
       }
       if (event.target && (event.target.closest("#modules-container") || event.target.closest("#exams-container"))) {
         if (event.target.closest("#modules-container")) updateModuleSummaries();
@@ -2029,6 +2129,9 @@
       if (event.target && (event.target.matches("#enterprise_pricing_mode") || event.target.matches("#enterprise_price_xof") || event.target.matches("#enterprise_discount_percent"))) {
         syncEnterprisePricing();
       }
+      if (event.target && event.target.closest && event.target.closest("#objectives-container, #prerequisites-container, #equipment-container")) {
+        updatePedagogyCount(false);
+      }
       if (event.target && (event.target.closest("#modules-container") || event.target.closest("#exams-container"))) {
         if (event.target.closest("#modules-container")) updateModuleSummaries();
         serializeBuilders();
@@ -2039,7 +2142,14 @@
       serializeBuilders();
       syncEnterprisePricing();
       var submitter = event.submitter || document.activeElement;
-      var submitAction = submitter && submitter.name === "submit_action" ? submitter.value : "";
+      var fallbackSubmitAction = q('input[name="submit_action"][data-publish-fallback="1"]', form);
+      if (submitter && submitter.name === "submit_action" && fallbackSubmitAction) {
+        fallbackSubmitAction.remove();
+        fallbackSubmitAction = null;
+      }
+      var submitAction = submitter && submitter.name === "submit_action"
+        ? submitter.value
+        : clean(fallbackSubmitAction && fallbackSubmitAction.value);
       if (submitAction === "submit") {
         var issue = firstBlockingIssue();
         if (issue) {

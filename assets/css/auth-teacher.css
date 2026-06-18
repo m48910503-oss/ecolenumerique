@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
 @font-face {
     font-family: "Font Awesome 6 Free";
@@ -33,6 +33,16 @@
 }
 
 body[data-view^="auth/"] {
+    --app-font-title: "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --app-font-display: var(--app-font-title);
+    --app-font-section: var(--app-font-title);
+    --app-font-ui: var(--app-font-title);
+    --app-font-sans: var(--app-font-title);
+    --app-font-body: var(--app-font-title);
+    --app-font-serif: "Times New Roman", Times, Georgia, serif;
+    --app-font-accent: var(--app-font-serif);
+    --app-font-mono: "IBM Plex Mono", "Cascadia Code", Consolas, monospace;
+    --app-font-numeric: var(--app-font-mono);
     --teacher-page-bg: linear-gradient(180deg, #eef2f7 0%, #f8fafc 44%, #edf2f7 100%);
     --teacher-surface: rgba(255, 255, 255, 0.98);
     --teacher-surface-soft: rgba(248, 250, 252, 0.94);
@@ -58,7 +68,7 @@ body[data-view^="auth/"] {
     overflow-x: hidden;
     background: var(--teacher-page-bg) !important;
     color: var(--teacher-text) !important;
-    font-family: "Inter", "Segoe UI", system-ui, sans-serif !important;
+    font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif) !important;
 }
 
 html.dark body[data-view^="auth/"],

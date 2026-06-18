@@ -157,10 +157,10 @@ $isProfileComplete = $profileCompletionPct >= 100;
       </a>
     <?php endif; ?>
     <button id="theme-toggle-sidebar" data-web-theme-toggle data-theme-toggle type="button" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition sm:px-4 sm:py-3" aria-pressed="false">
-      <i class="fas fa-moon text-base w-5" data-theme-icon-dark aria-hidden="true"></i>
-      <i class="fas fa-sun hidden text-base w-5" data-theme-icon-light aria-hidden="true"></i>
+      <span class="inline-flex h-5 w-5 items-center justify-center" data-theme-icon-dark aria-hidden="true"><?php echo dashboard_icon_svg('theme-moon'); ?></span>
+      <span class="inline-flex h-5 w-5 items-center justify-center" data-theme-icon-light aria-hidden="true" hidden><?php echo dashboard_icon_svg('theme-sun'); ?></span>
       <span class="dark:hidden">Mode sombre</span>
-      <span class="hidden dark:inline">Mode clair</span>
+      <span class="hidden dark:inline" hidden>Mode clair</span>
     </button>
     <form method="post" action="<?php echo e($logoutUrl); ?>" class="mt-1">
       <input type="hidden" name="_csrf" value="<?php echo e($logoutCsrf); ?>">
@@ -303,7 +303,7 @@ $isProfileComplete = $profileCompletionPct >= 100;
         >
             <span data-theme-label aria-hidden="true"></span>
              <span class="dark:hidden">Mode sombre</span>
-            <span class="hidden dark:inline">Mode clair</span>
+            <span class="hidden dark:inline" hidden>Mode clair</span>
         </button>
 
         <form method="post" action="<?php echo e(site_url('logout')); ?>" class="mt-2">

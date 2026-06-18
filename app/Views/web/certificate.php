@@ -1,5 +1,6 @@
 <?php
 $cert = is_array($cert ?? null) ? $cert : [];
+$siteName = trim((string) ($siteName ?? 'École Numérique'));
 $fullName = trim((string) ($fullName ?? ''));
 $teacherName = trim((string) ($teacherName ?? 'Formateur'));
 $dgName = trim((string) ($dgName ?? 'Direction générale'));
@@ -12,21 +13,42 @@ $qrVerifyUrl = trim((string) ($qrVerifyUrl ?? ''));
 $exportFormat = strtolower(trim((string) ($exportFormat ?? 'html')));
 $isWordExport = !empty($isWordExport);
 $isPdfExport = !empty($isPdfExport);
-$certificateCode = trim((string) ($cert['code'] ?? ''));
-$scoreLabel = trim((string) ($cert['score'] ?? ''));
 
-if ($fullName === '') { 
+$certificateCode = trim((string) ($cert['code'] ?? ''));
+$courseTitle = trim((string) ($cert['course_title'] ?? 'Cours'));
+$examTitle = trim((string) ($cert['exam_title'] ?? 'Examen'));
+$scoreValue = $cert['score'] ?? null;
+$scoreLabel = '';
+if (is_numeric($scoreValue)) {
+    $scoreLabel = (string) (int) $scoreValue . '/100';
+} else {
+    $scoreLabel = trim((string) $scoreValue);
+}
+
+if ($siteName === '') {
+    $siteName = 'École Numérique';
+}
+if ($fullName === '') {
     $fullName = 'Étudiant';
 }
 if ($teacherName === '') {
     $teacherName = 'Formateur';
-} 
+}
 if ($dgName === '') {
     $dgName = 'Direction générale';
 }
 if ($issuedLabel === '') {
     $issuedLabel = 'n/c';
 }
+if ($courseTitle === '') {
+    $courseTitle = 'Cours';
+}
+if ($examTitle === '') {
+    $examTitle = 'Examen';
+}
+
+$publicHost = parse_url($verifyUrl, PHP_URL_HOST);
+$publicHost = is_string($publicHost) && $publicHost !== '' ? $publicHost : 'ecolenumerique.local';
 $htmlUrl = site_url('certificate?code=' . urlencode($certificateCode));
 $pdfUrl = site_url('certificate?code=' . urlencode($certificateCode) . '&format=pdf');
 $wordUrl = site_url('certificate?code=' . urlencode($certificateCode) . '&format=docx');
@@ -38,117 +60,140 @@ $wordUrl = site_url('certificate?code=' . urlencode($certificateCode) . '&format
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="app-global-assets" content="off">
     <title>Certificat - <?php echo e($fullName); ?></title>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/standalone-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/standalone-dashboard.css') ?: time()))); ?>">
     <?php if (!$isWordExport): ?>
         <script src="<?php echo e(site_url('assets/js/web_theme.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/web_theme.js') ?: time()))); ?>" defer></script>
     <?php endif; ?>
-    
-<link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
+    <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
 </head>
-<body class="certificate-page" data-view="web/certificate">
-    <div class="wrap">
+<body class="certificate-page" data-view="web/certificate" data-export="<?php echo e($exportFormat); ?>">
+    <main class="cert-page-shell">
         <?php if (!$isWordExport): ?>
-            <header class="toolbar no-print">
-                <div>
-                    <h1>Certificat professionnel</h1>
-                    <p>Version exportable Word/PDF. Code: <strong><?php echo e($certificateCode !== '' ? $certificateCode : 'n/c'); ?></strong></p>
+            <header class="cert-toolbar no-print" aria-label="Actions du certificat">
+                <div class="cert-toolbar__copy">
+                    <p class="cert-toolbar__eyebrow">Certificat professionnel</p>
+                    <h1>Certificat de réussite</h1>
+                    <p>Code <strong><?php echo e($certificateCode !== '' ? $certificateCode : 'n/c'); ?></strong></p>
                 </div>
-                <div class="toolbar-actions">
-                    <a href="<?php echo e($htmlUrl); ?>" class="btn">Vue web</a>
-                    <a href="<?php echo e($wordUrl); ?>" class="btn">Word</a>
-                    <a href="<?php echo e($pdfUrl); ?>" class="btn btn-primary">PDF</a>
-                    <button type="button" onclick="window.print()" class="btn">Imprimer</button>
-                </div>
+                <nav class="cert-toolbar__actions" aria-label="Exports">
+                    <a href="<?php echo e($htmlUrl); ?>" class="cert-action">Vue web</a>
+                    <a href="<?php echo e($wordUrl); ?>" class="cert-action">Word</a>
+                    <a href="<?php echo e($pdfUrl); ?>" class="cert-action cert-action--primary">PDF</a>
+                    <button type="button" onclick="window.print()" class="cert-action">Imprimer</button>
+                </nav>
             </header>
         <?php endif; ?>
 
-        <section class="sheet">
-            <article class="sheet-inner">
-                <div class="head">
-                    <div class="brand">
-                        <div class="logo">
+        <section class="cert-sheet" aria-label="Certificat">
+            <article class="cert-document">
+                <span class="cert-corner cert-corner--top-left" aria-hidden="true"></span>
+                <span class="cert-corner cert-corner--top-right" aria-hidden="true"></span>
+                <span class="cert-corner cert-corner--bottom-left" aria-hidden="true"></span>
+                <span class="cert-corner cert-corner--bottom-right" aria-hidden="true"></span>
+
+                <header class="cert-document__header">
+                    <div class="cert-brand">
+                        <span class="cert-brand__mark">
                             <?php if ($siteLogoUrl !== ''): ?>
-                                <img src="<?php echo e($siteLogoUrl); ?>" alt="Logo">
+                                <img src="<?php echo e($siteLogoUrl); ?>" alt="Logo <?php echo e($siteName); ?>">
                             <?php else: ?>
-                                <span style="font-weight:700;font-size:12px;">LOGO</span>
+                                <span><?php echo e(mb_substr($siteName, 0, 1)); ?></span>
                             <?php endif; ?>
-                        </div>
-                        <div>
-                            <p class="brand-kicker">École Numérique</p>
-                            <p class="brand-title">Attestation officielle de réussite</p>
-                        </div>
+                        </span>
+                        <span>
+                            <strong><?php echo e($siteName); ?></strong>
+                            <small>Attestation officielle de réussite</small>
+                        </span>
                     </div>
-                    <div class="meta">
-                        <p class="badge">Vérifié</p>
-                        <p style="margin:8px 0 0;">Émis le <?php echo e($issuedLabel); ?></p>
+                    <div class="cert-number">
+                        <span>Certificat N°</span>
+                        <strong><?php echo e($certificateCode !== '' ? $certificateCode : 'n/c'); ?></strong>
                     </div>
-                </div>
+                </header>
 
-                <div class="hero">
-                    <p class="hero-kicker">Certification académique</p>
-                    <h2 class="hero-title">Certificat de r&eacute;ussite</h2>
-                    <p class="hero-subtitle">Ce certificat est attribu&eacute; &agrave;</p>
-                    <p class="hero-name"><?php echo e($fullName); ?></p>
-                </div>
+                <section class="cert-hero">
+                    <p class="cert-overline">Certification académique</p>
+                    <h2>Certificat de réussite</h2>
+                    <p class="cert-intro">Ce document officiel est décerné à</p>
+                    <p class="cert-recipient"><?php echo e($fullName); ?></p>
+                    <p class="cert-course-intro">pour avoir validé avec succès la formation</p>
+                    <h3><?php echo e($courseTitle); ?></h3>
+                </section>
 
-                <div class="body-grid">
-                    <section class="panel">
-                        <h3>Détails de la validation</h3>
-                        <p><strong>Examen:</strong> <?php echo e((string) ($cert['exam_title'] ?? 'Examen')); ?></p>
-                        <p><strong>Cours:</strong> <?php echo e((string) ($cert['course_title'] ?? 'Cours')); ?></p>
-                        <p><strong>Code certificat:</strong> <?php echo e($certificateCode !== '' ? $certificateCode : 'n/c'); ?></p>
-                        <?php if ($scoreLabel !== ''): ?>
-                            <p><strong>Score:</strong> <?php echo e($scoreLabel); ?></p>
+                <section class="cert-meta-grid" aria-label="Détails de validation">
+                    <div class="cert-meta-card">
+                        <span>Examen</span>
+                        <strong><?php echo e($examTitle); ?></strong>
+                    </div>
+                    <div class="cert-meta-card">
+                        <span>Date d’émission</span>
+                        <strong><?php echo e($issuedLabel); ?></strong>
+                    </div>
+                    <?php if ($scoreLabel !== ''): ?>
+                        <div class="cert-meta-card">
+                            <span>Score</span>
+                            <strong><?php echo e($scoreLabel); ?></strong>
+                        </div>
+                    <?php endif; ?>
+                </section>
+
+                <section class="cert-verification">
+                    <div class="cert-verification__text">
+                        <p class="cert-section-label">Vérification</p>
+                        <p>Authenticité contrôlable uniquement via le lien officiel ci-dessous.</p>
+                        <strong><?php echo e($verifyUrl); ?></strong>
+                    </div>
+                    <div class="cert-qr" aria-label="Vérification locale">
+                        <?php if ($qrVerifyUrl !== ''): ?>
+                            <img src="<?php echo e($qrVerifyUrl); ?>" alt="QR de vérification">
+                        <?php else: ?>
+                            <span>Vérification locale uniquement</span>
                         <?php endif; ?>
-                    </section>
+                    </div>
+                </section>
 
-                    <section class="panel panel-verify">
-                        <div>
-                            <h3>Vérification</h3>
-                            <p>Utilisez uniquement le lien local ci-dessous pour contrôler l'authenticité.</p>
-                            <p style="font-size:12px;margin-top:10px;word-break:break-all;"><strong><?php echo e($verifyUrl); ?></strong></p>
-                        </div>
-                        <div class="qr">
-                            <?php if ($qrVerifyUrl !== ''): ?>
-                                <img src="<?php echo e($qrVerifyUrl); ?>" alt="QR de vérification">
-                            <?php else: ?>
-                                <span style="font-size:11px;color:#6b7f9d;">Vérification locale uniquement</span>
-                            <?php endif; ?>
-                        </div>
-                    </section>
-                </div>
-
-                <div class="signatures">
-                    <section class="signature-block">
-                        <div class="signature-image">
+                <section class="cert-signatures" aria-label="Signatures">
+                    <div class="cert-signature">
+                        <div class="cert-signature__media">
                             <?php if ($teacherSignatureUrl !== ''): ?>
-                                <img src="<?php echo e($teacherSignatureUrl); ?>" alt="Signature formateur">
+                                <img src="<?php echo e($teacherSignatureUrl); ?>" alt="Signature <?php echo e($teacherName); ?>">
+                            <?php else: ?>
+                                <span><?php echo e($teacherName); ?></span>
                             <?php endif; ?>
                         </div>
-                        <div class="signature-line"></div>
-                        <p class="signature-role">Signature enseignant</p>
-                        <p class="signature-name"><?php echo e($teacherName); ?></p>
-                    </section>
+                        <span class="cert-signature__line"></span>
+                        <p>Signature enseignant</p>
+                        <strong><?php echo e($teacherName); ?></strong>
+                    </div>
 
-                    <section class="signature-block">
-                        <div class="signature-image">
+                    <div class="cert-seal" aria-label="Certificat vérifié">
+                        <span>Certifié</span>
+                        <strong><?php echo e($siteName); ?></strong>
+                        <small><?php echo e($publicHost); ?></small>
+                    </div>
+
+                    <div class="cert-signature">
+                        <div class="cert-signature__media">
                             <?php if ($dgSignatureUrl !== ''): ?>
-                                <img src="<?php echo e($dgSignatureUrl); ?>" alt="Signature direction">
+                                <img src="<?php echo e($dgSignatureUrl); ?>" alt="Signature <?php echo e($dgName); ?>">
+                            <?php else: ?>
+                                <span><?php echo e($dgName); ?></span>
                             <?php endif; ?>
                         </div>
-                        <div class="signature-line"></div>
-                        <p class="signature-role">Direction générale</p>
-                        <p class="signature-name"><?php echo e($dgName); ?></p>
-                    </section>
-                </div>
+                        <span class="cert-signature__line"></span>
+                        <p>Direction générale</p>
+                        <strong><?php echo e($dgName); ?></strong>
+                    </div>
+                </section>
 
-                <p class="foot">
-                    Toute vérification doit s'effectuer via ce lien: <?php echo e($verifyUrl); ?>
-                </p>
+                <footer class="cert-footer">
+                    <span>Document délivré par <?php echo e($siteName); ?></span>
+                    <span><?php echo e($verifyUrl); ?></span>
+                </footer>
             </article>
         </section>
-    </div>
+    </main>
 
     <?php if ($isPdfExport && !$isWordExport): ?>
         <script>

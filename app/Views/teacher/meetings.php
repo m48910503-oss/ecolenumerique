@@ -192,7 +192,7 @@ $metricCards = [
   <title>Mes rendez-vous · Enseignant · École Numérique</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time()))); ?>">
   <script src="<?php echo e(site_url('assets/js/sidebar_toggle.js')); ?>" defer></script>
@@ -232,41 +232,12 @@ $teacherTopContextLabel = $statusLabel;
         </div>
       <?php endif; ?>
 
-      <section class="bg-gradient-to-r from-primary-600 to-accent-600 rounded-2xl p-5 text-white shadow-glow sm:p-6">
-        <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-          <div class="min-w-0">
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary-100">Rendez-vous étudiants</p>
-            <h1 class="mt-2 text-2xl font-bold sm:text-3xl">Gestion des demandes</h1>
-            <p class="mt-2 max-w-3xl text-sm font-medium text-white/85">Gérez les demandes des étudiants et vos créneaux disponibles.</p>
-            <div class="mt-4 flex flex-wrap gap-2">
-              <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20">
-                <i class="fas fa-clock" aria-hidden="true"></i>
-                <?php echo e($formatCount((int) $groupStats['pending'])); ?> à traiter
-              </span>
-              <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20">
-                <i class="fas fa-filter" aria-hidden="true"></i>
-                <?php echo e($statusLabel); ?>
-              </span>
-              <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20">
-                <i class="fas fa-book-open" aria-hidden="true"></i>
-                <?php echo e($courseLabel); ?>
-              </span>
-              <?php if ($q !== ''): ?>
-                <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20">
-                  <i class="fas fa-search" aria-hidden="true"></i>
-                  <?php echo e($q); ?>
-                </span>
-              <?php endif; ?>
-            </div>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <a href="<?php echo e($baseUrl); ?>" class="inline-flex w-fit items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-primary-50">
-              <i class="fas fa-undo-alt" aria-hidden="true"></i>
-              Réinitialiser
-            </a>
-          </div>
-        </div>
-      </section>
+      <?php $teacherWelcomeTitle = 'Gestion des demandes'; ?>
+      <?php $teacherWelcomeSummary = $formatCount((int) $groupStats['pending']) . ' à traiter · ' . $statusLabel . ' · ' . $courseLabel . ($q !== '' ? ' · Recherche : ' . $q : ''); ?>
+      <?php $teacherWelcomeActionUrl = $baseUrl; ?>
+      <?php $teacherWelcomeActionLabel = 'Réinitialiser'; ?>
+      <?php $teacherWelcomeActionIcon = 'repeat'; ?>
+      <?php require __DIR__ . '/_welcome_hero.php'; ?>
 
       <section id="teacher-meetings-stats" class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <?php foreach ($metricCards as $card): ?>

@@ -1,3 +1,19 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+@import url("./icon-colors.css");
+
+:root {
+  --app-font-title: "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --app-font-display: var(--app-font-title);
+  --app-font-section: var(--app-font-title);
+  --app-font-ui: var(--app-font-title);
+  --app-font-sans: var(--app-font-title);
+  --app-font-body: var(--app-font-title);
+  --app-font-serif: "Times New Roman", Times, Georgia, serif;
+  --app-font-accent: var(--app-font-serif);
+  --app-font-mono: "IBM Plex Mono", "Cascadia Code", Consolas, monospace;
+  --app-font-numeric: var(--app-font-mono);
+}
+
 html[data-view] {
   font-size: 14.5px;
   overflow-x: hidden;
@@ -6,6 +22,106 @@ html[data-view] {
 
 body[data-view] {
   overflow-x: hidden;
+}
+
+body[data-view^="web/"],
+body[data-view^="auth/"],
+body.app-auth-page {
+  font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif) !important;
+}
+
+body[data-view^="web/"] :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  a,
+  button,
+  label,
+  input,
+  select,
+  textarea,
+  summary,
+  small,
+  strong,
+  b,
+  span,
+  li,
+  th,
+  td,
+  dd,
+  dt,
+  figcaption
+),
+body[data-view^="auth/"] :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  a,
+  button,
+  label,
+  input,
+  select,
+  textarea,
+  summary,
+  small,
+  strong,
+  b,
+  span,
+  li,
+  th,
+  td,
+  dd,
+  dt,
+  figcaption
+),
+body.app-auth-page :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  a,
+  button,
+  label,
+  input,
+  select,
+  textarea,
+  summary,
+  small,
+  strong,
+  b,
+  span,
+  li,
+  th,
+  td,
+  dd,
+  dt,
+  figcaption
+) {
+  font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif) !important;
+}
+
+body[data-view^="web/"] :is(.font-display, h1, h2, h3, h4, h5, h6),
+body[data-view^="auth/"] :is(.font-display, h1, h2, h3, h4, h5, h6),
+body.app-auth-page :is(.font-display, h1, h2, h3, h4, h5, h6) {
+  font-family: var(--app-font-title, "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif) !important;
+}
+
+body[data-view^="web/"] :is(.font-mono, .font-numeric, code, kbd, samp, pre, [class*="tabular-nums"]),
+body[data-view^="auth/"] :is(.font-mono, .font-numeric, code, kbd, samp, pre, [class*="tabular-nums"]),
+body.app-auth-page :is(.font-mono, .font-numeric, code, kbd, samp, pre, [class*="tabular-nums"]) {
+  font-family: var(--app-font-numeric, "IBM Plex Mono", "Cascadia Code", Consolas, monospace) !important;
+  font-variant-numeric: tabular-nums;
 }
 
 .public-mobile-toggle.is-open {
@@ -443,14 +559,14 @@ html[data-theme="dark"] .public-mobile-panel__badge--danger {
     padding-right: 0.75rem;
   }
 
-  body[data-view="web/certificate"] .toolbar {
+  body[data-view="web/certificate"] .cert-toolbar {
     padding-top: 0.85rem;
     padding-bottom: 0.85rem;
     padding-left: 0.95rem;
     padding-right: 0.95rem;
   }
 
-  body[data-view="web/certificate"] .toolbar-actions {
+  body[data-view="web/certificate"] .cert-toolbar__actions {
     gap: 0.5rem;
     flex-wrap: wrap;
   }
@@ -493,5 +609,510 @@ html[data-theme="dark"] .public-mobile-panel__badge--danger {
   .public-mobile-panel__action {
     min-height: 3.2rem;
     padding: 0.85rem 0.95rem;
+  }
+}
+
+/* Public, web and authentication pages share the same lighter typography rhythm. */
+html[data-view^="web/"],
+html[data-view^="auth/"] {
+  font-size: 14px !important;
+}
+
+body[data-view^="web/"],
+body[data-view^="auth/"],
+body.app-auth-page {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+body[data-view^="web/"] :is(.font-semibold, [class*="font-semibold"], strong, b),
+body[data-view^="auth/"] :is(.font-semibold, [class*="font-semibold"], strong, b),
+body.app-auth-page :is(.font-semibold, [class*="font-semibold"], strong, b) {
+  font-weight: 560 !important;
+}
+
+body[data-view^="web/"] :is(.font-bold, [class*="font-bold"]),
+body[data-view^="auth/"] :is(.font-bold, [class*="font-bold"]),
+body.app-auth-page :is(.font-bold, [class*="font-bold"]) {
+  font-weight: 600 !important;
+}
+
+body[data-view^="web/"] :is(.font-extrabold, .font-black, [class*="font-extrabold"], [class*="font-black"]),
+body[data-view^="auth/"] :is(.font-extrabold, .font-black, [class*="font-extrabold"], [class*="font-black"]),
+body.app-auth-page :is(.font-extrabold, .font-black, [class*="font-extrabold"], [class*="font-black"]) {
+  font-weight: 650 !important;
+}
+
+body[data-view^="web/"] :is(h1, .text-7xl, .text-6xl, .text-5xl, .mk-hero__title, .mk-catalog-hero__title) {
+  font-size: clamp(1.65rem, 3.8vw, 2.75rem) !important;
+  font-weight: 650 !important;
+  line-height: 1.08 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="web/"] :is(h2, .text-4xl, .mk-section__title, .mk-hero-panel__title) {
+  font-size: clamp(1.2rem, 2.4vw, 1.8rem) !important;
+  font-weight: 650 !important;
+  line-height: 1.16 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="web/"] :is(h3, .text-3xl) {
+  font-size: clamp(1.05rem, 1.8vw, 1.35rem) !important;
+  font-weight: 600 !important;
+  line-height: 1.22 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="web/"] :is(h4, .text-2xl, .mk-course-card__title, .mk-feature-card h3) {
+  font-size: 1.08rem !important;
+  font-weight: 600 !important;
+  line-height: 1.28 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="web/"] .text-xl {
+  font-size: 1rem !important;
+  line-height: 1.32 !important;
+}
+
+body[data-view^="web/"] .text-lg {
+  font-size: 0.92rem !important;
+  line-height: 1.42 !important;
+}
+
+body[data-view^="web/"] :is(
+  .mk-announcement__title,
+  .mk-announcement__link,
+  .mk-brand__title,
+  .mk-header__link,
+  .mk-header__account-link,
+  .mk-header__account-label,
+  .mk-hero-panel__label,
+  .mk-toolbar__eyebrow,
+  .mk-filter-panel__eyebrow,
+  .mk-hero-panel__meta,
+  .mk-feature-card__index,
+  .mk-feature-card h3,
+  .mk-proof-card h3,
+  .mk-testimonial-card__author,
+  .mk-story-list__meta,
+  .mk-course-card__fallback-kicker,
+  .mk-course-card__signal,
+  .mk-course-card__title,
+  .mk-course-card__meta,
+  .mk-course-card__price-label,
+  .mk-course-card__cta
+) {
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="web/"] :is(.mk-hero__description, .mk-catalog-hero__description, .mk-section__description) {
+  font-size: 0.94rem !important;
+  line-height: 1.55 !important;
+  font-weight: 400 !important;
+}
+
+body[data-view^="web/"] :is(.mk-proof-strip__item strong, .mk-proof-card strong, .mk-course-card__price, .mk-course-card__fallback strong) {
+  font-size: clamp(1.08rem, 1.65vw, 1.45rem) !important;
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="web/"] .mk-proof-strip__item span {
+  font-size: 0.78rem !important;
+  font-weight: 560 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="web/"] :is(p, li, label, a, button, input, select, textarea, summary, td, th)[class~="text-sm"],
+body[data-view^="auth/"] :is(p, li, label, a, button, input, select, textarea, summary, td, th)[class~="text-sm"],
+body.app-auth-page :is(p, li, label, a, button, input, select, textarea, summary, td, th)[class~="text-sm"] {
+  font-size: 0.84rem !important;
+  line-height: 1.45 !important;
+}
+
+body[data-view^="web/"] :is(p, span, li, label, a, button, th)[class*="uppercase"],
+body[data-view^="auth/"] :is(p, span, li, label, a, button, th)[class*="uppercase"],
+body.app-auth-page :is(p, span, li, label, a, button, th)[class*="uppercase"],
+body.app-auth-page :is(.auth-suite__eyebrow, .auth-form-v2__section-kicker, .auth-form-v2__divider) {
+  font-size: 0.68rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.1em !important;
+  line-height: 1.25 !important;
+}
+
+body[data-view^="web/"] table :is(th, td, strong, b, .font-medium, .font-semibold, .font-bold),
+body[data-view^="auth/"] table :is(th, td, strong, b, .font-medium, .font-semibold, .font-bold),
+body.app-auth-page table :is(th, td, strong, b, .font-medium, .font-semibold, .font-bold) {
+  font-weight: 430 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="web/"] table th,
+body[data-view^="auth/"] table th,
+body.app-auth-page table th {
+  font-size: 0.78rem !important;
+  font-weight: 520 !important;
+  text-transform: none !important;
+}
+
+body[data-view^="web/"] table td,
+body[data-view^="auth/"] table td,
+body.app-auth-page table td {
+  font-size: 0.84rem !important;
+  line-height: 1.45 !important;
+}
+
+body[data-view^="web/"] :is(.rounded-full, .badge, [class*="badge"], [class*="pill"]),
+body[data-view^="auth/"] :is(.rounded-full, .badge, [class*="badge"], [class*="pill"]),
+body.app-auth-page :is(.rounded-full, .badge, [class*="badge"], [class*="pill"]) {
+  font-weight: 560 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="web/"] :is(.btn, button, a[class*="btn"], .mk-btn, .public-mobile-panel__link),
+body[data-view^="auth/"] :is(.btn, button, a[class*="btn"]),
+body.app-auth-page :is(.btn, button, a[class*="btn"], .auth-form-v2__submit, .auth-form-v2__secondary-action, .auth-form-v2__ghost-button) {
+  font-weight: 580 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="auth/"] :is(h1, .text-4xl, .text-3xl),
+body.app-auth-page :is(h1, .text-4xl, .text-3xl, .auth-suite__panel-title, .auth-suite__aside-title) {
+  font-size: clamp(1.22rem, 1.8vw, 1.6rem) !important;
+  font-weight: 650 !important;
+  line-height: 1.14 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="auth/"] :is(h2, .text-2xl),
+body.app-auth-page :is(h2, .text-2xl, .auth-form-v2__section-title) {
+  font-size: 1.08rem !important;
+  font-weight: 600 !important;
+  line-height: 1.24 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="auth/"] :is(h3, .text-xl, .text-lg),
+body.app-auth-page :is(h3, .text-xl, .text-lg, .auth-suite__highlight-title, .auth-inline-banner__title, .auth-message__title) {
+  font-size: 0.96rem !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="auth/"] :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]),
+body.app-auth-page :is(input, select, textarea, .auth-form-v2__control):not([type="checkbox"]):not([type="radio"]) {
+  font-size: 0.9rem !important;
+  line-height: 1.45 !important;
+}
+
+body.app-auth-page :is(
+  .auth-suite__panel-subtitle,
+  .auth-suite__aside-text,
+  .auth-suite__highlight-text,
+  .auth-form-v2__hint,
+  .auth-form-v2__meta-note,
+  .auth-form-v2__footer-note,
+  .auth-empty-state-v2__text,
+  .auth-inline-banner__text,
+  .auth-sso-card__text,
+  .auth-form-v2__section-text,
+  .auth-stepper-v2__content small,
+  .auth-choice-v2__text,
+  .auth-strength-v2__status
+) {
+  font-size: 0.88rem !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+}
+
+body[data-view^="auth/"] :is(
+  .auth-step-pill,
+  .auth-choice-card__title,
+  .auth-notice__eyebrow,
+  .auth-notice__title,
+  .auth-form-v2__text-link,
+  .auth-form-v2__footer-note a,
+  .auth-form-v2__hint a,
+  .auth-form-v2__checkbox a,
+  .auth-form-v2__toggle,
+  .auth-choice-v2__title,
+  .auth-form-v2__accordion-trigger,
+  .auth-form-v2__accordion-note,
+  .auth-strength-v2__label,
+  .auth-rules-v2__badge,
+  .auth-stepper-v2__index,
+  .auth-stepper-v2__content strong
+),
+body.app-auth-page :is(
+  .auth-step-pill,
+  .auth-choice-card__title,
+  .auth-notice__eyebrow,
+  .auth-notice__title,
+  .auth-form-v2__text-link,
+  .auth-form-v2__footer-note a,
+  .auth-form-v2__hint a,
+  .auth-form-v2__checkbox a,
+  .auth-form-v2__toggle,
+  .auth-choice-v2__title,
+  .auth-form-v2__accordion-trigger,
+  .auth-form-v2__accordion-note,
+  .auth-strength-v2__label,
+  .auth-rules-v2__badge,
+  .auth-stepper-v2__index,
+  .auth-stepper-v2__content strong,
+  .auth-login-dashboard__logo,
+  .auth-login-dashboard__eyebrow,
+  .auth-login-dashboard__section-label,
+  .auth-login-dashboard__title,
+  .auth-login-dashboard__status,
+  .auth-login-dashboard__summary-title,
+  .auth-login-dashboard__kpi-label,
+  .auth-login-dashboard__worklist-head span,
+  .auth-login-dashboard__task strong
+) {
+  font-weight: 560 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-auth-page :is(.auth-login-dashboard__summary-title, .auth-suite__stat strong, .auth-login-dashboard__kpi strong) {
+  font-size: clamp(1.05rem, 1.65vw, 1.35rem) !important;
+  font-weight: 650 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="auth/"] :is(.auth-notice__message, .auth-notice__list),
+body.app-auth-page :is(.auth-notice__message, .auth-notice__list, .auth-message__text, .auth-message__list) {
+  font-size: 0.86rem !important;
+  line-height: 1.45 !important;
+  font-weight: 400 !important;
+}
+
+@media (max-width: 640px) {
+  body[data-view^="web/"] :is(h1, .text-7xl, .text-6xl, .text-5xl, .mk-hero__title, .mk-catalog-hero__title) {
+    font-size: clamp(1.42rem, 7vw, 2rem) !important;
+  }
+
+  body[data-view^="web/"] :is(h2, .text-4xl, .mk-section__title, .mk-hero-panel__title) {
+    font-size: clamp(1.12rem, 5.2vw, 1.45rem) !important;
+  }
+
+  body[data-view^="web/"] :is(h3, .text-3xl) {
+    font-size: clamp(1rem, 4.2vw, 1.18rem) !important;
+  }
+
+  body[data-view^="auth/"] :is(h1, .text-4xl, .text-3xl),
+  body.app-auth-page :is(h1, .text-4xl, .text-3xl, .auth-suite__panel-title, .auth-suite__aside-title) {
+    font-size: clamp(1.15rem, 6vw, 1.45rem) !important;
+  }
+}
+
+/* Teacher pages use the same typography rhythm as student dashboards. */
+html[data-view^="teacher/"] {
+  font-size: 14px !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] {
+  font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(
+  .teacher-dashboard-topbar,
+  .teacher-dashboard-sidebar,
+  #teacher-dashboard-sidebar,
+  .teacher-dashboard-main,
+  .teacher-courses-main,
+  .app-shell-toolbar,
+  .app-shell-sidebar
+) {
+  font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(.font-semibold, .font-bold, .font-extrabold, .font-black, strong, b) {
+  font-weight: 560 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(.btn, button, a[class*="btn"], .dash-btn, .teacher-courses-btn) {
+  font-weight: 580 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(.rounded-full, .badge, [class*="badge"], [class*="pill"]) {
+  font-weight: 560 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] table :is(th, td, strong, b, .font-medium, .font-semibold, .font-bold) {
+  font-weight: 430 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] table th {
+  font-size: 0.78rem !important;
+  text-transform: none !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] table td {
+  font-size: 0.84rem !important;
+  line-height: 1.45 !important;
+}
+
+@media (max-width: 640px) {
+  body.app-role-teacher[data-view^="teacher/"] h1,
+  body.app-role-teacher[data-view^="teacher/"] .text-4xl {
+    font-size: clamp(1.08rem, 1.4vw, 1.45rem) !important;
+    line-height: 1.12 !important;
+  }
+
+  body.app-role-teacher[data-view^="teacher/"] h2,
+  body.app-role-teacher[data-view^="teacher/"] .text-3xl {
+    font-size: clamp(0.98rem, 1.2vw, 1.2rem) !important;
+    line-height: 1.18 !important;
+  }
+
+  body.app-role-teacher[data-view^="teacher/"] h3,
+  body.app-role-teacher[data-view^="teacher/"] .text-2xl {
+    font-size: 0.98rem !important;
+    line-height: 1.22 !important;
+  }
+
+  body.app-role-teacher[data-view^="teacher/"] .text-xl {
+    font-size: 0.94rem !important;
+    line-height: 1.22 !important;
+  }
+
+  body.app-role-teacher[data-view^="teacher/"] .text-lg {
+    font-size: 0.9rem !important;
+    line-height: 1.24 !important;
+  }
+
+  body.app-role-teacher[data-view^="teacher/"] :is(input, select, textarea, button) {
+    font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+    font-size: 0.84rem !important;
+  }
+}
+
+/* Final teacher/student typography parity overrides. */
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-title {
+  font-family: var(--app-font-title, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+  max-width: min(48vw, 36rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.05rem !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(.app-shell-toolbar__eyebrow, .teacher-dashboard-topbar p[class*="uppercase"]) {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.1em !important;
+  line-height: 1.2 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-welcome :is(h1, h2),
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-hero :is(h1, h2) {
+  font-family: var(--app-font-title, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+  font-size: 1.125rem !important;
+  font-weight: 650 !important;
+  line-height: 1.12 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-welcome,
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-hero {
+  min-height: 0 !important;
+  padding: 1.15rem 1.25rem !important;
+  border-radius: 1.15rem !important;
+  background: linear-gradient(100deg, #2563eb 0%, #1d9bd8 56%, #0fb5c8 100%) !important;
+  box-shadow: 0 20px 42px -34px rgba(37, 99, 235, 0.72) !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-welcome p:not([class*="uppercase"]),
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-hero p:not([class*="uppercase"]) {
+  font-family: var(--app-font-accent, "Times New Roman", Times, serif) !important;
+  font-size: 0.9rem !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill__label {
+  font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+  font-size: 0.84rem !important;
+  font-weight: 400 !important;
+  line-height: 1.45 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill__value {
+  font-family: var(--app-font-title, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+  font-size: 1.45rem !important;
+  font-weight: 650 !important;
+  line-height: 1.1 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-strip {
+  gap: 1rem !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill {
+  min-height: 5.6rem !important;
+  padding: 0.92rem 1rem !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill :is(p, span) {
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill__icon {
+  width: 2.35rem !important;
+  height: 2.35rem !important;
+  min-width: 2.35rem !important;
+  border-radius: 0.85rem !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill__icon .app-icon,
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill__icon .app-icon > svg {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-filter-tab {
+  font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+  font-size: 0.84rem !important;
+  font-weight: 560 !important;
+  letter-spacing: 0 !important;
+}
+
+@media (min-width: 640px) {
+  body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-title {
+    max-width: min(58vw, 42rem);
+    font-size: 1.125rem !important;
+  }
+
+  body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-welcome :is(h1, h2),
+  body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-hero :is(h1, h2) {
+    font-size: 1.25rem !important;
+  }
+}
+
+@media (max-width: 380px) {
+  body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-title {
+    max-width: 38vw;
+    font-size: 1rem !important;
   }
 }

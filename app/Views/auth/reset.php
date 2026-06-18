@@ -29,10 +29,10 @@ $resetJsUrl = $assetUrl('assets/js/auth_reset.js');
     <link rel="stylesheet" href="<?php echo e($authTeacherCssUrl); ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: var(--app-font-body, 'Plus Jakarta Sans', 'Inter', 'Segoe UI', system-ui, sans-serif);
             transition: background-color 0.3s ease, color 0.2s ease;
         }
         input:focus { outline: none; ring: none; }

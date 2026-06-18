@@ -392,6 +392,13 @@ $upcomingNote = $nextMeetingLabel !== ''
 $confirmedNote = $confirmedCount > 0 ? 'Sessions validées' : 'Aucune session confirmée';
 $pastNote = $pastCount > 0 ? 'Historique disponible' : 'Aucun historique pour le moment';
 $showUpcomingEmptyState = $confirmedCount > 0 && $upcomingCount === 0;
+$studentWelcomeSummary = $upcomingCount > 0
+    ? $upcomingNote
+    : 'Consultez vos rendez-vous ou planifiez une nouvelle session.';
+$studentWelcomeTitle = 'Mes rendez-vous';
+$studentWelcomeActionUrl = $upcomingCount > 0 ? $myCoursesUrl : $catalogueUrl;
+$studentWelcomeActionLabel = $upcomingCount > 0 ? 'Voir mes cours' : 'Explorer le catalogue';
+$studentWelcomeActionIcon = $upcomingCount > 0 ? 'book-open' : 'search';
 ?>
 <!DOCTYPE html>
 <html lang="fr" class="light" data-default-theme="light">
@@ -435,33 +442,7 @@ $showUpcomingEmptyState = $confirmedCount > 0 && $upcomingCount === 0;
         <?php require __DIR__ . '/_topbar.php'; ?>
 
         <div class="student-dashboard-content p-4 pb-24 space-y-5 animate-fade-up sm:p-6 sm:pb-24 sm:space-y-6 lg:space-y-8">
-          <?php if ($showUpcomingEmptyState): ?>
-            <section class="student-dashboard-hero rounded-[1.5rem] bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 p-4 text-white shadow-glow sm:rounded-2xl sm:p-6">
-              <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div class="min-w-0">
-                  <p class="text-xs font-semibold uppercase tracking-[0.22em] text-blue-100/80">Planning étudiant</p>
-                  <h2 class="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Aucune session à venir</h2>
-                  <p class="mt-2 text-sm text-blue-100 sm:text-base">Consultez vos rendez-vous ou planifiez une nouvelle session.</p>
-                </div>
-                <div class="flex flex-wrap items-center gap-3">
-                  <a
-                    href="<?php echo e($catalogueUrl); ?>"
-                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-white/70"
-                  >
-                    <i class="fas fa-compass text-xs"></i>
-                    Explorer le catalogue
-                  </a>
-                  <a
-                    href="<?php echo e($myCoursesUrl); ?>"
-                    class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/18 focus:outline-none focus:ring-2 focus:ring-white/40"
-                  >
-                    <i class="fas fa-book-open text-xs"></i>
-                    Voir mes cours
-                  </a>
-                </div>
-              </div>
-            </section>
-          <?php endif; ?>
+          <?php require __DIR__ . '/_welcome_hero.php'; ?>
 
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <article class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border border-gray-100 dark:border-gray-700 hover-lift">
@@ -553,7 +534,7 @@ $showUpcomingEmptyState = $confirmedCount > 0 && $upcomingCount === 0;
           <?php if ($meetingCards === []): ?>
             <div class="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-16 text-center shadow-card dark:border-gray-700 dark:bg-gray-800">
               <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">
-                <i class="fas fa-calendar-times text-2xl"></i>
+                <?php echo dashboard_icon_svg('calendar', 'class="h-7 w-7 shrink-0"'); ?>
               </div>
               <h2 class="mt-4 text-lg font-bold text-gray-900 dark:text-white">Aucun rendez-vous confirmé</h2>
               <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Les sessions validées apparaîtront ici.</p>
@@ -707,7 +688,7 @@ $showUpcomingEmptyState = $confirmedCount > 0 && $upcomingCount === 0;
             <div class="hidden" data-meetings-no-match>
               <div class="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-14 text-center shadow-card dark:border-gray-700 dark:bg-gray-800">
                 <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-300">
-                  <i class="fas fa-search text-2xl"></i>
+                  <?php echo dashboard_icon_svg('search', 'class="h-7 w-7 shrink-0"'); ?>
                 </div>
                 <h3 class="mt-4 text-lg font-bold text-gray-900 dark:text-white">Aucun résultat</h3>
                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Modifiez vos filtres.</p>

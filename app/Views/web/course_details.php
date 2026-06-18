@@ -199,7 +199,7 @@ $makeAvatarPlaceholder = static function (string $label) use ($extractInitials):
   <rect width="120" height="120" rx="60" fill="url(#avatarGradient)"/>
   <circle cx="36" cy="34" r="18" fill="rgba(255,255,255,0.12)"/>
   <circle cx="88" cy="84" r="22" fill="rgba(255,255,255,0.10)"/>
-  <text x="60" y="72" text-anchor="middle" fill="#ffffff" font-size="42" font-family="Inter, Arial, sans-serif" font-weight="700">{$initials}</text>
+  <text x="60" y="72" text-anchor="middle" fill="#ffffff" font-size="42" font-family="Plus Jakarta Sans, Inter, Arial, sans-serif" font-weight="700">{$initials}</text>
 </svg>
 SVG;
 
@@ -220,8 +220,8 @@ $makeCoverPlaceholder = static function (string $title, string $subtitle): strin
   <rect width="800" height="480" rx="36" fill="url(#coverGradient)"/>
   <circle cx="640" cy="120" r="110" fill="rgba(255,255,255,0.08)"/>
   <circle cx="120" cy="400" r="130" fill="rgba(255,255,255,0.06)"/>
-  <text x="56" y="92" fill="#dbeafe" font-size="28" font-family="Inter, Arial, sans-serif">{$safeSubtitle}</text>
-  <text x="56" y="180" fill="#ffffff" font-size="46" font-weight="700" font-family="Inter, Arial, sans-serif">{$safeTitle}</text>
+  <text x="56" y="92" fill="#dbeafe" font-size="28" font-family="Plus Jakarta Sans, Inter, Arial, sans-serif">{$safeSubtitle}</text>
+  <text x="56" y="180" fill="#ffffff" font-size="46" font-weight="700" font-family="Plus Jakarta Sans, Inter, Arial, sans-serif">{$safeTitle}</text>
 </svg>
 SVG;
 
@@ -322,7 +322,7 @@ if ($courseShareUrl === '') {
   <?php if ($csp !== ''): ?><meta http-equiv="Content-Security-Policy" content="<?php echo e($csp); ?>"><?php endif; ?>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="<?php echo e($tailwindThemeBootstrapJsUrl); ?>"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
  <link rel="stylesheet" href="<?php echo e(site_url('assets/vendor/fontawesome/all.min.css?v=' . (@filemtime(__DIR__ . '/../../../assets/vendor/fontawesome/all.min.css') ?: time()))); ?>">
   <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
   <script src="<?php echo e($webThemeJsUrl); ?>" defer></script>

@@ -471,7 +471,7 @@ $formatRating = static function (float $value): string {
     <title>Mes cours · Enseignant · École Numérique</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time()))); ?>">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-courses.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-courses.css') ?: time()))); ?>">
@@ -493,12 +493,12 @@ $formatRating = static function (float $value): string {
     <?php $showCatalogue = false; ?>
     <?php require __DIR__ . '/_topbar.php'; ?>
             <div class="p-4 sm:p-5 lg:p-6 space-y-5 animate-fade-up">
-                <section class="teacher-courses-page-head flex flex-wrap items-center justify-between gap-4">
-                    <div>
-                        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Mes formations</h2>
-                        <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Créez, gérez et améliorez vos cours.</p>
-                    </div>
-                </section>
+                <?php $teacherWelcomeTitle = 'Mes formations'; ?>
+                <?php $teacherWelcomeSummary = 'Créez, gérez et améliorez vos cours.'; ?>
+                <?php $teacherWelcomeActionUrl = site_url('teacher/course_create'); ?>
+                <?php $teacherWelcomeActionLabel = 'Créer un cours'; ?>
+                <?php $teacherWelcomeActionIcon = 'plus-square'; ?>
+                <?php require __DIR__ . '/_welcome_hero.php'; ?>
 
                 <section class="teacher-courses-summary grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="Résumé des formations">
                     <article class="teacher-courses-summary-card">

@@ -30,6 +30,7 @@ $notificationsUrl = site_url('notifications?space=student');
 $referralsUrl = site_url('student/referrals');
 $supportUrl = site_url('support?space=student');
 $profileUrl = site_url('profile?space=student');
+$catalogueUrl = site_url('catalogue');
 $homeUrl = site_url('');
 $logoutUrl = site_url('logout');
 $logoutCsrf = function_exists('view_csrf_token') ? view_csrf_token() : '';
@@ -215,6 +216,13 @@ if ($latestOrderReference !== '') {
     $latestOrderMetaParts[] = '#' . $latestOrderReference;
 }
 $latestOrderMeta = $latestOrderMetaParts !== [] ? implode(' · ', $latestOrderMetaParts) : 'Aucune commande enregistrée';
+$studentWelcomeSummary = $ordersCount > 0
+    ? 'Retrouvez vos commandes, vos paiements et vos accès activés au même endroit.'
+    : 'Vos commandes, statuts et accès apparaîtront ici dès votre premier achat.';
+$studentWelcomeTitle = 'Mes achats';
+$studentWelcomeActionUrl = $validatedCount > 0 ? $myCoursesUrl : $catalogueUrl;
+$studentWelcomeActionLabel = $validatedCount > 0 ? 'Voir mes cours' : 'Explorer le catalogue';
+$studentWelcomeActionIcon = $validatedCount > 0 ? 'book-open' : 'search';
 
 $paginationData = is_array($ordersPagination) ? $ordersPagination : [];
 $paginationPage = max(1, (int) ($paginationData['page'] ?? 1));
@@ -231,6 +239,99 @@ $paginationWindowEnd = min($paginationTotalPages, $paginationPage + 2);
 $buildPageUrl = static function (int $page) use ($ordersUrl): string {
     return $ordersUrl . '?page=' . max(1, $page);
 };
+
+$orderItems = [];
+foreach ($ordersList as $order) {
+    $orderReference = trim((string) ($order['reference'] ?? ''));
+    $statusRaw = strtolower((string) ($order['status'] ?? ''));
+    $statusMeta = $statusMetaFor($statusRaw);
+    $statusTone = (string) ($statusMeta['tone'] ?? 'neutral');
+    $statusLabel = (string) ($statusMeta['label'] ?? 'Inconnu');
+    $statusClass = match ($statusTone) {
+        'success' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+        'warning' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+        'danger' => 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+        'info' => 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
+        default => 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
+    };
+    $providerLabel = $providerLabelFor((string) ($order['provider'] ?? ''));
+    $orderDate = $fmtDtShort((string) ($order['created_at'] ?? ''));
+    $amountLabel = $formatMoney((int) ($order['total_xof'] ?? 0), $statusRaw);
+    $courseLabels = $courseLabelsForOrder($order);
+    $searchParts = array_filter([
+        $orderReference,
+        $providerLabel,
+        $statusLabel,
+        $orderDate,
+        $amountLabel,
+        implode(' ', $courseLabels),
+    ], static fn (string $value): bool => trim($value) !== '');
+    $searchBlob = $normalizeSearchText(implode(' ', $searchParts));
+    $courseIds = $courseIdsForOrder($order);
+    $isValidatedOrder = in_array($statusRaw, ['paid', 'completed', 'succeeded', 'success', 'free'], true);
+    $isPendingOrder = $statusRaw === 'pending';
+    $isFailedOrder = in_array($statusRaw, ['failed', 'cancelled', 'canceled'], true);
+    $canRetryCheckout = $courseIds !== [];
+    $checkoutUrl = $canRetryCheckout ? site_url('checkout?course=' . (int) $courseIds[0]) : site_url('checkout');
+    $orderSupportUrl = $supportUrl . '&topic=paiement' . ($orderReference !== '' ? '&order=' . rawurlencode($orderReference) : '');
+    $receiptPdfUrl = site_url('student/orders?receipt=1&order_id=' . (int) ($order['id'] ?? 0));
+    $primaryCourseLabel = count($courseLabels) > 1 ? 'Voir les cours' : 'Voir le cours';
+    $courseVisibleLabels = array_slice($courseLabels, 0, 3);
+    $courseOverflow = max(0, count($courseLabels) - count($courseVisibleLabels));
+    $action = null;
+
+    if ($isValidatedOrder && $courseLabels !== []) {
+        $action = [
+            'label' => $primaryCourseLabel,
+            'table_label' => $primaryCourseLabel,
+            'url' => $myCoursesUrl,
+            'variant' => 'primary',
+            'icon' => 'book-open',
+        ];
+    } elseif ($isPendingOrder && $canRetryCheckout) {
+        $action = [
+            'label' => 'Finaliser paiement',
+            'table_label' => 'Payer',
+            'url' => $checkoutUrl,
+            'variant' => 'warning',
+            'icon' => 'credit-card',
+        ];
+    } elseif ($isPendingOrder) {
+        $action = [
+            'label' => 'Vérifier paiement',
+            'table_label' => 'Vérifier',
+            'url' => $orderSupportUrl,
+            'variant' => 'warning',
+            'icon' => 'history',
+        ];
+    } elseif ($isFailedOrder && $canRetryCheckout) {
+        $action = [
+            'label' => 'Réessayer paiement',
+            'table_label' => 'Réessayer',
+            'url' => $checkoutUrl,
+            'variant' => 'danger',
+            'icon' => 'redo-alt',
+        ];
+    }
+
+    $orderItems[] = [
+        'search_blob' => $searchBlob,
+        'status_raw' => $statusRaw !== '' ? $statusRaw : 'unknown',
+        'status_label' => $statusLabel,
+        'status_class' => $statusClass,
+        'provider_label' => $providerLabel,
+        'order_date' => $orderDate,
+        'amount_label' => $amountLabel,
+        'order_reference' => $orderReference,
+        'course_labels' => $courseLabels,
+        'course_count' => count($courseLabels),
+        'course_visible_labels' => $courseVisibleLabels,
+        'course_overflow' => $courseOverflow,
+        'receipt_url' => $receiptPdfUrl,
+        'receipt_available' => $isValidatedOrder,
+        'action' => $action,
+    ];
+}
 
 $sidebarItems = [
     [
@@ -349,6 +450,8 @@ $sidebarItems = [
       <?php require __DIR__ . '/_topbar.php'; ?>
 
       <div class="student-dashboard-content mx-auto max-w-6xl p-4 pb-24 space-y-5 animate-fade-up sm:p-6 sm:pb-24 sm:space-y-6 lg:space-y-8">
+        <?php require __DIR__ . '/_welcome_hero.php'; ?>
+
         <section class="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div class="hover-lift rounded-2xl border border-gray-100 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
             <div class="flex items-center justify-between gap-4">
@@ -393,7 +496,7 @@ $sidebarItems = [
         <section class="student-orders-panel rounded-[1.5rem] border border-gray-100 bg-white shadow-card dark:border-gray-700 dark:bg-gray-800">
           <div class="flex flex-col gap-4 border-b border-gray-100 p-5 dark:border-gray-700 md:flex-row md:items-center md:justify-between">
             <div>
-              <h3 class="font-bold text-gray-900 dark:text-white">Historique des commandes</h3>
+              <h3 class="app-inline-title font-bold text-gray-900 dark:text-white"><?php echo dashboard_title_icon('receipt'); ?><span>Historique des commandes</span></h3>
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 <?php echo e(function_exists('view_pluralize') ? view_pluralize(count($ordersList), 'commande listée sur cette page', 'commandes listées sur cette page') : (count($ordersList) . ' commande(s) listée(s) sur cette page')); ?>
                 · <?php echo e(number_format($ordersCount, 0, ',', ' ')); ?> au total
@@ -450,164 +553,104 @@ $sidebarItems = [
               </div>
             </div>
           <?php else: ?>
-            <div class="overflow-x-auto">
-              <table class="student-orders-table w-full min-w-[1080px] text-sm">
-                <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
-                  <tr class="text-xs uppercase tracking-[0.16em]">
-                    <th class="px-5 py-3 text-left">Commande</th>
-                    <th class="px-5 py-3 text-left">Date</th>
-                    <th class="px-5 py-3 text-left">Cours</th>
-                    <th class="px-5 py-3 text-left">Montant</th>
-                    <th class="px-5 py-3 text-left">Statut</th>
-                    <th class="px-5 py-3 text-left">Reçu</th>
-                    <th class="px-5 py-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="orders-table-body" class="divide-y divide-gray-100 dark:divide-gray-700">
-                  <?php foreach ($ordersList as $index => $order): ?>
-                    <?php
-                      $orderReference = trim((string) ($order['reference'] ?? ''));
-                      $statusRaw = strtolower((string) ($order['status'] ?? ''));
-                      $statusMeta = $statusMetaFor($statusRaw);
-                      $statusTone = (string) ($statusMeta['tone'] ?? 'neutral');
-                      $statusLabel = (string) ($statusMeta['label'] ?? 'Inconnu');
-                      $statusClass = match ($statusTone) {
-                          'success' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-                          'warning' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-                          'danger' => 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
-                          'info' => 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
-                          default => 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
-                      };
-                      $providerLabel = $providerLabelFor((string) ($order['provider'] ?? ''));
-                      $orderDate = $fmtDtShort((string) ($order['created_at'] ?? ''));
-                      $amountLabel = $formatMoney((int) ($order['total_xof'] ?? 0), $statusRaw);
-                      $courseLabels = $courseLabelsForOrder($order);
-                      $searchParts = array_filter([
-                          $orderReference,
-                          $providerLabel,
-                          $statusLabel,
-                          $orderDate,
-                          $amountLabel,
-                          implode(' ', $courseLabels),
-                      ], static fn (string $value): bool => trim($value) !== '');
-                      $searchBlob = $normalizeSearchText(implode(' ', $searchParts));
-                      $courseIds = $courseIdsForOrder($order);
-                      $isValidatedOrder = in_array($statusRaw, ['paid', 'completed', 'succeeded', 'success', 'free'], true);
-                      $isPendingOrder = $statusRaw === 'pending';
-                      $isFailedOrder = in_array($statusRaw, ['failed', 'cancelled', 'canceled'], true);
-                      $canRetryCheckout = $courseIds !== [];
-                      $checkoutUrl = $canRetryCheckout ? site_url('checkout?course=' . (int) $courseIds[0]) : site_url('checkout');
-                      $orderSupportUrl = $supportUrl . '&topic=paiement' . ($orderReference !== '' ? '&order=' . rawurlencode($orderReference) : '');
-                      $receiptPdfUrl = site_url('student/orders?receipt=1&order_id=' . (int) ($order['id'] ?? 0));
-                      $primaryCourseLabel = count($courseLabels) > 1 ? 'Voir les cours' : 'Voir le cours';
-                      $detailMessage = ($orderReference !== '' ? ('Commande #' . $orderReference) : 'Commande')
-                          . ' · ' . $statusLabel
-                          . ' · ' . $amountLabel
-                          . ($courseLabels !== [] ? (' · ' . implode(', ', $courseLabels)) : '');
-                      $courseVisibleLabels = array_slice($courseLabels, 0, 3);
-                      $courseOverflow = max(0, count($courseLabels) - count($courseVisibleLabels));
-                    ?>
-                    <tr class="order-row order-row-enter hover:bg-gray-50 transition dark:hover:bg-gray-700/30" data-search="<?php echo e($searchBlob); ?>" data-status="<?php echo e($statusRaw !== '' ? $statusRaw : 'unknown'); ?>">
-                      <td class="px-5 py-4 align-top">
-                        <div class="flex items-center gap-3">
-                          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-primary-600 dark:bg-blue-500/10 dark:text-primary-300">
-                            <i class="fas fa-receipt"></i>
+            <div class="overflow-x-auto pb-2">
+              <table class="student-orders-table w-full min-w-[920px] table-fixed text-xs sm:text-sm">
+                  <colgroup>
+                    <col class="w-[23%]">
+                    <col class="w-[12%]">
+                    <col class="w-[18%]">
+                    <col class="w-[11%]">
+                    <col class="w-[9%]">
+                    <col class="w-[9%]">
+                    <col class="w-[18%]">
+                  </colgroup>
+                  <thead class="bg-gray-50 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
+                    <tr class="text-xs uppercase tracking-[0.14em]">
+                      <th class="px-3 py-3 text-left sm:px-5">Commande</th>
+                      <th class="px-3 py-3 text-left sm:px-5">Date</th>
+                      <th class="px-3 py-3 text-left sm:px-5">Cours</th>
+                      <th class="px-3 py-3 text-left sm:px-5">Montant</th>
+                      <th class="px-3 py-3 text-left sm:px-5">Statut</th>
+                      <th class="px-3 py-3 text-left sm:px-5">Reçu</th>
+                      <th class="px-3 py-3 text-right sm:px-5">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="orders-table-body" class="divide-y divide-gray-100 dark:divide-gray-700">
+                    <?php foreach ($orderItems as $item): ?>
+                      <tr class="order-row order-row-enter hover:bg-gray-50 transition dark:hover:bg-gray-700/30" data-search="<?php echo e((string) $item['search_blob']); ?>" data-status="<?php echo e((string) $item['status_raw']); ?>">
+                        <td class="px-3 py-3 align-top sm:px-5 sm:py-4">
+                          <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-primary-600 dark:bg-blue-500/10 dark:text-primary-300">
+                              <i class="fas fa-receipt"></i>
+                            </div>
+                            <div class="min-w-0">
+                              <p class="font-semibold text-gray-900 dark:text-white"><?php echo e((string) ($item['order_reference'] !== '' ? ('#' . $item['order_reference']) : 'Commande sans référence')); ?></p>
+                              <p class="text-xs text-gray-500 dark:text-gray-400">Paiement via <?php echo e((string) $item['provider_label']); ?></p>
+                            </div>
                           </div>
-                          <div class="min-w-0">
-                            <p class="font-semibold text-gray-900 dark:text-white"><?php echo e($orderReference !== '' ? ('#' . $orderReference) : 'Commande sans référence'); ?></p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Paiement via <?php echo e($providerLabel); ?></p>
-                            <p class="mt-1 text-[11px] text-gray-400 dark:text-gray-500 sm:hidden"><?php echo e($orderDate !== '' ? $orderDate : 'Date non renseignée'); ?></p>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="px-5 py-4 align-top text-gray-500 dark:text-gray-400 hidden sm:table-cell"><?php echo e($orderDate !== '' ? $orderDate : 'Non définie'); ?></td>
-                      <td class="px-5 py-4 align-top">
-                        <?php if ($courseVisibleLabels !== []): ?>
-                          <div class="flex flex-wrap gap-2">
-                            <?php foreach ($courseVisibleLabels as $label): ?>
-                              <span class="student-order-course-chip rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-900/70 dark:text-gray-200">
-                                <?php echo e($label); ?>
-                              </span>
-                            <?php endforeach; ?>
-                            <?php if ($courseOverflow > 0): ?>
-                              <span class="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-primary-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-primary-300">
-                                +<?php echo e((string) $courseOverflow); ?>
-                              </span>
-                            <?php endif; ?>
-                          </div>
-                        <?php else: ?>
-                          <p class="text-sm text-gray-500 dark:text-gray-400">Aucun cours lié n’a été trouvé.</p>
-                        <?php endif; ?>
-                      </td>
-                      <td class="px-5 py-4 align-top font-semibold whitespace-nowrap text-gray-900 dark:text-white"><?php echo e($amountLabel); ?></td>
-                      <td class="px-5 py-4 align-top">
-                        <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold <?php echo e($statusClass); ?>"><?php echo e($statusLabel); ?></span>
-                      </td>
-                      <td class="px-5 py-4 align-top">
-                        <?php if ($isValidatedOrder): ?>
-                          <a
-                            href="<?php echo e($receiptPdfUrl); ?>"
-                            class="student-order-receipt inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300"
-                          >
-                            <i class="fas fa-file-download"></i>
-                            <span>Reçu</span>
-                          </a>
-                        <?php else: ?>
-                          <span class="student-order-receipt-muted inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-400">
-                            <i class="fas fa-lock text-[11px]"></i>
-                            <span>Après validation</span>
-                          </span>
-                        <?php endif; ?>
-                      </td>
-                      <td class="px-5 py-4 align-top text-right">
-                        <div class="student-order-actions">
-                          <?php if ($isValidatedOrder && $courseLabels !== []): ?>
-                            <a href="<?php echo e($myCoursesUrl); ?>" class="student-order-action student-order-action--primary">
-                              <i class="fas fa-book-open"></i>
-                              <span><?php echo e($primaryCourseLabel); ?></span>
-                            </a>
-                          <?php elseif ($isPendingOrder && $canRetryCheckout): ?>
-                            <a href="<?php echo e($checkoutUrl); ?>" class="student-order-action student-order-action--warning">
-                              <i class="fas fa-credit-card"></i>
-                              <span>Finaliser paiement</span>
-                            </a>
-                          <?php elseif ($isPendingOrder): ?>
-                            <a href="<?php echo e($orderSupportUrl); ?>" class="student-order-action student-order-action--warning">
-                              <i class="fas fa-history"></i>
-                              <span>Vérifier paiement</span>
-                            </a>
-                          <?php elseif ($isFailedOrder && $canRetryCheckout): ?>
-                            <a href="<?php echo e($checkoutUrl); ?>" class="student-order-action student-order-action--danger">
-                              <i class="fas fa-redo-alt"></i>
-                              <span>Réessayer paiement</span>
+                        </td>
+                        <td class="px-3 py-3 align-top whitespace-nowrap text-gray-500 dark:text-gray-400 sm:px-5 sm:py-4"><?php echo e((string) ($item['order_date'] !== '' ? $item['order_date'] : 'Non définie')); ?></td>
+                        <td class="px-3 py-3 align-top sm:px-5 sm:py-4">
+                          <?php if ($item['course_visible_labels'] !== []): ?>
+                            <div class="flex flex-wrap gap-2">
+                              <?php foreach ($item['course_visible_labels'] as $label): ?>
+                                <span class="student-order-course-chip rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-900/70 dark:text-gray-200">
+                                  <?php echo e((string) $label); ?>
+                                </span>
+                              <?php endforeach; ?>
+                              <?php if ((int) $item['course_overflow'] > 0): ?>
+                                <span class="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-primary-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-primary-300">
+                                  +<?php echo e((string) $item['course_overflow']); ?>
+                                </span>
+                              <?php endif; ?>
+                            </div>
+                          <?php else: ?>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Aucun cours lié n’a été trouvé.</p>
+                          <?php endif; ?>
+                        </td>
+                        <td class="px-3 py-3 align-top whitespace-nowrap font-semibold text-gray-900 dark:text-white sm:px-5 sm:py-4"><?php echo e((string) $item['amount_label']); ?></td>
+                        <td class="px-3 py-3 align-top sm:px-5 sm:py-4">
+                          <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold <?php echo e((string) $item['status_class']); ?>"><?php echo e((string) $item['status_label']); ?></span>
+                        </td>
+                        <td class="px-3 py-3 align-top sm:px-5 sm:py-4">
+                          <?php if (!empty($item['receipt_available'])): ?>
+                            <a
+                              href="<?php echo e((string) $item['receipt_url']); ?>"
+                              class="student-order-receipt inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300"
+                            >
+                              <i class="fas fa-file-download"></i>
+                              <span>Reçu</span>
                             </a>
                           <?php else: ?>
-                            <a href="<?php echo e($orderSupportUrl); ?>" class="student-order-action student-order-action--secondary">
-                              <i class="fas fa-headset"></i>
-                              <span>Support</span>
-                            </a>
+                            <span class="student-order-receipt-muted inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-400">
+                              <i class="fas fa-lock text-[11px]"></i>
+                              <span>Après validation</span>
+                            </span>
                           <?php endif; ?>
-                          <button type="button" class="student-order-action student-order-action--secondary" data-order-detail data-order-detail-message="<?php echo e($detailMessage); ?>">
-                            <i class="fas fa-info-circle"></i>
-                            <span>Détails</span>
-                          </button>
-                          <?php if (!$isValidatedOrder && ($isPendingOrder || $isFailedOrder) && $canRetryCheckout): ?>
-                            <a href="<?php echo e($orderSupportUrl); ?>" class="student-order-action student-order-action--ghost">
-                              <i class="fas fa-headset"></i>
-                              <span>Support</span>
-                            </a>
-                          <?php endif; ?>
-                        </div>
-                      </td>
-                    </tr>
-                  <?php endforeach; ?>
-                </tbody>
-              </table>
+                        </td>
+                        <td class="px-3 py-3 align-top text-right sm:px-5 sm:py-4">
+                          <div class="student-order-actions">
+                            <?php if (is_array($item['action'] ?? null) && !empty($item['action']['url']) && !empty($item['action']['label'])): ?>
+                              <a
+                                href="<?php echo e((string) $item['action']['url']); ?>"
+                                title="<?php echo e((string) $item['action']['label']); ?>"
+                                class="student-order-action student-order-action--<?php echo e((string) $item['action']['variant']); ?>"
+                              >
+                                <i class="fas fa-<?php echo e((string) $item['action']['icon']); ?>"></i>
+                                <span><?php echo e((string) ($item['action']['table_label'] ?? $item['action']['label'])); ?></span>
+                              </a>
+                            <?php endif; ?>
+                          </div>
+                        </td>
+                      </tr>
+                    <?php endforeach; ?>
+                  </tbody>
+                </table>
             </div>
 
             <div id="orders-no-search-results" class="hidden border-t border-gray-100 px-6 py-14 text-center dark:border-gray-700">
-              <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 text-2xl text-gray-400 dark:bg-gray-700 dark:text-gray-300">
-                <i class="fas fa-search"></i>
+              <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-300">
+                <?php echo dashboard_icon_svg('search', 'class="h-8 w-8 shrink-0"'); ?>
               </div>
               <h3 class="mt-4 text-lg font-bold text-gray-900 dark:text-white">Aucun résultat</h3>
               <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Essayez un autre mot-clé ou changez le filtre de statut.</p>

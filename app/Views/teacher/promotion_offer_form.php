@@ -235,7 +235,7 @@ $backUrl = site_url('teacher/promotions');
   <title><?php echo e($formTitle); ?> · Enseignant · École Numérique</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time()))); ?>">
   <script src="<?php echo e(site_url('assets/js/sidebar_toggle.js')); ?>" defer></script>
@@ -253,6 +253,13 @@ $backUrl = site_url('teacher/promotions');
       <?php require __DIR__ . '/_topbar.php'; ?>
 
       <div class="mx-auto max-w-7xl p-4 pb-24 space-y-6 animate-fade-up sm:p-6 sm:pb-24">
+        <?php $teacherWelcomeTitle = $formTitle; ?>
+        <?php $teacherWelcomeSummary = $formLead; ?>
+        <?php $teacherWelcomeActionUrl = $backUrl; ?>
+        <?php $teacherWelcomeActionLabel = 'Retour'; ?>
+        <?php $teacherWelcomeActionIcon = 'arrow-left'; ?>
+        <?php require __DIR__ . '/_welcome_hero.php'; ?>
+
         <section class="relative overflow-hidden rounded-[28px] border <?php echo e($heroToneClasses); ?> shadow-[0_28px_80px_-44px_rgba(15,23,42,0.32)]">
           <div class="flex flex-wrap items-start justify-between gap-5 border-b border-white/70 px-5 py-5 dark:border-white/10 sm:px-6">
             <div class="min-w-0">

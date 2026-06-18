@@ -421,6 +421,12 @@ $courseHeroSummary = $activeCoursesCount > 0
     ? 'Recherchez, filtrez et reprenez votre progression.'
     : 'Commencez votre parcours depuis le catalogue et retrouvez ici toutes vos inscriptions.';
 
+$studentWelcomeSummary = $courseHeroSummary;
+$studentWelcomeTitle = 'Votre bibliothèque de cours';
+$studentWelcomeActionUrl = $catalogueUrl;
+$studentWelcomeActionLabel = 'Explorer le catalogue';
+$studentWelcomeActionIcon = 'search';
+
 $courseTabCounts = [
     'all' => $activeCoursesCount,
     'in-progress' => $inProgressCoursesCount,
@@ -490,26 +496,15 @@ $courseEmptyMessage = $activeCoursesCount === 0
       <?php require __DIR__ . '/_topbar.php'; ?>
 
       <div class="student-dashboard-content p-4 pb-24 space-y-5 animate-fade-up sm:p-6 sm:pb-24 sm:space-y-6 lg:space-y-8">
-        <section
-          class="student-dashboard-panel course-library-hero"
-          style="background: linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #06b6d4 100%) !important;"
-        >
-          <div class="course-library-hero__inner">
-            <div class="course-library-hero__content">
-              <div class="course-library-hero__heading">
-                <span class="course-library-hero__icon" aria-hidden="true">
-                  <i class="fas fa-layer-group"></i>
-                </span>
-                <div class="min-w-0">
-                  <p class="course-library-hero__eyebrow">Bibliothèque</p>
-                  <h2 class="course-library-hero__title">Votre bibliothèque de cours</h2>
-                </div>
-              </div>
-              <p class="course-library-hero__subtitle">
-                <?php echo e($courseHeroSummary); ?>
-              </p>
+        <?php require __DIR__ . '/_welcome_hero.php'; ?>
+
+        <section class="student-dashboard-panel course-library-toolbar bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-card border border-gray-100 dark:border-gray-700 sm:p-5">
+          <div class="course-library-toolbar__inner">
+            <div class="course-library-toolbar__copy">
+              <p class="course-library-toolbar__eyebrow">Organisation</p>
+              <p class="course-library-toolbar__summary"><?php echo e($courseSearchSummary); ?></p>
             </div>
-            <div class="course-library-controls">
+            <div class="course-library-toolbar__actions">
               <div class="course-view-toggle" role="group" aria-label="Mode d’affichage">
                 <button
                   id="view-grid"
@@ -572,7 +567,7 @@ $courseEmptyMessage = $activeCoursesCount === 0
           <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-card border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="flex flex-col items-center justify-center gap-4 px-6 py-14 text-center">
               <div class="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-300">
-                <i class="fas fa-search text-2xl"></i>
+                <?php echo dashboard_icon_svg('search', 'class="h-8 w-8 shrink-0"'); ?>
               </div>
               <div class="max-w-md">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white"><?php echo e($courseEmptyTitle); ?></h3>
@@ -746,7 +741,7 @@ $courseEmptyMessage = $activeCoursesCount === 0
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-card border border-gray-100 dark:border-gray-700 overflow-hidden">
               <div class="flex flex-col items-center justify-center gap-4 px-6 py-14 text-center">
                 <div class="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-300">
-                  <i class="fas fa-search text-2xl"></i>
+                  <?php echo dashboard_icon_svg('search', 'class="h-8 w-8 shrink-0"'); ?>
                 </div>
                 <div class="max-w-md">
                   <h3 class="text-lg font-bold text-gray-900 dark:text-white">Aucun cours trouvé</h3>

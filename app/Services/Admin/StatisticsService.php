@@ -30,7 +30,7 @@ final class StatisticsService extends Service
         $chartFilter = $this->resolveChartFilter($query);
 
         $unreadCount = $this->dashboard->countUnreadNotifications((int) ($user['id'] ?? 0));
-        $highPriorityTickets = $this->dashboard->countHighPrioritySupportTickets();
+        $waitingSupportTickets = $this->dashboard->countWaitingSupportTickets();
         $pendingCourses = $this->dashboard->countPendingCourses();
         $pendingWithdrawals = $this->dashboard->countPendingWithdrawals();
         $failedPayments = $this->dashboard->countFailedPayments();
@@ -110,14 +110,14 @@ final class StatisticsService extends Service
         ];
 
         $healthSummary = $this->buildHealthSummary(
-            $highPriorityTickets,
+            $waitingSupportTickets,
             $pendingCourses,
             $pendingWithdrawals,
             $failedPayments,
             $supportResponseMinutes
         );
 
-        $backlogTotal = $highPriorityTickets + $pendingCourses + $pendingWithdrawals + $failedPayments;
+        $backlogTotal = $waitingSupportTickets + $pendingCourses + $pendingWithdrawals + $failedPayments;
         $estimatedCommission = (int) round(((int) $revenueSnapshot['current_total_xof']) * ($commissionPercent / 100));
 
         $userDelta = $this->deltaBadge((int) $userSnapshot['current_users'], (int) $userSnapshot['previous_users']);
@@ -168,7 +168,7 @@ final class StatisticsService extends Service
                 'value' => $this->formatNumber($backlogTotal),
                 'meta' => 'Support, cours, retraits et paiements en échec',
                 'delta' => [
-                    'label' => $backlogTotal > 0 ? $this->formatNumber($highPriorityTickets) . ' priorité(s) haute(s)' : 'rien de bloquant',
+                    'label' => $backlogTotal > 0 ? $this->formatNumber($waitingSupportTickets) . ' ticket(s) support en attente' : 'rien de bloquant',
                     'tone' => $backlogTotal > 0 ? 'rose' : 'emerald',
                 ],
                 'icon' => 'alert-triangle',
@@ -469,14 +469,14 @@ final class StatisticsService extends Service
      * @return array<string,mixed>
      */
     private function buildHealthSummary(
-        int $highPriorityTickets,
+        int $waitingSupportTickets,
         int $pendingCourses,
         int $pendingWithdrawals,
         int $failedPayments,
         int $supportResponseMinutes
     ): array {
         $score = 100;
-        $score -= min(28, $highPriorityTickets * 8);
+        $score -= min(28, $waitingSupportTickets * 8);
         $score -= min(18, $pendingCourses * 2);
         $score -= min(18, $pendingWithdrawals * 4);
         $score -= min(22, $failedPayments * 7);

@@ -287,6 +287,21 @@ final class CourseService extends Service
             $doneByLesson = array_values(array_unique(
                 $this->model->fetchDoneLessonIds((int) $currentUser['id'], (int) $course['id'])
             ));
+            $validLessonIds = [];
+            foreach ($lessonsFlat as $lessonRow) {
+                if (is_array($lessonRow) && (int) ($lessonRow['id'] ?? 0) > 0) {
+                    $validLessonIds[] = (int) $lessonRow['id'];
+                }
+            }
+            if ($validLessonIds !== []) {
+                $validLessonLookup = array_flip(array_unique($validLessonIds));
+                $doneByLesson = array_values(array_filter(
+                    $doneByLesson,
+                    static fn (int $lessonId): bool => isset($validLessonLookup[$lessonId])
+                ));
+            } else {
+                $doneByLesson = [];
+            }
             foreach ($videoPlaylist as $index => $playlistItem) {
                 $videoPlaylist[$index]['done'] = in_array((int) $playlistItem['id'], $doneByLesson, true);
             }
@@ -319,7 +334,7 @@ final class CourseService extends Service
             }
         }
 
-        $doneCount = count($doneByLesson);
+        $doneCount = min($totalLessons, count($doneByLesson));
         $totalLessonsAll = array_sum($chapterLessonCount);
         $resourceCount = 0;
         foreach ($docsByChapter as $chapterDocs) {

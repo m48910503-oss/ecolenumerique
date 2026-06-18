@@ -49,7 +49,7 @@ $removeCourseUrl = static function (int $courseId) use ($removeBaseUrl): string 
   <title>Panier & Paiement · <?php echo e($platformName); ?></title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="<?php echo e($tailwindThemeBootstrapJsUrl); ?>"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?php echo e(site_url('assets/vendor/fontawesome/all.min.css?v=' . (@filemtime(__DIR__ . '/../../../assets/vendor/fontawesome/all.min.css') ?: time()))); ?>">
   <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
   <script src="<?php echo e($webThemeJsUrl); ?>" defer></script>

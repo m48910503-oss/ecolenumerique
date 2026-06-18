@@ -21,12 +21,6 @@ final class SupportService extends Service
         'other' => 'Autre',
     ];
 
-    private const PRIORITY_LABELS = [
-        'low' => 'Faible',
-        'normal' => 'Normal',
-        'high' => 'Urgent',
-    ];
-
     private const DEFAULT_SUBJECTS = [
         'billing' => 'Paiement non validé',
         'certificate' => 'Certificat indisponible',
@@ -133,8 +127,6 @@ final class SupportService extends Service
             $category = $this->legacyCategoryForTicket($ticketId);
         }
         $subject = $this->normalizeSubjectForDisplay((string) ($row['subject'] ?? ''), $category, $ticketId);
-        $priority = (string) ($row['priority'] ?? 'normal');
-        $priority = in_array($priority, ['low', 'normal', 'high'], true) ? $priority : 'normal';
         $updatedRaw = trim((string) ($row['updated_at'] ?? ''));
         if ($updatedRaw === '') {
             $updatedRaw = $dateRaw;
@@ -202,8 +194,6 @@ final class SupportService extends Service
             'updated_iso' => $updatedIso,
             'category' => $category,
             'category_label' => self::CATEGORY_LABELS[$category] ?? self::CATEGORY_LABELS['other'],
-            'priority' => $priority,
-            'priority_label' => self::PRIORITY_LABELS[$priority] ?? self::PRIORITY_LABELS['normal'],
             'status' => $status,
             'status_group' => $statusGroup,
             'status_label' => $statusLabel,

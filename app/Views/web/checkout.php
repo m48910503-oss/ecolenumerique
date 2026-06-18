@@ -95,8 +95,8 @@ $makeCheckoutCover = static function (string $title, string $level): string {
   <rect width="640" height="360" rx="36" fill="url(#checkoutCoverGradient)"/>
   <circle cx="520" cy="84" r="76" fill="rgba(255,255,255,0.10)"/>
   <circle cx="104" cy="300" r="92" fill="rgba(255,255,255,0.12)"/>
-  <text x="44" y="76" fill="#dbeafe" font-size="24" font-family="Arial, sans-serif">{$safeLevel}</text>
-  <text x="44" y="170" fill="#ffffff" font-size="34" font-weight="700" font-family="Arial, sans-serif">{$safeTitle}</text>
+  <text x="44" y="76" fill="#dbeafe" font-size="24" font-family="Plus Jakarta Sans, Inter, Arial, sans-serif">{$safeLevel}</text>
+  <text x="44" y="170" fill="#ffffff" font-size="34" font-weight="700" font-family="Plus Jakarta Sans, Inter, Arial, sans-serif">{$safeTitle}</text>
 </svg>
 SVG;
 

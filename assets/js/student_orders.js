@@ -42,77 +42,6 @@
     }
   };
 
-  const notify = (message, type = 'info') => {
-    const safeMessage = String(message || '').trim();
-    if (safeMessage === '') {
-      return;
-    }
-
-    if (typeof window.appShowToast === 'function') {
-      window.appShowToast(safeMessage, type);
-      return;
-    }
-
-    if (typeof window.showToast === 'function') {
-      window.showToast(safeMessage, type);
-      return;
-    }
-
-    const normalizedType = ['success', 'error', 'warning', 'info'].includes(type) ? type : 'info';
-    const existing = document.querySelector('[data-student-orders-toast="1"]');
-    if (existing && existing.parentNode) {
-      existing.parentNode.removeChild(existing);
-    }
-
-    const toast = document.createElement('div');
-    toast.dataset.studentOrdersToast = '1';
-    toast.className = `teacher-withdrawal-toast teacher-withdrawal-toast--${normalizedType}`;
-    toast.setAttribute('role', normalizedType === 'error' ? 'alert' : 'status');
-    toast.setAttribute('aria-live', normalizedType === 'error' ? 'assertive' : 'polite');
-
-    const copy = document.createElement('div');
-    copy.className = 'teacher-withdrawal-toast__copy';
-
-    const icon = document.createElement('span');
-    icon.className = 'teacher-withdrawal-toast__icon';
-    icon.setAttribute('aria-hidden', 'true');
-    const iconGlyph = document.createElement('i');
-    iconGlyph.className = normalizedType === 'success'
-      ? 'fas fa-circle-check'
-      : (normalizedType === 'error' ? 'fas fa-circle-exclamation' : (normalizedType === 'warning' ? 'fas fa-triangle-exclamation' : 'fas fa-circle-info'));
-    icon.appendChild(iconGlyph);
-
-    const text = document.createElement('div');
-    const title = document.createElement('p');
-    title.className = 'teacher-withdrawal-toast__title';
-    title.textContent = normalizedType === 'success'
-      ? 'Succès'
-      : (normalizedType === 'error' ? 'Erreur' : (normalizedType === 'warning' ? 'Attention' : 'Information'));
-
-    const body = document.createElement('p');
-    body.className = 'teacher-withdrawal-toast__message';
-    body.textContent = safeMessage;
-
-    text.appendChild(title);
-    text.appendChild(body);
-    copy.appendChild(icon);
-    copy.appendChild(text);
-
-    const bar = document.createElement('span');
-    bar.className = 'teacher-withdrawal-toast__bar';
-    bar.setAttribute('aria-hidden', 'true');
-
-    toast.appendChild(copy);
-    toast.appendChild(bar);
-    document.body.appendChild(toast);
-
-    window.setTimeout(() => {
-      if (toast.parentNode) {
-        toast.parentNode.removeChild(toast);
-      }
-    }, 3600);
-  };
-
   const init = () => {
     if (!isOrdersPage()) {
       return;
@@ -120,9 +49,8 @@
 
     const searchInputs = Array.from(document.querySelectorAll('[data-orders-search]'));
     const statusFilter = document.getElementById('status-filter');
-    const rows = Array.from(document.querySelectorAll('.order-row'));
+    const rows = Array.from(document.querySelectorAll('.order-row, .order-card'));
     const noSearchState = document.getElementById('orders-no-search-results');
-    const detailButtons = Array.from(document.querySelectorAll('[data-order-detail]'));
 
     const syncSearchInputs = (source) => {
       if (!(source instanceof HTMLInputElement)) {
@@ -195,17 +123,6 @@
       statusFilter.addEventListener('change', filterOrders);
       statusFilter.dataset.studentOrdersFilterBound = '1';
     }
-
-    detailButtons.forEach((button) => {
-      if (button.dataset.studentOrdersDetailBound === '1') {
-        return;
-      }
-
-      button.addEventListener('click', () => {
-        notify(button.dataset.orderDetailMessage || 'Détails de la commande.', 'info');
-      });
-      button.dataset.studentOrdersDetailBound = '1';
-    });
 
     filterOrders();
   };

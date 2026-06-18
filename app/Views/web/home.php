@@ -83,8 +83,8 @@ $makeCoverPlaceholder = static function (string $title, string $category): strin
   <rect width="800" height="480" fill="url(#g)"/>
   <circle cx="640" cy="120" r="110" fill="rgba(255,255,255,0.08)"/>
   <circle cx="120" cy="400" r="130" fill="rgba(255,255,255,0.06)"/>
-  <text x="56" y="92" fill="#dbeafe" font-size="28" font-family="Arial, sans-serif">{$safeCategory}</text>
-  <text x="56" y="180" fill="#ffffff" font-size="46" font-weight="700" font-family="Arial, sans-serif">{$safeTitle}</text>
+  <text x="56" y="92" fill="#dbeafe" font-size="28" font-family="Plus Jakarta Sans, Inter, Arial, sans-serif">{$safeCategory}</text>
+  <text x="56" y="180" fill="#ffffff" font-size="46" font-weight="700" font-family="Plus Jakarta Sans, Inter, Arial, sans-serif">{$safeTitle}</text>
 </svg>
 SVG;
 
@@ -573,7 +573,7 @@ $footerSupportLinks = [
   <?php endif; ?>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="<?php echo e($tailwindThemeBootstrapJsUrl); ?>"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="<?php echo e(site_url('assets/vendor/fontawesome/all.min.css?v=' . (@filemtime(__DIR__ . '/../../../assets/vendor/fontawesome/all.min.css') ?: time()))); ?>">
   <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
   <script src="<?php echo e($webThemeJsUrl); ?>" defer></script>

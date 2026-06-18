@@ -50,7 +50,7 @@ final class DashboardService extends Service
 
         $openTickets = $this->model->countOpenSupportTickets();
 
-        $highPriorityTickets = $this->model->countHighPrioritySupportTickets();
+        $waitingSupportTickets = $this->model->countWaitingSupportTickets();
 
         $pendingCourses = $this->model->countPendingCourses();
         $publishedCourses = $this->model->countPublishedCourses();
@@ -100,7 +100,7 @@ final class DashboardService extends Service
             'failed_payments' => $failedPayments,
             'pending_payments' => $pendingPayments,
             'open_tickets' => $openTickets,
-            'high_priority_tickets' => $highPriorityTickets,
+            'waiting_support_tickets' => $waitingSupportTickets,
             'revenue_xof' => $totalRevenueXof,
             'admin_revenue_xof' => $adminRevenueXof,
             'commission_percent' => $commissionPercent,
@@ -156,10 +156,10 @@ final class DashboardService extends Service
                 'icon' => 'message-circle',
             ],
             [
-                'label' => 'Conversations prioritaires',
-                'value' => $highPriorityTickets,
-                'meta' => 'Support haute priorité',
-                'tone' => $highPriorityTickets > 0 ? 'danger' : 'success',
+                'label' => 'Tickets à traiter',
+                'value' => $waitingSupportTickets,
+                'meta' => 'Support en attente de réponse',
+                'tone' => $waitingSupportTickets > 0 ? 'warning' : 'success',
                 'icon' => 'alert-triangle',
             ],
             [
@@ -189,21 +189,21 @@ final class DashboardService extends Service
 
             [
 
-                'scope' => 'urgent',
+                'scope' => 'support',
 
-                'label' => 'Urgent',
+                'label' => 'Support à traiter',
 
-                'value' => $highPriorityTickets,
+                'value' => $waitingSupportTickets,
 
-                'meta' => 'Conversations support haute priorité',
+                'meta' => 'Conversations support en attente',
 
-                'cta' => 'Ouvrir conversation',
+                'cta' => 'Ouvrir le support',
 
-                'url' => $this->siteUrl('admin/support?status=open&priority=high'),
+                'url' => $this->siteUrl('admin/support?status=waiting_support'),
 
-                'tone' => $highPriorityTickets > 0 ? 'danger' : 'success',
+                'tone' => $waitingSupportTickets > 0 ? 'warning' : 'success',
 
-                'icon' => 'alert-triangle',
+                'icon' => 'headset',
 
             ],
 
@@ -300,13 +300,13 @@ final class DashboardService extends Service
 
 
 
-        foreach ($this->model->fetchSupportPriorityCandidates(8) as $row) {
+        foreach ($this->model->fetchSupportQueueCandidates(8) as $row) {
 
-            $priority = strtolower((string) ($row['priority'] ?? 'normal'));
+            $status = strtolower((string) ($row['status'] ?? 'open'));
 
-            $impact = $priority === 'high' ? 3 : ($priority === 'low' ? 1 : 2);
+            $impact = $status === 'waiting_user' ? 3 : ($status === 'waiting_support' ? 2 : 1);
 
-            $slaHours = $priority === 'high' ? 4 : 12;
+            $slaHours = $status === 'waiting_user' ? 6 : 12;
 
             $ageHours = $this->hoursSince((string) ($row['last_message_at'] ?? $row['created_at'] ?? ''));
 
@@ -318,7 +318,7 @@ final class DashboardService extends Service
 
                 'score' => $score,
 
-                'tone' => $priority === 'high' ? 'danger' : 'warning',
+                'tone' => $status === 'waiting_user' ? 'danger' : 'warning',
 
                 'label' => 'Ticket support #' . (int) ($row['id'] ?? 0),
 

@@ -151,6 +151,7 @@ $scopeToneMeta = [
     <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/standalone-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/standalone-dashboard.css') ?: time()))); ?>">
+    <link rel="stylesheet" href="<?php echo e(site_url('assets/css/app-typography.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/app-typography.css') ?: time()))); ?>">
     <script src="<?php echo e(site_url('assets/js/web_theme.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/web_theme.js') ?: time()))); ?>" defer></script>
     <script src="<?php echo e(site_url('assets/js/notifications_page.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/notifications_page.js') ?: time()))); ?>" defer></script>
 <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
@@ -160,7 +161,7 @@ $scopeToneMeta = [
 
 $companyTopEyebrow = 'Centre de notifications';
 $companyTopTitle = 'Notifications entreprise';
-$companyTopSummary = "Filtrez vos alertes, traitez l’important en premier et gardez une lecture plus nette des priorités.";
+        $companyTopSummary = "Filtrez les alertes et gardez les priorités lisibles.";
 $companyTopStatusLabel = $unreadCount > 0 ? 'À traiter' : 'À jour';
 $companyTopStatusTone = $unreadCount > 0 ? 'warning' : 'active';
 $companyTopMeta = [

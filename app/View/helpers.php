@@ -340,9 +340,10 @@ if (!function_exists('dashboard_icon_svg')) {
      *   <span class="app-icon"><?= dashboard_icon_svg('book-open') ?></span>
      *
      * @param  string $icon  Clé de l'icône (voir liste statique).
+     * @param  string $attrs Attributs SVG additionnels, injectés dans la balise <svg>.
      * @return string        SVG HTML ou chaîne vide si clé inconnue.
      */
-    function dashboard_icon_svg(string $icon): string
+    function dashboard_icon_svg(string $icon, string $attrs = ''): string
     {
         static $icons = [
             /* â€” Navigation â€” */
@@ -356,6 +357,8 @@ if (!function_exists('dashboard_icon_svg')) {
             'chevron-left'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>',
             'moon'          => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.9 13.2A8.5 8.5 0 1 1 10.8 3a7 7 0 0 0 10.1 10.2z"/></svg>',
             'sun'           => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>',
+            'theme-moon'    => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.2 3.6a7.9 7.9 0 1 0 5.2 13.4A8.8 8.8 0 1 1 15.2 3.6Z"/><path d="M16.7 5.2v2.1"/><path d="M15.65 6.25h2.1"/><path d="m19.55 8.15.55.55"/><path d="m20.1 8.15-.55.55"/></svg>',
+            'theme-sun'     => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.15"/><path d="M12 2.75v2.1"/><path d="M12 19.15v2.1"/><path d="m5.46 5.46 1.48 1.48"/><path d="m17.06 17.06 1.48 1.48"/><path d="M2.75 12h2.1"/><path d="M19.15 12h2.1"/><path d="m5.46 18.54 1.48-1.48"/><path d="m17.06 6.94 1.48-1.48"/></svg>',
             'gift'          => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><rect x="4" y="12" width="16" height="9" rx="2"/><path d="M12 8v13"/><path d="M12 8H8.5a2.5 2.5 0 1 1 0-5C10.5 3 12 5 12 8z"/><path d="M12 8H15.5a2.5 2.5 0 1 0 0-5C13.5 3 12 5 12 8z"/></svg>',
             'chalkboard-user' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M7 20h10"/><circle cx="12" cy="10" r="2"/><path d="M9 15a3 3 0 0 1 6 0"/></svg>',
 
@@ -390,6 +393,7 @@ if (!function_exists('dashboard_icon_svg')) {
             'users'         => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
             'user'          => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
             'user-plus'     => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>',
+            'building'      => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h.01M12 7h.01M16 7h.01M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01"/><path d="M10 21v-4h4v4"/></svg>',
 
             /* â€” Notifications / Alertes â€” */
             'bell'          => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.26 15.33A1 1 0 0 0 7 17h10a1 1 0 0 0 .74-1.67C16.63 14.09 16 12.45 16 10.75V9a4 4 0 1 0-8 0v1.75c0 1.7-.63 3.34-1.74 4.58"/><path d="M10.5 20a1.8 1.8 0 0 0 3 0"/><path d="M12 3.25v1"/></svg>',
@@ -404,6 +408,7 @@ if (!function_exists('dashboard_icon_svg')) {
 
             /* â€” Réalisations / Gamification â€” */
             'award'         => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="6"/><path d="m8.2 14.8-2.2 6.2L12 18l6 3-2.2-6.2"/></svg>',
+            'coins'         => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="9" cy="6.5" rx="5.5" ry="3.25"/><path d="M3.5 6.5v4.5c0 1.8 2.5 3.25 5.5 3.25s5.5-1.45 5.5-3.25V6.5"/><ellipse cx="15" cy="13" rx="5.5" ry="3.25"/><path d="M9.5 13v4.5c0 1.8 2.5 3.25 5.5 3.25s5.5-1.45 5.5-3.25V13"/></svg>',
             'star'          => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
             'heart'         => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 5.7a5 5 0 0 0-7.1 0L12 7.4l-1.7-1.7a5 5 0 1 0-7.1 7.1L12 21.6l8.8-8.8a5 5 0 0 0 0-7.1z"/></svg>',
 
@@ -435,7 +440,20 @@ if (!function_exists('dashboard_icon_svg')) {
             'chevron-down'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>',
         ];
 
-        return $icons[$icon] ?? $icons['help-circle'];
+        $resolvedIcon = isset($icons[$icon]) ? $icon : 'help-circle';
+        $svg = $icons[$resolvedIcon];
+        $attrs = trim($attrs);
+        $iconAttrs = preg_match('/\bdata-app-icon\s*=/', $attrs) === 1
+            ? ''
+            : 'data-app-icon="' . htmlspecialchars($resolvedIcon, ENT_QUOTES, 'UTF-8') . '"';
+        if ($attrs !== '') {
+            $iconAttrs = trim($iconAttrs . ' ' . $attrs);
+        }
+        if ($iconAttrs !== '') {
+            $svg = preg_replace('/^<svg\\b/', '<svg ' . $iconAttrs, $svg, 1) ?? $svg;
+        }
+
+        return $svg;
     }
 }
 
@@ -482,6 +500,7 @@ if (!function_exists('dashboard_icon_fa_class')) {
             'users'            => 'fas fa-users',
             'user'             => 'fas fa-user',
             'user-plus'        => 'fas fa-user-plus',
+            'building'         => 'fas fa-building',
             'bell'             => 'fas fa-bell',
             'alert-triangle'   => 'fas fa-exclamation-triangle',
             'alert-circle'     => 'fas fa-exclamation-circle',
@@ -502,18 +521,95 @@ if (!function_exists('dashboard_icon_fa_class')) {
             'lock'             => 'fas fa-lock',
             'key'              => 'fas fa-key',
             'search'           => 'fas fa-search',
+            'share'            => 'fas fa-share-alt',
             'filter'           => 'fas fa-filter',
             'download'         => 'fas fa-download',
             'printer'          => 'fas fa-print',
             'trash-2'          => 'fas fa-trash',
             'save'             => 'fas fa-save',
             'external-link'    => 'fas fa-external-link-alt',
+            'arrow-left'       => 'fas fa-arrow-left',
             'more-vertical'    => 'fas fa-ellipsis-v',
             'x'                => 'fas fa-times',
             'check'            => 'fas fa-check',
         ];
 
         return $icons[$icon] ?? 'fas fa-circle';
+    }
+}
+
+if (!function_exists('dashboard_icon_for_label')) {
+    /**
+     * Resolve a semantic dashboard icon from a human-readable label.
+     */
+    function dashboard_icon_for_label(string $label, string $fallback = 'help-circle'): string
+    {
+        $value = trim($label);
+        if ($value === '') {
+            return $fallback;
+        }
+
+        $value = function_exists('mb_strtolower') ? mb_strtolower($value, 'UTF-8') : strtolower($value);
+        if (function_exists('iconv')) {
+            $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+            if (is_string($ascii) && $ascii !== '') {
+                $value = strtolower($ascii);
+            }
+        }
+
+        $rules = [
+            'bell' => ['notification', 'boite', 'alerte', 'annonce'],
+            'filter' => ['filtre', 'affiner', 'tri', 'recherche'],
+            'book-open' => ['cours', 'formation', 'apprentissage', 'lecon', 'module', 'programme', 'contenu', 'bibliotheque'],
+            'clipboard-list' => ['examen', 'evaluation', 'question', 'copie', 'tentative', 'quiz'],
+            'award' => ['certificat', 'reussite', 'badge', 'avis', 'note'],
+            'wallet' => ['revenu', 'retrait', 'gain', 'commission', 'finance', 'paiement', 'achat', 'commande', 'facture', 'portefeuille', 'transaction'],
+            'calendar' => ['rendez-vous', 'creneau', 'session', 'date', 'calendrier', 'agenda', 'reservation'],
+            'building' => ['entreprise', 'societe', 'organisation'],
+            'users' => ['utilisateur', 'apprenant', 'collaborateur', 'membre', 'enseignant', 'filleul', 'parrain', 'equipe'],
+            'user-plus' => ['invitation', 'inviter', 'candidature', 'candidater', 'inscription'],
+            'headset' => ['support', 'assistance', 'ticket', 'conversation', 'message'],
+            'shield' => ['securite', 'regle', 'controle', 'validation', 'moderation', 'permission'],
+            'settings' => ['parametre', 'configuration', 'reglage', 'preference'],
+            'upload' => ['fichier', 'ressource', 'document', 'drive', 'depot', 'avatar', 'signature', 'import'],
+            'gift' => ['promotion', 'coupon', 'offre', 'parrainage'],
+            'trending-up' => ['statistique', 'performance', 'croissance', 'activite', 'rapport', 'analyse'],
+            'home' => ['tableau de bord', 'dashboard', 'accueil'],
+            'help-circle' => ['aide', 'faq', 'question'],
+            'user' => ['profil', 'compte'],
+        ];
+
+        foreach ($rules as $icon => $needles) {
+            foreach ($needles as $needle) {
+                if (str_contains($value, $needle)) {
+                    return $icon;
+                }
+            }
+        }
+
+        return $fallback;
+    }
+}
+
+if (!function_exists('dashboard_title_icon')) {
+    /**
+     * Render a compact icon well for headings.
+     */
+    function dashboard_title_icon(string $icon, string $class = 'app-title-icon app-title-icon--sm'): string
+    {
+        $icon = trim($icon);
+        if ($icon === '') {
+            return '';
+        }
+
+        $class = trim($class);
+        if ($class === '') {
+            $class = 'app-title-icon app-title-icon--sm';
+        }
+
+        return '<span class="' . htmlspecialchars($class, ENT_QUOTES, 'UTF-8') . '" aria-hidden="true">'
+            . dashboard_icon_svg($icon)
+            . '</span>';
     }
 }
 
@@ -963,7 +1059,7 @@ if (!function_exists('dashboard_menu_item_meta')) {
 if (!function_exists('admin_sidebar_badge_counts')) {
     /**
      * @param  array<string,mixed>|null $user
-     * @return array{notifications:int,pending_withdrawals:int,pending_payments:int,failed_payments:int,pending_teacher_applications:int,pending_courses:int,support_priority:int}
+     * @return array{notifications:int,pending_withdrawals:int,pending_payments:int,failed_payments:int,pending_teacher_applications:int,pending_courses:int,support_waiting:int}
      */
     function admin_sidebar_badge_counts(?array $user): array
     {
@@ -976,7 +1072,7 @@ if (!function_exists('admin_sidebar_badge_counts')) {
             'failed_payments' => 0,
             'pending_teacher_applications' => 0,
             'pending_courses' => 0,
-            'support_priority' => 0,
+            'support_waiting' => 0,
         ];
 
         if (!is_array($user)) {
@@ -1007,7 +1103,7 @@ if (!function_exists('admin_sidebar_badge_counts')) {
                 'failed_payments' => max(0, $model->countFailedPayments()),
                 'pending_teacher_applications' => max(0, $model->countPendingTeacherApplications()),
                 'pending_courses' => max(0, $model->countPendingCourses()),
-                'support_priority' => max(0, $model->countHighPrioritySupportTickets()),
+                'support_waiting' => max(0, $model->countWaitingSupportTickets()),
             ];
         } catch (\Throwable $e) {
             $cache[$userId] = $default;

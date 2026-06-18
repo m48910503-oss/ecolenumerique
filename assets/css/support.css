@@ -1,8 +1,16 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
 :root {
-    --app-font-body: "Inter", system-ui, sans-serif;
-    --app-font-display: "Inter", "Segoe UI", system-ui, sans-serif;
+    --app-font-title: "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --app-font-display: var(--app-font-title);
+    --app-font-section: var(--app-font-title);
+    --app-font-ui: var(--app-font-title);
+    --app-font-sans: var(--app-font-title);
+    --app-font-body: var(--app-font-title);
+    --app-font-serif: "Times New Roman", Times, Georgia, serif;
+    --app-font-accent: var(--app-font-serif);
+    --app-font-mono: "IBM Plex Mono", "Cascadia Code", Consolas, monospace;
+    --app-font-numeric: var(--app-font-mono);
 }
 
 body.font-body,
@@ -92,21 +100,16 @@ body.font-sans {
     color: #cbd5e1;
 }
 
-.support-ticket-status,
-.support-ticket-note,
-.support-ticket-priority {
+.support-ticket-status {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
+    padding: 0.42rem 0.62rem;
     border-radius: 999px;
     font-size: 0.72rem;
     font-weight: 800;
     line-height: 1;
     white-space: nowrap;
-}
-
-.support-ticket-status {
-    padding: 0.42rem 0.62rem;
 }
 
 .support-ticket-status--open {
@@ -169,91 +172,11 @@ body.font-sans {
     color: #cbd5e1;
 }
 
-.support-ticket-priority {
-    padding: 0.28rem 0.5rem;
-}
-
-.support-ticket-priority--low {
-    background: #e2e8f0;
-    color: #475569;
-}
-
-.support-ticket-priority--normal {
-    background: #dbeafe;
-    color: #1d4ed8;
-}
-
-.support-ticket-priority--urgent {
-    background: #ffedd5;
-    color: #c2410c;
-}
-
-.dark .support-ticket-priority--low {
-    background: rgba(148, 163, 184, 0.18);
-    color: #cbd5e1;
-}
-
-.dark .support-ticket-priority--normal {
-    background: rgba(37, 99, 235, 0.2);
-    color: #bfdbfe;
-}
-
-.dark .support-ticket-priority--urgent {
-    background: rgba(249, 115, 22, 0.22);
-    color: #fed7aa;
-}
-
 .support-ticket-footer {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 0.75rem;
-}
-
-.support-ticket-note {
-    padding: 0.48rem 0.64rem;
-}
-
-.support-ticket-note--waiting {
-    background: #fef3c7;
-    color: #b45309;
-}
-
-.support-ticket-note--info {
-    background: #dbeafe;
-    color: #1d4ed8;
-}
-
-.support-ticket-note--action {
-    background: #fee2e2;
-    color: #b91c1c;
-    box-shadow: 0 0 0 1px rgba(185, 28, 28, 0.12);
-}
-
-.support-ticket-note--done {
-    background: #dcfce7;
-    color: #15803d;
-}
-
-.dark .support-ticket-note--waiting {
-    background: rgba(245, 158, 11, 0.24);
-    color: #fde68a;
-}
-
-.dark .support-ticket-note--info {
-    background: rgba(37, 99, 235, 0.24);
-    color: #bfdbfe;
-}
-
-.dark .support-ticket-note--action {
-    background: rgba(239, 68, 68, 0.26);
-    color: #fecaca;
-    box-shadow: 0 0 0 1px rgba(252, 165, 165, 0.14);
-}
-
-.dark .support-ticket-note--done {
-    background: rgba(34, 197, 94, 0.22);
-    color: #bbf7d0;
 }
 
 .support-ticket-action {
@@ -323,17 +246,6 @@ body.font-sans {
 .dark .support-chat-image-link {
     border-color: rgba(100, 116, 139, 0.55);
     background: rgba(15, 23, 42, 0.35);
-}
-
-@media (max-width: 640px) {
-    .support-ticket-footer {
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .support-ticket-action {
-        width: 100%;
-    }
 }
 
 .chat-bubble-sent {

@@ -5,37 +5,47 @@ if (!$profileIsAdmin && is_array($roles ?? null)) {
     $profileIsAdmin = in_array('admin', $roles, true) || in_array('admin_secondary', $roles, true) || in_array('support', $roles, true);
 }
 $profileDashboardSpace = strtolower(trim((string) ($dashboardSpace ?? '')));
-if ($profileIsAdmin && ($profileDashboardSpace === 'admin' || ($profileDashboardSpace === '' && !$isTeacher && !$isStudent))) {
+if ($profileDashboardSpace === 'company') {
+    $profileShellRole = 'company';
+} elseif ($profileIsAdmin && ($profileDashboardSpace === 'admin' || ($profileDashboardSpace === '' && !$isTeacher && !$isStudent))) {
     $profileShellRole = 'admin';
-} elseif ($dashboardSpace === 'teacher' || ($dashboardSpace === '' && $isTeacher && !$isStudent)) {
+} elseif ($profileDashboardSpace === 'teacher' || ($profileDashboardSpace === '' && $isTeacher && !$isStudent)) {
     $profileShellRole = 'teacher';
-} elseif ($dashboardSpace === 'student' || ($dashboardSpace === '' && $isStudent)) {
+} elseif ($profileDashboardSpace === 'student' || ($profileDashboardSpace === '' && $isStudent)) {
     $profileShellRole = 'student';
 }
 
-$profileHtmlDataViewAttr = $profileShellRole === 'teacher'
-    ? ' data-view="teacher/dashboard"'
-    : ($profileShellRole === 'admin' ? ' data-view="admin/profile"' : '');
-$profileBodyDataViewAttr = $profileShellRole === 'teacher'
-    ? 'data-view="teacher/dashboard"'
-    : ($profileShellRole === 'admin'
-        ? 'data-view="admin/profile" data-sidebar-desktop-toggle="1"'
-        : 'data-view="student/dashboard" data-sidebar-desktop-toggle="0"');
+$profileHtmlDataViewAttr = match ($profileShellRole) {
+    'teacher' => ' data-view="teacher/dashboard"',
+    'admin' => ' data-view="admin/profile"',
+    'company' => ' data-view="company/profile"',
+    default => '',
+};
+$profileBodyDataViewAttr = match ($profileShellRole) {
+    'teacher' => 'data-view="teacher/dashboard"',
+    'admin' => 'data-view="admin/profile" data-sidebar-desktop-toggle="1"',
+    'company' => 'data-view="company/profile" data-sidebar-desktop-toggle="0"',
+    default => 'data-view="student/dashboard" data-sidebar-desktop-toggle="0"',
+};
 $profileBodyClass = match ($profileShellRole) {
     'admin' => 'app-view app-role-admin min-h-screen bg-slate-50 text-slate-900 font-body dark:bg-slate-950 dark:text-slate-100',
     'teacher' => 'app-role-teacher teacher-dashboard-page font-sans antialiased text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-900 transition-colors duration-300 overflow-hidden overflow-x-hidden min-h-screen',
+    'company' => 'app-role-company student-dashboard-page font-sans antialiased text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-900 transition-colors duration-300 overflow-hidden overflow-x-hidden min-h-screen',
     default => 'app-role-student student-dashboard-page font-sans antialiased text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-900 transition-colors duration-300 overflow-hidden overflow-x-hidden min-h-screen',
 };
 $profileShellCssUrl = match ($profileShellRole) {
     'admin' => site_url('assets/css/admin-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/admin-dashboard.css') ?: time())),
     'teacher' => site_url('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time())),
+    'company' => site_url('assets/css/student_dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/student_dashboard.css') ?: time())),
     default => site_url('assets/css/student_dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/student_dashboard.css') ?: time())),
 };
 $profileShellJsUrl = match ($profileShellRole) {
     'admin' => site_url('assets/js/admin_dashboard.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/admin_dashboard.js') ?: time())),
     'teacher' => site_url('assets/js/teacher_dashboard.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/teacher_dashboard.js') ?: time())),
+    'company' => site_url('assets/js/student_dashboard.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/student_dashboard.js') ?: time())),
     default => site_url('assets/js/student_dashboard.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/student_dashboard.js') ?: time())),
 };
+$profileTypographyCssUrl = site_url('assets/css/app-typography.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/app-typography.css') ?: time()));
 $profileLayoutClass = $profileShellRole === 'teacher'
     ? 'teacher-dashboard-layout relative h-screen overflow-hidden pt-16 sm:pt-[4.5rem] md:pl-72 md:flex-row'
     : 'student-dashboard-layout relative h-screen overflow-hidden pt-16 sm:pt-[4.5rem] md:pl-72';
@@ -45,10 +55,16 @@ $profileMainClass = $profileShellRole === 'teacher'
 $profileContentClass = match ($profileShellRole) {
     'admin' => 'profile-modern-page profile-modern-page--admin space-y-5 animate-fade-up',
     'teacher' => 'profile-modern-page p-4 pb-36 space-y-8 animate-fade-up sm:p-6 sm:pb-40',
+    'company' => 'profile-modern-page profile-modern-page--company student-dashboard-content p-4 pb-36 space-y-5 animate-fade-up sm:p-6 sm:pb-40 sm:space-y-6 lg:space-y-8',
     default => 'profile-modern-page student-dashboard-content p-4 pb-36 space-y-5 animate-fade-up sm:p-6 sm:pb-40 sm:space-y-6 lg:space-y-8',
 };
 $profileTopTitle = 'Mon profil';
-$profileTopSubtitle = $profileIsAdmin ? 'Espace administrateur' : ($profileShellRole === 'teacher' ? 'Espace enseignant' : 'Espace étudiant');
+$profileTopSubtitle = match ($profileShellRole) {
+    'admin' => 'Espace administrateur',
+    'teacher' => 'Espace enseignant',
+    'company' => 'Espace entreprise',
+    default => 'Espace étudiant',
+};
 $profileBackdropClass = $profileShellRole === 'teacher' || $profileShellRole === 'admin'
     ? 'js-sidebar-backdrop fixed inset-0 z-30 bg-slate-950/60 opacity-0 pointer-events-none transition md:hidden'
     : 'js-sidebar-backdrop fixed inset-0 z-30 bg-gray-950/75 opacity-0 pointer-events-none transition lg:hidden';
@@ -72,7 +88,7 @@ $deleteAccountPanelOpen = $profilePostedAction === 'DELETE_ACCOUNT';
     <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
     <link rel="stylesheet" href="<?php echo e($profileShellCssUrl); ?>">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/profile_modern.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/profile_modern.css') ?: time()))); ?>">
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/vendor/fontawesome/all.min.css?v=' . (@filemtime(__DIR__ . '/../../../assets/vendor/fontawesome/all.min.css') ?: time()))); ?>">
     <?php if ($profileShellRole === 'student'): ?>
         <script src="<?php echo e(site_url('assets/js/web_theme.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/web_theme.js') ?: time()))); ?>" defer></script>
@@ -150,57 +166,80 @@ $deleteAccountPanelOpen = $profilePostedAction === 'DELETE_ACCOUNT';
                 <div class="<?php echo e($profileContentClass); ?>" data-profile-initial-tab="<?php echo e($profileInitialTab); ?>">
     <?php endif; ?>
                 <section class="<?php echo e($profileCardClass); ?> profile-modern-hero">
-                    <div class="profile-modern-hero__inner flex flex-col items-center gap-5 sm:flex-row">
-                        <div class="relative">
-                            <?php if ($profileAvatarHasImage): ?>
-                                <img src="<?php echo e($profileAvatarUrl); ?>" class="profile-modern-hero__avatar h-20 w-20 rounded-full object-cover border-4 border-primary-200 dark:border-primary-800" alt="Photo de profil">
-                            <?php else: ?>
-                                <div class="profile-modern-hero__avatar flex h-20 w-20 items-center justify-center rounded-full border-4 border-primary-200 bg-gradient-to-br from-primary-600 to-accent-500 text-xl font-bold text-white shadow-md dark:border-primary-800">
-                                    <?php echo e($profileAvatarInitials); ?>
-                                </div>
-                            <?php endif; ?>
-                            <button type="button" class="profile-modern-hero__camera absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-white transition hover:bg-primary-700" title="Modifier la photo" aria-label="Modifier la photo" data-upload-trigger="avatar_file">
-                                <i class="fas fa-camera text-xs"></i>
-                            </button>
-                        </div>
-                        <div class="min-w-0 flex-1 text-center sm:text-left">
-                            <p class="profile-modern-kicker"><?php echo e($profileSpaceLabel); ?></p>
-                            <h2 class="text-2xl font-bold text-gray-900 dark:text-white"><?php echo e($displayName); ?></h2>
-                            <?php if ($profileMemberSinceLabel !== ''): ?>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Membre depuis <?php echo e($profileMemberSinceLabel); ?></p>
-                            <?php endif; ?>
-                            <p class="profile-modern-intro mt-3 text-sm text-gray-500 dark:text-gray-300"><?php echo e($profileIntro); ?></p>
-                            <div class="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
-                                <?php foreach ($roleChips as $chip): ?>
-                                    <span class="<?php echo e((string) ($chip['class'] ?? 'profile-modern-chip profile-modern-chip--slate')); ?>">
-                                        <i class="fas <?php echo e((string) ($chip['icon'] ?? 'fa-user')); ?>" aria-hidden="true"></i>
-                                        <?php echo e((string) ($chip['label'] ?? 'Profil')); ?>
-                                    </span>
-                                <?php endforeach; ?>
-                                <span class="rounded-full px-2.5 py-1 text-xs font-medium <?php echo e($profileVerifiedClass); ?>"><?php echo e($profileVerifiedLabel); ?></span>
+                    <div class="profile-modern-hero__inner">
+                        <div class="profile-modern-hero__identity">
+                            <div class="relative">
+                                <?php if ($profileAvatarHasImage): ?>
+                                    <img src="<?php echo e($profileAvatarUrl); ?>" class="profile-modern-hero__avatar h-20 w-20 rounded-full object-cover border-4 border-primary-200 dark:border-primary-800" alt="Photo de profil">
+                                <?php else: ?>
+                                    <div class="profile-modern-hero__avatar flex h-20 w-20 items-center justify-center rounded-full border-4 border-primary-200 bg-gradient-to-br from-primary-600 to-accent-500 text-xl font-bold text-white shadow-md dark:border-primary-800">
+                                        <?php echo e($profileAvatarInitials); ?>
+                                    </div>
+                                <?php endif; ?>
+                                <button type="button" class="profile-modern-hero__camera absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-white transition hover:bg-primary-700" title="Modifier la photo" aria-label="Modifier la photo" data-upload-trigger="avatar_file">
+                                    <i class="fas fa-camera text-xs"></i>
+                                </button>
                             </div>
-                            <div class="profile-modern-summary mt-5">
-                                <div class="profile-modern-summary__item">
-                                    <i class="fas fa-check-circle" aria-hidden="true"></i>
-                                    <span>Profil <?php echo e((string) $completionPct); ?>%</span>
+                            <div class="profile-modern-hero__copy min-w-0 flex-1 text-center sm:text-left">
+                                <p class="profile-modern-kicker"><?php echo e($profileSpaceLabel); ?></p>
+                                <h2 class="text-2xl font-bold text-gray-900 dark:text-white"><?php echo e($displayName); ?></h2>
+                                <?php if ($profileMemberSinceLabel !== ''): ?>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Membre depuis <?php echo e($profileMemberSinceLabel); ?></p>
+                                <?php endif; ?>
+                                <p class="profile-modern-intro mt-3 text-sm text-gray-500 dark:text-gray-300"><?php echo e($profileIntro); ?></p>
+                                <div class="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+                                    <?php foreach ($roleChips as $chip): ?>
+                                        <span class="<?php echo e((string) ($chip['class'] ?? 'profile-modern-chip profile-modern-chip--slate')); ?>">
+                                            <i class="fas <?php echo e((string) ($chip['icon'] ?? 'fa-user')); ?>" aria-hidden="true"></i>
+                                            <?php echo e((string) ($chip['label'] ?? 'Profil')); ?>
+                                        </span>
+                                    <?php endforeach; ?>
                                 </div>
-                                <a class="profile-modern-summary__item profile-modern-summary__link" href="<?php echo e($notificationsUrl); ?>">
-                                    <i class="fas fa-bell" aria-hidden="true"></i>
-                                    <span>Notifications <?php echo e((string) $profileNotificationCount); ?></span>
-                                </a>
-                                <a class="profile-modern-summary__item profile-modern-summary__link" href="<?php echo e($dashboardUrl); ?>">
-                                    <i class="fas fa-th-large" aria-hidden="true"></i>
-                                    <span>Tableau de bord</span>
-                                </a>
                             </div>
                         </div>
+                        <aside class="profile-modern-hero__aside">
+                            <div class="profile-modern-hero__panel">
+                                <p class="profile-modern-kicker">Aperçu rapide</p>
+                                <div class="mt-3 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+                                    <div class="profile-modern-hero__metric">
+                                        <span>Profil complété</span>
+                                        <strong><?php echo e((string) $completionPct); ?>%</strong>
+                                    </div>
+                                    <div class="profile-modern-hero__metric">
+                                        <span>Notifications</span>
+                                        <strong><?php echo e((string) $profileNotificationCount); ?></strong>
+                                    </div>
+                                    <div class="profile-modern-hero__metric">
+                                        <span>Statut</span>
+                                        <strong><?php echo e($profileVerifiedLabel); ?></strong>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <div class="flex items-center justify-between gap-3 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                        <span>Complétion du profil</span>
+                                        <span><?php echo e((string) $completionPct); ?>%</span>
+                                    </div>
+                                    <progress class="profile-modern-progress mt-2" value="<?php echo e((string) $completionPct); ?>" max="100"></progress>
+                                </div>
+                                <div class="profile-modern-hero__actions mt-4">
+                                    <a class="profile-modern-hero__action profile-modern-hero__action--primary" href="<?php echo e($dashboardUrl); ?>">
+                                        <i class="fas fa-th-large" aria-hidden="true"></i>
+                                        <span>Tableau de bord</span>
+                                    </a>
+                                    <a class="profile-modern-hero__action profile-modern-hero__action--secondary" href="<?php echo e($notificationsUrl); ?>">
+                                        <i class="fas fa-bell" aria-hidden="true"></i>
+                                        <span>Notifications</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </aside>
                     </div>
                 </section>
 
-                <div class="profile-modern-tabs flex gap-2 border-b border-gray-200 dark:border-gray-700">
-                    <button type="button" class="profile-tab tab-active border-b-2 border-primary-600 pb-3 text-sm font-semibold text-primary-600 transition dark:border-primary-400 dark:text-primary-400" data-tab="infos"><i class="fas fa-id-card" aria-hidden="true"></i> Informations personnelles</button>
-                    <button type="button" class="profile-tab border-b-2 border-transparent pb-3 text-sm font-medium text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" data-tab="preferences"><i class="fas fa-sliders-h" aria-hidden="true"></i> Préférences</button>
-                    <button type="button" class="profile-tab border-b-2 border-transparent pb-3 text-sm font-medium text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" data-tab="security"><i class="fas fa-shield-alt" aria-hidden="true"></i> Sécurité</button>
+                <div class="profile-modern-tabs flex gap-2 border-b border-gray-200 dark:border-gray-700" role="tablist" aria-label="Sections du profil">
+                    <button type="button" id="profile-tab-infos" role="tab" aria-selected="true" aria-controls="tab-infos" class="profile-tab tab-active border-b-2 border-primary-600 pb-3 text-sm font-semibold text-primary-600 transition dark:border-primary-400 dark:text-primary-400" data-tab="infos"><i class="fas fa-id-card" aria-hidden="true"></i> Informations personnelles</button>
+                    <button type="button" id="profile-tab-preferences" role="tab" aria-selected="false" aria-controls="tab-preferences" class="profile-tab border-b-2 border-transparent pb-3 text-sm font-medium text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" data-tab="preferences"><i class="fas fa-sliders-h" aria-hidden="true"></i> Préférences</button>
+                    <button type="button" id="profile-tab-security" role="tab" aria-selected="false" aria-controls="tab-security" class="profile-tab border-b-2 border-transparent pb-3 text-sm font-medium text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" data-tab="security"><i class="fas fa-shield-alt" aria-hidden="true"></i> Sécurité</button>
                 </div>
 
                 <?php if ($profileMessage !== ''): ?>
@@ -224,7 +263,7 @@ $deleteAccountPanelOpen = $profilePostedAction === 'DELETE_ACCOUNT';
                     <input type="hidden" name="action" value="profile">
                     <input type="hidden" name="notification_preferences_present" value="1">
 
-                    <div id="tab-infos" class="tab-panel space-y-6">
+                    <div id="tab-infos" class="tab-panel space-y-6" role="tabpanel" aria-labelledby="profile-tab-infos">
                         <section class="<?php echo e($profileCardClass); ?>" data-upload-dropzone="avatar_file">
                             <div class="flex flex-col gap-6 xl:flex-row">
                                 <div class="xl:w-64">
@@ -404,13 +443,13 @@ $deleteAccountPanelOpen = $profilePostedAction === 'DELETE_ACCOUNT';
                         <?php endif; ?>
                     </div>
 
-                    <div id="tab-preferences" class="tab-panel hidden space-y-6">
+                    <div id="tab-preferences" class="tab-panel hidden space-y-6" role="tabpanel" aria-labelledby="profile-tab-preferences">
                         <section class="<?php echo e($profileCardClass); ?>">
                             <p class="text-[11px] uppercase tracking-[0.28em] text-gray-500 dark:text-gray-400">Notifications</p>
                             <h3 class="profile-section-title mt-1 text-lg font-bold text-gray-900 dark:text-white"><i class="fas fa-bell" aria-hidden="true"></i> Vos pr&eacute;f&eacute;rences</h3>
                             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Choisissez o&ugrave; recevoir les alertes importantes.</p>
 
-                            <div class="mt-5 space-y-3">
+                            <div class="mt-5 grid gap-3 md:grid-cols-2">
                                 <label class="profile-preference-row flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-700 dark:bg-gray-900/40">
                                     <span class="min-w-0">
                                         <strong class="profile-field-label text-gray-900 dark:text-white"><i class="fas fa-bullhorn" aria-hidden="true"></i> Annonces par email</strong>
@@ -465,15 +504,15 @@ $deleteAccountPanelOpen = $profilePostedAction === 'DELETE_ACCOUNT';
                         </section>
                     </div>
 
-                    <div class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                    <div class="profile-action-bar rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800" data-profile-action-bar>
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <span data-profile-dirty class="text-sm text-gray-600 dark:text-gray-300">Aucune modification en attente.</span>
                             <div class="flex flex-wrap items-center gap-2">
-                                <button type="button" data-profile-cancel="<?php echo e($dashboardUrl); ?>" class="<?php echo e($profileSecondaryButtonClass); ?>">
+                                <button type="button" data-profile-cancel="<?php echo e($dashboardUrl); ?>" class="<?php echo e($profileSecondaryButtonClass); ?> w-full sm:w-auto">
                                     <i class="fas fa-times"></i>
                                     <span>Annuler</span>
                                 </button>
-                                <button type="submit" data-profile-save class="<?php echo e($profilePrimaryButtonClass); ?> disabled:cursor-not-allowed disabled:opacity-50" disabled>
+                                <button type="submit" data-profile-save class="<?php echo e($profilePrimaryButtonClass); ?> w-full sm:w-auto disabled:cursor-not-allowed disabled:opacity-50" disabled>
                                     <i class="fas fa-check-circle"></i>
                                     <span>Enregistrer</span>
                                 </button>
@@ -498,129 +537,131 @@ $deleteAccountPanelOpen = $profilePostedAction === 'DELETE_ACCOUNT';
                     </section>
                 <?php endif; ?>
 
-                <div id="tab-security" class="tab-panel hidden space-y-6">
-                    <?php if ($isGoogleAccount): ?>
-                        <section class="<?php echo e($profileCardClass); ?> text-sm text-gray-600 dark:text-gray-300">
-                            <p class="text-[11px] uppercase tracking-[0.28em] text-gray-500 dark:text-gray-400">S&eacute;curit&eacute;</p>
-                            <h3 class="profile-section-title mt-1 text-lg font-bold text-gray-900 dark:text-white"><i class="fas fa-lock" aria-hidden="true"></i> Mot de passe</h3>
-                            <p class="mt-2">Compte connect&eacute; &agrave; Google. Mot de passe g&eacute;r&eacute; par Google.</p>
-                        </section>
-                    <?php else: ?>
-                        <section class="<?php echo e($profileCardClass); ?>">
-                            <p class="text-[11px] uppercase tracking-[0.28em] text-gray-500 dark:text-gray-400">S&eacute;curit&eacute;</p>
-                            <h3 class="profile-section-title mt-1 text-lg font-bold text-gray-900 dark:text-white"><i class="fas fa-lock" aria-hidden="true"></i> Changer le mot de passe</h3>
-                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Choisissez un mot de passe fort et unique.</p>
+                <div id="tab-security" class="tab-panel hidden space-y-6" role="tabpanel" aria-labelledby="profile-tab-security">
+                    <div class="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]">
+                        <?php if ($isGoogleAccount): ?>
+                            <section class="<?php echo e($profileCardClass); ?> text-sm text-gray-600 dark:text-gray-300">
+                                <p class="text-[11px] uppercase tracking-[0.28em] text-gray-500 dark:text-gray-400">S&eacute;curit&eacute;</p>
+                                <h3 class="profile-section-title mt-1 text-lg font-bold text-gray-900 dark:text-white"><i class="fas fa-lock" aria-hidden="true"></i> Mot de passe</h3>
+                                <p class="mt-2">Compte connect&eacute; &agrave; Google. Le mot de passe se g&egrave;re directement chez Google.</p>
+                            </section>
+                        <?php else: ?>
+                            <section class="<?php echo e($profileCardClass); ?>">
+                                <p class="text-[11px] uppercase tracking-[0.28em] text-gray-500 dark:text-gray-400">S&eacute;curit&eacute;</p>
+                                <h3 class="profile-section-title mt-1 text-lg font-bold text-gray-900 dark:text-white"><i class="fas fa-lock" aria-hidden="true"></i> Changer le mot de passe</h3>
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Choisissez un mot de passe fort et unique.</p>
 
-                            <form method="post" action="<?php echo e($formAction); ?>" class="mt-5 space-y-4">
+                                <form method="post" action="<?php echo e($formAction); ?>" class="mt-5 space-y-4">
+                                    <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
+                                    <input type="hidden" name="action" value="password">
+
+                                    <div class="grid gap-4 md:grid-cols-2">
+                                        <div class="md:col-span-2">
+                                            <label class="<?php echo e($profileLabelClass); ?>" for="current_password">
+                                                <span class="profile-field-label"><i class="fas fa-key" aria-hidden="true"></i> Mot de passe actuel</span>
+                                            </label>
+                                            <div class="mt-1 flex gap-3">
+                                                <input class="<?php echo e($profileFieldClass); ?> !mt-0 flex-1" type="password" id="current_password" name="current_password" autocomplete="current-password" required>
+                                                <button type="button" class="<?php echo e($profileSecondaryButtonClass); ?> profile-password-icon-button h-12 w-12 shrink-0 p-0 text-sm" data-password-toggle="#current_password" data-label-show="Afficher le mot de passe actuel" data-label-hide="Masquer le mot de passe actuel">
+                                                    <i class="fas fa-eye" data-password-toggle-icon aria-hidden="true"></i>
+                                                    <span class="sr-only" data-password-toggle-label>Afficher le mot de passe actuel</span>
+                                                </button>
+                                            </div>
+                                            <span id="current_password_inline_error" class="mt-1 hidden text-xs text-gray-500 dark:text-gray-400"></span>
+                                        </div>
+
+                                        <div>
+                                            <label class="<?php echo e($profileLabelClass); ?>" for="new_password">
+                                                <span class="profile-field-label"><i class="fas fa-lock-open" aria-hidden="true"></i> Nouveau mot de passe</span>
+                                            </label>
+                                            <div class="mt-1 flex gap-3">
+                                                <input class="<?php echo e($profileFieldClass); ?> !mt-0 flex-1" type="password" id="new_password" name="new_password" minlength="8" autocomplete="new-password" required>
+                                                <button type="button" class="<?php echo e($profileSecondaryButtonClass); ?> profile-password-icon-button h-12 w-12 shrink-0 p-0 text-sm" data-password-toggle="#new_password" data-label-show="Afficher le nouveau mot de passe" data-label-hide="Masquer le nouveau mot de passe">
+                                                    <i class="fas fa-eye" data-password-toggle-icon aria-hidden="true"></i>
+                                                    <span class="sr-only" data-password-toggle-label>Afficher le nouveau mot de passe</span>
+                                                </button>
+                                            </div>
+                                            <span id="new_password_inline_error" class="mt-1 hidden text-xs text-gray-500 dark:text-gray-400"></span>
+                                        </div>
+
+                                        <div>
+                                            <label class="<?php echo e($profileLabelClass); ?>" for="confirm_password">
+                                                <span class="profile-field-label"><i class="fas fa-check-double" aria-hidden="true"></i> Confirmer le mot de passe</span>
+                                            </label>
+                                            <div class="mt-1 flex gap-3">
+                                                <input class="<?php echo e($profileFieldClass); ?> !mt-0 flex-1" type="password" id="confirm_password" name="confirm_password" minlength="8" autocomplete="new-password" required>
+                                                <button type="button" class="<?php echo e($profileSecondaryButtonClass); ?> profile-password-icon-button h-12 w-12 shrink-0 p-0 text-sm" data-password-toggle="#confirm_password" data-label-show="Afficher la confirmation du mot de passe" data-label-hide="Masquer la confirmation du mot de passe">
+                                                    <i class="fas fa-eye" data-password-toggle-icon aria-hidden="true"></i>
+                                                    <span class="sr-only" data-password-toggle-label>Afficher la confirmation du mot de passe</span>
+                                                </button>
+                                            </div>
+                                            <span id="confirm_password_inline_error" class="mt-1 hidden text-xs text-gray-500 dark:text-gray-400"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <button type="submit" class="<?php echo e($profilePrimaryButtonClass); ?>">
+                                            <i class="fas fa-shield-alt"></i>
+                                            <span>Mettre &agrave; jour</span>
+                                        </button>
+                                    </div>
+                                </form>
+                            </section>
+                        <?php endif; ?>
+
+                        <details class="profile-danger-zone rounded-2xl border border-rose-200 bg-white dark:border-rose-900/40 dark:bg-gray-800" <?php echo $deleteAccountPanelOpen ? 'open' : ''; ?>>
+                            <summary class="profile-danger-zone__summary flex cursor-pointer list-none items-center justify-between gap-4 p-5">
+                                <span class="min-w-0">
+                                    <span class="block text-[11px] font-bold uppercase tracking-[0.28em] text-rose-600 dark:text-rose-300"><i class="fas fa-exclamation-triangle mr-1.5" aria-hidden="true"></i>Zone dangereuse</span>
+                                    <span class="profile-section-title mt-1 text-lg font-bold text-rose-700 dark:text-rose-200"><i class="fas fa-trash-alt" aria-hidden="true"></i> Suppression d&eacute;finitive</span>
+                                    <span class="mt-1 block text-sm text-gray-500 dark:text-gray-400">Gardez cette section ferm&eacute;e sauf si vous voulez supprimer le compte.</span>
+                                </span>
+                                <span class="profile-danger-zone__chevron flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-200">
+                                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                                </span>
+                            </summary>
+
+                            <form method="post" action="<?php echo e($formAction); ?>" class="profile-danger-zone__panel border-t border-rose-100 p-5 dark:border-rose-900/40" data-delete-account-form data-final-confirm-message="Derni&egrave;re confirmation : supprimer d&eacute;finitivement ce compte ?">
                                 <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
-                                <input type="hidden" name="action" value="password">
+                                <input type="hidden" name="action" value="delete_account">
+                                <input class="hidden" type="text" name="delete_account_username" value="<?php echo e($email); ?>" autocomplete="username" tabindex="-1" aria-hidden="true">
+                                <p class="text-[11px] uppercase tracking-[0.28em] text-rose-600 dark:text-rose-300">Suppression</p>
+                                <h3 class="profile-section-title mt-1 text-lg font-bold text-rose-700 dark:text-rose-200"><i class="fas fa-user-slash" aria-hidden="true"></i> Confirmer la suppression</h3>
+                                <p class="mt-1 text-sm text-rose-700/80 dark:text-rose-200/80">Cette action est irr&eacute;versible.</p>
 
-                                <div class="grid gap-4 md:grid-cols-2">
-                                    <div class="md:col-span-2">
-                                        <label class="<?php echo e($profileLabelClass); ?>" for="current_password">
-                                            <span class="profile-field-label"><i class="fas fa-key" aria-hidden="true"></i> Mot de passe actuel</span>
-                                        </label>
-                                        <div class="mt-1 flex gap-3">
-                                            <input class="<?php echo e($profileFieldClass); ?> !mt-0 flex-1" type="password" id="current_password" name="current_password" autocomplete="current-password" required>
-                                            <button type="button" class="<?php echo e($profileSecondaryButtonClass); ?> profile-password-icon-button h-12 w-12 shrink-0 p-0 text-sm" data-password-toggle="#current_password" data-label-show="Afficher le mot de passe actuel" data-label-hide="Masquer le mot de passe actuel">
-                                                <i class="fas fa-eye" data-password-toggle-icon aria-hidden="true"></i>
-                                                <span class="sr-only" data-password-toggle-label>Afficher le mot de passe actuel</span>
-                                            </button>
-                                        </div>
-                                        <span id="current_password_inline_error" class="mt-1 hidden text-xs text-gray-500 dark:text-gray-400"></span>
-                                    </div>
+                                <div class="mt-5 grid gap-4 md:grid-cols-2">
+                                    <label class="<?php echo e($profileLabelClass); ?> md:col-span-2" for="delete_confirmation">
+                                        <span class="profile-field-label"><i class="fas fa-keyboard" aria-hidden="true"></i> Saisissez exactement SUPPRIMER</span>
+                                        <input class="<?php echo e($profileFieldClass); ?> border-rose-200 bg-white font-semibold tracking-[0.18em] dark:border-rose-900/60 dark:bg-gray-900/70" type="text" id="delete_confirmation" name="delete_confirmation" value="" autocomplete="new-password" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="SUPPRIMER" pattern="SUPPRIMER" data-delete-confirmation-input required>
+                                        <span class="mt-1 block text-xs text-rose-600 dark:text-rose-300">Le champ doit contenir uniquement SUPPRIMER.</span>
+                                    </label>
 
-                                    <div>
-                                        <label class="<?php echo e($profileLabelClass); ?>" for="new_password">
-                                            <span class="profile-field-label"><i class="fas fa-lock-open" aria-hidden="true"></i> Nouveau mot de passe</span>
-                                        </label>
-                                        <div class="mt-1 flex gap-3">
-                                            <input class="<?php echo e($profileFieldClass); ?> !mt-0 flex-1" type="password" id="new_password" name="new_password" minlength="8" autocomplete="new-password" required>
-                                            <button type="button" class="<?php echo e($profileSecondaryButtonClass); ?> profile-password-icon-button h-12 w-12 shrink-0 p-0 text-sm" data-password-toggle="#new_password" data-label-show="Afficher le nouveau mot de passe" data-label-hide="Masquer le nouveau mot de passe">
-                                                <i class="fas fa-eye" data-password-toggle-icon aria-hidden="true"></i>
-                                                <span class="sr-only" data-password-toggle-label>Afficher le nouveau mot de passe</span>
-                                            </button>
+                                    <?php if ($isGoogleAccount): ?>
+                                        <div class="rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm text-gray-600 dark:border-rose-900/60 dark:bg-gray-900/60 dark:text-gray-300 md:col-span-2">
+                                            Compte Google : la confirmation se fait sans mot de passe local suppl&eacute;mentaire.
                                         </div>
-                                        <span id="new_password_inline_error" class="mt-1 hidden text-xs text-gray-500 dark:text-gray-400"></span>
-                                    </div>
+                                    <?php else: ?>
+                                        <label class="<?php echo e($profileLabelClass); ?> md:col-span-2" for="delete_account_password">
+                                            <span class="profile-field-label"><i class="fas fa-lock" aria-hidden="true"></i> Mot de passe de confirmation</span>
+                                            <input class="<?php echo e($profileFieldClass); ?> border-rose-200 bg-white dark:border-rose-900/60 dark:bg-gray-900/70" type="password" id="delete_account_password" name="delete_account_password" autocomplete="current-password" required>
+                                        </label>
+                                    <?php endif; ?>
 
-                                    <div>
-                                        <label class="<?php echo e($profileLabelClass); ?>" for="confirm_password">
-                                            <span class="profile-field-label"><i class="fas fa-check-double" aria-hidden="true"></i> Confirmer le mot de passe</span>
-                                        </label>
-                                        <div class="mt-1 flex gap-3">
-                                            <input class="<?php echo e($profileFieldClass); ?> !mt-0 flex-1" type="password" id="confirm_password" name="confirm_password" minlength="8" autocomplete="new-password" required>
-                                            <button type="button" class="<?php echo e($profileSecondaryButtonClass); ?> profile-password-icon-button h-12 w-12 shrink-0 p-0 text-sm" data-password-toggle="#confirm_password" data-label-show="Afficher la confirmation du mot de passe" data-label-hide="Masquer la confirmation du mot de passe">
-                                                <i class="fas fa-eye" data-password-toggle-icon aria-hidden="true"></i>
-                                                <span class="sr-only" data-password-toggle-label>Afficher la confirmation du mot de passe</span>
-                                            </button>
-                                        </div>
-                                        <span id="confirm_password_inline_error" class="mt-1 hidden text-xs text-gray-500 dark:text-gray-400"></span>
-                                    </div>
+                                    <label class="md:col-span-2 inline-flex items-start gap-3 rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm text-gray-700 dark:border-rose-900/60 dark:bg-gray-900/60 dark:text-gray-200">
+                                        <input class="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" type="checkbox" name="delete_acknowledge" value="1" required>
+                                        <span><i class="fas fa-exclamation-circle mr-1.5 text-rose-500" aria-hidden="true"></i>Je confirme vouloir supprimer mon compte de mani&egrave;re irr&eacute;versible et perdre l'acc&egrave;s &agrave; cet espace.</span>
+                                    </label>
                                 </div>
 
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <button type="submit" class="<?php echo e($profilePrimaryButtonClass); ?>">
-                                        <i class="fas fa-shield-alt"></i>
-                                        <span>Mettre &agrave; jour</span>
+                                <div class="mt-5 flex flex-wrap items-center gap-2">
+                                    <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700">
+                                        <i class="fas fa-trash-alt"></i>
+                                        <span>Supprimer mon compte</span>
                                     </button>
                                 </div>
                             </form>
-                        </section>
-                    <?php endif; ?>
-
-                    <details class="profile-danger-zone rounded-2xl border border-rose-200 bg-white dark:border-rose-900/40 dark:bg-gray-800" <?php echo $deleteAccountPanelOpen ? 'open' : ''; ?>>
-                        <summary class="profile-danger-zone__summary flex cursor-pointer list-none items-center justify-between gap-4 p-5">
-                            <span class="min-w-0">
-                                <span class="block text-[11px] font-bold uppercase tracking-[0.28em] text-rose-600 dark:text-rose-300"><i class="fas fa-exclamation-triangle mr-1.5" aria-hidden="true"></i>Zone dangereuse</span>
-                                <span class="profile-section-title mt-1 text-lg font-bold text-rose-700 dark:text-rose-200"><i class="fas fa-trash-alt" aria-hidden="true"></i> Supprimer mon compte</span>
-                                <span class="mt-1 block text-sm text-gray-500 dark:text-gray-400">Ouvrez cette section uniquement si vous voulez lancer une suppression d&eacute;finitive.</span>
-                            </span>
-                            <span class="profile-danger-zone__chevron flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-200">
-                                <i class="fas fa-chevron-down" aria-hidden="true"></i>
-                            </span>
-                        </summary>
-
-                        <form method="post" action="<?php echo e($formAction); ?>" class="profile-danger-zone__panel border-t border-rose-100 p-5 dark:border-rose-900/40" data-delete-account-form data-final-confirm-message="Derni&egrave;re confirmation : supprimer d&eacute;finitivement ce compte ?">
-                            <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
-                            <input type="hidden" name="action" value="delete_account">
-                            <input class="hidden" type="text" name="delete_account_username" value="<?php echo e($email); ?>" autocomplete="username" tabindex="-1" aria-hidden="true">
-                            <p class="text-[11px] uppercase tracking-[0.28em] text-rose-600 dark:text-rose-300">Suppression</p>
-                            <h3 class="profile-section-title mt-1 text-lg font-bold text-rose-700 dark:text-rose-200"><i class="fas fa-user-slash" aria-hidden="true"></i> Supprimer le compte</h3>
-                            <p class="mt-1 text-sm text-rose-700/80 dark:text-rose-200/80">Cette action est irr&eacute;versible.</p>
-
-                            <div class="mt-5 grid gap-4 md:grid-cols-2">
-                                <label class="<?php echo e($profileLabelClass); ?> md:col-span-2" for="delete_confirmation">
-                                    <span class="profile-field-label"><i class="fas fa-keyboard" aria-hidden="true"></i> Confirmez en saisissant exactement SUPPRIMER</span>
-                                    <input class="<?php echo e($profileFieldClass); ?> border-rose-200 bg-white font-semibold tracking-[0.18em] dark:border-rose-900/60 dark:bg-gray-900/70" type="text" id="delete_confirmation" name="delete_confirmation" value="" autocomplete="new-password" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="SUPPRIMER" pattern="SUPPRIMER" data-delete-confirmation-input required>
-                                    <span class="mt-1 block text-xs text-rose-600 dark:text-rose-300">L'email ne suffit pas : le champ doit contenir uniquement SUPPRIMER.</span>
-                                </label>
-
-                                <?php if ($isGoogleAccount): ?>
-                                    <div class="rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm text-gray-600 dark:border-rose-900/60 dark:bg-gray-900/60 dark:text-gray-300 md:col-span-2">
-                                        Compte Google : la confirmation se fait sans mot de passe local suppl&eacute;mentaire.
-                                    </div>
-                                <?php else: ?>
-                                    <label class="<?php echo e($profileLabelClass); ?> md:col-span-2" for="delete_account_password">
-                                        <span class="profile-field-label"><i class="fas fa-lock" aria-hidden="true"></i> Mot de passe de confirmation</span>
-                                        <input class="<?php echo e($profileFieldClass); ?> border-rose-200 bg-white dark:border-rose-900/60 dark:bg-gray-900/70" type="password" id="delete_account_password" name="delete_account_password" autocomplete="current-password" required>
-                                    </label>
-                                <?php endif; ?>
-
-                                <label class="md:col-span-2 inline-flex items-start gap-3 rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm text-gray-700 dark:border-rose-900/60 dark:bg-gray-900/60 dark:text-gray-200">
-                                    <input class="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" type="checkbox" name="delete_acknowledge" value="1" required>
-                                    <span><i class="fas fa-exclamation-circle mr-1.5 text-rose-500" aria-hidden="true"></i>Je confirme vouloir supprimer mon compte de mani&egrave;re irr&eacute;versible et perdre l'acc&egrave;s &agrave; cet espace.</span>
-                                </label>
-                            </div>
-
-                            <div class="mt-5 flex flex-wrap items-center gap-2">
-                                <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700">
-                                    <i class="fas fa-trash-alt"></i>
-                                    <span>Supprimer mon compte</span>
-                                </button>
-                            </div>
-                        </form>
-                    </details>
+                        </details>
+                    </div>
                 </div>
             </div>
         </main>

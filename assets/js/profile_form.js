@@ -183,7 +183,7 @@
       }
       if (actionBar) {
         actionBar.classList.toggle('is-visible', isDirty);
-        actionBar.setAttribute('aria-hidden', isDirty ? 'false' : 'true');
+        actionBar.setAttribute('aria-hidden', 'false');
       }
       if (pageBody) {
         pageBody.classList.toggle('profile-mobile-actions-visible', isDirty);

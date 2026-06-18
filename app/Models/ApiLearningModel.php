@@ -67,10 +67,13 @@ final class ApiLearningModel extends Model
     public function countLessonCompletions(int $userId, int $courseId): int
     {
         $stmt = $this->pdo->prepare(
-            'SELECT COUNT(*)
-             FROM lesson_completions
-             WHERE course_id = :cid
-               AND user_id = :uid'
+            'SELECT COUNT(DISTINCT lc.lesson_id)
+             FROM lesson_completions lc
+             JOIN course_lessons l ON l.id = lc.lesson_id
+             JOIN course_chapters ch ON ch.id = l.chapter_id
+             WHERE lc.course_id = :cid
+               AND lc.user_id = :uid
+               AND ch.course_id = :cid'
         );
         $stmt->execute([
             ':cid' => $courseId,

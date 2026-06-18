@@ -29,7 +29,7 @@ $adminTopActions = [
     ['label' => 'Paramètres', 'url' => site_url('admin/site_settings?tab=certificate'), 'tone' => 'neutral'],
     ['label' => 'Tableau de bord', 'url' => site_url('admin/dashboard'), 'tone' => 'neutral'],
 ];
-$adminPageScripts = ['admin_certificate_preview.js'];
+$adminPageScripts = ['assets/vendor/qrcode-generator/qrcode.js', 'admin_certificate_preview.js'];
 ?>
 <!doctype html>
 <html lang="fr">
@@ -243,7 +243,9 @@ $adminPageScripts = ['admin_certificate_preview.js'];
 
                             <footer class="admin-certificate-footer">
                                 <div class="admin-certificate-verify">
-                                    <span aria-hidden="true"><i class="fas fa-qrcode"></i></span>
+                                    <span class="admin-certificate-qr" data-certificate-qr="<?php echo e($verifyUrl); ?>" aria-label="QR de vérification">
+                                        <i class="fas fa-qrcode" aria-hidden="true"></i>
+                                    </span>
                                     <div>
                                         <p>Vérification en ligne :</p>
                                         <strong><?php echo e($verifyUrl); ?></strong>

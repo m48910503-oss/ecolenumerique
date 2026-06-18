@@ -9,7 +9,6 @@
     return;
   }
 
-  const role = body.dataset.supportSpace || 'student';
   const basePath = body.dataset.basePath || '';
   const currentUserId = Number.parseInt(body.dataset.userId || '0', 10) || 0;
   const initialConv = Number.parseInt(body.dataset.initialConv || '0', 10) || 0;
@@ -25,8 +24,6 @@
 
   const newForm = document.getElementById('support-new-form');
   const newStatusEl = document.getElementById('support-new-status');
-  const categorySelect = document.getElementById('support-new-category');
-  const priorityInput = document.getElementById('support-new-priority');
   const newAttachmentsInput = document.getElementById('support-new-attachments');
   const newFilesHintEl = document.getElementById('support-new-files-hint');
 
@@ -49,23 +46,6 @@
   const inactiveFilterClasses =
     'ticket-filter-btn rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600';
 
-  const categoryPriorityMap = {
-    student: {
-      technical: 'high',
-      billing: 'high',
-      certificate: 'normal',
-      course: 'normal',
-      other: 'low',
-    },
-    teacher: {
-      technical: 'high',
-      lesson: 'normal',
-      meeting: 'normal',
-      withdrawal: 'high',
-      other: 'low',
-    },
-  };
-
   const categoryLabels = {
     technical: 'Problème technique',
     billing: 'Paiement',
@@ -75,12 +55,6 @@
     meeting: 'Rendez-vous',
     withdrawal: 'Retrait / revenus',
     other: 'Autre',
-  };
-
-  const priorityLabels = {
-    low: 'Faible',
-    normal: 'Normal',
-    high: 'Urgent',
   };
 
   const defaultSubjects = {
@@ -143,11 +117,6 @@
     }
 
     return 'other';
-  }
-
-  function normalizePriority(value) {
-    const raw = String(value || '').trim().toLowerCase();
-    return Object.prototype.hasOwnProperty.call(priorityLabels, raw) ? raw : 'normal';
   }
 
   function displaySubject(conversation) {
@@ -280,38 +249,6 @@
     }).format(parsed);
   }
 
-  function formatRelativeTime(raw) {
-    const parsed = parseDateValue(raw);
-    if (!parsed) {
-      return '';
-    }
-
-    const diffMs = Date.now() - parsed.getTime();
-    if (diffMs < 0) {
-      return '';
-    }
-
-    const minutes = Math.floor(diffMs / 60000);
-    if (minutes < 1) {
-      return 'à l\'instant';
-    }
-    if (minutes < 60) {
-      return `il y a ${minutes} min`;
-    }
-
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) {
-      return `il y a ${hours} h`;
-    }
-
-    const days = Math.floor(hours / 24);
-    if (days < 7) {
-      return `il y a ${days} j`;
-    }
-
-    return formatTicketDate(raw);
-  }
-
   function getInitials(name) {
     const clean = String(name || '')
       .replace(/[^A-Za-z0-9 ]+/g, ' ')
@@ -352,36 +289,19 @@
 
   function getTicketMeta(conversation) {
     const status = normalizeStatus(conversation?.status);
-    const unreadCount = Math.max(0, Number.parseInt(conversation?.unread_count || '0', 10) || 0);
 
     let statusLabel = 'Ouvert';
     let statusClass = 'support-ticket-status support-ticket-status--open';
-    let note = 'En attente de réponse';
-    let noteClass = 'support-ticket-note support-ticket-note--waiting';
 
     if (status === 'closed') {
       statusLabel = 'Résolu';
       statusClass = 'support-ticket-status support-ticket-status--closed';
-      note = 'Clôturé';
-      noteClass = 'support-ticket-note support-ticket-note--done';
     } else if (status === 'waiting_user') {
       statusLabel = 'Réponse requise';
       statusClass = 'support-ticket-status support-ticket-status--action';
-      note = 'Votre réponse est attendue';
-      noteClass = 'support-ticket-note support-ticket-note--action';
     } else if (status === 'waiting_support') {
       statusLabel = 'Support';
       statusClass = 'support-ticket-status support-ticket-status--waiting';
-      note = 'En attente du support';
-    } else if (unreadCount > 0) {
-      note = 'Nouveau message';
-      noteClass = 'support-ticket-note support-ticket-note--info';
-    }
-
-    const relative = formatRelativeTime(conversation?.last_message_at || '');
-    if (status !== 'closed' && status !== 'waiting_user' && unreadCount > 0 && relative !== '') {
-      note = `Réponse du support ${relative}`;
-      noteClass = 'support-ticket-note support-ticket-note--info';
     }
 
     return {
@@ -389,30 +309,8 @@
       statusGroup: status === 'closed' ? 'closed' : 'open',
       statusLabel,
       statusClass,
-      note,
-      noteClass,
-      unreadCount,
       dimmed: status === 'closed',
     };
-  }
-
-  function updatePriorityFromCategory() {
-    if (
-      !(categorySelect instanceof HTMLSelectElement) ||
-      !(
-        priorityInput instanceof HTMLInputElement ||
-        priorityInput instanceof HTMLSelectElement
-      )
-    ) {
-      return;
-    }
-
-    const selectedOption = categorySelect.selectedOptions[0];
-    const selectedValue = categorySelect.value || '';
-    priorityInput.value =
-      selectedOption?.dataset?.priority ||
-      categoryPriorityMap[role]?.[selectedValue] ||
-      'normal';
   }
 
   function setTicketFilter(nextFilter) {
@@ -506,13 +404,9 @@
       category = legacyCategoryForTicket(conversation.id);
     }
     const categoryLabel = conversation.category_label || categoryLabels[category] || categoryLabels.other;
-    const priority = normalizePriority(conversation.priority);
-    const priorityLabel = conversation.priority_label || priorityLabels[priority] || priorityLabels.normal;
-    const priorityClass =
-      `support-ticket-priority support-ticket-priority--${priority === 'high' ? 'urgent' : priority}`;
     const updatedAt = conversation.updated_at || conversation.last_message_at || conversation.created_at || '';
     const updatedLabel = formatTicketDate(updatedAt);
-    const actionLabel = meta.statusGroup === 'closed' ? 'Détails' : 'Voir / Répondre';
+    const actionLabel = 'Ouvrir';
     const subject = displaySubject(conversation);
 
     card.innerHTML = `
@@ -533,20 +427,12 @@
           <i class="fas fa-layer-group" aria-hidden="true"></i>
           ${escapeHtml(categoryLabel)}
         </span>
-        <span class="${priorityClass}">
-          <i class="fas fa-flag" aria-hidden="true"></i>
-          ${escapeHtml(priorityLabel)}
-        </span>
         <span>
           <i class="far fa-clock" aria-hidden="true"></i>
           Mis à jour : ${escapeHtml(updatedLabel)}
         </span>
       </div>
       <div class="support-ticket-footer mt-3">
-        <span class="${meta.noteClass}">
-          ${escapeHtml(meta.note)}
-          ${meta.unreadCount > 0 ? `<span class="ml-2 rounded-full bg-primary-600 px-2 py-0.5 text-[10px] font-bold text-white">${meta.unreadCount}</span>` : ''}
-        </span>
         <button type="button" class="support-ticket-action" data-ticket-action>
           ${escapeHtml(actionLabel)}
           <i class="fas fa-arrow-right" aria-hidden="true"></i>
@@ -863,7 +749,6 @@
       return;
     }
 
-    updatePriorityFromCategory();
     setInlineStatus(newStatusEl, '', '');
 
     const submitButton = newForm.querySelector('button[type="submit"]');
@@ -884,7 +769,6 @@
       });
 
       newForm.reset();
-      updatePriorityFromCategory();
       updateFileHint(
         newAttachmentsInput,
         newFilesHintEl,
@@ -939,7 +823,6 @@
         creationPayload.delete('conversation_id');
         creationPayload.set('subject', subjectFromBody(bodyText));
         creationPayload.set('body', bodyText);
-        creationPayload.set('priority', 'normal');
         creationPayload.set('category', 'course');
 
         const payload = await fetchJson(`${basePath}/api/support_conversations`, {
@@ -1022,11 +905,6 @@
       setTicketFilter(button.dataset.ticketFilter || 'all');
     });
   });
-
-  updatePriorityFromCategory();
-  if (categorySelect instanceof HTMLSelectElement) {
-    categorySelect.addEventListener('change', updatePriorityFromCategory);
-  }
 
   if (newAttachmentsInput instanceof HTMLInputElement) {
     newAttachmentsInput.addEventListener('change', () => {

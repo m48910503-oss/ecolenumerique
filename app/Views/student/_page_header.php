@@ -4,6 +4,7 @@ $studentPageClass = trim((string) ($studentPageClass ?? ''));
 $studentPageEyebrow = trim((string) ($studentPageEyebrow ?? ''));
 $studentPageTitle = trim((string) ($studentPageTitle ?? ''));
 $studentPageSummary = trim((string) ($studentPageSummary ?? ''));
+$studentPageIcon = trim((string) ($studentPageIcon ?? ''));
 $studentPageAsideHtml = trim((string) ($studentPageAsideHtml ?? ''));
 $studentPageActions = is_array($studentPageActions ?? null) ? $studentPageActions : [];
 $studentPageStats = is_array($studentPageStats ?? null) ? $studentPageStats : [];
@@ -69,6 +70,7 @@ $pageHeroClass = trim('student-page-header ' . $studentPageClass);
 $pageHeroEyebrow = $studentPageEyebrow;
 $pageHeroTitle = $studentPageTitle;
 $pageHeroSummary = $studentPageSummary;
+$pageHeroIcon = $studentPageIcon;
 $pageHeroAsideHtml = $studentPageAsideHtml;
 
 require __DIR__ . '/../shared/_page_hero.php';

@@ -4,6 +4,7 @@ declare(strict_types=1);
 return [
     'icon' => static function (string $name, string $classes = 'h-5 w-5'): string {
         $classAttr = htmlspecialchars($classes, ENT_QUOTES, 'UTF-8');
+        $iconAttr = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
 
         if ($name === 'google') {
             return sprintf(
@@ -29,8 +30,9 @@ $paths = match ($name) {
         };
 
         return sprintf(
-            '<svg class="%s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">%s</svg>',
+            '<svg class="%s" data-app-icon="%s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">%s</svg>',
             $classAttr,
+            $iconAttr,
             $paths
         );
     },

@@ -13,9 +13,19 @@
 
   if (!courseId) return;
 
-  const totalLessons = parseInt(body.dataset.totalLessons || '0', 10);
-  let doneLessons = parseInt(body.dataset.doneLessons || '0', 10);
-  let baseProgress = parseInt(body.dataset.baseProgress || '0', 10);
+  const totalLessons = Math.max(0, parseInt(body.dataset.totalLessons || '0', 10) || 0);
+
+  function clampDone(value) {
+    const parsed = Math.max(0, parseInt(value || '0', 10) || 0);
+    return totalLessons > 0 ? Math.min(parsed, totalLessons) : 0;
+  }
+
+  function clampPercent(value) {
+    return Math.max(0, Math.min(100, parseFloat(value || 0) || 0));
+  }
+
+  let doneLessons = clampDone(body.dataset.doneLessons || '0');
+  let baseProgress = clampPercent(body.dataset.baseProgress || '0');
 
   const perLessonPct = totalLessons > 0 ? 100 / totalLessons : 0;
   let currentProgress = baseProgress;
@@ -26,6 +36,10 @@
   function updateProgressCount() {
     const counter = document.getElementById('progress-counter');
     if (counter) counter.textContent = `${doneLessons} / ${totalLessons}`;
+  }
+
+  function progressSummaryText() {
+    return `${doneLessons} / ${totalLessons}`;
   }
 
   function getCurrentLessonId() {
@@ -54,14 +68,39 @@
     const label = $('#progress-label');
     const sidebarBar = $('#sidebar-progress-bar');
     const sidebarLabel = $('#sidebar-progress');
+    const completionBadge = $('#course-completion-badge');
+    const completionPanel = $('#course-completion-panel');
+    const progressState = $('#course-progress-state');
+    const roundedPercent = Math.max(0, Math.min(100, Math.floor(percent)));
+    const summary = progressSummaryText();
+    const complete = totalLessons > 0 && doneLessons >= totalLessons;
 
     if (bar) bar.style.width = `${percent}%`;
-    if (span) span.textContent = `${percent}%`;
-    if (label) label.textContent = `${percent}% complété`;
+    if (span) span.textContent = `${roundedPercent}% · ${summary}`;
+    if (label) label.textContent = `${roundedPercent}% complété`;
     if (sidebarBar) sidebarBar.style.width = `${percent}%`;
-    if (sidebarLabel) sidebarLabel.textContent = `${percent}%`;
+    if (sidebarLabel) sidebarLabel.textContent = `${roundedPercent}% · ${summary}`;
+    if (completionBadge) completionBadge.classList.toggle('hidden', !complete);
+    if (completionPanel) completionPanel.classList.toggle('hidden', !complete);
+    if (progressState) {
+      progressState.innerHTML = complete
+        ? '<i class="fas fa-check" aria-hidden="true"></i> Cours terminé'
+        : '<i class="fas fa-play" aria-hidden="true"></i> En cours';
+      progressState.classList.toggle('border-emerald-200', complete);
+      progressState.classList.toggle('bg-emerald-50', complete);
+      progressState.classList.toggle('text-emerald-700', complete);
+      progressState.classList.toggle('dark:border-emerald-900/50', complete);
+      progressState.classList.toggle('dark:bg-emerald-900/25', complete);
+      progressState.classList.toggle('dark:text-emerald-200', complete);
+      progressState.classList.toggle('border-primary-200', !complete);
+      progressState.classList.toggle('bg-primary-50', !complete);
+      progressState.classList.toggle('text-primary-700', !complete);
+      progressState.classList.toggle('dark:border-primary-900/50', !complete);
+      progressState.classList.toggle('dark:bg-primary-900/25', !complete);
+      progressState.classList.toggle('dark:text-primary-200', !complete);
+    }
 
-    const roundedPercent = Math.max(0, Math.min(100, Math.floor(percent)));
+    body.dataset.courseCompleted = complete ? '1' : '0';
     body.dataset.currentProgress = String(roundedPercent);
     window.dispatchEvent(new CustomEvent('course:progressChanged', {
       detail: {
@@ -89,8 +128,8 @@
       } else {
         btnTop.textContent = label;
       }
-      btnTop.classList.remove('border-emerald-500');
-      btnTop.classList.add('border-emerald-400', 'text-emerald-200');
+      btnTop.classList.remove('text-gray-600', 'dark:text-gray-400');
+      btnTop.classList.add('text-emerald-600', 'dark:text-emerald-300');
     }
 
     const btnBottom = document.querySelector('[data-action="mark-done"]');
@@ -128,6 +167,18 @@
 
   async function sendCompletion(lessonId) {
     if (!lessonId) return;
+    const currentItem = document.querySelector(
+      `.queue-item[data-lesson-id="${lessonId}"]`
+    );
+    const btnTop = document.getElementById('btn-mark');
+    if (
+      (currentItem && currentItem.dataset.done === '1') ||
+      (btnTop && btnTop.dataset.done === '1')
+    ) {
+      updateProgressUI(baseProgress);
+      updateProgressCount();
+      return;
+    }
 
     try {
       const res = await fetch(basePath + '/api/lesson_complete', {
@@ -157,8 +208,8 @@
       markLessonLocallyAsDone(lessonId);
 
       if (typeof data.progress_percent !== 'undefined') {
-        baseProgress = parseInt(data.progress_percent, 10) || 0;
-        doneLessons = parseInt(data.done_count ?? doneLessons, 10);
+        baseProgress = clampPercent(data.progress_percent);
+        doneLessons = clampDone(data.done_count ?? doneLessons);
         currentProgress = baseProgress;
         updateProgressUI(baseProgress);
         updateProgressCount();

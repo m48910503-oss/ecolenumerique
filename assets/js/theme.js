@@ -153,6 +153,15 @@
         );
     };
 
+    const ensureIconColorStylesheet = (moveToEnd = false) => {
+        ensureStylesheet(
+            'link[data-app-icon-colors="1"], link[href*="/assets/css/icon-colors.css"], link[href*="assets/css/icon-colors.css"]',
+            `${withBasePath('assets/css/icon-colors.css')}?v=20260618-icon-colors`,
+            'data-app-icon-colors',
+            moveToEnd
+        );
+    };
+
     const ensureTypographyStylesheet = (moveToEnd = false) => {
         ensureStylesheet(
             'link[data-app-typography="1"], link[href*="/assets/css/app-typography.css"], link[href*="assets/css/app-typography.css"]',
@@ -1164,6 +1173,7 @@
     /* — Exécution immédiate (avant DOMContentLoaded) — */
     ensureFontStylesheet();
     ensureIconStylesheet();
+    ensureIconColorStylesheet();
     ensureStudentStylesheet();
     ensureTypographyStylesheet(true);
     ensureTailwindCdn();
@@ -1223,6 +1233,7 @@
             ensureStudentStylesheet(true);
         }
         ensureIconStylesheet();
+        ensureIconColorStylesheet(true);
         ensureTypographyStylesheet(true);
         ensureToolbarOffsetSync();
         initMobileKpiToggle();

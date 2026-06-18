@@ -25,7 +25,7 @@ $adminAssetUrl = static function (string $relativePath): string {
     if ($adminPageScript === '') {
         continue;
     }
-    if (strpos($adminPageScript, 'assets/js/') !== 0) {
+    if (strpos($adminPageScript, 'assets/') !== 0) {
         $adminPageScript = 'assets/js/' . $adminPageScript;
     }
     ?>

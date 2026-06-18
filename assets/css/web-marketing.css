@@ -1,11 +1,16 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Syne:wght@500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
 :root {
-  --app-font-title: "Syne", "Segoe UI", system-ui, sans-serif;
+  --app-font-title: "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --app-font-display: var(--app-font-title);
-  --app-font-body: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --app-font-sans: var(--app-font-body);
-  --app-font-numeric: "IBM Plex Mono", "Cascadia Code", Consolas, monospace;
+  --app-font-section: var(--app-font-title);
+  --app-font-ui: var(--app-font-title);
+  --app-font-sans: var(--app-font-title);
+  --app-font-body: var(--app-font-title);
+  --app-font-serif: "Times New Roman", Times, Georgia, serif;
+  --app-font-accent: var(--app-font-serif);
+  --app-font-mono: "IBM Plex Mono", "Cascadia Code", Consolas, monospace;
+  --app-font-numeric: var(--app-font-mono);
   --mk-bg: linear-gradient(180deg, #f8fafc 0%, #eef4ff 42%, #f8fafc 100%);
   --mk-surface: rgba(255, 255, 255, 0.88);
   --mk-surface-strong: #ffffff;

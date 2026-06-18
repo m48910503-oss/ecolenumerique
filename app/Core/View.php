@@ -74,6 +74,7 @@ final class View
         $html = self::injectFavicon($html);
         $html = self::injectIconFontLayer($html);
         $html = self::injectTypographyLayer($html);
+        $html = self::injectIconColorLayer($html);
 
         if (!self::shouldInjectGlobalAssets($html, $data)) {
             return self::normalizeRenderedHtml(self::injectNotificationRuntime($html));
@@ -235,6 +236,24 @@ final class View
             $html,
             'data-app-icons="1"',
             '<link rel="stylesheet" href="' . htmlspecialchars($iconCssUrl, ENT_QUOTES, 'UTF-8') . '" data-app-icons="1">'
+        );
+    }
+
+    private static function injectIconColorLayer(string $html): string
+    {
+        if (
+            preg_match('/<link\b[^>]+assets\/css\/icon-colors\.css[^>]*>/i', $html) === 1
+            || stripos($html, 'data-app-icon-colors=') !== false
+        ) {
+            return $html;
+        }
+
+        $iconColorCssUrl = self::assetUrl('assets/css/icon-colors.css');
+
+        return self::injectHeadAsset(
+            $html,
+            'data-app-icon-colors="1"',
+            '<link rel="stylesheet" href="' . htmlspecialchars($iconColorCssUrl, ENT_QUOTES, 'UTF-8') . '" data-app-icon-colors="1">'
         );
     }
 

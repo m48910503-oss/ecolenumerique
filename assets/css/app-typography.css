@@ -1386,3 +1386,179 @@ body.app-role-admin[data-view^="admin/"] :is(.admin-shell-card > p, .admin-shell
   font-family: "Font Awesome 6 Brands", "Font Awesome 5 Brands" !important;
   font-weight: 400 !important;
 }
+
+/* Admin final visual pass: screenshot-driven consistency fixes. */
+body.app-role-admin[data-view^="admin/"] {
+  --admin-readable-text: #0f172a;
+  --admin-readable-muted: #475569;
+  --admin-header-bg: rgba(255, 255, 255, 0.96);
+}
+
+html.dark body.app-role-admin[data-view^="admin/"],
+html[data-theme="dark"] body.app-role-admin[data-view^="admin/"] {
+  --admin-readable-text: #f8fafc;
+  --admin-readable-muted: #cbd5e1;
+  --admin-header-bg: rgba(30, 41, 59, 0.96);
+}
+
+body.app-role-admin[data-view^="admin/"] .admin-dashboard-topbar,
+body.app-role-admin[data-view^="admin/"] .admin-shell-topbar {
+  z-index: 60 !important;
+  background: var(--admin-header-bg) !important;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 18px 42px -34px rgba(15, 23, 42, 0.52) !important;
+}
+
+body.app-role-admin[data-view^="admin/"] .admin-dashboard-topbar form {
+  width: min(26rem, 38vw) !important;
+  min-width: 18rem;
+}
+
+body.app-role-admin[data-view^="admin/"] .admin-dashboard-topbar input[type="text"] {
+  width: 100% !important;
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+
+body.app-role-admin[data-view^="admin/"] .admin-shell-content {
+  padding-top: clamp(1.25rem, 2.3vw, 1.8rem) !important;
+}
+
+body.app-role-admin[data-view^="admin/"] .admin-shell-content > :first-child {
+  margin-top: 0 !important;
+}
+
+body.app-role-admin[data-view^="admin/"] :is(
+  .admin-shell-hero,
+  .admin-categories-hero,
+  .admin-teachers-hero,
+  .admin-stats-v2-hero,
+  .admin-finance-hero,
+  .admin-settings-hero,
+  .admin-notifications-hero,
+  .admin-error-logs-hero,
+  .admin-announcement-hero,
+  .admin-secondary-template-hero
+) {
+  scroll-margin-top: 6.5rem;
+}
+
+body.app-role-admin[data-view^="admin/"] :is(
+  .admin-shell-hero,
+  .admin-categories-hero,
+  .admin-teachers-hero,
+  .admin-stats-v2-hero,
+  .admin-finance-hero,
+  .admin-settings-hero,
+  .admin-notifications-hero,
+  .admin-error-logs-hero,
+  .admin-announcement-hero,
+  .admin-secondary-template-hero
+) :is(p, span, small) {
+  font-family: var(--app-font-body) !important;
+  font-style: normal !important;
+  font-weight: 500 !important;
+  line-height: 1.55 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-admin[data-view^="admin/"] :is(
+  .admin-shell-hero,
+  .admin-categories-hero,
+  .admin-teachers-hero,
+  .admin-stats-v2-hero,
+  .admin-finance-hero,
+  .admin-settings-hero,
+  .admin-notifications-hero,
+  .admin-error-logs-hero,
+  .admin-announcement-hero,
+  .admin-secondary-template-hero
+) :is(h1, h2) {
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-admin[data-view^="admin/"] :is(.admin-shell-card h3, .admin-shell-panel h3, .admin-kpi-card h3, .admin-dashboard-card h3, .admin-metric-card h3) {
+  font-weight: 620 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-admin[data-view^="admin/"] :is(.admin-shell-table, table) th {
+  color: var(--admin-readable-muted) !important;
+  font-family: var(--app-font-body) !important;
+  font-size: 0.8rem !important;
+  font-weight: 560 !important;
+  letter-spacing: 0.045em !important;
+}
+
+body.app-role-admin[data-view^="admin/"] :is(.admin-shell-table, table) td {
+  color: var(--admin-readable-muted) !important;
+  font-family: var(--app-font-body) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-admin[data-view^="admin/"] :is(.admin-shell-table, table) td :is(strong, b, .font-bold, .font-semibold) {
+  color: var(--admin-readable-text) !important;
+  font-weight: 560 !important;
+}
+
+body.app-role-admin[data-view^="admin/"] :is(.admin-shell-badge, .app-status-pill, [class*="pill"], [class*="chip"], [class*="badge"]) {
+  font-weight: 560 !important;
+  text-shadow: none !important;
+}
+
+body.app-role-admin[data-view="admin/categories"] .admin-category-simple-name {
+  font-weight: 580 !important;
+}
+
+body.app-role-admin[data-view="admin/categories"] .admin-category-simple-count {
+  font-weight: 500 !important;
+}
+
+html:not(.dark):not([data-theme="dark"]) body.app-role-admin[data-view="admin/categories"] .admin-category-simple {
+  background: var(--role-surface) !important;
+  border-color: var(--role-border) !important;
+  box-shadow: var(--role-shadow) !important;
+}
+
+html:not(.dark):not([data-theme="dark"]) body.app-role-admin[data-view="admin/categories"] .admin-category-simple-table {
+  color: var(--admin-readable-text) !important;
+  background: transparent !important;
+}
+
+html:not(.dark):not([data-theme="dark"]) body.app-role-admin[data-view="admin/categories"] .admin-category-simple-table thead {
+  background: color-mix(in srgb, #2563eb 5%, #ffffff 95%) !important;
+}
+
+html:not(.dark):not([data-theme="dark"]) body.app-role-admin[data-view="admin/categories"] .admin-category-simple-table th {
+  color: var(--admin-readable-muted) !important;
+}
+
+html:not(.dark):not([data-theme="dark"]) body.app-role-admin[data-view="admin/categories"] .admin-category-simple-table td {
+  color: var(--admin-readable-muted) !important;
+  background: transparent !important;
+}
+
+html:not(.dark):not([data-theme="dark"]) body.app-role-admin[data-view="admin/categories"] .admin-category-simple-table tbody tr:nth-child(even) {
+  background: rgba(226, 232, 240, 0.38) !important;
+}
+
+html:not(.dark):not([data-theme="dark"]) body.app-role-admin[data-view="admin/categories"] .admin-category-simple-table tbody tr:hover {
+  background: color-mix(in srgb, #2563eb 7%, #ffffff 93%) !important;
+}
+
+html:not(.dark):not([data-theme="dark"]) body.app-role-admin[data-view="admin/categories"] .admin-category-simple-name {
+  color: var(--admin-readable-text) !important;
+}
+
+html:not(.dark):not([data-theme="dark"]) body.app-role-admin[data-view="admin/categories"] .admin-category-simple-count {
+  color: var(--admin-readable-muted) !important;
+}
+
+@media (max-width: 900px) {
+  body.app-role-admin[data-view^="admin/"] .admin-dashboard-topbar form {
+    width: auto !important;
+    min-width: 0;
+  }
+}

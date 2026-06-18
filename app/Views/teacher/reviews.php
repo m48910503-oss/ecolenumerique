@@ -36,7 +36,6 @@ if ($selectedCourseTitle === '' && $detailMode && $courseId > 0) {
 }
 
 $summaryTotal = max(0, (int) ($summary['total'] ?? count($allVisibleReviews)));
-$summaryAvgDisplay = number_format((float) ($summary['avg'] ?? 0.0), 2, '.', '');
 $summaryResponseRate = max(0, min(100, (int) ($summary['response_rate'] ?? 0)));
 $summaryPending = max(0, (int) ($summary['pending'] ?? 0));
 $ratingFilterValue = max(0, min(5, (int) ($filters['ratingMin'] ?? 0)));
@@ -155,18 +154,11 @@ $activePendingCards = array_values(array_filter(
     $activeCourseCards,
     static fn (array $card): bool => max(0, (int) ($card['review_count'] ?? 0)) === 0
 ));
-$archivedReviewedCards = array_values(array_filter(
-    $archivedCourseCards,
-    static fn (array $card): bool => max(0, (int) ($card['review_count'] ?? 0)) > 0
-));
 $archivedPendingCards = array_values(array_filter(
     $archivedCourseCards,
     static fn (array $card): bool => max(0, (int) ($card['review_count'] ?? 0)) === 0
 ));
-$coursesWithReviewsCount = count($activeReviewedCards) + count($archivedReviewedCards);
 $coursesWithoutReviewsCount = count($activePendingCards) + count($archivedPendingCards);
-$totalCourseCount = count($reviewableCourseCards);
-$activeCourseCount = count($activeCourseCards);
 $archivedCourseCount = count($archivedCourseCards);
 $formatEntityCount = static function (int $count, string $singular, ?string $plural = null) use ($formatCount): string {
     return $formatCount($count) . ' ' . ($count > 1 ? ($plural ?? ($singular . 's')) : $singular);
@@ -201,32 +193,19 @@ foreach ($activeReviewedCards as $card) {
         break;
     }
 }
-$smartSummaryText = $summaryTotal > 0
-    ? 'Votre note moyenne est de ' . $summaryAvgDisplay . '/5. ' . $formatEntityCount($summaryPending, 'avis sans réponse', 'avis sans réponse') . '. Répondre aux avis renforce la confiance des futurs étudiants.'
-    : ($coursesWithoutReviewsCount > 0
-        ? $formatEntityCount($coursesWithoutReviewsCount, 'cours attend', 'cours attendent') . ' encore un premier avis. Priorité : encourager les étudiants actifs à laisser un retour.'
-        : 'Aucun avis reçu pour le moment. Les retours apparaîtront ici dès les premières évaluations.');
 $quickReadText = $coursesWithoutReviewsCount > 0
     ? $formatEntityCount($coursesWithoutReviewsCount, 'cours attend', 'cours attendent') . ' encore leur premier avis. Priorité : encourager les étudiants actifs à laisser un retour.'
     : ($summaryPending > 0
         ? $formatEntityCount($summaryPending, 'avis reste', 'avis restent') . ' sans réponse. Priorité : traiter les retours récents.'
         : 'Tous les avis visibles ont reçu une réponse. Continuez à suivre les nouveaux retours.');
-$recommendedActionTitle = '';
-$recommendedActionText = '';
 $recommendedActionUrl = '';
 $recommendedActionLabel = '';
 if (is_array($firstCourseWithPendingReply)) {
     $recommendedCourseId = max(0, (int) ($firstCourseWithPendingReply['course_id'] ?? 0));
-    $recommendedTitle = trim((string) ($firstCourseWithPendingReply['course_title'] ?? 'ce cours'));
-    $recommendedActionTitle = 'Action recommandée';
-    $recommendedActionText = 'Répondez à l’avis du cours "' . $recommendedTitle . '" pour améliorer votre taux de réponse.';
     $recommendedActionUrl = $overviewUrl . '?course_id=' . $recommendedCourseId . '&detail=1';
     $recommendedActionLabel = 'Répondre aux avis';
 } elseif (is_array($firstCourseWithoutReview)) {
     $recommendedCourseId = max(0, (int) ($firstCourseWithoutReview['course_id'] ?? 0));
-    $recommendedTitle = trim((string) ($firstCourseWithoutReview['course_title'] ?? 'ce cours'));
-    $recommendedActionTitle = 'Cours à encourager';
-    $recommendedActionText = 'Le cours "' . $recommendedTitle . '" attend encore son premier avis. Invitez les étudiants actifs à partager leur retour.';
     $recommendedActionUrl = site_url('teacher/course_preview?id=' . $recommendedCourseId);
     $recommendedActionLabel = 'Voir le cours';
 }
@@ -241,6 +220,15 @@ $renderCourseCard = static function (array $courseCard) use ($overviewUrl, $form
     $courseLatestLabel = $formatDateLabel(trim((string) ($courseCard['latest_review_at'] ?? '')), 'Aucun avis');
     $courseDetailUrl = $overviewUrl . '?course_id=' . $courseCardId . '&detail=1';
     $coursePreviewUrl = site_url('teacher/course_preview?id=' . $courseCardId);
+    $coursePrimaryUrl = $courseReviews > 0 ? $courseDetailUrl : $coursePreviewUrl;
+    $coursePrimaryLabel = $courseReviews > 0 ? 'Voir les avis' : 'Voir le cours';
+    $coursePrimaryExtraClass = $courseReviews > 0 ? ' view-reviews-btn' : '';
+    $courseMetaLabel = '';
+    if ($courseReviews > 0) {
+        $courseMetaLabel = 'Dernier avis le ' . $courseLatestLabel;
+    } elseif ($courseArchived) {
+        $courseMetaLabel = 'Archivé sans avis';
+    }
     $courseShellClass = 'bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border hover-lift cursor-pointer';
     if ($courseArchived) {
         $courseShellClass .= ' border-slate-200 bg-slate-50/70 dark:border-slate-700 dark:bg-gray-800/70';
@@ -264,15 +252,9 @@ $renderCourseCard = static function (array $courseCard) use ($overviewUrl, $form
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
           <h3 class="font-semibold text-gray-900 dark:text-white truncate"><?php echo e($courseTitle); ?></h3>
-          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            <?php if ($courseReviews > 0): ?>
-              Dernier avis le <?php echo e($courseLatestLabel); ?>
-            <?php elseif ($courseArchived): ?>
-              Historique conservé, aucun nouvel avis enregistré.
-            <?php else: ?>
-              Ce cours attend encore son premier avis.
-            <?php endif; ?>
-          </p>
+          <?php if ($courseMetaLabel !== ''): ?>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400"><?php echo e($courseMetaLabel); ?></p>
+          <?php endif; ?>
         </div>
         <?php if ($courseArchived): ?>
           <span class="shrink-0 inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:bg-slate-700/60 dark:text-slate-300">Archivé</span>
@@ -288,7 +270,8 @@ $renderCourseCard = static function (array $courseCard) use ($overviewUrl, $form
             <span class="text-2xl font-bold text-gray-900 dark:text-white"><?php echo e($courseAvg); ?></span>
             <span class="text-yellow-400 mb-1" aria-hidden="true">★</span>
           <?php else: ?>
-            <span class="text-xl font-semibold text-gray-500 dark:text-gray-300">Cours à encourager</span>
+            <span class="text-2xl font-bold text-gray-900 dark:text-white">0</span>
+            <span class="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">avis</span>
           <?php endif; ?>
         </div>
         <span class="text-xs text-gray-500 dark:text-gray-400"><?php echo e($courseReviews > 0 ? $formatCount($courseReviews) . ' avis' : 'Aucun avis'); ?></span>
@@ -296,23 +279,14 @@ $renderCourseCard = static function (array $courseCard) use ($overviewUrl, $form
       <div class="mt-3 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
         <span><i class="fas fa-user-graduate mr-1" aria-hidden="true"></i><?php echo e($formatCount($courseStudents)); ?> étudiants</span>
       </div>
-      <div class="mt-4 grid gap-2 <?php echo $courseReviews > 0 ? 'sm:grid-cols-1' : 'sm:grid-cols-2'; ?>">
+      <div class="mt-4">
         <a
-          href="<?php echo e($courseReviews > 0 ? $courseDetailUrl : $coursePreviewUrl); ?>"
-          class="w-full inline-flex items-center justify-center py-2 border border-primary-200 dark:border-primary-800 text-primary-600 dark:text-primary-400 rounded-lg text-sm font-medium hover:bg-primary-50 dark:hover:bg-primary-900/20 transition <?php echo $courseReviews > 0 ? 'view-reviews-btn' : ''; ?>"
+          href="<?php echo e($coursePrimaryUrl); ?>"
+          class="w-full inline-flex items-center justify-center py-2 border border-primary-200 dark:border-primary-800 text-primary-600 dark:text-primary-400 rounded-lg text-sm font-medium hover:bg-primary-50 dark:hover:bg-primary-900/20 transition<?php echo $coursePrimaryExtraClass; ?>"
           data-course-id="<?php echo e((string) $courseCardId); ?>"
         >
-          <?php echo $courseReviews > 0 ? 'Voir les avis' : 'Voir le cours'; ?>
+          <?php echo e($coursePrimaryLabel); ?>
         </a>
-        <?php if ($courseReviews === 0): ?>
-          <a
-            href="<?php echo e($courseDetailUrl); ?>"
-            class="w-full inline-flex items-center justify-center py-2 border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200 rounded-lg text-sm font-medium hover:bg-amber-100 dark:hover:bg-amber-500/15 transition view-reviews-btn"
-            data-course-id="<?php echo e((string) $courseCardId); ?>"
-          >
-            Suivre les avis
-          </a>
-        <?php endif; ?>
       </div>
     </article>
     <?php
@@ -405,7 +379,7 @@ if (!is_string($teacherReviewsClientDataJson) || $teacherReviewsClientDataJson =
   <title>Avis & Notes · Enseignant · École Numérique</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time()))); ?>">
   <script src="<?php echo e(site_url('assets/js/sidebar_toggle.js')); ?>" defer></script>
@@ -414,6 +388,9 @@ if (!is_string($teacherReviewsClientDataJson) || $teacherReviewsClientDataJson =
     .hover-lift { transition: transform 0.25s ease, box-shadow 0.25s ease; }
     .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.08); }
     .review-filter-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       border: 1px solid rgba(148, 163, 184, 0.38);
       border-radius: 999px;
       color: #475569;
@@ -491,6 +468,28 @@ if (!is_string($teacherReviewsClientDataJson) || $teacherReviewsClientDataJson =
       background: rgba(37, 99, 235, 0.18);
       color: #bfdbfe;
     }
+    @media (max-width: 640px) {
+      [data-review-overview-filters] {
+        padding: 0.9rem;
+      }
+      [data-review-overview-filters] .review-filter-chip-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.45rem;
+      }
+      [data-review-overview-filters] .review-filter-chip {
+        width: 100%;
+        min-height: 2rem;
+        padding: 0.35rem 0.55rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        line-height: 1.1;
+      }
+      [data-review-overview-filters] .overview-course-search {
+        min-height: 2.45rem;
+        font-size: 0.875rem;
+      }
+    }
     html.dark .review-action-menu__list,
     html[data-theme="dark"] .review-action-menu__list {
       border-color: rgba(100, 116, 139, 0.62);
@@ -543,6 +542,16 @@ $teacherTopContextLabel = $detailMode ? $selectedCourseTitle : 'Par cours';
     <?php require __DIR__ . '/_topbar.php'; ?>
 
     <div class="p-4 pb-24 space-y-8 animate-fade-up sm:p-6 sm:pb-24">
+      <?php $teacherWelcomeTitle = $detailMode ? ('Avis du cours : ' . $selectedCourseTitle) : 'Avis & Notes'; ?>
+      <?php $teacherWelcomeSummary = $detailMode ? 'Consultez les retours étudiants et répondez aux avis du cours sélectionné.' : $quickReadText; ?>
+      <?php $teacherWelcomeActionUrl = $detailMode ? $overviewUrl : $recommendedActionUrl; ?>
+      <?php $teacherWelcomeActionLabel = $detailMode ? 'Retour aux avis' : $recommendedActionLabel; ?>
+      <?php $teacherWelcomeActionIcon = $detailMode ? 'arrow-left' : 'chevron-right'; ?>
+      <?php if ($teacherWelcomeActionUrl === ''): ?>
+        <?php $teacherWelcomeActionLabel = ''; ?>
+      <?php endif; ?>
+      <?php require __DIR__ . '/_welcome_hero.php'; ?>
+
       <?php if ($successMessage !== ''): ?>
         <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100">
           <?php echo e($successMessage); ?>
@@ -564,60 +573,11 @@ $teacherTopContextLabel = $detailMode ? $selectedCourseTitle : 'Par cours';
       <?php endif; ?>
 
       <section id="overview-view" class="<?php echo $detailMode ? 'hidden ' : ''; ?>space-y-8">
-        <div class="rounded-3xl border border-primary-100 bg-primary-50/80 p-5 shadow-card dark:border-primary-500/30 dark:bg-primary-500/10">
-          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div class="max-w-4xl">
-              <p class="text-xs uppercase tracking-[0.24em] text-primary-700 dark:text-primary-200">Résumé intelligent</p>
-              <p class="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-200"><?php echo e($smartSummaryText); ?></p>
-            </div>
-            <?php if ($recommendedActionUrl !== ''): ?>
-              <a href="<?php echo e($recommendedActionUrl); ?>" class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-700">
-                <i class="fas fa-arrow-right" aria-hidden="true"></i>
-                <?php echo e($recommendedActionLabel); ?>
-              </a>
-            <?php endif; ?>
-          </div>
-        </div>
-
-        <div class="rounded-3xl border border-gray-200 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
-          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div class="max-w-3xl">
-              <p class="text-xs uppercase tracking-[0.28em] text-gray-500 dark:text-gray-400">Résumé des avis</p>
-              <p class="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300"><?php echo e($quickReadText); ?></p>
-            </div>
-            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-5">
-              <div class="rounded-2xl bg-yellow-100/95 px-3 py-2 dark:bg-yellow-500/20">
-                <p class="text-[11px] uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">Note moyenne</p>
-                <p class="mt-1 flex items-center gap-1 text-lg font-bold text-gray-900 dark:text-white">
-                  <?php echo e($summaryAvgDisplay); ?>
-                  <span class="text-sm text-yellow-500" aria-hidden="true">★</span>
-                </p>
-              </div>
-              <div class="rounded-2xl bg-sky-100/95 px-3 py-2 dark:bg-sky-500/15">
-                <p class="text-[11px] uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">Avec avis</p>
-                <p class="mt-1 text-lg font-bold text-gray-900 dark:text-white"><?php echo e($formatCount($coursesWithReviewsCount)); ?></p>
-              </div>
-              <div class="rounded-2xl bg-amber-100/95 px-3 py-2 dark:bg-amber-500/20">
-                <p class="text-[11px] uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">Sans avis</p>
-                <p class="mt-1 text-lg font-bold text-gray-900 dark:text-white"><?php echo e($formatCount($coursesWithoutReviewsCount)); ?></p>
-              </div>
-              <div class="rounded-2xl bg-emerald-100/95 px-3 py-2 dark:bg-emerald-500/20">
-                <p class="text-[11px] uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">Actifs</p>
-                <p class="mt-1 text-lg font-bold text-gray-900 dark:text-white"><?php echo e($formatCount($activeCourseCount)); ?></p>
-              </div>
-              <div class="rounded-2xl bg-slate-100/95 px-3 py-2 dark:bg-slate-700/60">
-                <p class="text-[11px] uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">Archivés</p>
-                <p class="mt-1 text-lg font-bold text-gray-900 dark:text-white"><?php echo e($formatCount($archivedCourseCount)); ?></p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div class="rounded-3xl border border-gray-200 bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-800" data-review-overview-filters>
           <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <p class="text-xs uppercase tracking-[0.22em] text-gray-500 dark:text-gray-400">Filtres</p>
-              <div class="mt-3 flex flex-wrap gap-2" role="group" aria-label="Filtres des cours par avis">
+              <div class="review-filter-chip-list mt-3 flex flex-wrap gap-2" role="group" aria-label="Filtres des cours par avis">
                 <button type="button" class="review-filter-chip is-active" data-review-course-filter="all">Tous les cours</button>
                 <button type="button" class="review-filter-chip" data-review-course-filter="reviewed">Avec avis</button>
                 <button type="button" class="review-filter-chip" data-review-course-filter="no_reviews">Sans avis</button>
@@ -628,7 +588,7 @@ $teacherTopContextLabel = $detailMode ? $selectedCourseTitle : 'Par cours';
             <label class="relative block w-full xl:max-w-sm">
               <span class="sr-only">Rechercher un cours</span>
               <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true"></i>
-              <input id="overview-course-search" type="text" class="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-900 placeholder:text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-white" placeholder="Rechercher un cours...">
+              <input id="overview-course-search" type="text" class="overview-course-search w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-900 placeholder:text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-white" placeholder="Rechercher un cours...">
             </label>
           </div>
         </div>
@@ -647,23 +607,10 @@ $teacherTopContextLabel = $detailMode ? $selectedCourseTitle : 'Par cours';
                 Aucun cours avec avis pour le moment.
               </div>
             <?php else: ?>
-              <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
-                <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
-                  <?php foreach ($activeReviewedCards as $courseCard): ?>
-                    <?php echo $renderCourseCard($courseCard); ?>
-                  <?php endforeach; ?>
-                </div>
-                <?php if ($recommendedActionTitle !== ''): ?>
-                  <aside class="rounded-2xl border border-primary-100 bg-primary-50/80 p-5 text-sm dark:border-primary-500/30 dark:bg-primary-500/10">
-                    <p class="font-semibold text-primary-800 dark:text-primary-100"><?php echo e($recommendedActionTitle); ?></p>
-                    <p class="mt-2 leading-6 text-slate-600 dark:text-slate-200"><?php echo e($recommendedActionText); ?></p>
-                    <?php if ($recommendedActionUrl !== ''): ?>
-                      <a href="<?php echo e($recommendedActionUrl); ?>" class="mt-4 inline-flex items-center justify-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-700">
-                        <?php echo e($recommendedActionLabel); ?>
-                      </a>
-                    <?php endif; ?>
-                  </aside>
-                <?php endif; ?>
+              <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+                <?php foreach ($activeReviewedCards as $courseCard): ?>
+                  <?php echo $renderCourseCard($courseCard); ?>
+                <?php endforeach; ?>
               </div>
               <p class="hidden rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" data-section-empty-filter>Aucun cours ne correspond aux filtres.</p>
             <?php endif; ?>

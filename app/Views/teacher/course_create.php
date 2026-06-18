@@ -102,6 +102,30 @@ $listValues = static function (array $items): array {
     return $clean !== [] ? $clean : [''];
 };
 
+$countFilledList = static function (array $items): int {
+    $count = 0;
+    foreach ($items as $item) {
+        if (trim((string) $item) !== '') {
+            $count++;
+        }
+    }
+    return $count;
+};
+
+$requiredChecks = [
+    $title !== '',
+    $level !== '',
+    $description !== '',
+    $priceXof !== '',
+    $categoryId !== '',
+    $coverPathExisting !== '',
+];
+$requiredDone = count(array_filter($requiredChecks));
+$requiredTotal = count($requiredChecks);
+$requiredRemaining = max(0, $requiredTotal - $requiredDone);
+$draftProgressPct = $requiredTotal > 0 ? (int) round(($requiredDone / $requiredTotal) * 100) : 0;
+$pedagogyOpen = ($countFilledList($objectives) + $countFilledList($prerequisites) + $countFilledList($equipment)) > 0;
+
 $renderSimpleRows = static function (array $items, string $name, string $placeholder) use ($listValues): void {
     foreach ($listValues($items) as $value) {
         ?>
@@ -125,7 +149,7 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
     <title><?php echo e($pageTitle); ?> · Enseignant · École Numérique</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time()))); ?>">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/course_create_builder.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/course_create_builder.css') ?: time()))); ?>">
@@ -142,23 +166,9 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
         <main class="teacher-dashboard-main min-h-screen bg-gray-50 dark:bg-gray-900" data-scroll-top-root="1">
             <?php require __DIR__ . '/_topbar.php'; ?>
 
-            <div class="p-4 sm:p-5 lg:p-6 space-y-5 animate-fade-up">
-                <section class="teacher-courses-page-head flex flex-wrap items-center justify-between gap-4">
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-blue-600 dark:text-blue-300"><?php echo $editMode ? 'Modification unifiée' : 'Studio de cours'; ?></p>
-                        <h2 class="mt-1 text-2xl font-bold text-slate-900 dark:text-white"><?php echo e($pageTitle); ?></h2>
-                        <p class="mt-1 text-sm text-slate-600 dark:text-slate-300"><?php echo e($pageSubtitle); ?></p>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <a href="<?php echo e(site_url('teacher/courses')); ?>" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
-                            <i class="fas fa-arrow-left"></i>
-                            Mes cours
-                        </a>
-                    </div>
-                </section>
-
-                <div class="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_18rem] 2xl:items-start">
-                    <form method="post" action="<?php echo e($formAction); ?>" enctype="multipart/form-data" data-course-create-form data-autosave-key="<?php echo e($autosaveKey); ?>" data-autosave-clear="<?php echo e($autosaveClear); ?>" class="min-w-0">
+            <div class="course-builder-page p-4 sm:p-5 lg:p-6 animate-fade-up">
+                <div class="course-builder-shell grid gap-5 xl:grid-cols-[minmax(0,1fr)_18rem] 2xl:items-start">
+                    <form method="post" action="<?php echo e($formAction); ?>" enctype="multipart/form-data" novalidate data-course-create-form data-autosave-key="<?php echo e($autosaveKey); ?>" data-autosave-clear="<?php echo e($autosaveClear); ?>" class="course-complete-builder-form min-w-0">
         <input type="hidden" name="_csrf" value="<?php echo e($csrfToken); ?>">
         <input type="hidden" id="content_payload" name="content_payload" value="<?php echo e($contentBuilderPayload); ?>">
         <input type="hidden" id="exams_payload" name="exams_payload" value="<?php echo e($examBuilderPayload); ?>">
@@ -167,12 +177,12 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
         <input type="hidden" id="referral_l2_enabled" name="referral_l2_enabled" value="<?php echo $referralL2Enabled ? '1' : '0'; ?>">
         <input type="hidden" id="duration_hours" name="duration_hours" value="<?php echo e($durationHours !== '' ? $durationHours : '1'); ?>">
 
-                        <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-800">
+                        <div class="course-builder-toolbar flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-800">
                             <div>
-                                <h1 class="flex items-center gap-3 text-xl font-extrabold text-slate-900 dark:text-white">
+                                <h1 class="flex items-center gap-3 text-lg font-extrabold text-slate-900 dark:text-white">
                                     <i class="fas fa-edit text-primary-600"></i> <?php echo $editMode ? 'Modification unifiée' : 'Brouillon unique'; ?>
                                 </h1>
-                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-300"><?php echo $editMode ? 'Mettez à jour le cours complet, puis enregistrez ou soumettez.' : 'Construisez le cours complet, puis enregistrez ou publiez.'; ?></p>
+                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-300"><?php echo e($requiredRemaining === 0 ? 'Champs requis prêts.' : $requiredRemaining . ' champ(s) requis à finaliser.'); ?></p>
                             </div>
                             <div class="flex items-center gap-2">
                                 <button type="button" data-preview-course class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-700">
@@ -214,7 +224,7 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                 </section>
             <?php endif; ?>
 
-            <div class="flex items-center justify-between mb-10 bg-white rounded-2xl shadow-card p-4">
+            <div class="course-stepper-compact flex items-center justify-between bg-white rounded-2xl shadow-card p-3">
                 <button type="button" data-step-target="1" id="stepBtn1" class="flex items-center gap-3 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 bg-primary-600 text-white shadow-lg shadow-primary-500/25">
                     <span class="w-7 h-7 bg-white text-primary-600 rounded-full flex items-center justify-center text-xs font-bold">1</span>
                     <span class="hidden sm:inline">Général</span>
@@ -235,18 +245,17 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                 </button>
             </div>
 
-            <div id="step1Content" class="space-y-6">
-                <div class="bg-white rounded-2xl shadow-card p-6 sm:p-8">
-                    <div class="flex items-center gap-3 mb-6">
+            <div id="step1Content" class="course-step-content space-y-5">
+                <div class="course-form-card bg-white rounded-2xl shadow-card p-5 sm:p-6">
+                    <div class="flex items-center gap-3 mb-5">
                         <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
                             <i class="fas fa-info-circle text-primary-600"></i>
                         </div>
                         <div>
                             <h2 class="text-lg font-bold">Informations générales</h2>
-                            <p class="text-sm text-slate-500">Titre, niveau, description, objectifs, prérequis et équipement</p>
                         </div>
                     </div>
-                    <div class="space-y-5">
+                    <div class="grid gap-4 lg:grid-cols-2">
                         <div>
                             <label for="title" class="block text-sm font-semibold mb-1.5">Titre <span class="text-red-500">*</span></label>
                             <input id="title" name="title" type="text" value="<?php echo e($title); ?>" placeholder="Ex: Maîtriser React JS" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500">
@@ -259,10 +268,21 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                                 <option value="advanced" <?php echo $level === 'advanced' ? 'selected' : ''; ?>>Avancé</option>
                             </select>
                         </div>
-                        <div>
+                        <div class="lg:col-span-2">
                             <label for="description" class="block text-sm font-semibold mb-1.5">Description <span class="text-red-500">*</span></label>
                             <textarea id="description" name="description" rows="4" placeholder="Décrivez le cours..." required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"><?php echo e($description); ?></textarea>
                         </div>
+                    </div>
+
+                    <details class="course-builder-details mt-5 rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50" <?php echo $pedagogyOpen ? 'open' : ''; ?>>
+                        <summary class="course-builder-details-summary flex cursor-pointer items-center justify-between gap-3 px-4 py-3">
+                            <span class="font-semibold text-slate-900 dark:text-white">Pédagogie</span>
+                            <span class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-300">
+                                <span data-pedagogy-count><?php echo e((string) ($countFilledList($objectives) + $countFilledList($prerequisites) + $countFilledList($equipment))); ?> élément(s)</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </span>
+                        </summary>
+                        <div class="course-builder-details-body space-y-5 border-t border-slate-200 p-4 dark:border-slate-700">
                         <div>
                             <label class="block text-sm font-semibold mb-1.5">Objectifs pédagogiques</label>
                             <div id="objectives-container" class="space-y-2">
@@ -290,11 +310,12 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                                 <i class="fas fa-plus text-xs"></i> Ajouter
                             </button>
                         </div>
-                    </div>
+                        </div>
+                    </details>
                 </div>
 
-                <div class="bg-white rounded-2xl shadow-card p-6 sm:p-8">
-                    <div class="flex items-center gap-3 mb-6">
+                <div class="course-form-card bg-white rounded-2xl shadow-card p-5 sm:p-6">
+                    <div class="flex items-center gap-3 mb-5">
                         <div class="w-10 h-10 bg-accent-100 rounded-xl flex items-center justify-center">
                             <i class="fas fa-image text-accent-600"></i>
                         </div>
@@ -333,7 +354,6 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                                         <option value="price" <?php echo $enterprisePricingMode === 'price' ? 'selected' : ''; ?>>Prix fixe entreprise</option>
                                         <option value="discount" <?php echo $enterprisePricingMode === 'discount' ? 'selected' : ''; ?>>Réduction entreprise</option>
                                     </select>
-                                    <p class="mt-2 text-xs text-slate-500">Choisissez un seul mode : prix fixe ou réduction.</p>
                                 </div>
                                 <div data-enterprise-panel="price" class="<?php echo $enterprisePricingMode === 'price' ? '' : 'hidden'; ?>">
                                     <label for="enterprise_price_xof" class="block text-sm font-semibold">Prix entreprise (F CFA)</label>
@@ -358,7 +378,6 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                                     <?php endforeach; ?>
                                     <option value="other" <?php echo $categoryId === 'other' ? 'selected' : ''; ?>>Autre</option>
                                 </select>
-                                <p class="mt-2 text-xs text-slate-500">Si votre catégorie n’apparaît pas, choisissez Autre.</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold mb-2">Parrainage</label>
@@ -371,29 +390,33 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                                         <input type="checkbox" id="referral-l2-toggle" data-referral-l2-toggle <?php echo $referralL2Enabled ? 'checked' : ''; ?> class="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
                                         <span>
                                             Appliquer aussi au niveau 2
-                                            <span class="mt-1 block text-xs font-normal text-slate-500">Cochez si le niveau 2 reçoit aussi une commission.</span>
                                         </span>
                                     </label>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                            <div>
-                                <label for="general_file" class="block text-sm font-semibold"><i class="fas fa-cloud-upload-alt mr-1 text-emerald-500"></i>Ressource générale</label>
-                                <p class="mt-1 text-xs text-slate-500">
-                                    Optionnel. Taille max <?php echo e((string) $driveMaxMb); ?> Mo.
+                    <details class="course-builder-details mt-6 rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50" <?php echo $generalFileCacheName !== '' ? 'open' : ''; ?>>
+                        <summary class="course-builder-details-summary flex cursor-pointer items-center justify-between gap-3 px-4 py-3">
+                            <span class="font-semibold text-slate-900 dark:text-white"><i class="fas fa-cloud-upload-alt mr-1 text-emerald-500"></i>Ressource générale</span>
+                            <span class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-300">
+                                Optionnel
+                                <i class="fas fa-chevron-down"></i>
+                            </span>
+                        </summary>
+                        <div class="course-builder-details-body border-t border-slate-200 p-4 dark:border-slate-700">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <p class="text-xs text-slate-500 dark:text-slate-300">
+                                    Taille max <?php echo e((string) $driveMaxMb); ?> Mo.
                                     <?php if ($driveUploadNote !== ''): ?><?php echo e($driveUploadNote); ?><?php endif; ?>
                                 </p>
-                            </div>
                             <?php if ($driveConnectRecommended): ?>
                                 <a href="<?php echo e(site_url('drive/oauth_connect')); ?>" class="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700">
                                     Connecter Drive <i class="fas fa-arrow-right"></i>
                                 </a>
                             <?php endif; ?>
-                        </div>
-                        <input id="general_file" name="general_file" type="file" class="mt-4 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500">
+                            </div>
+                            <input id="general_file" name="general_file" type="file" class="mt-4 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500">
                         <?php if ($generalFileCacheName !== ''): ?>
                             <div class="mt-3 rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm text-blue-700">
                                 <p class="font-semibold"><?php echo e($generalFileCacheName); ?></p>
@@ -404,9 +427,10 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                                 </label>
                             </div>
                         <?php endif; ?>
-                    </div>
+                        </div>
+                    </details>
                 </div>
-                <div class="flex justify-end">
+                <div class="course-step-actions flex justify-end">
                     <button type="button" data-step-target="2" class="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl text-sm font-semibold shadow-lg hover:bg-primary-700 transition">
                         Continuer vers le contenu <i class="fas fa-arrow-right"></i>
                     </button>
@@ -422,7 +446,6 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                             </div>
                             <div>
                                 <h2 class="text-lg font-bold">Contenu du cours</h2>
-                                <p class="text-sm text-slate-500">Modules, leçons vidéo, documents, exercices et rendez-vous</p>
                             </div>
                         </div>
                         <button type="button" data-add-module class="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold shadow">
@@ -435,7 +458,7 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                         <p>Aucun module</p>
                     </div>
                 </div>
-                <div class="flex justify-between">
+                <div class="course-step-actions flex justify-between">
                     <button type="button" data-step-target="1" class="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold shadow-sm hover:bg-slate-50 transition">
                         <i class="fas fa-arrow-left"></i> Retour
                     </button>
@@ -454,7 +477,6 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                             </div>
                             <div>
                                 <h2 class="text-lg font-bold">Examens & Évaluations</h2>
-                                <p class="text-sm text-slate-500">Une seule évaluation finale : QCM, document à soumettre ou rendez-vous</p>
                             </div>
                         </div>
                         <span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
@@ -467,7 +489,7 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                         <p>Aucun examen</p>
                     </div>
                 </div>
-                <div class="flex justify-between">
+                <div class="course-step-actions flex justify-between">
                     <button type="button" data-step-target="2" class="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold shadow-sm hover:bg-slate-50 transition">
                         <i class="fas fa-arrow-left"></i> Retour
                     </button>
@@ -478,99 +500,95 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
             </div>
                     </form>
 
-                    <aside class="space-y-4 2xl:sticky 2xl:top-24">
-                        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
-                            <div class="flex items-start gap-3">
+                    <aside class="course-builder-aside space-y-3 xl:sticky xl:top-24">
+                        <section class="course-side-card rounded-2xl border border-slate-200 bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-800">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Progression</p>
+                                    <h2 class="mt-1 text-base font-bold text-slate-900 dark:text-white"><?php echo e((string) $draftProgressPct); ?>% prêt</h2>
+                                </div>
                                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">
-                                    <i class="fas fa-database"></i>
+                                    <i class="fas fa-list-check"></i>
                                 </span>
-                                <div>
-                                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Repères</p>
-                                    <h2 class="mt-1 text-base font-bold text-slate-900 dark:text-white">État du brouillon</h2>
-                                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-300">Données utiles pendant la création.</p>
-                                </div>
                             </div>
-                            <div class="mt-5 grid gap-3">
+                            <div class="mt-4 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-900">
+                                <div class="h-full rounded-full bg-primary-600" style="width: <?php echo e((string) $draftProgressPct); ?>%"></div>
+                            </div>
+                            <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
                                 <div class="rounded-xl bg-slate-50 p-3 dark:bg-gray-900/70">
-                                    <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Catégories disponibles</p>
-                                    <p class="mt-1 text-2xl font-extrabold text-slate-900 dark:text-white"><?php echo e((string) count($categories)); ?></p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Restants</p>
+                                    <p class="mt-1 text-xl font-extrabold text-slate-900 dark:text-white"><?php echo e((string) $requiredRemaining); ?></p>
                                 </div>
                                 <div class="rounded-xl bg-slate-50 p-3 dark:bg-gray-900/70">
-                                    <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Brouillons actifs</p>
-                                    <p class="mt-1 text-2xl font-extrabold text-slate-900 dark:text-white"><?php echo e((string) count($teacherDraftCourses)); ?></p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Brouillons</p>
+                                    <p class="mt-1 text-xl font-extrabold text-slate-900 dark:text-white"><?php echo e((string) count($teacherDraftCourses)); ?></p>
                                 </div>
                             </div>
                         </section>
 
-                        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
-                            <div class="flex items-center justify-between gap-3">
-                                <div>
-                                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Stockage</p>
-                                    <h2 class="mt-1 text-base font-bold text-slate-900 dark:text-white">Ressources du cours</h2>
-                                </div>
-                                <span class="rounded-full px-3 py-1 text-xs font-semibold <?php echo e($driveStatusClass); ?>">
-                                    <?php echo e($driveStatusLabel); ?>
+                        <details class="course-side-disclosure rounded-2xl border border-slate-200 bg-white shadow-card dark:border-gray-700 dark:bg-gray-800">
+                            <summary class="flex cursor-pointer items-center justify-between gap-3 p-4">
+                                <span class="text-sm font-bold text-slate-900 dark:text-white">Stockage</span>
+                                <span class="course-side-summary-meta">
+                                    <span class="rounded-full px-3 py-1 text-xs font-semibold <?php echo e($driveStatusClass); ?>"><?php echo e($driveStatusLabel); ?></span>
+                                    <i class="fas fa-chevron-down course-side-chevron" aria-hidden="true"></i>
                                 </span>
+                            </summary>
+                            <div class="border-t border-slate-100 px-4 pb-4 pt-3 text-sm text-slate-500 dark:border-gray-700 dark:text-slate-300">
+                                <p><?php echo e($driveUploadNote !== '' ? $driveUploadNote : 'Documents associés au cours.'); ?></p>
+                                <p class="mt-2 text-xs text-slate-400">Max : <?php echo e((string) $driveMaxMb); ?> Mo</p>
+                                <?php if ($generalFileCacheName !== ''): ?>
+                                    <p class="mt-3 truncate rounded-xl bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 dark:bg-blue-500/10 dark:text-blue-200"><?php echo e($generalFileCacheName); ?></p>
+                                <?php endif; ?>
+                                <?php if ($driveConnectRecommended): ?>
+                                    <a href="<?php echo e(site_url('drive/oauth_connect')); ?>" class="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-300">
+                                        Connecter Drive <i class="fas fa-arrow-right"></i>
+                                    </a>
+                                <?php endif; ?>
                             </div>
-                            <p class="mt-3 text-sm text-slate-500 dark:text-slate-300">
-                                <?php echo e($driveUploadNote !== '' ? $driveUploadNote : 'Les documents et sujets pourront être associés au cours.'); ?>
-                            </p>
-                            <p class="mt-2 text-xs text-slate-400">Taille max ressource générale : <?php echo e((string) $driveMaxMb); ?> Mo</p>
-                            <?php if ($generalFileCacheName !== ''): ?>
-                                <div class="mt-3 rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm text-blue-700 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-200">
-                                    <p class="font-semibold"><?php echo e($generalFileCacheName); ?></p>
-                                    <p class="text-xs"><?php echo e($formatBytes($generalFileCacheSize)); ?></p>
-                                </div>
-                            <?php endif; ?>
-                            <?php if ($driveConnectRecommended): ?>
-                                <a href="<?php echo e(site_url('drive/oauth_connect')); ?>" class="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-300">
-                                    Connecter Drive <i class="fas fa-arrow-right"></i>
-                                </a>
-                            <?php endif; ?>
-                        </section>
+                        </details>
 
-                        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
-                            <div class="flex items-center justify-between gap-3">
-                                <div>
-                                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Parrainage</p>
-                                    <h2 class="mt-1 text-base font-bold text-slate-900 dark:text-white">Règles plateforme</h2>
-                                </div>
-                                <i class="fas fa-handshake text-teal-500"></i>
-                            </div>
-                            <div class="mt-4 grid grid-cols-2 gap-3">
+                        <details class="course-side-disclosure rounded-2xl border border-slate-200 bg-white shadow-card dark:border-gray-700 dark:bg-gray-800">
+                            <summary class="flex cursor-pointer items-center justify-between gap-3 p-4">
+                                <span class="text-sm font-bold text-slate-900 dark:text-white">Parrainage</span>
+                                <span class="course-side-summary-meta">
+                                    <i class="fas fa-handshake text-teal-500" aria-hidden="true"></i>
+                                    <i class="fas fa-chevron-down course-side-chevron" aria-hidden="true"></i>
+                                </span>
+                            </summary>
+                            <div class="grid grid-cols-2 gap-2 border-t border-slate-100 p-4 dark:border-gray-700">
                                 <div class="rounded-xl bg-slate-50 p-3 dark:bg-gray-900/70">
                                     <p class="text-xs text-slate-500 dark:text-slate-400">Niveau 1</p>
-                                    <p class="mt-1 text-lg font-bold text-slate-900 dark:text-white"><?php echo e(number_format((float) ($platformReferral['l1_rate'] ?? 0), 2, ',', ' ')); ?>%</p>
+                                    <p class="mt-1 text-base font-bold text-slate-900 dark:text-white"><?php echo e(number_format((float) ($platformReferral['l1_rate'] ?? 0), 2, ',', ' ')); ?>%</p>
                                 </div>
                                 <div class="rounded-xl bg-slate-50 p-3 dark:bg-gray-900/70">
                                     <p class="text-xs text-slate-500 dark:text-slate-400">Niveau 2</p>
-                                    <p class="mt-1 text-lg font-bold text-slate-900 dark:text-white"><?php echo e(number_format((float) ($platformReferral['l2_rate'] ?? 0), 2, ',', ' ')); ?>%</p>
+                                    <p class="mt-1 text-base font-bold text-slate-900 dark:text-white"><?php echo e(number_format((float) ($platformReferral['l2_rate'] ?? 0), 2, ',', ' ')); ?>%</p>
                                 </div>
                             </div>
-                        </section>
+                        </details>
 
                         <?php if ($teacherDraftCourses !== []): ?>
-                            <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
-                                <div class="flex items-center justify-between gap-3">
-                                    <div>
-                                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">À reprendre</p>
-                                        <h2 class="mt-1 text-base font-bold text-slate-900 dark:text-white">Derniers brouillons</h2>
-                                    </div>
-                                    <a href="<?php echo e(site_url('teacher/courses?status=draft')); ?>" class="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-300">Voir tout</a>
-                                </div>
-                                <div class="mt-4 space-y-2">
-                                    <?php foreach (array_slice($teacherDraftCourses, 0, 4) as $draftCourse): ?>
+                            <details class="course-side-disclosure rounded-2xl border border-slate-200 bg-white shadow-card dark:border-gray-700 dark:bg-gray-800">
+                                <summary class="flex cursor-pointer items-center justify-between gap-3 p-4">
+                                    <span class="text-sm font-bold text-slate-900 dark:text-white">Derniers brouillons</span>
+                                    <span class="course-side-summary-meta">
+                                        <a href="<?php echo e(site_url('teacher/courses?status=draft')); ?>" class="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-300">Voir tout</a>
+                                        <i class="fas fa-chevron-down course-side-chevron" aria-hidden="true"></i>
+                                    </span>
+                                </summary>
+                                <div class="space-y-2 border-t border-slate-100 p-4 dark:border-gray-700">
+                                    <?php foreach (array_slice($teacherDraftCourses, 0, 3) as $draftCourse): ?>
                                         <?php
                                         $draftId = max(0, (int) ($draftCourse['id'] ?? 0));
                                         $draftTitle = trim((string) ($draftCourse['title'] ?? 'Cours sans titre'));
                                         ?>
                                         <a href="<?php echo e(site_url('teacher/course_content?id=' . $draftId)); ?>" class="block rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-blue-200 hover:bg-blue-50 dark:border-gray-700 dark:bg-gray-900/60 dark:hover:border-blue-500/40 dark:hover:bg-blue-500/10">
                                             <p class="truncate text-sm font-semibold text-slate-800 dark:text-white"><?php echo e($draftTitle); ?></p>
-                                            <p class="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400"><?php echo e((string) ($draftCourse['category_name'] ?? 'Sans catégorie')); ?></p>
                                         </a>
                                     <?php endforeach; ?>
                                 </div>
-                            </section>
+                            </details>
                         <?php endif; ?>
                     </aside>
                 </div>

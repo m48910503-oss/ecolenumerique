@@ -8888,7 +8888,7 @@ html[data-theme="dark"] .admin-certificate-demo-pill {
 
 .admin-certificate-sign-block {
     display: grid;
-    min-width: 10rem;
+    min-width: 6.4rem;
     justify-items: center;
     text-align: center;
 }
@@ -8897,27 +8897,27 @@ html[data-theme="dark"] .admin-certificate-demo-pill {
     margin-bottom: 0.25rem;
     color: var(--app-text-secondary);
     font-family: "Dancing Script", cursive;
-    font-size: clamp(1.9rem, 4vw, 2.4rem);
+    font-size: clamp(0.95rem, 1.45vw, 1.18rem);
     font-weight: 700;
     line-height: 1;
 }
 
 .admin-certificate-signature-media {
     display: grid;
-    width: 12rem;
-    height: 3.2rem;
+    width: 6.4rem;
+    height: 1.6rem;
     place-items: center;
 }
 
 .admin-certificate-signature-media img {
-    max-width: 100%;
-    max-height: 100%;
+    max-width: 6rem;
+    max-height: 1.5rem;
     object-fit: contain;
 }
 
 .admin-certificate-sign-line {
     display: block;
-    width: 11rem;
+    width: 6.3rem;
     height: 2px;
     background: #9ca3af;
 }
@@ -8989,17 +8989,29 @@ html[data-theme="dark"] .admin-certificate-demo-pill {
     gap: 0.9rem;
 }
 
-.admin-certificate-verify > span {
+.admin-certificate-qr {
     display: inline-flex;
-    width: 3.4rem;
-    height: 3.4rem;
+    width: 4.6rem;
+    height: 4.6rem;
     flex: 0 0 auto;
     align-items: center;
     justify-content: center;
-    border-radius: 0.8rem;
-    background: color-mix(in srgb, var(--app-surface-hover) 76%, var(--app-surface) 24%);
+    border: 1px solid color-mix(in srgb, var(--app-border) 72%, #ffffff 28%);
+    border-radius: 0.6rem;
+    background: #ffffff;
     color: var(--app-text-secondary);
-    font-size: 1.45rem;
+    font-size: 1.35rem;
+    padding: 0.34rem;
+}
+
+.admin-certificate-qr svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.admin-certificate-qr svg rect {
+    shape-rendering: crispEdges;
 }
 
 .admin-certificate-verify p {
@@ -9088,29 +9100,277 @@ html[data-theme="dark"] .admin-certificate-congrats {
         display: none !important;
     }
 
-    body.app-role-admin {
+    body.app-role-admin[data-view="admin/certificate_preview"] {
+        width: 210mm !important;
+        min-width: 210mm !important;
+        min-height: 297mm !important;
+        margin: 0 !important;
+        overflow: hidden !important;
         background: #ffffff !important;
     }
 
-    .admin-shell-main {
+    body.app-role-admin[data-view="admin/certificate_preview"],
+    body.app-role-admin[data-view="admin/certificate_preview"] * {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-shell-root,
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-shell-main {
+        display: block !important;
+        width: 210mm !important;
+        min-height: 297mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-shell-main {
         padding-top: 0 !important;
     }
 
-    .admin-shell-content,
-    .admin-certificate-stage {
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-shell-content,
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-stage {
+        display: flex !important;
+        width: 210mm !important;
+        min-height: 297mm !important;
+        align-items: center !important;
+        justify-content: center !important;
         margin: 0 !important;
         padding: 0 !important;
         border: 0 !important;
         background: #ffffff !important;
         box-shadow: none !important;
+        overflow: hidden !important;
     }
 
-    .admin-certificate-card {
-        max-width: 100% !important;
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-card {
+        box-sizing: border-box !important;
+        width: 196mm !important;
+        max-width: none !important;
+        height: 285mm !important;
+        min-height: 0 !important;
         aspect-ratio: auto !important;
-        border-width: 8px !important;
+        border-width: 2.4mm !important;
+        border-radius: 5mm !important;
         box-shadow: none !important;
-        break-inside: avoid;
+        break-after: avoid !important;
+        break-before: avoid !important;
+        break-inside: avoid !important;
+        page-break-after: avoid !important;
+        page-break-before: avoid !important;
+        page-break-inside: avoid !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-content {
+        box-sizing: border-box !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        padding: 9mm 10mm 8mm !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-corner {
+        width: 18mm !important;
+        height: 18mm !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-brand-icon {
+        width: 11mm !important;
+        height: 11mm !important;
+        border-radius: 3mm !important;
+        box-shadow: none !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-brand-name {
+        font-size: 15pt !important;
+        letter-spacing: 0 !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-number p {
+        font-size: 6pt !important;
+        letter-spacing: 0 !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-number strong {
+        font-size: 6.5pt !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-title-block {
+        margin-top: 9mm !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-congrats {
+        padding: 1.6mm 5mm !important;
+        font-size: 6pt !important;
+        letter-spacing: 0 !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-title-block h1 {
+        margin-top: 4mm !important;
+        font-size: 34pt !important;
+        letter-spacing: 0 !important;
+        line-height: 0.95 !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-title-rule {
+        margin: 3mm 0 !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-title-rule span {
+        width: 18mm !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-title-block p {
+        font-size: 9pt !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-recipient {
+        padding: 7mm 0 4mm !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-recipient h2 {
+        background: none !important;
+        color: #2563eb !important;
+        font-size: 38pt !important;
+        letter-spacing: 0 !important;
+        line-height: 1 !important;
+        -webkit-text-fill-color: #2563eb !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-recipient span {
+        width: 42mm !important;
+        height: 1.3mm !important;
+        margin-top: 3mm !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-course-intro {
+        font-size: 8.5pt !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-course-title {
+        margin-top: 2mm !important;
+        max-width: 160mm !important;
+        font-size: 20pt !important;
+        line-height: 1.1 !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-course-description {
+        max-width: 160mm !important;
+        margin-top: 3mm !important;
+        font-size: 7.2pt !important;
+        line-height: 1.35 !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-meta {
+        gap: 3mm !important;
+        margin-top: 6mm !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-meta span {
+        padding: 1.6mm 3mm !important;
+        font-size: 6.6pt !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-seal-row {
+        gap: 9mm !important;
+        margin-top: auto !important;
+        padding-top: 11mm !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-sign-block {
+        min-width: 24mm !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-signature-text {
+        font-size: 8.4pt !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-signature-media {
+        width: 22mm !important;
+        height: 5.4mm !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-signature-media .admin-certificate-signature-text {
+        margin: 0 !important;
+        font-size: 7.2pt !important;
+        line-height: 0.95 !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-signature-media img {
+        max-width: 21mm !important;
+        max-height: 5mm !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-sign-line {
+        width: 22mm !important;
+        height: 0.35mm !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-sign-block small {
+        margin-top: 1.6mm !important;
+        font-size: 6.2pt !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-seal {
+        width: 25mm !important;
+        height: 25mm !important;
+        border-width: 1.8mm !important;
+        box-shadow: none !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-seal i:first-child {
+        font-size: 14pt !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-seal strong {
+        font-size: 5.7pt !important;
+        letter-spacing: 0 !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-seal span {
+        max-width: 19mm !important;
+        font-size: 4.8pt !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-seal i:last-child {
+        font-size: 5.8pt !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-footer {
+        gap: 6mm !important;
+        margin-top: 8mm !important;
+        padding-top: 4mm !important;
+        font-size: 6pt !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-verify {
+        gap: 3mm !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-qr {
+        width: 15mm !important;
+        height: 15mm !important;
+        border-radius: 2mm !important;
+        font-size: 8pt !important;
+        padding: 1mm !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-verify p {
+        font-size: 5.8pt !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-verify strong {
+        max-width: 104mm !important;
+        font-size: 5.4pt !important;
+        white-space: nowrap !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-site {
+        max-width: 44mm !important;
+    }
+
+    body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-site p {
+        font-size: 5.8pt !important;
+        line-height: 1.25 !important;
     }
 }
 

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 $companySimplePage = 'members';
 $companySimpleTitle = 'Collaborateurs';
-$companySimpleSubtitle = 'Gérez les membres et attribuez les places.';
+$companySimpleSubtitle = 'Gérez l’équipe et les accès.';
 $memberRows = is_array($memberRows ?? null) ? $memberRows : [];
 $memberSummary = is_array($memberSummary ?? null) ? $memberSummary : [];
 $csrfToken = function_exists('view_csrf_token') ? view_csrf_token() : '';
@@ -38,7 +38,7 @@ require __DIR__ . '/_simple_flash.php';
   <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
     <div>
       <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">Equipe</p>
-      <h3 class="text-lg font-bold text-gray-900 dark:text-white">Liste des collaborateurs</h3>
+      <h3 class="app-inline-title text-lg font-bold text-gray-900 dark:text-white"><?php echo dashboard_title_icon('users'); ?><span>Liste des collaborateurs</span></h3>
     </div>
     <a href="<?php echo e(site_url('company/invites#invite-form')); ?>" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">Inviter</a>
   </div>

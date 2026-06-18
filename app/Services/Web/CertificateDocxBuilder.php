@@ -11,16 +11,17 @@ final class CertificateDocxBuilder
     public function build(array $view): ?string
     {
         $cert = is_array($view['cert'] ?? null) ? $view['cert'] : [];
-        $fullName = $this->safeText((string) ($view['fullName'] ?? 'Etudiant'));
-        $teacherName = $this->safeText((string) ($view['teacherName'] ?? 'Formateur'));
-        $dgName = $this->safeText((string) ($view['dgName'] ?? 'Direction generale'));
-        $issuedLabel = $this->safeText((string) ($view['issuedLabel'] ?? 'n/c'));
-        $verifyUrl = $this->safeText((string) ($view['verifyUrl'] ?? ''));
+        $siteName = trim((string) ($view['siteName'] ?? 'École Numérique'));
+        $fullName = trim((string) ($view['fullName'] ?? 'Étudiant'));
+        $teacherName = trim((string) ($view['teacherName'] ?? 'Formateur'));
+        $dgName = trim((string) ($view['dgName'] ?? 'Direction générale'));
+        $issuedLabel = trim((string) ($view['issuedLabel'] ?? 'n/c'));
+        $verifyUrl = trim((string) ($view['verifyUrl'] ?? ''));
 
-        $courseTitle = $this->safeText((string) ($cert['course_title'] ?? 'Cours'));
-        $examTitle = $this->safeText((string) ($cert['exam_title'] ?? 'Examen'));
-        $score = $this->safeText((string) ($cert['score'] ?? ''));
-        $code = $this->safeText((string) ($cert['code'] ?? 'n/c'));
+        $courseTitle = trim((string) ($cert['course_title'] ?? 'Cours'));
+        $examTitle = trim((string) ($cert['exam_title'] ?? 'Examen'));
+        $score = $this->formatScore($cert['score'] ?? '');
+        $code = trim((string) ($cert['code'] ?? 'n/c'));
 
         $tmpBase = tempnam(sys_get_temp_dir(), 'cert_docx_');
         if ($tmpBase === false) {
@@ -29,6 +30,7 @@ final class CertificateDocxBuilder
         @unlink($tmpBase);
         $tmpPath = $tmpBase . '.docx';
         $documentXml = $this->documentXml(
+            $siteName,
             $fullName,
             $courseTitle,
             $examTitle,
@@ -112,6 +114,7 @@ final class CertificateDocxBuilder
     }
 
     private function documentXml(
+        string $siteName,
         string $fullName,
         string $courseTitle,
         string $examTitle,
@@ -122,7 +125,7 @@ final class CertificateDocxBuilder
         string $dgName,
         string $verifyUrl
     ): string {
-        $scoreLine = $score !== '' ? $this->paragraph('Score: ' . $score) : '';
+        $scoreLine = $score !== '' ? $this->paragraph('Score : ' . $score) : '';
 
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             . '<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"'
@@ -142,21 +145,21 @@ final class CertificateDocxBuilder
             . ' xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"'
             . ' mc:Ignorable="w14 wp14">'
             . '<w:body>'
-            . $this->paragraph('ECOLE NUMERIQUE', true, 34)
-            . $this->paragraph('CERTIFICAT DE REUSSITE', true, 44)
-            . $this->paragraph('Ce certificat est attribue a', false, 24)
+            . $this->paragraph($siteName, true, 34)
+            . $this->paragraph('CERTIFICAT DE RÉUSSITE', true, 44)
+            . $this->paragraph('Ce certificat est attribué à', false, 24)
             . $this->paragraph($fullName, true, 40)
             . $this->paragraph('', false, 20)
-            . $this->paragraph('Examen: ' . $examTitle)
-            . $this->paragraph('Cours: ' . $courseTitle)
+            . $this->paragraph('Examen : ' . $examTitle)
+            . $this->paragraph('Cours : ' . $courseTitle)
             . $scoreLine
-            . $this->paragraph('Code certificat: ' . $code)
-            . $this->paragraph('Date d emission: ' . $issuedLabel)
+            . $this->paragraph('Code certificat : ' . $code)
+            . $this->paragraph("Date d'émission : " . $issuedLabel)
             . $this->paragraph('', false, 20)
-            . $this->paragraph('Enseignant: ' . $teacherName)
-            . $this->paragraph('Direction generale: ' . $dgName)
+            . $this->paragraph('Enseignant : ' . $teacherName)
+            . $this->paragraph('Direction générale : ' . $dgName)
             . $this->paragraph('', false, 20)
-            . $this->paragraph('Verification: ' . $verifyUrl, false, 18)
+            . $this->paragraph('Vérification : ' . $verifyUrl, false, 18)
             . '<w:sectPr>'
             . '<w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/>'
             . '<w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="708" w:footer="708" w:gutter="0"/>'
@@ -185,5 +188,17 @@ final class CertificateDocxBuilder
             return '';
         }
         return htmlspecialchars($trimmed, ENT_XML1 | ENT_COMPAT, 'UTF-8');
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private function formatScore($value): string
+    {
+        if (is_numeric($value)) {
+            return (string) (int) $value . '/100';
+        }
+
+        return trim((string) $value);
     }
 }

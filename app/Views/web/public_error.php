@@ -26,7 +26,7 @@ $standaloneCssUrl = site_url('assets/css/standalone-dashboard.css?v=' . (@filemt
     <meta name="app-global-assets" content="off">
     <meta name="robots" content="noindex,follow">
     <meta name="description" content="<?php echo e($errorMessage); ?>">
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo e($standaloneCssUrl); ?>">
     <link rel="stylesheet" href="<?php echo e($marketingCssUrl); ?>">
 <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">

@@ -663,7 +663,7 @@ $dashboardStats = [
               <?php if ($notifications === []): ?>
                 <div class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center dark:border-gray-700 dark:bg-gray-700/40">
                   <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white text-gray-400 shadow-sm dark:bg-gray-800 dark:text-gray-300">
-                    <i class="fas fa-bell"></i>
+                    <?php echo dashboard_icon_svg('bell', 'class="h-7 w-7 shrink-0"'); ?>
                   </div>
                   <p class="mt-4 text-base font-semibold text-gray-900 dark:text-white">Aucune notification pour ce filtre</p>
                   <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">

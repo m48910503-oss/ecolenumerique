@@ -348,7 +348,7 @@ if (!is_string($chartValuesJson) || $chartValuesJson === '') {
   <title>Dashboard Enseignant · École Numérique</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time()))); ?>">
   <script src="<?php echo e(site_url('assets/js/sidebar_toggle.js')); ?>" defer></script>
@@ -367,10 +367,12 @@ if (!is_string($chartValuesJson) || $chartValuesJson === '') {
     <?php $showCatalogue = false; ?>
     <?php require __DIR__ . '/_topbar.php'; ?>
     <div class="teacher-dashboard-content p-4 pb-20 space-y-6 animate-fade-up sm:p-5 sm:pb-20">
-      <section class="teacher-dashboard-hero bg-gradient-to-r from-primary-600 to-accent-600 rounded-xl p-5 text-white shadow-glow">
-        <h2 class="text-xl font-bold sm:text-2xl">Bonjour <?php echo e($teacherFirstName); ?>, votre espace formateur est à jour.</h2>
-        <p class="text-primary-100 mt-1 text-sm sm:text-base"><?php echo e($dashboardHeroSummary !== '' ? $dashboardHeroSummary : 'Suivez vos cours, vos inscriptions et vos avis récents depuis cette vue.'); ?></p>
-      </section>
+      <?php $teacherWelcomeTitle = 'Bon retour, ' . $teacherFirstName . ' !'; ?>
+      <?php $teacherWelcomeSummary = $dashboardHeroSummary !== '' ? $dashboardHeroSummary : 'Suivez vos cours, vos inscriptions et vos avis récents depuis cette vue.'; ?>
+      <?php $teacherWelcomeActionUrl = $siteUrl('teacher/course_create'); ?>
+      <?php $teacherWelcomeActionLabel = 'Créer un cours'; ?>
+      <?php $teacherWelcomeActionIcon = 'plus-square'; ?>
+      <?php require __DIR__ . '/_welcome_hero.php'; ?>
 
       <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <?php foreach ($dashboardKpis as $kpi): ?>
@@ -411,7 +413,7 @@ if (!is_string($chartValuesJson) || $chartValuesJson === '') {
 
       <section>
         <div class="flex items-center justify-between mb-4 gap-3">
-          <h3 class="font-bold text-gray-950 dark:text-white text-lg">Mes formations</h3>
+          <h3 class="app-inline-title font-bold text-gray-950 dark:text-white text-lg"><?php echo dashboard_title_icon('book-open'); ?><span>Mes formations</span></h3>
           <a href="<?php echo e($siteUrl('teacher/course_create')); ?>" class="teacher-primary-action inline-flex items-center gap-2 rounded-xl bg-primary-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300">
             <i class="fas fa-plus-circle"></i>
             <span>Créer un cours</span>
@@ -474,7 +476,7 @@ if (!is_string($chartValuesJson) || $chartValuesJson === '') {
         <div class="teacher-dashboard-card lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl p-5 shadow-card border border-gray-100 dark:border-gray-700">
           <div class="flex items-center justify-between gap-3 mb-4">
             <div class="min-w-0">
-              <h3 class="font-bold text-gray-950 dark:text-white"><?php echo e($chartTitle); ?></h3>
+              <h3 class="app-inline-title font-bold text-gray-950 dark:text-white"><?php echo dashboard_title_icon('trending-up'); ?><span><?php echo e($chartTitle); ?></span></h3>
               <p class="mt-1 text-xs text-gray-600 dark:text-gray-300">Tendance des inscriptions sur la période sélectionnée.</p>
             </div>
             <form method="get" action="<?php echo e($siteUrl('teacher/dashboard')); ?>">
@@ -517,7 +519,7 @@ if (!is_string($chartValuesJson) || $chartValuesJson === '') {
 
         <div class="teacher-dashboard-card bg-white dark:bg-gray-800 rounded-xl p-5 shadow-card border border-gray-100 dark:border-gray-700">
           <div class="flex items-center justify-between mb-4 gap-3">
-            <h3 class="font-bold text-gray-950 dark:text-white">Prochains rendez-vous</h3>
+            <h3 class="app-inline-title font-bold text-gray-950 dark:text-white"><?php echo dashboard_title_icon('calendar'); ?><span>Prochains rendez-vous</span></h3>
             <a href="<?php echo e($siteUrl('teacher/meetings?status=pending')); ?>" class="text-xs font-semibold text-primary-600 hover:underline dark:text-primary-300">Tout voir</a>
           </div>
 
@@ -587,7 +589,7 @@ if (!is_string($chartValuesJson) || $chartValuesJson === '') {
 
       <section class="teacher-dashboard-card bg-white dark:bg-gray-800 rounded-xl p-5 shadow-card border border-gray-100 dark:border-gray-700">
         <div class="flex items-center justify-between gap-3 mb-4">
-          <h3 class="font-bold text-gray-950 dark:text-white">Derniers avis étudiants</h3>
+          <h3 class="app-inline-title font-bold text-gray-950 dark:text-white"><?php echo dashboard_title_icon('star'); ?><span>Derniers avis étudiants</span></h3>
           <a href="<?php echo e($siteUrl('teacher/reviews')); ?>" class="text-xs font-semibold text-primary-600 hover:underline dark:text-primary-300">Voir tous les avis</a>
         </div>
 

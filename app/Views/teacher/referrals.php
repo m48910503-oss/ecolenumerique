@@ -259,7 +259,7 @@ $referralFilleulsUrl = $siteUrl('teacher/referrals/filleuls');
     <script src="<?php echo e($siteUrl('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="<?php echo e($siteUrl('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time()))); ?>">
     <script src="<?php echo e($siteUrl('assets/js/web_theme.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/web_theme.js') ?: time()))); ?>" defer></script>
@@ -297,6 +297,15 @@ $referralFilleulsUrl = $siteUrl('teacher/referrals/filleuls');
                     : 'teacher-dashboard-content p-4 pb-24 space-y-6 animate-fade-up sm:p-6 sm:pb-24'; ?>
                 <div class="<?php echo e($referralContentClass); ?>">
                     <script id="global-popup-data" type="application/json"><?php echo $toastJson; ?></script>
+
+                    <?php $teacherWelcomeTitle = $referralsPageMode === 'referees' ? 'Mes filleuls' : 'Programme de parrainage'; ?>
+                    <?php $teacherWelcomeSummary = $referralsPageMode === 'referees'
+                        ? ($referralCountLabel . ' · ' . $commissionCountLabel)
+                        : ('Partagez votre lien, suivez vos filleuls et vos gains validés.'); ?>
+                    <?php $teacherWelcomeActionUrl = $referralsPageMode === 'referees' ? $referralOverviewUrl : $referralFilleulsUrl; ?>
+                    <?php $teacherWelcomeActionLabel = $referralsPageMode === 'referees' ? 'Retour au programme' : 'Voir mes filleuls'; ?>
+                    <?php $teacherWelcomeActionIcon = $referralsPageMode === 'referees' ? 'arrow-left' : 'users'; ?>
+                    <?php require __DIR__ . '/_welcome_hero.php'; ?>
 
                     <?php if ($referralsPageMode === 'referees'): ?>
                         <section class="rounded-2xl border border-gray-100 bg-white p-6 shadow-card dark:border-gray-700 dark:bg-gray-800 sm:p-7">

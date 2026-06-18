@@ -188,7 +188,7 @@ $profileSecondaryButtonClass = 'profile-modern-button profile-modern-button--sec
     <title>Mon profil - &Eacute;cole Num&eacute;rique</title>
     <meta name="app-global-assets" content="off">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-tailwind.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-tailwind.css') ?: time()))); ?>">
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="<?php echo e(site_url('assets/js/profile_form.js')); ?>" defer></script>
     <script src="<?php echo e(site_url('assets/js/togglePassword.js')); ?>" defer></script>
     <style>
@@ -206,7 +206,7 @@ $profileSecondaryButtonClass = 'profile-modern-button profile-modern-button--sec
         }
 
         body {
-            font-family: 'Inter', system-ui, sans-serif;
+            font-family: var(--app-font-body, 'Plus Jakarta Sans', 'Inter', 'Segoe UI', system-ui, sans-serif);
         }
 
         body[data-view="web/profile"] {
@@ -531,7 +531,7 @@ $profileSecondaryButtonClass = 'profile-modern-button profile-modern-button--sec
         }
 
         .profile-certificate__title {
-            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            font-family: var(--app-font-title, 'Plus Jakarta Sans', 'Inter', 'Segoe UI', system-ui, sans-serif);
             font-weight: 800;
             line-height: 1.05;
         }
@@ -1152,7 +1152,7 @@ $profileSecondaryButtonClass = 'profile-modern-button profile-modern-button--sec
         }
 
         .font-display {
-            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            font-family: var(--app-font-title, 'Plus Jakarta Sans', 'Inter', 'Segoe UI', system-ui, sans-serif);
             letter-spacing: 0;
         }
 

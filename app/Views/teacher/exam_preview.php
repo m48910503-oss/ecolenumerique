@@ -61,7 +61,7 @@ if ($variantCount < 1) {
     <title>Aperçu de l'examen - École Numérique</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time()))); ?>">
     <script src="<?php echo e(site_url('assets/js/sidebar_toggle.js')); ?>" defer></script>
@@ -80,6 +80,13 @@ if ($variantCount < 1) {
             <?php require __DIR__ . '/_topbar.php'; ?>
 
             <main class="teacher-hub-main mx-auto max-w-7xl px-4 py-6 md:px-6 xl:px-8 space-y-6">
+                <?php $teacherWelcomeTitle = $examTitle; ?>
+                <?php $teacherWelcomeSummary = $courseTitle . ' · ' . $typeLabel . ' · ' . $durationLabel; ?>
+                <?php $teacherWelcomeActionUrl = site_url('teacher/exams_manage?exam_id=' . $examId); ?>
+                <?php $teacherWelcomeActionLabel = 'Gérer les tentatives'; ?>
+                <?php $teacherWelcomeActionIcon = 'clipboard-list'; ?>
+                <?php require __DIR__ . '/_welcome_hero.php'; ?>
+
                 <section class="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
                     <div class="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
                         <div class="min-w-0 flex-1">

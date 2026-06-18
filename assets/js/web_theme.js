@@ -91,12 +91,40 @@
         }
     `;
 
-    const THEME_ICON_LIGHT = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"></circle><path d="M12 1.5v2.5"></path><path d="M12 20v2.5"></path><path d="m4.57 4.57 1.77 1.77"></path><path d="m17.66 17.66 1.77 1.77"></path><path d="M1.5 12H4"></path><path d="M20 12h2.5"></path><path d="m4.57 19.43 1.77-1.77"></path><path d="m17.66 6.34 1.77-1.77"></path></svg>';
-    const THEME_ICON_DARK = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11Z"></path></svg>';
+    const THEME_ICON_LIGHT = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.15"></circle><path d="M12 2.75v2.1"></path><path d="M12 19.15v2.1"></path><path d="m5.46 5.46 1.48 1.48"></path><path d="m17.06 17.06 1.48 1.48"></path><path d="M2.75 12h2.1"></path><path d="M19.15 12h2.1"></path><path d="m5.46 18.54 1.48-1.48"></path><path d="m17.06 6.94 1.48-1.48"></path></svg>';
+    const THEME_ICON_DARK = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3.6a7.9 7.9 0 1 0 5.2 13.4A8.8 8.8 0 1 1 15.2 3.6Z"></path><path d="M16.7 5.2v2.1"></path><path d="M15.65 6.25h2.1"></path><path d="m19.55 8.15.55.55"></path><path d="m20.1 8.15-.55.55"></path></svg>';
     const scrollTopState = {
         button: null,
         initialized: false,
         root: null,
+    };
+
+    const resolveBasePath = () => {
+        const SCRIPT_MARKER = '/assets/js/web_theme.js';
+        for (const script of document.getElementsByTagName('script')) {
+            const src = script.getAttribute('src') || '';
+            if (!src.includes(SCRIPT_MARKER)) {
+                continue;
+            }
+
+            try {
+                const url = new URL(src, window.location.origin);
+                const idx = url.pathname.indexOf(SCRIPT_MARKER);
+                if (idx !== -1) {
+                    return url.pathname.slice(0, idx).replace(/\/+$/, '');
+                }
+            } catch (_error) {
+                /* Invalid script src; keep looking. */
+            }
+        }
+
+        return '';
+    };
+
+    const appBasePath = resolveBasePath();
+    const withBasePath = (relative) => {
+        const clean = String(relative || '').replace(/^\/+/, '');
+        return (appBasePath ? `${appBasePath}/` : '/') + clean;
     };
 
     const safeStorage = {
@@ -142,6 +170,27 @@
         style.id = SCROLL_TOP_STYLE_ID;
         style.textContent = SCROLL_TOP_CSS;
         document.head.appendChild(style);
+    };
+
+    const ensureIconColorStylesheet = () => {
+        const head = document.head || document.documentElement;
+        if (!head) {
+            return;
+        }
+
+        const existing = head.querySelector('link[data-app-icon-colors="1"], link[href*="/assets/css/icon-colors.css"], link[href*="assets/css/icon-colors.css"]');
+        if (existing) {
+            if (existing.parentNode === head) {
+                head.appendChild(existing);
+            }
+            return;
+        }
+
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = `${withBasePath('assets/css/icon-colors.css')}?v=20260618-icon-colors`;
+        link.setAttribute('data-app-icon-colors', '1');
+        head.appendChild(link);
     };
 
     const getScrollTopRoot = () => {
@@ -236,6 +285,16 @@
         const isDark = theme === 'dark';
         const title = isDark ? 'Activer le mode clair' : 'Activer le mode sombre';
         const icon = isDark ? THEME_ICON_LIGHT : THEME_ICON_DARK;
+        const setVisible = (node, visible) => {
+            if (!(node instanceof HTMLElement)) {
+                return;
+            }
+
+            node.hidden = !visible;
+            node.classList.toggle('hidden', !visible);
+            node.style.display = visible ? '' : 'none';
+            node.setAttribute('aria-hidden', 'true');
+        };
 
         document.querySelectorAll(SELECTOR).forEach((button) => {
             const darkIconNode = button.querySelector('[data-theme-icon-dark]');
@@ -252,17 +311,10 @@
             let iconNode = button.querySelector('[data-theme-label]');
 
             if (darkIconNode || lightIconNode) {
-                if (darkIconNode instanceof HTMLElement) {
-                    darkIconNode.classList.toggle('hidden', isDark);
-                }
-                if (lightIconNode instanceof HTMLElement) {
-                    lightIconNode.classList.toggle('hidden', !isDark);
-                }
-            } else if (hasLegacyThemeIcons) {
-                // The markup already contains a moon/sun pair controlled by Tailwind's dark variants.
-                // Keep it intact to avoid duplicating the icon set on teacher/admin shell buttons.
+                setVisible(darkIconNode, !isDark);
+                setVisible(lightIconNode, isDark);
             } else {
-                if (!iconNode) {
+                if (!iconNode && !hasLegacyThemeIcons) {
                     iconNode = document.createElement('span');
                     iconNode.setAttribute('data-theme-label', '');
                     iconNode.setAttribute('aria-hidden', 'true');
@@ -270,8 +322,26 @@
                     button.prepend(iconNode);
                 }
 
-                iconNode.innerHTML = icon;
+                if (iconNode instanceof HTMLElement) {
+                    iconNode.innerHTML = icon;
+                    setVisible(iconNode, true);
+                }
             }
+
+            legacyThemeIconNodes.forEach((node) => {
+                if (!(node instanceof HTMLElement)) {
+                    return;
+                }
+
+                if (node.classList.contains('dark:hidden')) {
+                    setVisible(node, !isDark);
+                    return;
+                }
+
+                if (node.classList.contains('dark:inline')) {
+                    setVisible(node, isDark);
+                }
+            });
 
             button.setAttribute('aria-label', title);
             button.setAttribute('title', title);
@@ -343,6 +413,7 @@
         syncTheme(false);
         ensureScrollbarStyle();
         ensureScrollTopStyle();
+        ensureIconColorStylesheet();
         ensureScrollTopButton();
     };
 

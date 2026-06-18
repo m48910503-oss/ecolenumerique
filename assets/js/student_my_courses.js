@@ -19,7 +19,7 @@
   var sortSelect = root.querySelector("[data-course-sort]");
   var resetButtons = Array.prototype.slice.call(root.querySelectorAll("[data-course-reset]"));
   var noMatchState = root.querySelector("[data-courses-no-match]");
-  var modal = root.querySelector("#course-modal");
+  var modal = document.querySelector("#course-modal");
   var modalCover = modal ? modal.querySelector("#course-modal-cover") : null;
   var modalStatus = modal ? modal.querySelector("#course-modal-status") : null;
   var modalLevel = modal ? modal.querySelector("#course-modal-level") : null;

@@ -270,7 +270,7 @@ if ($courseCoverPath !== '') {
     <title>Modifier un cours - École Numérique</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time()))); ?>">
     <script src="<?php echo e(site_url('assets/js/course_create_fields.js')); ?>" defer></script>
@@ -305,6 +305,12 @@ if ($courseCoverPath !== '') {
             <?php require __DIR__ . '/_topbar.php'; ?>
 
 <main class="teacher-workflow-main max-w-7xl mx-auto px-6 py-8 space-y-6">
+        <?php $teacherWelcomeTitle = 'Modifier le cours'; ?>
+        <?php $teacherWelcomeSummary = 'Modifiez le cours avec les données déjà chargées.'; ?>
+        <?php $teacherWelcomeActionUrl = site_url('teacher/courses'); ?>
+        <?php $teacherWelcomeActionLabel = 'Mes cours'; ?>
+        <?php $teacherWelcomeActionIcon = 'arrow-left'; ?>
+        <?php require __DIR__ . '/_welcome_hero.php'; ?>
 
         <section class="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 space-y-4">
 

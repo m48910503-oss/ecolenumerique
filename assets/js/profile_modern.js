@@ -19,6 +19,8 @@
             tab.classList.toggle('text-gray-500', !isActive);
             tab.classList.toggle('dark:text-gray-400', !isActive);
             tab.classList.toggle('border-transparent', !isActive);
+            tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            tab.tabIndex = isActive ? 0 : -1;
         });
 
         tabPanels.forEach((panel) => {
@@ -35,6 +37,33 @@
         profileTabs.forEach((tab) => {
             tab.addEventListener('click', () => {
                 activateTab(tab.getAttribute('data-tab'));
+            });
+
+            tab.addEventListener('keydown', (event) => {
+                const currentIndex = profileTabs.indexOf(tab);
+                if (currentIndex < 0) {
+                    return;
+                }
+
+                let nextIndex = currentIndex;
+                if (event.key === 'ArrowRight') {
+                    nextIndex = (currentIndex + 1) % profileTabs.length;
+                } else if (event.key === 'ArrowLeft') {
+                    nextIndex = (currentIndex - 1 + profileTabs.length) % profileTabs.length;
+                } else if (event.key === 'Home') {
+                    nextIndex = 0;
+                } else if (event.key === 'End') {
+                    nextIndex = profileTabs.length - 1;
+                } else {
+                    return;
+                }
+
+                event.preventDefault();
+                const nextTab = profileTabs[nextIndex];
+                if (nextTab) {
+                    nextTab.focus();
+                    activateTab(nextTab.getAttribute('data-tab'));
+                }
             });
         });
 

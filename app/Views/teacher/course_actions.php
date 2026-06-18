@@ -101,7 +101,7 @@ $lastRejectionReason = trim((string) ($course['last_rejection_reason'] ?? ''));
     <title><?php echo e($decodeLabel('G&eacute;rer le cours')); ?> - Enseignant</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time()))); ?>">
     <script src="<?php echo e(site_url('assets/js/sidebar_toggle.js')); ?>" defer></script>
@@ -121,24 +121,12 @@ $lastRejectionReason = trim((string) ($course['last_rejection_reason'] ?? ''));
             <?php require __DIR__ . '/_topbar.php'; ?>
 
             <main class="teacher-courses-main mx-auto px-4 md:px-6 py-6 space-y-5">
-                <section class="teacher-courses-hero rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950/40">
-                    <div class="teacher-courses-hero__header flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                            <p class="teacher-courses-hero__eyebrow text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg('settings'); ?></span>
-                                <span>Gestion du cours</span>
-                            </p>
-                            <h1 class="teacher-courses-hero__title text-xl font-display font-semibold text-slate-900 dark:text-slate-100"><?php echo e($courseTitle); ?></h1>
-                            <p class="teacher-courses-hero__subtitle mt-1 text-sm text-slate-600 dark:text-slate-300">Choisissez une action, puis revenez aux cours.</p>
-                        </div>
-                        <div class="teacher-courses-hero__actions flex flex-wrap gap-2">
-                            <a href="<?php echo e($backUrl); ?>" class="teacher-courses-btn teacher-courses-btn--secondary inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100">
-                                <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg('layout'); ?></span>
-                                <span>Retour &agrave; la liste</span>
-                            </a>
-                        </div>
-                    </div>
-                </section>
+                <?php $teacherWelcomeTitle = $courseTitle; ?>
+                <?php $teacherWelcomeSummary = 'Choisissez une action, puis revenez aux cours.'; ?>
+                <?php $teacherWelcomeActionUrl = $backUrl; ?>
+                <?php $teacherWelcomeActionLabel = 'Retour à la liste'; ?>
+                <?php $teacherWelcomeActionIcon = 'layout'; ?>
+                <?php require __DIR__ . '/_welcome_hero.php'; ?>
 
                 <section class="teacher-courses-panel rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/40">
                     <div class="teacher-courses-card__stack space-y-3">

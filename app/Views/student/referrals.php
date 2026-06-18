@@ -102,6 +102,32 @@ $formatPercent = static function (float $value): string {
 };
 $commissionLabel = $formatPercent($referralCommissionRateValue);
 $minimumWithdrawalLabel = $formatMoney($withdrawMinValue);
+$studentWelcomeSummary = '';
+$studentWelcomeTitle = 'Parrainage';
+$studentWelcomeActionType = 'link';
+$studentWelcomeActionUrl = $catalogueUrl;
+$studentWelcomeActionLabel = 'Explorer le catalogue';
+$studentWelcomeActionIcon = 'search';
+$studentWelcomeActionAttrs = '';
+
+if ($isRefereesPage) {
+    $studentWelcomeTitle = 'Mes filleuls';
+    $studentWelcomeSummary = $referralCount . ' filleul(s) inscrit(s).';
+    $studentWelcomeActionUrl = $referralsUrl;
+    $studentWelcomeActionLabel = 'Retour au parrainage';
+    $studentWelcomeActionIcon = 'arrow-left';
+} elseif ($isHistoryPage) {
+    $studentWelcomeTitle = 'Historique des gains';
+    $studentWelcomeSummary = $referralCommissionCount . ' commission(s) validée(s).';
+    $studentWelcomeActionUrl = $referralsUrl;
+    $studentWelcomeActionLabel = 'Retour au parrainage';
+    $studentWelcomeActionIcon = 'arrow-left';
+} else {
+    $studentWelcomeTitle = 'Parrainage';
+    $studentWelcomeSummary = 'Gagnez ' . $commissionLabel . ' par achat validé.';
+    $studentWelcomeActionLabel = '';
+}
+
 $initialsFromName = static function (string $name, string $fallback = 'ET'): string {
     $name = trim($name);
     if ($name === '') {
@@ -142,13 +168,6 @@ if ($levelTwoValue > 0) {
 
 $conversionRate = $referralCount > 0 ? min(100, $referralCount * 16) : 0;
 $nextMilestone = max(0, 10 - $referralCount);
-$shareText = 'Rejoignez-moi sur École Numérique';
-$referralLinkShare = $referralLinkValue !== '' ? rawurlencode($referralLinkValue) : '';
-$facebookShareUrl = $referralLinkValue !== '' ? 'https://www.facebook.com/sharer/sharer.php?u=' . $referralLinkShare : '';
-$twitterShareUrl = $referralLinkValue !== '' ? 'https://twitter.com/intent/tweet?text=' . rawurlencode($shareText) . '&url=' . $referralLinkShare : '';
-$whatsappShareUrl = $referralLinkValue !== '' ? 'https://wa.me/?text=' . rawurlencode($shareText . ' : ' . $referralLinkValue) : '';
-$linkedinShareUrl = $referralLinkValue !== '' ? 'https://www.linkedin.com/sharing/share-offsite/?url=' . $referralLinkShare : '';
-
 $deriveReferralStatus = static function (array $row): array {
     $count = max(0, (int) ($row['total_count'] ?? 0));
     if ($count >= 3) {
@@ -199,6 +218,8 @@ $deriveReferralStatus = static function (array $row): array {
       <?php require __DIR__ . '/_topbar.php'; ?>
 
       <div class="student-dashboard-content student-referrals-page p-4 pb-24 space-y-5 animate-fade-up sm:p-6 sm:pb-24 sm:space-y-6 lg:space-y-8">
+        <?php require __DIR__ . '/_welcome_hero.php'; ?>
+
         <?php if ($isRefereesPage): ?>
           <section class="student-referrals-link-card rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_48px_-38px_rgba(15,23,42,0.35)]">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -259,7 +280,7 @@ $deriveReferralStatus = static function (array $row): array {
               <div class="p-6 sm:p-8" data-referrals-empty>
                 <div class="student-referrals-empty-card rounded-[22px] border border-dashed border-slate-200 bg-slate-50/70 p-6 text-center">
                   <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                    <i class="fas fa-users text-xl"></i>
+                    <?php echo dashboard_icon_svg('users', 'class="h-7 w-7 shrink-0"'); ?>
                   </div>
                   <h4 class="mt-4 text-lg font-semibold text-slate-900">Aucun filleul pour le moment</h4>
                   <p class="mt-2 text-sm text-slate-500">
@@ -367,7 +388,7 @@ $deriveReferralStatus = static function (array $row): array {
               <div class="p-6 sm:p-8">
                 <div class="student-referrals-empty-card rounded-[22px] border border-dashed border-slate-200 bg-slate-50/70 p-6 text-center">
                   <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                    <i class="fas fa-coins text-xl"></i>
+                    <?php echo dashboard_icon_svg('coins', 'class="h-7 w-7 shrink-0"'); ?>
                   </div>
                   <h4 class="mt-4 text-lg font-semibold text-slate-900">Aucun gain enregistré</h4>
                   <p class="mt-2 text-sm text-slate-500">Partagez votre lien pour obtenir votre premier filleul.</p>
@@ -421,307 +442,149 @@ $deriveReferralStatus = static function (array $row): array {
           ?>
 
         <?php else: ?>
-        <section class="student-dashboard-hero student-referrals-hero-card bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-[1.5rem] p-4 text-white shadow-glow sm:rounded-2xl sm:p-6">
-          <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div class="min-w-0">
-              <h2 class="text-xl font-bold sm:text-2xl">Gagnez <?php echo e($commissionLabel); ?> par achat validé.</h2>
-              <p class="mt-1 text-sm text-blue-100 sm:text-base">Achat confirmé = gain validé.</p>
-            </div>
+          <section class="student-referrals-link-card rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_48px_-38px_rgba(15,23,42,0.35)]">
+            <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+              <div class="min-w-0 max-w-2xl">
+                <h2 class="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">Votre lien de parrainage</h2>
+                <p class="mt-1 text-sm text-slate-500 sm:text-base">Commission : <?php echo e($commissionLabel); ?> par achat validé.</p>
 
-            <?php if ($referralLinkValue !== ''): ?>
-              <button
-                type="button"
-                class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-white/70"
-                data-referral-share
-                data-referral-value="<?php echo e($referralLinkValue); ?>"
-                data-referral-copy-success="Lien partagé."
-                data-referral-copy-fallback-success="Lien copié."
-                data-referral-copy-error="Partage impossible."
-              >
-                <i class="fas fa-share-alt text-xs"></i>
-                <span>Partager maintenant</span>
-              </button>
-            <?php else: ?>
-              <span class="inline-flex shrink-0 items-center justify-center rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold text-blue-50">
-                Lien indisponible
-              </span>
-            <?php endif; ?>
-          </div>
-
-          <div class="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-blue-50">
-            <span class="rounded-full bg-white/15 px-3 py-1.5">Gain : <?php echo e($commissionLabel); ?></span>
-            <span class="rounded-full bg-white/15 px-3 py-1.5">Validation : achat confirmé</span>
-            <span class="rounded-full bg-white/15 px-3 py-1.5">Retrait : dès <?php echo e($minimumWithdrawalLabel); ?></span>
-          </div>
-        </section>
-
-        <section class="student-referrals-kpi-grid grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <article class="student-referrals-stat-card rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_48px_-38px_rgba(15,23,42,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_52px_-38px_rgba(15,23,42,0.45)]">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <p class="text-sm text-slate-500">Filleuls inscrits</p>
-                <p class="mt-1 text-3xl font-bold tracking-tight text-slate-900"><?php echo e((string) $referralCount); ?></p>
-                <p class="mt-2 text-sm text-slate-500">+<?php echo e((string) $recentReferralsCount); ?> ce mois</p>
-              </div>
-              <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
-                <i class="fas fa-user-plus text-lg"></i>
-              </div>
-            </div>
-          </article>
-
-          <article class="student-referrals-stat-card rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_48px_-38px_rgba(15,23,42,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_52px_-38px_rgba(15,23,42,0.45)]">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <p class="text-sm text-slate-500">Gains totaux</p>
-                <p class="mt-1 text-3xl font-bold tracking-tight text-slate-900"><?php echo e($formatMoney($referralEarningsValue)); ?></p>
-                <p class="mt-2 text-sm text-slate-500">Dont <?php echo e($formatMoney($withdrawAvailableValue)); ?> disponibles</p>
-              </div>
-              <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
-                <i class="fas fa-euro-sign text-lg"></i>
-              </div>
-            </div>
-          </article>
-
-          <article class="student-referrals-stat-card rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_48px_-38px_rgba(15,23,42,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_52px_-38px_rgba(15,23,42,0.45)]">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <p class="text-sm text-slate-500">Récompenses débloquées</p>
-                <p class="mt-1 text-3xl font-bold tracking-tight text-slate-900"><?php echo e((string) $rewardTiersUnlocked); ?></p>
-                <p class="mt-2 text-sm text-slate-500"><?php echo $nextMilestone > 0 ? 'Prochain palier à ' . e((string) $nextMilestone) . ' filleul(s)' : 'Palier suivant atteint'; ?></p>
-              </div>
-              <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-100 text-purple-600">
-                <i class="fas fa-gift text-lg"></i>
-              </div>
-            </div>
-          </article>
-
-          <article class="student-referrals-stat-card rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_48px_-38px_rgba(15,23,42,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_52px_-38px_rgba(15,23,42,0.45)]">
-            <div class="flex items-start justify-between gap-3">
-              <div class="min-w-0">
-                <p class="text-sm text-slate-500">Taux de conversion</p>
-                <p class="mt-1 text-3xl font-bold tracking-tight text-slate-900"><?php echo e((string) $conversionRate); ?>%</p>
-                <div class="mt-4 h-2 rounded-full bg-slate-200">
-                  <div class="h-2 rounded-full bg-cyan-500" style="width: <?php echo e((string) $conversionRate); ?>%;"></div>
-                </div>
-              </div>
-              <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-600">
-                <i class="fas fa-chart-line text-lg"></i>
-              </div>
-            </div>
-          </article>
-        </section>
-
-        <section class="student-referrals-link-card rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_48px_-38px_rgba(15,23,42,0.35)]">
-          <div class="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-            <div class="min-w-0 max-w-2xl">
-              <h2 class="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">Votre lien de parrainage</h2>
-              <p class="mt-1 text-sm text-slate-500 sm:text-base">Commission : <?php echo e($commissionLabel); ?> par achat validé.</p>
-              <div class="mt-4 flex flex-wrap gap-3">
-                <?php if ($referralLinkValue !== ''): ?>
-                  <a href="<?php echo e($facebookShareUrl); ?>" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-600">
-                    <i class="fab fa-facebook-f student-referrals-social-icon student-referrals-social-icon--facebook"></i>
-                    Facebook
+                <div class="mt-4 flex flex-wrap gap-3">
+                  <a href="<?php echo e($referralRefereesUrl); ?>" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+                    <i class="fas fa-users text-xs"></i>
+                    Voir les filleuls
                   </a>
-                  <a href="<?php echo e($twitterShareUrl); ?>" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-600">
-                    <i class="fab fa-twitter student-referrals-social-icon student-referrals-social-icon--twitter"></i>
-                    Twitter
+                  <a href="<?php echo e($referralGainsUrl); ?>" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-600">
+                    <i class="fas fa-history text-xs"></i>
+                    Historique des gains
                   </a>
-                  <a href="<?php echo e($whatsappShareUrl); ?>" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-600">
-                    <i class="fab fa-whatsapp student-referrals-social-icon student-referrals-social-icon--whatsapp"></i>
-                    WhatsApp
-                  </a>
-                  <a href="<?php echo e($linkedinShareUrl); ?>" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-600">
-                    <i class="fab fa-linkedin-in student-referrals-social-icon student-referrals-social-icon--linkedin"></i>
-                    LinkedIn
-                  </a>
-                <?php else: ?>
-                  <span class="rounded-xl bg-slate-100 px-4 py-2.5 text-sm text-slate-500">Le partage sera disponible après activation du code.</span>
-                <?php endif; ?>
-              </div>
-            </div>
-
-            <div class="flex w-full flex-col gap-3 xl:max-w-[36rem]">
-              <div class="student-referrals-code-row flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" data-referral-copy-wrap>
-                <span class="min-w-0 flex-1 truncate font-mono text-sm text-slate-700">
-                  <?php echo e($referralLinkValue !== '' ? $referralLinkValue : 'Lien indisponible'); ?>
-                </span>
-                <?php if ($referralLinkValue !== ''): ?>
-                  <button
-                    type="button"
-                    class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white transition hover:bg-blue-700"
-                    data-referral-copy
-                    data-referral-value="<?php echo e($referralLinkValue); ?>"
-                    data-referral-copy-success="Lien de parrainage copié."
-                    data-referral-copy-error="Copie impossible. Utilisez Ctrl+C."
-                    aria-label="Copier le lien de parrainage"
-                  >
-                    <i class="fas fa-copy text-sm"></i>
-                  </button>
-                <?php endif; ?>
-              </div>
-              <div class="flex justify-end">
-                <?php if ($referralLinkValue !== ''): ?>
-                  <button
-                    type="button"
-                    class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-[0_16px_32px_-20px_rgba(37,99,235,0.8)] transition hover:-translate-y-0.5 hover:bg-blue-700"
-                    data-referral-share
-                    data-referral-value="<?php echo e($referralLinkValue); ?>"
-                    data-referral-copy-success="Lien partagé."
-                    data-referral-copy-fallback-success="Lien copié."
-                    data-referral-copy-error="Partage impossible."
-                  >
-                    <i class="fas fa-share-alt text-xs"></i>
-                    Partager maintenant
-                  </button>
-                <?php endif; ?>
-              </div>
-              <?php if ($referralCodeValue !== ''): ?>
-                <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" data-referral-copy-wrap>
-                  <div class="min-w-0">
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Code actif</p>
-                    <p class="mt-1 font-mono text-sm font-semibold text-slate-700"><?php echo e($referralCodeValue); ?></p>
-                  </div>
-                  <button
-                    type="button"
-                    class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
-                    data-referral-copy
-                    data-referral-value="<?php echo e($referralCodeValue); ?>"
-                    data-referral-copy-success="Code de parrainage copié."
-                    data-referral-copy-error="Copie impossible. Utilisez Ctrl+C."
-                    aria-label="Copier le code de parrainage"
-                  >
-                    <i class="fas fa-copy text-xs"></i>
-                    Copier le code
-                  </button>
-                  <p class="hidden basis-full text-xs font-medium text-emerald-600" data-referral-copy-status></p>
-                </div>
-              <?php endif; ?>
-            </div>
-          </div>
-        </section>
-
-        <section class="grid gap-4 lg:grid-cols-2">
-          <article class="student-referrals-table-card rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_48px_-38px_rgba(15,23,42,0.35)]">
-            <div class="flex items-start justify-between gap-4">
-              <div>
-                <h3 class="text-lg font-semibold tracking-tight text-slate-900">Mes filleuls</h3>
-                <p class="mt-1 text-sm text-slate-500"><?php echo e((string) $referralCount); ?> filleul(s) inscrit(s).</p>
-              </div>
-              <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
-                <i class="fas fa-users text-lg"></i>
-              </div>
-            </div>
-            <div class="mt-4 flex flex-wrap gap-3">
-              <a href="<?php echo e($referralRefereesUrl); ?>" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
-                <i class="fas fa-list text-xs"></i>
-                Voir les filleuls
-              </a>
-              <?php if ($referralLinkValue !== ''): ?>
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-600"
-                  data-referral-share
-                  data-referral-value="<?php echo e($referralLinkValue); ?>"
-                  data-referral-copy-success="Lien partagé."
-                  data-referral-copy-fallback-success="Lien copié."
-                  data-referral-copy-error="Partage impossible."
-                >
-                  <i class="fas fa-share-alt text-xs"></i>
-                  Partager
-                </button>
-              <?php endif; ?>
-            </div>
-          </article>
-
-          <article class="student-referrals-history-card rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_48px_-38px_rgba(15,23,42,0.35)]">
-            <div class="flex items-start justify-between gap-4">
-              <div>
-                <h3 class="text-lg font-semibold tracking-tight text-slate-900">Historique des gains</h3>
-                <p class="mt-1 text-sm text-slate-500"><?php echo e((string) $referralCommissionCount); ?> commission(s) validée(s).</p>
-              </div>
-              <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
-                <i class="fas fa-coins text-lg"></i>
-              </div>
-            </div>
-            <div class="mt-4 flex flex-wrap items-center gap-3">
-              <a href="<?php echo e($referralGainsUrl); ?>" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
-                <i class="fas fa-history text-xs"></i>
-                Voir l’historique
-              </a>
-              <span class="app-status-pill app-status-pill--active"><?php echo e($formatMoney($referralEarningsValue)); ?></span>
-            </div>
-          </article>
-        </section>
-
-        <section class="student-referrals-withdraw-card rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_48px_-38px_rgba(15,23,42,0.35)]">
-          <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-            <div class="max-w-2xl">
-              <h3 class="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">Retrait des gains</h3>
-              <p class="mt-1 text-sm text-slate-500">Paiement cours ou retrait FedaPay.</p>
-              <div class="mt-4 grid gap-3 sm:grid-cols-3">
-                <div class="student-referrals-mini-card rounded-2xl bg-slate-50 p-4">
-                  <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Disponible</p>
-                  <p class="mt-2 text-base font-bold text-slate-900"><?php echo e($formatMoney($withdrawAvailableValue)); ?></p>
-                  <p class="mt-1 text-xs text-slate-500">Montant mobilisable maintenant</p>
-                </div>
-                <div class="student-referrals-mini-card rounded-2xl bg-slate-50 p-4">
-                  <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Minimum</p>
-                  <p class="mt-2 text-base font-bold text-slate-900"><?php echo e($formatMoney($withdrawMinValue)); ?></p>
-                  <p class="mt-1 text-xs text-slate-500">Minimum de retrait</p>
-                </div>
-                <div class="student-referrals-mini-card rounded-2xl bg-slate-50 p-4">
-                  <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">En attente</p>
-                  <p class="mt-2 text-base font-bold text-slate-900"><?php echo e($formatMoney($pendingWithdrawalsValue)); ?></p>
-                  <p class="mt-1 text-xs text-slate-500">Retraits en validation</p>
                 </div>
               </div>
-              <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-600">
-                Minimum <?php echo e($minimumWithdrawalLabel); ?> · Mobile Money via FedaPay · Validation administrative.
-              </div>
-            </div>
 
-            <div class="w-full xl:max-w-[31rem]">
-              <?php if (!$canRequestReferralWithdraw): ?>
-                <div class="student-referrals-empty-card rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-5">
-                  <p class="text-sm font-semibold text-slate-900">Aucune demande possible pour l’instant</p>
-                  <p class="mt-2 text-sm text-slate-500">Minimum requis : <?php echo e($minimumWithdrawalLabel); ?>.</p>
+              <div class="w-full xl:max-w-[34rem]">
+                <div class="student-referrals-code-row flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" data-referral-copy-wrap>
+                  <span class="min-w-0 flex-1 truncate font-mono text-sm text-slate-700">
+                    <?php echo e($referralLinkValue !== '' ? $referralLinkValue : 'Lien indisponible'); ?>
+                  </span>
+                  <?php if ($referralLinkValue !== ''): ?>
+                    <button
+                      type="button"
+                      class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white transition hover:bg-blue-700"
+                      data-referral-copy
+                      data-referral-value="<?php echo e($referralLinkValue); ?>"
+                      data-referral-copy-success="Lien de parrainage copié."
+                      data-referral-copy-error="Copie impossible. Utilisez Ctrl+C."
+                      aria-label="Copier le lien de parrainage"
+                    >
+                      <i class="fas fa-copy text-sm"></i>
+                    </button>
+                  <?php endif; ?>
                 </div>
-              <?php else: ?>
-                <form method="post" class="student-referrals-withdraw-form rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
-                  <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
-                  <input type="hidden" name="action" value="request_referral_withdrawal">
 
-                  <div class="grid gap-4">
-                    <label class="text-sm font-semibold text-slate-700">
-                      Montant (F CFA)
-                      <input name="amount_xof" type="number" min="0" max="<?php echo e((string) $withdrawAvailableValue); ?>" value="<?php echo e((string) $withdrawAvailableValue); ?>" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-100">
-                    </label>
-
-                    <label class="text-sm font-semibold text-slate-700">
-                      Méthode
-                      <select name="method" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-100">
-                        <option value="fedapay">Mobile Money via FedaPay</option>
-                      </select>
-                    </label>
-
-                    <label class="text-sm font-semibold text-slate-700">
-                      Destination
-                      <input name="destination" type="text" required placeholder="Numéro ou référence de réception" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-100">
-                      <span class="mt-1 block text-xs font-normal text-slate-500">Numéro Mobile Money.</span>
-                    </label>
-
-                    <div class="flex justify-end">
-                      <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
-                        <i class="fas fa-wallet"></i>
-                        Demander le retrait
-                      </button>
+                <?php if ($referralCodeValue !== ''): ?>
+                  <div class="mt-3 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3" data-referral-copy-wrap>
+                    <div class="min-w-0 flex-1">
+                      <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Code de parrainage</p>
+                      <p class="mt-1 truncate font-mono text-sm font-semibold text-slate-700"><?php echo e($referralCodeValue); ?></p>
                     </div>
+                    <button
+                      type="button"
+                      class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white transition hover:bg-blue-700"
+                      data-referral-copy
+                      data-referral-value="<?php echo e($referralCodeValue); ?>"
+                      data-referral-copy-success="Code de parrainage copié."
+                      data-referral-copy-error="Copie impossible. Utilisez Ctrl+C."
+                      aria-label="Copier le code de parrainage"
+                    >
+                      <i class="fas fa-copy text-sm"></i>
+                    </button>
                   </div>
-                </form>
-              <?php endif; ?>
+                <?php endif; ?>
+
+                <div class="mt-3 flex justify-end">
+                  <?php if ($referralLinkValue !== ''): ?>
+                    <button
+                      type="button"
+                      class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-[0_16px_32px_-20px_rgba(37,99,235,0.8)] transition hover:-translate-y-0.5 hover:bg-blue-700"
+                      data-referral-share
+                      data-referral-value="<?php echo e($referralLinkValue); ?>"
+                      data-referral-copy-success="Lien partagé."
+                      data-referral-copy-fallback-success="Lien copié."
+                      data-referral-copy-error="Partage impossible."
+                    >
+                      <i class="fas fa-share-alt text-xs"></i>
+                      Partager maintenant
+                    </button>
+                  <?php endif; ?>
+                </div>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+
+          <section class="student-referrals-withdraw-card rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_48px_-38px_rgba(15,23,42,0.35)]">
+            <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+              <div class="max-w-2xl">
+                <h3 class="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">Retrait des gains</h3>
+                <p class="mt-1 text-sm text-slate-500">Paiement cours ou retrait FedaPay.</p>
+
+                <div class="mt-4 flex flex-wrap gap-2">
+                  <span class="inline-flex items-center rounded-full bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+                    Disponible : <?php echo e($formatMoney($withdrawAvailableValue)); ?>
+                  </span>
+                  <span class="inline-flex items-center rounded-full bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+                    Minimum : <?php echo e($formatMoney($withdrawMinValue)); ?>
+                  </span>
+                  <span class="inline-flex items-center rounded-full bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+                    En attente : <?php echo e($formatMoney($pendingWithdrawalsValue)); ?>
+                  </span>
+                </div>
+
+                <p class="mt-4 text-sm text-slate-500">
+                  Minimum <?php echo e($minimumWithdrawalLabel); ?> · Mobile Money via FedaPay · Validation administrative.
+                </p>
+              </div>
+
+              <div class="w-full xl:max-w-[31rem]">
+                <?php if (!$canRequestReferralWithdraw): ?>
+                  <div class="student-referrals-empty-card rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-5">
+                    <p class="text-sm font-semibold text-slate-900">Aucune demande possible pour l’instant</p>
+                    <p class="mt-2 text-sm text-slate-500">Minimum requis : <?php echo e($minimumWithdrawalLabel); ?>.</p>
+                  </div>
+                <?php else: ?>
+                  <form method="post" class="student-referrals-withdraw-form rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+                    <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
+                    <input type="hidden" name="action" value="request_referral_withdrawal">
+
+                    <div class="grid gap-4">
+                      <label class="text-sm font-semibold text-slate-700">
+                        Montant (F CFA)
+                        <input name="amount_xof" type="number" min="0" max="<?php echo e((string) $withdrawAvailableValue); ?>" value="<?php echo e((string) $withdrawAvailableValue); ?>" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-100">
+                      </label>
+
+                      <label class="text-sm font-semibold text-slate-700">
+                        Méthode
+                        <select name="method" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-100">
+                          <option value="fedapay">Mobile Money via FedaPay</option>
+                        </select>
+                      </label>
+
+                      <label class="text-sm font-semibold text-slate-700">
+                        Destination
+                        <input name="destination" type="text" required placeholder="Numéro ou référence de réception" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-100">
+                        <span class="mt-1 block text-xs font-normal text-slate-500">Numéro Mobile Money.</span>
+                      </label>
+
+                      <div class="flex justify-end">
+                        <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+                          <i class="fas fa-wallet"></i>
+                          Demander le retrait
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                <?php endif; ?>
+              </div>
+            </div>
+          </section>
         <?php endif; ?>
       </div>
     </main>

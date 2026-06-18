@@ -127,25 +127,19 @@ $kpiCards = [
 
 $ticketCategories = $supportRoleSpace === 'teacher'
     ? [
-        ['value' => 'technical', 'label' => 'Problème technique', 'priority' => 'normal'],
-        ['value' => 'lesson', 'label' => 'Cours / contenu', 'priority' => 'normal'],
-        ['value' => 'meeting', 'label' => 'Rendez-vous', 'priority' => 'normal'],
-        ['value' => 'withdrawal', 'label' => 'Retrait / revenus', 'priority' => 'high'],
-        ['value' => 'other', 'label' => 'Autre', 'priority' => 'low'],
+        ['value' => 'technical', 'label' => 'Problème technique'],
+        ['value' => 'lesson', 'label' => 'Cours / contenu'],
+        ['value' => 'meeting', 'label' => 'Rendez-vous'],
+        ['value' => 'withdrawal', 'label' => 'Retrait / revenus'],
+        ['value' => 'other', 'label' => 'Autre'],
     ]
     : [
-        ['value' => 'course', 'label' => 'Accès au cours', 'priority' => 'normal'],
-        ['value' => 'billing', 'label' => 'Paiement', 'priority' => 'high'],
-        ['value' => 'certificate', 'label' => 'Certificat', 'priority' => 'normal'],
-        ['value' => 'technical', 'label' => 'Problème technique', 'priority' => 'normal'],
-        ['value' => 'other', 'label' => 'Autre', 'priority' => 'low'],
+        ['value' => 'course', 'label' => 'Accès au cours'],
+        ['value' => 'billing', 'label' => 'Paiement'],
+        ['value' => 'certificate', 'label' => 'Certificat'],
+        ['value' => 'technical', 'label' => 'Problème technique'],
+        ['value' => 'other', 'label' => 'Autre'],
     ];
-
-$ticketPriorityOptions = [
-    ['value' => 'low', 'label' => 'Faible'],
-    ['value' => 'normal', 'label' => 'Normal'],
-    ['value' => 'high', 'label' => 'Urgent'],
-];
 
 $useTeacherShell = $supportRoleSpace === 'teacher';
 $supportDataView = $useTeacherShell ? 'teacher/support' : 'student/support';
@@ -170,7 +164,7 @@ $supportContentShellClass = $useTeacherShell
     <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/vendor/fontawesome/all.min.css?v=' . (@filemtime(__DIR__ . '/../../../assets/vendor/fontawesome/all.min.css') ?: time()))); ?>">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/support.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/support.css') ?: time()))); ?>">
 <?php if ($useTeacherShell): ?>
@@ -288,24 +282,8 @@ $supportContentShellClass = $useTeacherShell
                                     class="w-full rounded-xl border border-gray-200 bg-gray-100 px-4 py-2.5 text-sm text-gray-700 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:focus:border-primary-500 dark:focus:ring-primary-500/20"
                                 >
                                     <?php foreach ($ticketCategories as $index => $category): ?>
-                                        <option value="<?php echo e((string) ($category['value'] ?? 'other')); ?>" data-priority="<?php echo e((string) ($category['priority'] ?? 'normal')); ?>"<?php echo $index === 0 ? ' selected' : ''; ?>>
+                                        <option value="<?php echo e((string) ($category['value'] ?? 'other')); ?>"<?php echo $index === 0 ? ' selected' : ''; ?>>
                                             <?php echo e((string) ($category['label'] ?? 'Autre')); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label for="support-new-priority" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Priorité</label>
-                                <select
-                                    id="support-new-priority"
-                                    name="priority"
-                                    class="w-full rounded-xl border border-gray-200 bg-gray-100 px-4 py-2.5 text-sm text-gray-700 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:focus:border-primary-500 dark:focus:ring-primary-500/20"
-                                >
-                                    <?php foreach ($ticketPriorityOptions as $priorityOption): ?>
-                                        <?php $priorityValue = (string) ($priorityOption['value'] ?? 'normal'); ?>
-                                        <option value="<?php echo e($priorityValue); ?>"<?php echo $priorityValue === 'normal' ? ' selected' : ''; ?>>
-                                            <?php echo e((string) ($priorityOption['label'] ?? 'Normal')); ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -388,16 +366,11 @@ $supportContentShellClass = $useTeacherShell
                                     $ticketStatusGroup = (string) ($ticket['status_group'] ?? 'open');
                                     $ticketStatusTone = (string) ($ticket['status_tone'] ?? 'amber');
                                     $ticketStatusLabel = (string) ($ticket['status_label'] ?? 'Ouvert');
-                                    $ticketNoteTone = (string) ($ticket['note_tone'] ?? 'amber');
                                     $ticketDimmed = !empty($ticket['dimmed']);
-                                    $ticketPriority = (string) ($ticket['priority'] ?? 'normal');
-                                    $ticketPriorityLabel = (string) ($ticket['priority_label'] ?? ($ticketPriority === 'high' ? 'Urgent' : ($ticketPriority === 'low' ? 'Faible' : 'Normal')));
                                     $ticketCategoryLabel = (string) ($ticket['category_label'] ?? 'Autre');
                                     $ticketUpdatedLabel = (string) ($ticket['updated_label'] ?? ($ticket['date'] ?? '—'));
-                                    $ticketActionLabel = $ticketStatusGroup === 'closed' ? 'Détails' : 'Voir / Répondre';
+                                    $ticketActionLabel = 'Ouvrir';
                                     $ticketStatusPillClass = 'support-ticket-status support-ticket-status--' . ($ticketStatusTone === 'action' ? 'action' : ($ticketStatusTone === 'green' ? 'closed' : ($ticketStatusTone === 'blue' ? 'open' : 'waiting')));
-                                    $ticketNoteClass = 'support-ticket-note support-ticket-note--' . ($ticketNoteTone === 'action' ? 'action' : ($ticketNoteTone === 'blue' ? 'info' : ($ticketNoteTone === 'green' ? 'done' : 'waiting')));
-                                    $ticketPriorityClass = 'support-ticket-priority support-ticket-priority--' . ($ticketPriority === 'high' ? 'urgent' : ($ticketPriority === 'low' ? 'low' : 'normal'));
                                     $ticketTitleClass = $ticketDimmed
                                         ? 'font-medium text-gray-700 dark:text-gray-300'
                                         : 'font-bold text-gray-900 dark:text-white';
@@ -431,19 +404,12 @@ $supportContentShellClass = $useTeacherShell
                                             <i class="fas fa-layer-group" aria-hidden="true"></i>
                                             <?php echo e($ticketCategoryLabel); ?>
                                         </span>
-                                        <span class="<?php echo e($ticketPriorityClass); ?>">
-                                            <i class="fas fa-flag" aria-hidden="true"></i>
-                                            <?php echo e($ticketPriorityLabel); ?>
-                                        </span>
                                         <span>
                                             <i class="far fa-clock" aria-hidden="true"></i>
                                             Mis à jour : <?php echo e($ticketUpdatedLabel); ?>
                                         </span>
                                     </div>
                                     <div class="support-ticket-footer mt-3">
-                                        <span class="<?php echo e($ticketNoteClass); ?>">
-                                            <?php echo e((string) ($ticket['note'] ?? '')); ?>
-                                        </span>
                                         <button type="button" class="support-ticket-action" data-ticket-action>
                                             <?php echo e($ticketActionLabel); ?>
                                             <i class="fas fa-arrow-right" aria-hidden="true"></i>

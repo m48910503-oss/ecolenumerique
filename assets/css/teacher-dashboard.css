@@ -1,25 +1,34 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
 .hover-lift {
     transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 :root {
-    --app-font-title: "Inter", "Segoe UI", system-ui, sans-serif;
+    --app-font-title: "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     --app-font-display: var(--app-font-title);
-    --app-font-section: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --app-font-body: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --app-font-sans: var(--app-font-body);
-    --app-font-numeric: "IBM Plex Mono", "Cascadia Code", Consolas, monospace;
+    --app-font-section: var(--app-font-title);
+    --app-font-ui: var(--app-font-title);
+    --app-font-sans: var(--app-font-title);
+    --app-font-body: var(--app-font-title);
+    --app-font-serif: "Times New Roman", Times, Georgia, serif;
+    --app-font-accent: var(--app-font-serif);
+    --app-font-mono: "IBM Plex Mono", "Cascadia Code", Consolas, monospace;
+    --app-font-numeric: var(--app-font-mono);
 }
 
 body[data-view="teacher/course_create"],
 body[data-view="teacher/course_edit"] {
-    --app-font-title: "Space Grotesk", "Manrope", "Segoe UI", system-ui, sans-serif;
+    --app-font-title: "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     --app-font-display: var(--app-font-title);
-    --app-font-section: "Manrope", "Segoe UI", system-ui, sans-serif;
-    --app-font-body: "Manrope", "Segoe UI", system-ui, sans-serif;
-    --app-font-sans: var(--app-font-body);
+    --app-font-section: var(--app-font-title);
+    --app-font-ui: var(--app-font-title);
+    --app-font-sans: var(--app-font-title);
+    --app-font-body: var(--app-font-title);
+    --app-font-serif: "Times New Roman", Times, Georgia, serif;
+    --app-font-accent: var(--app-font-serif);
+    --app-font-mono: "IBM Plex Mono", "Cascadia Code", Consolas, monospace;
+    --app-font-numeric: var(--app-font-mono);
 }
 
 .font-body,
@@ -107,6 +116,10 @@ html[data-view^="teacher/"] {
     font-size: 14.5px;
     overflow-x: hidden;
     max-width: 100%;
+}
+
+html[data-view^="teacher/"][data-default-theme] {
+    font-size: 14px !important;
 }
 
 body[data-view^="teacher/"] {
@@ -301,14 +314,14 @@ body[data-view^="teacher/"] #teacher-dashboard-sidebar nav .space-y-1 > * + * {
 body[data-view^="teacher/"] #teacher-dashboard-sidebar nav p {
     padding-left: 0.65rem !important;
     font-size: 0.62rem !important;
-    letter-spacing: 0.17em !important;
+    letter-spacing: 0.12em !important;
 }
 
 body[data-view^="teacher/"] #teacher-dashboard-sidebar nav a {
     min-height: 2.35rem;
     padding: 0.52rem 0.72rem !important;
     border-radius: 0.75rem !important;
-    font-size: 0.92rem;
+    font-size: 0.88rem;
 }
 
 body[data-view^="teacher/"] #teacher-dashboard-sidebar nav a .w-5,
@@ -746,6 +759,37 @@ body[data-view="teacher/dashboard"] .teacher-dashboard-content {
 
 body[data-view="teacher/dashboard"] .teacher-dashboard-hero {
     border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-welcome {
+    min-height: 0 !important;
+    padding: 1.15rem 1.25rem !important;
+    border-radius: 1.15rem !important;
+    background: linear-gradient(100deg, #2563eb 0%, #1d9bd8 56%, #0fb5c8 100%) !important;
+    box-shadow: 0 20px 42px -34px rgba(37, 99, 235, 0.72) !important;
+    color: #fff !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-welcome :is(h1, h2) {
+    color: #fff !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+    line-height: 1.12 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-welcome p:not([class*="uppercase"]) {
+    max-width: 44rem;
+    color: #dbeafe !important;
+    font-family: var(--app-font-accent, "Times New Roman", Times, serif) !important;
+    font-size: 0.9rem !important;
+    font-style: italic !important;
+    font-weight: 400 !important;
+    line-height: 1.4 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-welcome :is(a, button) {
+    min-height: 2.5rem;
+    border-radius: 0.9rem !important;
 }
 
 body[data-view="teacher/dashboard"] .teacher-dashboard-card,
@@ -3155,10 +3199,273 @@ body[data-view="teacher/exams_manage"] :is(.teacher-dashboard-support-fab, [data
     height: 1.25rem;
 }
 
+body[data-view="teacher/exams_manage"] .exam-action-bar {
+    margin-top: -0.25rem;
+}
+
+body[data-view="teacher/exams_manage"] .exam-action-btn,
+body[data-view="teacher/exams_manage"] .exam-open-btn {
+    min-height: 2.25rem !important;
+    font-size: var(--teacher-type-control) !important;
+    font-family: var(--app-font-body) !important;
+    font-weight: var(--teacher-weight-label) !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0 !important;
+    box-shadow: 0 12px 24px -22px rgba(15, 23, 42, 0.5) !important;
+}
+
+body[data-view="teacher/exams_manage"] .exam-summary-strip {
+    gap: 0.6rem !important;
+}
+
+body[data-view="teacher/exams_manage"] .exam-summary-pill {
+    min-height: 4.4rem;
+    box-shadow: 0 16px 34px -30px rgba(15, 23, 42, 0.48) !important;
+}
+
+body[data-view="teacher/exams_manage"] .exam-summary-pill__icon {
+    width: 2.15rem !important;
+    height: 2.15rem !important;
+}
+
+body[data-view="teacher/exams_manage"] .exam-summary-pill__icon .app-icon,
+body[data-view="teacher/exams_manage"] .exam-summary-pill__icon .app-icon > svg {
+    width: 1rem !important;
+    height: 1rem !important;
+}
+
+body[data-view="teacher/exams_manage"] .exam-summary-pill__label {
+    font-size: var(--teacher-type-eyebrow) !important;
+    font-family: var(--app-font-body) !important;
+    font-weight: var(--teacher-weight-title) !important;
+    line-height: 1.1 !important;
+    letter-spacing: 0.08em !important;
+}
+
+body[data-view="teacher/exams_manage"] .exam-summary-pill__value {
+    font-size: var(--teacher-type-section-title) !important;
+    font-family: var(--app-font-title) !important;
+    font-weight: var(--teacher-weight-title) !important;
+    line-height: 1.05 !important;
+    letter-spacing: 0 !important;
+}
+
+body[data-view="teacher/exams_manage"] .exam-filter-bar {
+    padding: 0.55rem !important;
+    border-radius: 1.05rem !important;
+    box-shadow: 0 16px 34px -30px rgba(15, 23, 42, 0.48) !important;
+}
+
+body[data-view="teacher/exams_manage"] .exam-filter-row {
+    min-height: 2.65rem;
+}
+
+body[data-view="teacher/exams_manage"] .exam-filter-tabs {
+    flex: 0 0 auto;
+    max-width: 100%;
+    background: #edf3fb !important;
+    border-color: rgba(148, 163, 184, 0.34) !important;
+}
+
+body[data-view="teacher/exams_manage"] .exam-filter-tab {
+    border: 1px solid rgba(148, 163, 184, 0.22) !important;
+    background: rgba(255, 255, 255, 0.82) !important;
+    color: #475569 !important;
+    min-height: 2.1rem !important;
+    font-size: var(--teacher-type-control) !important;
+    font-family: var(--app-font-body) !important;
+    font-weight: var(--teacher-weight-label) !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0 !important;
+    padding: 0.4rem 0.85rem !important;
+    white-space: nowrap;
+}
+
+body[data-view="teacher/exams_manage"] .exam-filter-tab:hover {
+    border-color: rgba(59, 130, 246, 0.34) !important;
+    background: #eaf2ff !important;
+    color: #1d4ed8 !important;
+}
+
+body[data-view="teacher/exams_manage"] .exam-filter-tab[aria-current="page"] {
+    border-color: rgba(37, 99, 235, 0.82) !important;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    color: #fff !important;
+    box-shadow: 0 10px 20px -16px rgba(37, 99, 235, 0.72) !important;
+}
+
+html.dark body[data-view="teacher/exams_manage"] .exam-filter-tabs,
+html[data-theme="dark"] body[data-view="teacher/exams_manage"] .exam-filter-tabs {
+    background: rgba(15, 23, 42, 0.72) !important;
+    border-color: rgba(71, 85, 105, 0.78) !important;
+}
+
+html.dark body[data-view="teacher/exams_manage"] .exam-filter-tab,
+html[data-theme="dark"] body[data-view="teacher/exams_manage"] .exam-filter-tab {
+    border-color: rgba(71, 85, 105, 0.7) !important;
+    background: rgba(30, 41, 59, 0.72) !important;
+    color: #cbd5e1 !important;
+}
+
+html.dark body[data-view="teacher/exams_manage"] .exam-filter-tab:hover,
+html[data-theme="dark"] body[data-view="teacher/exams_manage"] .exam-filter-tab:hover {
+    border-color: rgba(96, 165, 250, 0.55) !important;
+    background: rgba(37, 99, 235, 0.18) !important;
+    color: #bfdbfe !important;
+}
+
+html.dark body[data-view="teacher/exams_manage"] .exam-filter-tab[aria-current="page"],
+html[data-theme="dark"] body[data-view="teacher/exams_manage"] .exam-filter-tab[aria-current="page"] {
+    border-color: rgba(96, 165, 250, 0.72) !important;
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important;
+    color: #fff !important;
+}
+
+body[data-view="teacher/exams_manage"] .exam-search-field {
+    flex: 1 1 20rem;
+    max-width: min(100%, 28rem) !important;
+}
+
+body[data-view="teacher/exams_manage"] .exam-search-field input {
+    min-height: 2.35rem !important;
+    padding-top: 0.55rem !important;
+    padding-bottom: 0.55rem !important;
+    font-size: var(--teacher-type-body) !important;
+    font-family: var(--app-font-body) !important;
+    line-height: 1.45 !important;
+}
+
+body[data-view="teacher/exams_manage"] .exam-index-table,
+body[data-view="teacher/exams_manage"] .exam-attempt-list,
+body[data-view="teacher/exams_manage"] .exam-correction-panel,
+body[data-view="teacher/exams_manage"] .exam-active-copy,
+body[data-view="teacher/exams_manage"] .exam-detail-card {
+    box-shadow: 0 18px 38px -32px rgba(15, 23, 42, 0.5) !important;
+}
+
+body[data-view="teacher/exams_manage"] .exam-index-row,
+body[data-view="teacher/exams_manage"] .exam-attempt-card {
+    min-height: 4.55rem;
+}
+
+body[data-view="teacher/exams_manage"] .exam-attempt-card h3,
+body[data-view="teacher/exams_manage"] .exam-active-copy h3 {
+    font-size: var(--teacher-type-card-title) !important;
+    font-family: var(--app-font-title) !important;
+    font-weight: var(--teacher-weight-title) !important;
+    letter-spacing: 0 !important;
+}
+
+body[data-view="teacher/exams_manage"] .exam-scorebox {
+    min-width: 5.6rem;
+}
+
+body[data-view="teacher/exams_manage"] .exam-scorebox p[class*="text-3xl"] {
+    font-size: var(--teacher-type-value) !important;
+    font-family: var(--app-font-title) !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+}
+
+@media (max-width: 767px) {
+    body[data-view="teacher/exams_manage"] .exam-action-bar {
+        justify-content: flex-start !important;
+        gap: 0.45rem !important;
+    }
+
+    body[data-view="teacher/exams_manage"] .exam-action-btn {
+        flex: 1 1 auto;
+        justify-content: center;
+        padding: 0.55rem 0.7rem !important;
+    }
+
+    body[data-view="teacher/exams_manage"] .exam-summary-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 0.5rem !important;
+    }
+
+    body[data-view="teacher/exams_manage"] .exam-summary-pill {
+        min-height: 3.85rem;
+        padding: 0.65rem 0.7rem !important;
+        border-radius: 0.9rem !important;
+    }
+
+    body[data-view="teacher/exams_manage"] .exam-summary-pill__icon {
+        width: 1.95rem !important;
+        height: 1.95rem !important;
+        border-radius: 0.75rem !important;
+    }
+
+    body[data-view="teacher/exams_manage"] .exam-filter-bar {
+        padding: 0.6rem !important;
+    }
+
+    body[data-view="teacher/exams_manage"] .exam-filter-tabs {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    body[data-view="teacher/exams_manage"] .exam-filter-tab {
+        flex: 0 0 auto;
+        min-height: 1.9rem !important;
+        padding: 0.35rem 0.65rem !important;
+    }
+
+    body[data-view="teacher/exams_manage"] .exam-search-field {
+        max-width: 100% !important;
+    }
+
+    body[data-view="teacher/exams_manage"] .exam-search-field input {
+        min-height: 2.3rem !important;
+    }
+
+    body[data-view="teacher/exams_manage"] .exam-index-row,
+    body[data-view="teacher/exams_manage"] .exam-attempt-card {
+        min-height: auto;
+        padding: 0.85rem !important;
+    }
+
+    body[data-view="teacher/exams_manage"] .exam-active-copy,
+    body[data-view="teacher/exams_manage"] .exam-detail-card,
+    body[data-view="teacher/exams_manage"] .exam-correction-panel {
+        padding: 0.85rem !important;
+    }
+
+    body[data-view="teacher/exams_manage"] .exam-scorebox {
+        min-width: 4.9rem;
+        padding: 0.65rem 0.75rem !important;
+    }
+}
+
 /* Typography calibration for teacher dashboards. */
 body[data-view^="teacher/"] {
+    --app-font-title: "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --app-font-display: var(--app-font-title);
+    --app-font-section: var(--app-font-title);
+    --app-font-ui: var(--app-font-title);
+    --app-font-sans: var(--app-font-title);
+    --app-font-body: var(--app-font-title);
+    --app-font-serif: "Times New Roman", Times, Georgia, serif;
+    --app-font-accent: var(--app-font-serif);
+    --app-font-mono: "IBM Plex Mono", "Cascadia Code", Consolas, monospace;
+    --app-font-numeric: var(--app-font-mono);
+    --teacher-type-eyebrow: 0.68rem;
+    --teacher-type-caption: 0.72rem;
+    --teacher-type-control: 0.84rem;
+    --teacher-type-body: 0.84rem;
+    --teacher-type-card-title: 0.95rem;
+    --teacher-type-section-title: 1.05rem;
+    --teacher-type-page-title: 1.125rem;
+    --teacher-type-value: 1.05rem;
+    --teacher-weight-label: 560;
+    --teacher-weight-title: 650;
     font-size: 14px;
     line-height: 1.5;
+    font-family: var(--app-font-body) !important;
+}
+
+body[data-view^="teacher/"] :is(.teacher-dashboard-topbar, .app-shell-toolbar, .teacher-dashboard-sidebar, .teacher-dashboard-main) {
+    font-family: var(--app-font-body) !important;
 }
 
 body[data-view^="teacher/"] .teacher-dashboard-main :is(input, select, textarea)::placeholder {
@@ -3167,13 +3474,13 @@ body[data-view^="teacher/"] .teacher-dashboard-main :is(input, select, textarea)
 }
 
 body[data-view^="teacher/"] #teacher-dashboard-sidebar > div:first-child .text-xl {
-    font-weight: 700 !important;
+    font-weight: 650 !important;
     letter-spacing: 0 !important;
 }
 
 body[data-view^="teacher/"] #teacher-dashboard-sidebar nav p {
     font-size: 0.68rem !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
     letter-spacing: 0.08em !important;
 }
 
@@ -3187,8 +3494,240 @@ body[data-view^="teacher/"] #teacher-dashboard-sidebar nav a.is-active-nav {
 }
 
 body[data-view^="teacher/"] .teacher-dashboard-title {
+    font-size: var(--teacher-type-page-title) !important;
     font-weight: 650 !important;
     letter-spacing: 0 !important;
+    line-height: 1.25 !important;
+}
+
+body[data-view^="teacher/"] :is(.app-shell-toolbar__eyebrow, .teacher-dashboard-topbar p[class*="uppercase"]) {
+    font-size: var(--teacher-type-eyebrow) !important;
+    font-weight: var(--teacher-weight-title) !important;
+    letter-spacing: 0.08em !important;
+    line-height: 1.2 !important;
+}
+
+body[data-view^="teacher/"] :is(.app-shell-toolbar__title, .teacher-dashboard-title) {
+    font-family: var(--app-font-title) !important;
+    font-weight: var(--teacher-weight-title) !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-welcome :is(h1, h2) {
+    font-size: 1.35rem !important;
+    font-weight: var(--teacher-weight-title) !important;
+    line-height: 1.12 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-welcome p:not([class*="uppercase"]) {
+    font-size: var(--teacher-type-body) !important;
+    line-height: 1.4 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-welcome :is(a, button) {
+    font-size: var(--teacher-type-control) !important;
+    font-weight: var(--teacher-weight-label) !important;
+    letter-spacing: 0 !important;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-main :is(
+    h2[class*="text-lg"],
+    h2[class*="text-xl"],
+    h2[class*="text-base"],
+    h3[class*="text-lg"],
+    h3[class*="text-xl"],
+    .teacher-courses-section-head__title,
+    .teacher-courses-hero__title
+) {
+    font-size: var(--teacher-type-section-title) !important;
+    font-weight: var(--teacher-weight-title) !important;
+    letter-spacing: 0 !important;
+    line-height: 1.25 !important;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-main h3[class*="text-base"] {
+    font-size: var(--teacher-type-card-title) !important;
+    font-weight: var(--teacher-weight-title) !important;
+    letter-spacing: 0 !important;
+    line-height: 1.28 !important;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-main :is(
+    article,
+    section,
+    div
+) > :is(h3, h4, p)[class*="font-bold"],
+body[data-view^="teacher/"] .teacher-dashboard-main :is(
+    article,
+    section,
+    div
+) > :is(h3, h4, p)[class*="font-semibold"],
+body[data-view^="teacher/"] .teacher-dashboard-main :is(.teacher-course-card__title, .teacher-courses-draft-card__title) {
+    font-size: var(--teacher-type-card-title) !important;
+    font-weight: var(--teacher-weight-title) !important;
+    letter-spacing: 0 !important;
+    line-height: 1.28 !important;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-main :is(
+    p,
+    span,
+    li,
+    td,
+    dd,
+    dt,
+    label,
+    a,
+    button,
+    summary,
+    input,
+    select,
+    textarea
+)[class~="text-sm"] {
+    font-size: var(--teacher-type-body) !important;
+    line-height: 1.45 !important;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-main :is(
+    p,
+    span,
+    li,
+    td,
+    th,
+    label,
+    a,
+    button,
+    summary
+)[class~="text-xs"],
+body[data-view^="teacher/"] .teacher-dashboard-main :is(
+    p,
+    span,
+    li,
+    td,
+    th,
+    label,
+    a,
+    button,
+    summary
+)[class*="text-["] {
+    font-size: var(--teacher-type-caption) !important;
+    line-height: 1.35 !important;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-main :is(
+    p,
+    span,
+    th,
+    label,
+    .analytics-filter-kicker,
+    .teacher-courses-section-head__eyebrow,
+    .teacher-courses-hero__eyebrow
+)[class*="uppercase"] {
+    font-size: var(--teacher-type-eyebrow) !important;
+    font-weight: var(--teacher-weight-title) !important;
+    letter-spacing: 0.08em !important;
+    line-height: 1.25 !important;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-main :is(
+    a,
+    button,
+    summary,
+    span
+).review-filter-chip,
+body[data-view^="teacher/"] .teacher-dashboard-main :is(
+    a,
+    button,
+    summary,
+    span
+):is(.dash-btn, .tab-btn, .period-btn, .teacher-courses-filter-toggle, .teacher-courses-link-chip, .tab-active-pill, .tab-count),
+body[data-view^="teacher/"] .teacher-dashboard-main :is(
+    a,
+    button,
+    summary,
+    span
+)[class*="rounded-full"][class*="font-semibold"] {
+    font-size: var(--teacher-type-control) !important;
+    font-weight: var(--teacher-weight-label) !important;
+    letter-spacing: 0 !important;
+    line-height: 1.2 !important;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-main :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) {
+    font-size: var(--teacher-type-body) !important;
+    line-height: 1.45 !important;
+}
+
+body[data-view^="teacher/"] .teacher-dashboard-main :is(
+    p,
+    span,
+    dd
+)[class*="text-4xl"],
+body[data-view^="teacher/"] .teacher-dashboard-main :is(
+    p,
+    span,
+    dd
+)[class*="text-2xl"],
+body[data-view^="teacher/"] .teacher-dashboard-main :is(
+    p,
+    span,
+    dd
+)[class*="text-3xl"] {
+    font-size: var(--teacher-type-value) !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+    line-height: 1.1 !important;
+}
+
+body[data-view="teacher/withdrawals"] [data-withdraw-modal] {
+    font-family: var(--app-font-body) !important;
+}
+
+body[data-view="teacher/withdrawals"] [data-withdraw-modal] [data-withdraw-modal-kicker] {
+    font-size: var(--teacher-type-eyebrow) !important;
+    font-weight: var(--teacher-weight-title) !important;
+    letter-spacing: 0.08em !important;
+    line-height: 1.25 !important;
+}
+
+body[data-view="teacher/withdrawals"] [data-withdraw-modal] [data-withdraw-modal-title] {
+    font-size: var(--teacher-type-section-title) !important;
+    font-weight: var(--teacher-weight-title) !important;
+    letter-spacing: 0 !important;
+    line-height: 1.25 !important;
+}
+
+body[data-view="teacher/withdrawals"] [data-withdraw-modal] :is(label, p, a, button, input, select, textarea) {
+    font-size: var(--teacher-type-body) !important;
+    line-height: 1.45 !important;
+}
+
+body[data-view="teacher/withdrawals"] [data-withdraw-modal] :is(button, a) {
+    font-weight: var(--teacher-weight-label) !important;
+    letter-spacing: 0 !important;
+}
+
+@media (min-width: 640px) {
+    body[data-view^="teacher/"] {
+        --teacher-type-page-title: 1.125rem;
+        --teacher-type-value: 1.45rem;
+    }
+
+    body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-welcome :is(h1, h2) {
+        font-size: 1.25rem !important;
+    }
+}
+
+@media (max-width: 640px) {
+    body[data-view^="teacher/"] .teacher-dashboard-main .review-filter-chip {
+        font-size: 0.72rem !important;
+        font-weight: 600 !important;
+        line-height: 1.1 !important;
+    }
+
+    body[data-view^="teacher/"] .teacher-dashboard-main [data-review-overview-filters] .overview-course-search {
+        font-size: var(--teacher-type-body) !important;
+        min-height: 2.45rem;
+    }
 }
 
 body[data-view="teacher/promotions"] .teacher-dashboard-main section:first-of-type p {
@@ -3203,16 +3742,17 @@ body[data-view="teacher/promotions"] .teacher-dashboard-main section.grid articl
 }
 
 body[data-view="teacher/promotions"] .teacher-dashboard-main section.grid article .text-3xl {
-    font-weight: 780 !important;
+    font-weight: 650 !important;
     letter-spacing: 0;
 }
 
 body[data-view="teacher/promotions"] .teacher-dashboard-main table th {
     color: var(--teacher-muted) !important;
-    font-size: 0.86rem !important;
-    font-weight: 650 !important;
-    letter-spacing: 0 !important;
-    text-transform: none !important;
+    font-size: var(--teacher-type-eyebrow) !important;
+    font-weight: var(--teacher-weight-title) !important;
+    letter-spacing: 0.08em !important;
+    line-height: 1.25 !important;
+    text-transform: uppercase !important;
 }
 
 body[data-view="teacher/promotions"] .teacher-dashboard-main table td {
@@ -3221,4 +3761,553 @@ body[data-view="teacher/promotions"] .teacher-dashboard-main table td {
 
 body[data-view="teacher/promotions"] .teacher-dashboard-main :is(.tab-btn, .tab-count, .tab-active-pill) {
     font-weight: 650 !important;
+}
+
+/* Keep the correction center aligned with the global teacher typography pass. */
+body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-action-btn,
+body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-open-btn {
+    font-size: var(--teacher-type-control) !important;
+    font-family: var(--app-font-body) !important;
+    font-weight: var(--teacher-weight-label) !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0 !important;
+}
+
+body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill__label {
+    font-size: var(--teacher-type-eyebrow) !important;
+    font-family: var(--app-font-body) !important;
+    font-weight: var(--teacher-weight-title) !important;
+    line-height: 1.1 !important;
+    letter-spacing: 0.08em !important;
+}
+
+body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill__value {
+    font-size: var(--teacher-type-section-title) !important;
+    font-family: var(--app-font-title) !important;
+    font-weight: var(--teacher-weight-title) !important;
+    line-height: 1.05 !important;
+    letter-spacing: 0 !important;
+}
+
+body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-filter-tabs {
+    flex: 0 0 auto;
+    max-width: 100%;
+    background: #edf3fb !important;
+    border-color: rgba(148, 163, 184, 0.34) !important;
+}
+
+body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-filter-tab {
+    border: 1px solid rgba(148, 163, 184, 0.22) !important;
+    background: rgba(255, 255, 255, 0.82) !important;
+    color: #475569 !important;
+    font-size: var(--teacher-type-control) !important;
+    font-family: var(--app-font-body) !important;
+    font-weight: var(--teacher-weight-label) !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap;
+}
+
+body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-filter-tab:hover {
+    border-color: rgba(59, 130, 246, 0.34) !important;
+    background: #eaf2ff !important;
+    color: #1d4ed8 !important;
+}
+
+body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-filter-tab[aria-current="page"] {
+    border-color: rgba(37, 99, 235, 0.82) !important;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    color: #fff !important;
+    box-shadow: 0 10px 20px -16px rgba(37, 99, 235, 0.72) !important;
+}
+
+html.dark body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-filter-tabs,
+html[data-theme="dark"] body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-filter-tabs {
+    background: rgba(15, 23, 42, 0.72) !important;
+    border-color: rgba(71, 85, 105, 0.78) !important;
+}
+
+html.dark body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-filter-tab,
+html[data-theme="dark"] body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-filter-tab {
+    border-color: rgba(71, 85, 105, 0.7) !important;
+    background: rgba(30, 41, 59, 0.72) !important;
+    color: #cbd5e1 !important;
+}
+
+html.dark body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-filter-tab:hover,
+html[data-theme="dark"] body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-filter-tab:hover {
+    border-color: rgba(96, 165, 250, 0.55) !important;
+    background: rgba(37, 99, 235, 0.18) !important;
+    color: #bfdbfe !important;
+}
+
+html.dark body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-filter-tab[aria-current="page"],
+html[data-theme="dark"] body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-filter-tab[aria-current="page"] {
+    border-color: rgba(96, 165, 250, 0.72) !important;
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important;
+    color: #fff !important;
+}
+
+body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-search-field {
+    flex: 1 1 20rem;
+    max-width: min(100%, 28rem) !important;
+}
+
+body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-search-field input {
+    font-size: var(--teacher-type-body) !important;
+    font-family: var(--app-font-body) !important;
+    line-height: 1.45 !important;
+}
+
+body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-attempt-card h3,
+body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-active-copy h3 {
+    font-size: var(--teacher-type-card-title) !important;
+    font-family: var(--app-font-title) !important;
+    font-weight: var(--teacher-weight-title) !important;
+    letter-spacing: 0 !important;
+}
+
+body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-scorebox p[class*="text-3xl"] {
+    font-size: var(--teacher-type-value) !important;
+    font-family: var(--app-font-title) !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+}
+
+@media (max-width: 767px) {
+    body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-filter-tabs {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-filter-tab {
+        font-size: var(--teacher-type-control) !important;
+        flex: 0 0 auto;
+    }
+
+    body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-search-field {
+        max-width: 100% !important;
+    }
+
+    body[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-search-field input {
+        font-size: var(--teacher-type-body) !important;
+    }
+}
+
+/* Typography parity with student dashboards. Keep this last for teacher pages. */
+body.app-role-teacher[data-view^="teacher/"] {
+    --app-font-title: "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --app-font-display: var(--app-font-title);
+    --app-font-section: var(--app-font-title);
+    --app-font-ui: var(--app-font-title);
+    --app-font-sans: var(--app-font-title);
+    --app-font-body: var(--app-font-title);
+    --app-font-serif: "Times New Roman", Times, Georgia, serif;
+    --app-font-accent: var(--app-font-serif);
+    --app-font-mono: "IBM Plex Mono", "Cascadia Code", Consolas, monospace;
+    --app-font-numeric: var(--app-font-mono);
+    --teacher-type-eyebrow: 0.68rem;
+    --teacher-type-caption: 0.72rem;
+    --teacher-type-control: 0.84rem;
+    --teacher-type-body: 0.84rem;
+    --teacher-type-card-title: 0.96rem;
+    --teacher-type-section-title: clamp(0.96rem, 1.1vw, 1.12rem);
+    --teacher-type-page-title: clamp(1rem, 1.25vw, 1.18rem);
+    --teacher-type-value: 1.05rem;
+    --teacher-weight-label: 560;
+    --teacher-weight-title: 650;
+    color: var(--teacher-text, #0f172a);
+    font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(
+    .teacher-dashboard-topbar,
+    .teacher-dashboard-sidebar,
+    #teacher-dashboard-sidebar,
+    #teacher-sidebar,
+    .teacher-dashboard-main,
+    .teacher-courses-main,
+    .teacher-promotions-page,
+    .teacher-withdrawals-page,
+    .app-shell-toolbar,
+    .app-shell-sidebar
+) {
+    font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(
+    #teacher-dashboard-sidebar,
+    #teacher-sidebar,
+    .teacher-dashboard-sidebar,
+    .app-shell-sidebar
+) :is(
+    a,
+    button,
+    p,
+    span,
+    small,
+    strong,
+    b,
+    summary,
+    label,
+    div
+) {
+    font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] table,
+body.app-role-teacher[data-view^="teacher/"] table :is(
+    caption,
+    thead,
+    tbody,
+    tfoot,
+    tr,
+    th,
+    td,
+    p,
+    span,
+    a,
+    button,
+    small,
+    strong,
+    b,
+    label,
+    div
+) {
+    font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(.font-semibold, .font-bold, .font-extrabold, .font-black, strong, b) {
+    font-weight: 560 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(.font-mono, .font-numeric, [class*="tabular-nums"]) {
+    font-family: var(--app-font-numeric, "IBM Plex Mono", "Cascadia Code", Consolas, monospace) !important;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] #teacher-dashboard-sidebar > div:first-child .text-xl,
+body.app-role-teacher[data-view^="teacher/"] :is(.app-shell-brand-title, .teacher-dashboard-brand-title) {
+    font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] #teacher-dashboard-sidebar nav p,
+body.app-role-teacher[data-view^="teacher/"] :is(.app-shell-sidebar__summary-label, .teacher-dashboard-sidebar nav > p) {
+    font-size: 0.6rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.12em !important;
+    line-height: 1.25 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] #teacher-dashboard-sidebar nav a,
+body.app-role-teacher[data-view^="teacher/"] :is(.app-nav-link, .teacher-dashboard-sidebar nav a) {
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    line-height: 1.25 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] #teacher-dashboard-sidebar nav a[aria-current="page"],
+body.app-role-teacher[data-view^="teacher/"] #teacher-dashboard-sidebar nav a.is-active-nav,
+body.app-role-teacher[data-view^="teacher/"] :is(.app-nav-link.is-active-nav, .app-nav-link[aria-current="page"]) {
+    font-weight: 600 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-title {
+    font-family: var(--app-font-title, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+    max-width: min(48vw, 36rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 1.05rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0 !important;
+    line-height: 1.35 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(.app-shell-toolbar__eyebrow, .teacher-dashboard-topbar p[class*="uppercase"]) {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.1em !important;
+    line-height: 1.2 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main :is(
+    h1,
+    h2,
+    h3,
+    h4,
+    .teacher-courses-section-head__title,
+    .teacher-courses-hero__title,
+    .teacher-course-card__title,
+    .teacher-courses-draft-card__title
+) {
+    font-family: var(--app-font-title, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+    letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main :is(
+    h2[class*="text-lg"],
+    h2[class*="text-xl"],
+    h2[class*="text-base"],
+    h3[class*="text-lg"],
+    h3[class*="text-xl"],
+    .teacher-courses-section-head__title,
+    .teacher-courses-hero__title
+) {
+    font-size: var(--teacher-type-section-title) !important;
+    line-height: 1.28 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main h3[class*="text-base"],
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main :is(.teacher-course-card__title, .teacher-courses-draft-card__title) {
+    font-size: var(--teacher-type-card-title) !important;
+    line-height: 1.35 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main :is(
+    p,
+    span,
+    li,
+    td,
+    dd,
+    dt,
+    label,
+    a,
+    button,
+    summary,
+    input,
+    select,
+    textarea
+)[class~="text-sm"] {
+    font-size: var(--teacher-type-body) !important;
+    line-height: 1.45 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main :is(
+    p,
+    span,
+    li,
+    td,
+    th,
+    label,
+    a,
+    button,
+    summary
+)[class~="text-xs"],
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main :is(
+    p,
+    span,
+    li,
+    td,
+    th,
+    label,
+    a,
+    button,
+    summary
+)[class*="text-["] {
+    font-size: var(--teacher-type-caption) !important;
+    line-height: 1.35 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main :is(
+    p,
+    span,
+    th,
+    label,
+    .analytics-filter-kicker,
+    .teacher-courses-section-head__eyebrow,
+    .teacher-courses-hero__eyebrow
+)[class*="uppercase"] {
+    font-size: 0.68rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em !important;
+    line-height: 1.25 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(
+    .btn,
+    button,
+    a[class*="btn"],
+    .dash-btn,
+    .teacher-courses-btn,
+    .teacher-dashboard-action,
+    .course-action-btn,
+    .course-action-link,
+    .teacher-order-action
+) {
+    font-weight: 580 !important;
+    letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(.rounded-full, .badge, [class*="badge"], [class*="pill"]) {
+    font-weight: 560 !important;
+    letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] table :is(th, td, strong, b, .font-medium, .font-semibold, .font-bold) {
+    font-weight: 430 !important;
+    letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] table th {
+    color: color-mix(in srgb, var(--teacher-muted, #475569) 88%, var(--teacher-text, #0f172a) 12%) !important;
+    font-size: 0.78rem !important;
+    text-transform: none !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] table td {
+    color: var(--teacher-muted, #475569) !important;
+    font-size: 0.84rem !important;
+    line-height: 1.45 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] table td :is(.text-gray-900, .dark\:text-white, .text-white, .text-slate-100) {
+    color: var(--teacher-text, #0f172a) !important;
+    font-weight: 520 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(
+    .teacher-dashboard-main p[class*="text-4xl"],
+    .teacher-dashboard-main p[class*="text-3xl"],
+    .teacher-dashboard-main p[class*="text-2xl"],
+    .teacher-dashboard-main span[class*="text-4xl"],
+    .teacher-dashboard-main span[class*="text-3xl"],
+    .teacher-dashboard-main span[class*="text-2xl"],
+    .teacher-metric-card__value,
+    .teacher-courses-summary-card__value,
+    .exam-summary-pill__value
+) {
+    font-size: clamp(1.12rem, 1.55vw, 1.45rem) !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-welcome :is(h1, h2),
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-hero :is(h1, h2) {
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-welcome p:not([class*="uppercase"]),
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-hero p:not([class*="uppercase"]) {
+    max-width: 44rem;
+    font-family: var(--app-font-accent, "Times New Roman", Times, serif) !important;
+    font-size: 0.9rem !important;
+    font-style: italic !important;
+    font-weight: 400 !important;
+    line-height: 1.4 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) {
+    font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+    font-size: var(--teacher-type-body) !important;
+    line-height: 1.45 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(input, select, textarea)::placeholder {
+    color: color-mix(in srgb, var(--teacher-muted, #475569) 90%, var(--teacher-text, #0f172a) 10%) !important;
+    opacity: 1;
+}
+
+/* Match the visible student dashboard typography on teacher components. */
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-welcome :is(h1, h2),
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-hero :is(h1, h2) {
+    font-family: var(--app-font-title, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+    font-size: 1.125rem !important;
+    font-weight: 650 !important;
+    line-height: 1.12 !important;
+    letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-welcome,
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-hero {
+    min-height: 0 !important;
+    padding: 1.15rem 1.25rem !important;
+    border-radius: 1.15rem !important;
+    background: linear-gradient(100deg, #2563eb 0%, #1d9bd8 56%, #0fb5c8 100%) !important;
+    box-shadow: 0 20px 42px -34px rgba(37, 99, 235, 0.72) !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-welcome p:not([class*="uppercase"]),
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-hero p:not([class*="uppercase"]) {
+    font-family: var(--app-font-accent, "Times New Roman", Times, serif) !important;
+    font-size: 0.9rem !important;
+    font-style: italic !important;
+    font-weight: 400 !important;
+    line-height: 1.4 !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill__label {
+    font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+    font-size: 0.84rem !important;
+    font-weight: 400 !important;
+    line-height: 1.45 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill__value {
+    font-family: var(--app-font-title, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+    font-size: 1.45rem !important;
+    font-weight: 650 !important;
+    line-height: 1.1 !important;
+    letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-strip {
+    gap: 1rem !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill {
+    min-height: 5.6rem !important;
+    padding: 0.92rem 1rem !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill :is(p, span) {
+    letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill__icon {
+    width: 2.35rem !important;
+    height: 2.35rem !important;
+    min-width: 2.35rem !important;
+    border-radius: 0.85rem !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill__icon .app-icon,
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill__icon .app-icon > svg {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-filter-tab {
+    font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+    font-size: 0.84rem !important;
+    font-weight: 560 !important;
+    letter-spacing: 0 !important;
+}
+
+@media (min-width: 640px) {
+    body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-title {
+        max-width: min(58vw, 42rem);
+        font-size: 1.125rem !important;
+    }
+
+    body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-welcome :is(h1, h2),
+    body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-hero :is(h1, h2) {
+        font-size: 1.25rem !important;
+    }
+}
+
+@media (max-width: 380px) {
+    body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-title {
+        max-width: 38vw;
+        font-size: 1rem !important;
+    }
 }

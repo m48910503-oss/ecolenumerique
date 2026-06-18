@@ -281,7 +281,7 @@ $notificationActionUrl = $buildPostActionUrl();
     <title>Notifications Enseignant · École Numérique</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time()))); ?>">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher_notifications.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher_notifications.css') ?: time()))); ?>">
@@ -302,6 +302,11 @@ $notificationActionUrl = $buildPostActionUrl();
     <?php $showCatalogue = false; ?>
     <?php require __DIR__ . '/_topbar.php'; ?>
         <div class="notifications-page teacher-notifications-page p-4 pb-32 space-y-5 animate-fade-up sm:p-6 sm:pb-24">
+            <?php $teacherWelcomeTitle = 'Notifications'; ?>
+            <?php $teacherWelcomeSummary = $formatCount($unreadCount) . ' non lues · ' . $formatCount($notificationTotalCount) . ' reçues.'; ?>
+            <?php $teacherWelcomeActionLabel = ''; ?>
+            <?php require __DIR__ . '/_welcome_hero.php'; ?>
+
             <section class="teacher-notifications-stats-grid hidden" aria-hidden="true">
                 <article class="teacher-notifications-stat-card rounded-2xl border border-blue-100 bg-white p-3.5 shadow-sm transition dark:border-blue-900/30 dark:bg-gray-800">
                     <div class="flex items-start justify-between gap-3">

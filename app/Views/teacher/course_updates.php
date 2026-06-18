@@ -19,7 +19,7 @@ return date('d/m/Y H:i', $ts);
     <title>Historique des mises &agrave; jour - &Eacute;cole Num&eacute;rique</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time()))); ?>">
     <script src="<?php echo e(site_url('assets/js/sidebar_toggle.js')); ?>" defer></script>
@@ -37,13 +37,12 @@ return date('d/m/Y H:i', $ts);
             <?php $teacherTopSubtitle = 'Espace enseignant'; ?>
             <?php require __DIR__ . '/_topbar.php'; ?>
 <main class="teacher-workflow-main max-w-5xl mx-auto px-6 py-6 space-y-4">
-        <section class="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-2xl">
-            <p class="text-xs uppercase tracking-[0.24em] text-slate-400">Suivi</p>
-            <h1 class="mt-2 text-2xl font-display font-semibold text-slate-100">Historique des mises &agrave; jour</h1>
-            <p class="mt-2 text-sm text-slate-300">
-                Retrouvez les derni&egrave;res modifications effectu&eacute;es sur vos cours, avec la source et la date de chaque action.
-            </p>
-        </section>
+        <?php $teacherWelcomeTitle = 'Historique des mises à jour'; ?>
+        <?php $teacherWelcomeSummary = 'Retrouvez les dernières modifications effectuées sur vos cours, avec la source et la date de chaque action.'; ?>
+        <?php $teacherWelcomeActionUrl = site_url('teacher/courses'); ?>
+        <?php $teacherWelcomeActionLabel = 'Mes cours'; ?>
+        <?php $teacherWelcomeActionIcon = 'arrow-left'; ?>
+        <?php require __DIR__ . '/_welcome_hero.php'; ?>
         <?php if (!$updates): ?>
             <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 text-sm text-slate-400">
                 Aucune mise &agrave; jour enregistr&eacute;e pour vos cours.

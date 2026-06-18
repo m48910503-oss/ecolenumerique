@@ -144,7 +144,9 @@ final class LearningService extends Service
 
         $total = $this->model->countCourseLessonsDirect($courseId);
         $done = $this->model->countLessonCompletions((int) $user['id'], $courseId);
+        $done = $total > 0 ? min($done, $total) : 0;
         $percent = $total > 0 ? (int) floor(($done / $total) * 100) : 0;
+        $percent = max(0, min(100, $percent));
 
         return [
             'status' => 200,
@@ -218,7 +220,9 @@ final class LearningService extends Service
 
         $totalLessons = $this->model->countCourseLessonsByChapters($courseId);
         $doneCount = $this->model->countLessonCompletions((int) $user['id'], $courseId);
+        $doneCount = $totalLessons > 0 ? min($doneCount, $totalLessons) : 0;
         $percent = $totalLessons > 0 ? (int) floor(($doneCount / $totalLessons) * 100) : 0;
+        $percent = max(0, min(100, $percent));
 
         return [
             'status' => 200,

@@ -101,8 +101,8 @@ if ($dashboardSearchAriaLabel === '') {
       aria-label="Changer le thème"
       aria-pressed="false"
     >
-      <i class="fas fa-moon text-base" data-theme-icon-dark aria-hidden="true"></i>
-      <i class="fas fa-sun hidden text-base" data-theme-icon-light aria-hidden="true"></i>
+      <span class="inline-flex h-5 w-5 items-center justify-center" data-theme-icon-dark aria-hidden="true"><?php echo dashboard_icon_svg('theme-moon'); ?></span>
+      <span class="inline-flex h-5 w-5 items-center justify-center" data-theme-icon-light aria-hidden="true" hidden><?php echo dashboard_icon_svg('theme-sun'); ?></span>
       <span class="sr-only">Changer le thème</span>
     </button>
 

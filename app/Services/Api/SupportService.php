@@ -23,12 +23,6 @@ final class SupportService extends Service
         'other' => 'Autre',
     ];
 
-    private const PRIORITY_LABELS = [
-        'low' => 'Faible',
-        'normal' => 'Normal',
-        'high' => 'Urgent',
-    ];
-
     private const DEFAULT_SUBJECTS = [
         'billing' => 'Paiement non validé',
         'certificate' => 'Certificat indisponible',
@@ -233,15 +227,11 @@ final class SupportService extends Service
             if ($category === 'other' && $this->isWeakSubject((string) ($row['subject'] ?? ''))) {
                 $category = $this->legacyCategoryForTicket($id);
             }
-            $priority = (string) ($row['priority'] ?? 'normal');
-            $priority = in_array($priority, ['low', 'normal', 'high'], true) ? $priority : 'normal';
             $subject = $this->normalizeSubjectForDisplay((string) ($row['subject'] ?? ''), $category, $id);
             $conversations[] = [
                 'id' => $id,
                 'subject' => $subject,
                 'status' => (string) ($row['status'] ?? ''),
-                'priority' => $priority,
-                'priority_label' => self::PRIORITY_LABELS[$priority] ?? self::PRIORITY_LABELS['normal'],
                 'category' => $category,
                 'category_label' => self::CATEGORY_LABELS[$category] ?? self::CATEGORY_LABELS['other'],
                 'created_by' => (int) ($row['created_by'] ?? 0),
@@ -264,8 +254,6 @@ final class SupportService extends Service
     {
         $subject = trim((string) ($data['subject'] ?? ''));
         $body = trim((string) ($data['body'] ?? ''));
-        $priority = (string) ($data['priority'] ?? 'normal');
-        $priority = in_array($priority, ['low', 'normal', 'high'], true) ? $priority : 'normal';
         $category = $this->resolveCategory((string) ($data['category'] ?? ''), $subject, $body);
 
         $upload = $this->storage->handleUploads($files['attachments'] ?? null, 5 * 1024 * 1024);
@@ -297,7 +285,6 @@ final class SupportService extends Service
                 (int) $user['id'],
                 $subject,
                 'waiting_support',
-                $priority,
                 $category
             );
             $messageId = $this->model->insertMessage($conversationId, (int) $user['id'], $body);

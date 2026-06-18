@@ -249,7 +249,7 @@ $metricCards = $isExamIndex
   <title><?php echo e($isExamIndex ? 'Centre de correction' : ('Gestion examen - ' . $courseTitle)); ?> · École Numérique</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time()))); ?>">
   <script src="<?php echo e(site_url('assets/js/sidebar_toggle.js')); ?>" defer></script>
@@ -289,141 +289,89 @@ $teacherTopContextLabel = $isExamIndex ? 'Vue globale' : $examTitle;
         </div>
       <?php endif; ?>
 
-      <section class="bg-gradient-to-r from-primary-600 to-accent-600 rounded-2xl p-6 text-white shadow-glow">
-        <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-          <div class="min-w-0">
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary-100"><?php echo e($isExamIndex ? 'Examens à corriger' : $courseTitle); ?></p>
-            <h1 class="mt-2 text-2xl font-bold sm:text-3xl"><?php echo e($isExamIndex ? 'Centre de correction' : $examTitle); ?></h1>
-            <div class="mt-4 flex flex-wrap gap-2">
-              <?php if ($isExamIndex): ?>
-                <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20">
-                  <i class="fas fa-clock" aria-hidden="true"></i>
-                  <?php echo e($formatCount($indexSubmittedTotal)); ?> à corriger
-                </span>
-                <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20">
-                  <i class="fas fa-users" aria-hidden="true"></i>
-                  <?php echo e($formatCount($indexTotalAttempts)); ?> tentative(s)
-                </span>
-                <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20">
-                  <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                  <?php echo e($formatCount($indexUrgentCount)); ?> urgent(s)
-                </span>
-              <?php else: ?>
-                <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20">
-                  <i class="fas fa-signal" aria-hidden="true"></i>
-                  <?php echo e($courseWorkflowLabel); ?>
-                </span>
-                <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20">
-                  <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg((string) $typeInfo['icon']); ?></span>
-                  <?php echo e((string) $typeInfo['label']); ?>
-                </span>
-                <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20">
-                  <i class="fas fa-clock" aria-hidden="true"></i>
-                  <?php echo e($durationLabel); ?>
-                </span>
-                <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20">
-                  <i class="fas fa-award" aria-hidden="true"></i>
-                  Note min <?php echo e((string) $minScore); ?>
-                </span>
-                <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20">
-                  <i class="fas fa-tasks" aria-hidden="true"></i>
-                  <?php echo e($structureHeroLabel); ?>
-                </span>
-              <?php endif; ?>
-            </div>
-          </div>
+      <?php $teacherWelcomeTitle = $isExamIndex ? 'Centre de correction' : $examTitle; ?>
+      <?php $teacherWelcomeSummary = $isExamIndex
+          ? ($formatCount($indexSubmittedTotal) . ' à corriger · ' . $formatCount($indexTotalAttempts) . ' tentative(s) · ' . $formatCount($indexUrgentCount) . ' urgent(s).')
+          : ($courseTitle . ' · ' . $courseWorkflowLabel . ' · ' . $durationLabel . ' · ' . $structureHeroLabel); ?>
+      <?php $teacherWelcomeActionUrl = $isExamIndex ? site_url('teacher/courses') : ($previewExamUrl !== '' ? $previewExamUrl : $backToListUrl); ?>
+      <?php $teacherWelcomeActionLabel = $isExamIndex ? 'Mes cours' : ($previewExamUrl !== '' ? 'Voir les questions' : ($backToListUrl !== '' ? 'Retour' : '')); ?>
+      <?php $teacherWelcomeActionIcon = $isExamIndex ? 'book-open' : ($previewExamUrl !== '' ? 'clipboard-list' : 'arrow-left'); ?>
+      <?php require __DIR__ . '/_welcome_hero.php'; ?>
 
-            <div class="flex flex-wrap items-center gap-2 xl:justify-end">
-            <?php if ($isExamIndex): ?>
-              <a href="<?php echo e(site_url('teacher/courses')); ?>" class="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-primary-50">
-                <i class="fas fa-book-open" aria-hidden="true"></i>
-                Mes cours
-              </a>
-            <?php else: ?>
-              <?php if ($backToListUrl !== ''): ?>
-                <a href="<?php echo e($backToListUrl); ?>" class="inline-flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/20">
-                  <i class="fas fa-arrow-left" aria-hidden="true"></i>
-                  Retour
-                </a>
-              <?php endif; ?>
-              <?php if ($previewExamUrl !== ''): ?>
-                <a href="<?php echo e($previewExamUrl); ?>" class="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-primary-50">
-                  <i class="fas fa-tasks" aria-hidden="true"></i>
-                  Voir les questions
-                </a>
-              <?php endif; ?>
-              <?php if ($editExamUrl !== ''): ?>
-                <a href="<?php echo e($editExamUrl); ?>" class="inline-flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/20">
-                  <i class="fas fa-pen" aria-hidden="true"></i>
-                  Modifier l'examen
-                </a>
-              <?php endif; ?>
-              <?php if ($exportGradesUrl !== ''): ?>
-                <a href="<?php echo e($exportGradesUrl); ?>" class="inline-flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/20">
-                  <i class="fas fa-file-export" aria-hidden="true"></i>
-                  Exporter les notes
-                </a>
-              <?php endif; ?>
-            <?php endif; ?>
-          </div>
+      <?php if (!$isExamIndex && ($backToListUrl !== '' || $editExamUrl !== '' || $exportGradesUrl !== '')): ?>
+        <div class="exam-action-bar flex flex-wrap items-center justify-end gap-2">
+          <?php if ($backToListUrl !== ''): ?>
+            <a href="<?php echo e($backToListUrl); ?>" class="exam-action-btn inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
+              <i class="fas fa-arrow-left" aria-hidden="true"></i>
+              Retour
+            </a>
+          <?php endif; ?>
+          <?php if ($editExamUrl !== ''): ?>
+            <a href="<?php echo e($editExamUrl); ?>" class="exam-action-btn inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
+              <i class="fas fa-pen" aria-hidden="true"></i>
+              Modifier
+            </a>
+          <?php endif; ?>
+          <?php if ($exportGradesUrl !== ''): ?>
+            <a href="<?php echo e($exportGradesUrl); ?>" class="exam-action-btn inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
+              <i class="fas fa-file-export" aria-hidden="true"></i>
+              Exporter
+            </a>
+          <?php endif; ?>
         </div>
-      </section>
+      <?php endif; ?>
 
-      <section class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <section class="exam-summary-strip student-dashboard-stats-grid grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Résumé des examens">
         <?php foreach ($metricCards as $card): ?>
           <?php $metricTone = $toneClass((string) ($card['tone'] ?? 'blue')); ?>
-          <article class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border border-gray-100 dark:border-gray-700 hover-lift">
-            <div class="flex items-center justify-between gap-4">
+          <article class="exam-summary-pill student-dashboard-stat-card bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border border-gray-100 dark:border-gray-700 hover-lift" title="<?php echo e((string) ($card['meta'] ?? '')); ?>">
+            <div class="flex items-center justify-between gap-3">
               <div class="min-w-0">
-                <p class="text-sm text-gray-500 dark:text-gray-400"><?php echo e((string) $card['label']); ?></p>
-                <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white"><?php echo e($formatCount((int) ($card['value'] ?? 0))); ?></p>
+                <p class="exam-summary-pill__label text-sm text-gray-500 dark:text-gray-400"><?php echo e((string) $card['label']); ?></p>
+                <p class="exam-summary-pill__value mt-1 text-3xl font-bold text-gray-900 dark:text-white"><?php echo e($formatCount((int) ($card['value'] ?? 0))); ?></p>
               </div>
-              <div class="flex h-10 w-10 items-center justify-center rounded-xl <?php echo e($metricTone['bg']); ?> <?php echo e($metricTone['text']); ?>">
+              <span class="exam-summary-pill__icon student-dashboard-icon-tile flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl <?php echo e($metricTone['bg']); ?> <?php echo e($metricTone['text']); ?>">
                 <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg((string) ($card['icon'] ?? 'star')); ?></span>
-              </div>
+              </span>
             </div>
-            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400"><?php echo e((string) ($card['meta'] ?? '')); ?></p>
           </article>
         <?php endforeach; ?>
       </section>
 
-      <section class="bg-white dark:bg-gray-800 rounded-lg px-4 py-3 shadow-card border border-gray-200 dark:border-gray-700">
-        <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-          <div class="flex flex-col gap-3 md:flex-row md:items-center">
-            <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">Afficher :</span>
-            <?php
-              $filters = [
-                ['url' => $linkAll, 'key' => 'all', 'label' => 'Tous'],
-                ['url' => $linkSubmitted, 'key' => 'submitted', 'label' => 'À corriger'],
-                ['url' => $linkGraded, 'key' => 'graded', 'label' => 'Corrigés'],
-                ['url' => $linkUrgent, 'key' => 'urgent', 'label' => 'Urgents'],
-              ];
-            ?>
-            <div class="flex flex-wrap gap-1.5 rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-gray-700 dark:bg-gray-900">
+      <section class="exam-filter-bar bg-white dark:bg-gray-800 rounded-2xl px-3 py-2 shadow-card border border-gray-200 dark:border-gray-700">
+        <div class="exam-filter-row flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+          <?php
+            $filters = [
+              ['url' => $linkAll, 'key' => 'all', 'label' => 'Tous'],
+              ['url' => $linkSubmitted, 'key' => 'submitted', 'label' => 'À corriger'],
+              ['url' => $linkGraded, 'key' => 'graded', 'label' => 'Corrigés'],
+              ['url' => $linkUrgent, 'key' => 'urgent', 'label' => 'Urgents'],
+            ];
+          ?>
+          <nav class="exam-filter-tabs flex flex-wrap gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-gray-700 dark:bg-gray-900" aria-label="Filtrer les examens">
             <?php foreach ($filters as $filter): ?>
-              <a href="<?php echo e($filter['url']); ?>" class="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-semibold transition <?php echo $status === $filter['key'] ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-200 dark:bg-primary-500/15 dark:text-primary-100 dark:ring-primary-500/40' : 'text-gray-600 hover:bg-white hover:text-primary-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-primary-200'; ?>">
+              <a href="<?php echo e($filter['url']); ?>" aria-current="<?php echo $status === $filter['key'] ? 'page' : 'false'; ?>" class="exam-filter-tab inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm font-semibold transition <?php echo $status === $filter['key'] ? 'bg-white text-primary-700 shadow-sm ring-1 ring-primary-200 dark:bg-primary-500/15 dark:text-primary-100 dark:ring-primary-500/40' : 'text-gray-600 hover:bg-white hover:text-primary-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-primary-200'; ?>">
                 <?php echo e($filter['label']); ?>
               </a>
             <?php endforeach; ?>
-            </div>
-          </div>
-          <label class="relative block w-full xl:max-w-sm">
+          </nav>
+          <label class="exam-search-field relative block w-full xl:max-w-sm">
             <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
               <i class="fas fa-search" aria-hidden="true"></i>
             </span>
-            <input type="search" data-exam-search placeholder="Rechercher un examen ou un étudiant" class="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm font-medium text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-400/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder:text-gray-500">
+            <input type="search" data-exam-search placeholder="Examen ou étudiant" class="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm font-medium text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-400/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder:text-gray-500">
           </label>
-          </div>
+        </div>
       </section>
 
       <?php if ($isExamIndex): ?>
-        <section class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-card dark:border-gray-700 dark:bg-gray-800" data-exam-search-root>
+        <section class="exam-index-table overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-card dark:border-gray-700 dark:bg-gray-800" data-exam-search-root>
           <?php if ($examRows === []): ?>
             <div class="p-6 text-sm text-gray-600 dark:text-gray-300">
               Aucun examen pour ce filtre.
             </div>
           <?php else: ?>
-            <div class="hidden grid-cols-[minmax(16rem,1.8fr)_8rem_12rem_7rem_7rem_7rem_8rem] gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3 text-xs font-bold uppercase text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 lg:grid">
+            <div class="hidden grid-cols-[minmax(16rem,1.8fr)_8rem_12rem_7rem_7rem_7rem_7rem] gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3 text-xs font-bold uppercase text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 lg:grid">
               <span>Examen</span>
               <span>Type</span>
               <span>Dernière activité</span>
@@ -457,7 +405,7 @@ $teacherTopContextLabel = $isExamIndex ? 'Vue globale' : $examTitle;
                     $isUrgent ? 'urgent' : '',
                 ]);
               ?>
-              <article data-exam-search-item data-search-text="<?php echo e($rowSearchText); ?>" class="grid grid-cols-1 gap-3 px-4 py-4 transition hover:bg-gray-50 dark:hover:bg-gray-900/60 lg:grid-cols-[minmax(16rem,1.8fr)_8rem_12rem_7rem_7rem_7rem_8rem] lg:items-center">
+              <article data-exam-search-item data-search-text="<?php echo e($rowSearchText); ?>" class="exam-index-row grid grid-cols-1 gap-3 px-4 py-3 transition hover:bg-gray-50 dark:hover:bg-gray-900/60 lg:grid-cols-[minmax(16rem,1.8fr)_8rem_12rem_7rem_7rem_7rem_7rem] lg:items-center">
                 <div class="min-w-0">
                   <div class="flex items-center gap-3">
                     <span class="flex h-9 w-9 items-center justify-center rounded-lg <?php echo e($rowTone['bg']); ?> <?php echo e($rowTone['text']); ?>">
@@ -493,10 +441,11 @@ $teacherTopContextLabel = $isExamIndex ? 'Vue globale' : $examTitle;
                   <span class="font-bold text-gray-900 dark:text-white"><?php echo e($formatCount($graded)); ?></span>
                 </div>
                 <div class="flex justify-start lg:justify-end">
-                    <a href="<?php echo e(site_url('teacher/exams_manage?exam_id=' . (int) ($row['exam_id'] ?? 0) . '&status=' . urlencode($status))); ?>" class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700">
-                      <i class="fas fa-arrow-right" aria-hidden="true"></i>
-                      Ouvrir
-                    </a>
+                  <a href="<?php echo e(site_url('teacher/exams_manage?exam_id=' . (int) ($row['exam_id'] ?? 0) . '&status=' . urlencode($status))); ?>" class="exam-open-btn inline-flex items-center gap-2 rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700">
+                    <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                    Voir
+                  </a>
+                </div>
               </article>
             <?php endforeach; ?>
             </div>
@@ -630,36 +579,21 @@ $teacherTopContextLabel = $isExamIndex ? 'Vue globale' : $examTitle;
           </section>
         <?php endif; ?>
 
-        <section class="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] xl:items-start">
+        <section class="grid gap-4 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] xl:items-start">
           <div class="space-y-4">
-            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
+            <div class="exam-correction-panel rounded-2xl border border-gray-200 bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-800">
               <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div class="min-w-0">
                   <p class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">Correction</p>
-                  <h2 class="mt-1 text-lg font-bold text-gray-900 dark:text-white">Copies à corriger</h2>
-                  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Cliquez une copie pour ouvrir son détail dans le panneau de droite.</p>
+                  <h2 class="mt-1 text-lg font-bold text-gray-900 dark:text-white">Copies</h2>
                 </div>
                 <span class="inline-flex w-fit rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
                   <?php echo e($formatCount(count($attempts))); ?> copie(s)
                 </span>
               </div>
-              <div class="mt-4 flex flex-wrap gap-2 text-xs">
-                <span class="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 font-semibold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
-                  <i class="fas fa-clock" aria-hidden="true"></i>
-                  <?php echo e($formatCount($submittedCount)); ?> à corriger
-                </span>
-                <span class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 font-semibold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
-                  <i class="fas fa-check-circle" aria-hidden="true"></i>
-                  <?php echo e($formatCount($gradedCount)); ?> corrigée(s)
-                </span>
-                <span class="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 font-semibold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
-                  <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                  <?php echo e($formatCount($indexUrgentCount)); ?> urgente(s)
-                </span>
-              </div>
             </div>
 
-            <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-card dark:border-gray-700 dark:bg-gray-800" data-exam-search-root>
+            <div class="exam-attempt-list overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-card dark:border-gray-700 dark:bg-gray-800" data-exam-search-root>
               <?php if ($attempts === []): ?>
                 <div class="p-6 text-sm text-gray-600 dark:text-gray-300">Aucune tentative pour ce filtre.</div>
               <?php else: ?>
@@ -691,7 +625,7 @@ $teacherTopContextLabel = $isExamIndex ? 'Vue globale' : $examTitle;
                       data-exam-search-item
                       data-search-text="<?php echo e($attemptSearchText); ?>"
                       aria-current="<?php echo $isSelectedAttempt ? 'true' : 'false'; ?>"
-                      class="block border-l-4 px-4 py-4 transition <?php echo $isSelectedAttempt ? 'border-primary-500 bg-primary-50/70 dark:bg-primary-500/10' : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-900/60'; ?>"
+                      class="exam-attempt-card block border-l-4 px-4 py-3 transition <?php echo $isSelectedAttempt ? 'border-primary-500 bg-primary-50/70 dark:bg-primary-500/10' : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-900/60'; ?>"
                     >
                       <div class="flex items-start justify-between gap-4">
                         <div class="min-w-0">
@@ -724,7 +658,7 @@ $teacherTopContextLabel = $isExamIndex ? 'Vue globale' : $examTitle;
                         </div>
                         <div class="shrink-0 text-right">
                           <p class="text-lg font-bold text-gray-900 dark:text-white"><?php echo e($attemptScoreLabel); ?><?php if ($examType === 'qcm' && $scoreVal !== null && ($maxScoreByVariant[$attemptVariant] ?? 0) > 0): ?>/<?php echo e((string) (int) ($maxScoreByVariant[$attemptVariant] ?? 0)); ?><?php endif; ?></p>
-                          <p class="mt-1 text-xs font-semibold text-gray-500 dark:text-gray-400">Ouvrir</p>
+                          <p class="mt-1 text-xs font-semibold text-gray-500 dark:text-gray-400">Voir</p>
                         </div>
                       </div>
                     </a>
@@ -767,7 +701,7 @@ $teacherTopContextLabel = $isExamIndex ? 'Vue globale' : $examTitle;
                 $selectedPrevUrl = $selectedAttemptPrev ? $attemptDetailUrl((int) ($selectedAttemptPrev['id'] ?? 0)) : '';
                 $selectedNextUrl = $selectedAttemptNext ? $attemptDetailUrl((int) ($selectedAttemptNext['id'] ?? 0)) : '';
               ?>
-              <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
+              <section class="exam-active-copy rounded-2xl border border-gray-200 bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-800">
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div class="min-w-0">
                     <p class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">Copie active</p>
@@ -782,7 +716,7 @@ $teacherTopContextLabel = $isExamIndex ? 'Vue globale' : $examTitle;
                       <?php endif; ?>
                     </div>
                   </div>
-                  <div class="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-right dark:border-gray-700 dark:bg-gray-900">
+                  <div class="exam-scorebox rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-right dark:border-gray-700 dark:bg-gray-900">
                     <?php if ($selectedScore !== null): ?>
                       <p class="text-3xl font-bold text-gray-900 dark:text-white"><?php echo e((string) $selectedScore); ?><?php if ($examType === 'qcm' && $selectedMaxScore > 0): ?>/<?php echo e((string) $selectedMaxScore); ?><?php endif; ?></p>
                       <p class="mt-1 text-xs font-semibold <?php echo e($selectedPassed ? 'text-emerald-700 dark:text-emerald-200' : 'text-rose-700 dark:text-rose-200'); ?>"><?php echo e($selectedPassed ? 'Réussi' : 'Non validé'); ?></p>
@@ -813,7 +747,7 @@ $teacherTopContextLabel = $isExamIndex ? 'Vue globale' : $examTitle;
                 </div>
               </section>
 
-              <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
+              <section class="exam-detail-card rounded-2xl border border-gray-200 bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-800">
                 <?php if ($examType === 'drive'): ?>
                   <?php
                     $selectedDriveLink = '';

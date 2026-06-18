@@ -71,8 +71,8 @@ $makeCoverPlaceholder = static function (string $title, string $category): strin
   <rect width="800" height="480" fill="url(#g)"/>
   <circle cx="660" cy="120" r="110" fill="rgba(255,255,255,0.08)"/>
   <circle cx="120" cy="360" r="130" fill="rgba(255,255,255,0.10)"/>
-  <text x="56" y="88" fill="#dbeafe" font-size="30" font-family="Arial, sans-serif">{$safeCategory}</text>
-  <text x="56" y="182" fill="#ffffff" font-size="46" font-weight="700" font-family="Arial, sans-serif">{$safeTitle}</text>
+  <text x="56" y="88" fill="#dbeafe" font-size="30" font-family="Plus Jakarta Sans, Inter, Arial, sans-serif">{$safeCategory}</text>
+  <text x="56" y="182" fill="#ffffff" font-size="46" font-weight="700" font-family="Plus Jakarta Sans, Inter, Arial, sans-serif">{$safeTitle}</text>
 </svg>
 SVG;
 
@@ -584,7 +584,7 @@ $resolveLevelBadgeClass = static function (string $levelKey): string {
   <script src="<?php echo e($tailwindThemeBootstrapJsUrl); ?>"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?php echo e(site_url('assets/vendor/fontawesome/all.min.css?v=' . (@filemtime(__DIR__ . '/../../../assets/vendor/fontawesome/all.min.css') ?: time()))); ?>">
   <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
   <script src="<?php echo e($webThemeJsUrl); ?>" defer></script>

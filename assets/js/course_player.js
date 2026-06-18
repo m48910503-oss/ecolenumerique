@@ -36,6 +36,7 @@
     pendingPlay: false,
     muted: false,
     playFallbackTimer: 0,
+    controlsTimer: 0,
     userInitiatedPlay: false,
     pendingAudiblePlayback: false,
   };
@@ -327,23 +328,64 @@
     playOverlay.setAttribute('aria-hidden', visible ? 'false' : 'true');
   }
 
+  function setControlsVisible(visible) {
+    const controls = $('#player-controls');
+    if (!controls) return;
+    controls.classList.toggle('opacity-0', !visible);
+    controls.classList.toggle('translate-y-2', !visible);
+    controls.classList.toggle('pointer-events-none', !visible);
+  }
+
+  function isPlaybackActive() {
+    if (!state.ready || !state.player || !window.YT || !window.YT.PlayerState) {
+      return !!state.pendingPlay;
+    }
+    const playerState =
+      state.player.getPlayerState && state.player.getPlayerState();
+    return (
+      playerState === window.YT.PlayerState.PLAYING ||
+      playerState === window.YT.PlayerState.BUFFERING
+    );
+  }
+
+  function scheduleControlsIdle() {
+    if (state.controlsTimer) {
+      window.clearTimeout(state.controlsTimer);
+    }
+    state.controlsTimer = window.setTimeout(() => {
+      if (isPlaybackActive()) {
+        setControlsVisible(false);
+      }
+    }, 2400);
+  }
+
+  function showControlsTemporarily() {
+    setControlsVisible(true);
+    if (isPlaybackActive()) {
+      scheduleControlsIdle();
+    }
+  }
+
   function setPlayButtonLabel(isPlaying) {
-    const btnPlay = $('#btn-play');
-    if (!btnPlay) return;
     const label = isPlaying ? 'Pause' : 'Lecture';
-    const icon = btnPlay.querySelector('[data-play-icon]');
-    const labelNode = btnPlay.querySelector('[data-control-label]');
-    if (icon) {
-      icon.classList.toggle('fa-play', !isPlaying);
-      icon.classList.toggle('fa-pause', isPlaying);
-      icon.classList.toggle('ml-1', !isPlaying);
-    } else {
-      btnPlay.textContent = label;
-    }
-    if (labelNode) {
-      labelNode.textContent = label;
-    }
-    btnPlay.setAttribute('aria-label', label);
+    $$('[data-player-toggle]').forEach((btnPlay) => {
+      const icon = btnPlay.querySelector('[data-play-icon]');
+      const labelNode = btnPlay.querySelector('[data-control-label]');
+      if (icon) {
+        const offsetClass = btnPlay.id === 'btn-inline-play' ? 'ml-0.5' : 'ml-1';
+        icon.classList.toggle('fa-play', !isPlaying);
+        icon.classList.toggle('fa-pause', isPlaying);
+        icon.classList.toggle('ml-1', !isPlaying && offsetClass === 'ml-1');
+        icon.classList.toggle('ml-0.5', !isPlaying && offsetClass === 'ml-0.5');
+      } else {
+        btnPlay.textContent = label;
+      }
+      if (labelNode) {
+        labelNode.textContent = label;
+      }
+      btnPlay.setAttribute('aria-label', label);
+      btnPlay.setAttribute('title', label);
+    });
   }
 
   function syncMuteUi() {
@@ -366,9 +408,33 @@
 
   function currentVolumeTarget() {
     const volumeRange = $('#volume-range');
-    if (!volumeRange) return 80;
-    const raw = parseInt(volumeRange.value || '80', 10);
+    const volumePanelRange = $('#volume-range-panel');
+    const source = volumeRange || volumePanelRange;
+    if (!source) return 80;
+    const raw = parseInt(source.value || '80', 10);
     return Math.max(0, Math.min(100, raw));
+  }
+
+  function setVolumeInputs(value) {
+    const safe = Math.max(0, Math.min(100, parseInt(value || '80', 10)));
+    ['#volume-range', '#volume-range-panel'].forEach((selector) => {
+      const node = $(selector);
+      if (node) node.value = String(safe);
+    });
+  }
+
+  function setSettingsPanel(open) {
+    const settingsPanel = $('#player-settings-panel');
+    const btnPip = $('#btn-pip');
+    if (!settingsPanel) return;
+    settingsPanel.classList.toggle('hidden', !open);
+    settingsPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
+    if (btnPip) {
+      btnPip.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    if (open) {
+      showControlsTemporarily();
+    }
   }
 
   function requestAudiblePlayback() {
@@ -409,15 +475,26 @@
       typeof state.player.getPlayerState === 'function'
     ) {
       const playerState = state.player.getPlayerState();
-      setPlayButtonLabel(playerState === window.YT.PlayerState.PLAYING);
+      const active =
+        playerState === window.YT.PlayerState.PLAYING ||
+        playerState === window.YT.PlayerState.BUFFERING;
+      setPlayButtonLabel(active);
       setPlayOverlayVisible(
         playerState !== window.YT.PlayerState.PLAYING &&
           playerState !== window.YT.PlayerState.BUFFERING
       );
+      if (active) {
+        scheduleControlsIdle();
+      } else {
+        setControlsVisible(true);
+      }
       return;
     }
     setPlayButtonLabel(!!state.pendingPlay);
     setPlayOverlayVisible(!state.pendingPlay);
+    if (state.pendingPlay) {
+      scheduleControlsIdle();
+    }
   }
 
   function updateTimeUi() {
@@ -539,6 +616,13 @@
     return withPlayerParams(rawUrl, {
       enablejsapi: '1',
       origin: pageOrigin || null,
+      controls: '0',
+      disablekb: '1',
+      fs: '0',
+      iv_load_policy: '3',
+      modestbranding: '1',
+      playsinline: '1',
+      rel: '0',
     });
   }
 
@@ -595,6 +679,7 @@
     state.pendingPlay = true;
     setPlayButtonLabel(true);
     setPlayOverlayVisible(false);
+    showControlsTemporarily();
     if (state.ready && state.player) {
       try {
         state.player.playVideo();
@@ -610,6 +695,7 @@
     state.pendingPlay = false;
     setPlayButtonLabel(false);
     setPlayOverlayVisible(true);
+    setControlsVisible(true);
     if (state.ready && state.player && typeof state.player.pauseVideo === 'function') {
       state.player.pauseVideo();
       return;
@@ -653,7 +739,11 @@
     if (state.ready && state.player && videoId) {
       state.player.loadVideoById(videoId);
       if (autoPlay !== false) playWithFallback(userGesture);
-      else setPlayButtonLabel(false);
+      else {
+        setPlayButtonLabel(false);
+        setPlayOverlayVisible(true);
+        setControlsVisible(true);
+      }
     } else if (embedUrl) {
       const shouldMuteAutoplay = autoPlay !== false && !userGesture;
       iframe.src =
@@ -674,6 +764,8 @@
       } else {
         state.pendingPlay = false;
         setPlayButtonLabel(false);
+        setPlayOverlayVisible(true);
+        setControlsVisible(true);
       }
     }
   }
@@ -695,33 +787,113 @@
     loadItem(items[nextIndex], true, true);
   }
 
+  function togglePlayback(fromUserGesture) {
+    if (!state.ready || !state.player) {
+      playWithFallback(!!fromUserGesture);
+      return;
+    }
+    const st = state.player.getPlayerState
+      ? state.player.getPlayerState()
+      : null;
+    if (window.YT && window.YT.PlayerState && st === window.YT.PlayerState.PLAYING) {
+      pauseWithFallback();
+    } else {
+      playWithFallback(!!fromUserGesture);
+    }
+  }
+
+  function fullscreenElement() {
+    return (
+      doc.fullscreenElement ||
+      doc.webkitFullscreenElement ||
+      doc.msFullscreenElement ||
+      null
+    );
+  }
+
+  function isPlayerFullscreen() {
+    const active = fullscreenElement();
+    return !!active && (active === wrapper || wrapper.contains(active));
+  }
+
+  function eventTargetsPlayer(event) {
+    const target = event && event.target ? event.target : null;
+    return !!target && (target === wrapper || wrapper.contains(target));
+  }
+
+  function blockPlayerContextEvent(event) {
+    if (!eventTargetsPlayer(event) && !isPlayerFullscreen()) {
+      return;
+    }
+    if (
+      event.type === 'mousedown' ||
+      event.type === 'pointerdown' ||
+      event.type === 'mouseup' ||
+      event.type === 'auxclick'
+    ) {
+      if (event.button !== 2) {
+        return;
+      }
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof event.stopImmediatePropagation === 'function') {
+      event.stopImmediatePropagation();
+    }
+  }
+
+  function bindContextMenuGuard() {
+    ['contextmenu', 'auxclick', 'mousedown', 'mouseup', 'pointerdown'].forEach(
+      (eventName) => {
+        wrapper.addEventListener(eventName, blockPlayerContextEvent, true);
+        doc.addEventListener(eventName, blockPlayerContextEvent, true);
+      }
+    );
+  }
+
   function bindControls() {
-    const btnPlay = $('#btn-play');
-    if (btnPlay) {
-      btnPlay.addEventListener('click', () => {
-        if (!state.ready || !state.player) {
-          playWithFallback(true);
+    bindContextMenuGuard();
+
+    $$('[data-player-toggle]').forEach((btnPlay) => {
+      btnPlay.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        togglePlayback(true);
+      });
+    });
+
+    const clickLayer = $('#player-click-layer');
+    if (clickLayer) {
+      clickLayer.addEventListener('click', (event) => {
+        event.preventDefault();
+        const settingsPanel = $('#player-settings-panel');
+        if (settingsPanel && !settingsPanel.classList.contains('hidden')) {
+          setSettingsPanel(false);
           return;
         }
-        const st = state.player.getPlayerState
-          ? state.player.getPlayerState()
-          : null;
-        if (window.YT && window.YT.PlayerState && st === window.YT.PlayerState.PLAYING) {
-          pauseWithFallback();
-        } else {
-          playWithFallback(true);
-        }
+        togglePlayback(true);
       });
     }
+
+    ['mousemove', 'touchstart', 'focusin'].forEach((eventName) => {
+      wrapper.addEventListener(eventName, showControlsTemporarily, { passive: true });
+    });
+
     const btnPrev = $('#btn-prev');
     if (btnPrev) btnPrev.addEventListener('click', () => moveInPlaylist('prev'));
     const btnNext = $('#btn-next');
     if (btnNext) btnNext.addEventListener('click', () => moveInPlaylist('next'));
 
     const btnBack = doc.querySelector('[data-action="back10"]');
-    if (btnBack) btnBack.addEventListener('click', () => seekWithFallback(-10));
+    if (btnBack) btnBack.addEventListener('click', () => {
+      seekWithFallback(-10);
+      showControlsTemporarily();
+    });
     const btnFwd = doc.querySelector('[data-action="fwd10"]');
-    if (btnFwd) btnFwd.addEventListener('click', () => seekWithFallback(10));
+    if (btnFwd) btnFwd.addEventListener('click', () => {
+      seekWithFallback(10);
+      showControlsTemporarily();
+    });
 
     const btnMute = $('#btn-mute');
     if (btnMute) {
@@ -737,26 +909,19 @@
             }
           } catch (_) {}
           syncMuteUi();
+          showControlsTemporarily();
           return;
         }
         state.muted = !state.muted;
         postCommand(state.muted ? 'mute' : 'unMute');
         syncMuteUi();
+        showControlsTemporarily();
       });
     }
 
     const btnPip = $('#btn-pip');
     const settingsPanel = $('#player-settings-panel');
     const btnSettingsClose = $('#btn-settings-close');
-
-    function setSettingsPanel(open) {
-      if (!settingsPanel) return;
-      settingsPanel.classList.toggle('hidden', !open);
-      settingsPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
-      if (btnPip) {
-        btnPip.setAttribute('aria-expanded', open ? 'true' : 'false');
-      }
-    }
 
     if (btnPip && settingsPanel) {
       btnPip.setAttribute('aria-haspopup', 'dialog');
@@ -790,34 +955,40 @@
       });
     }
 
-    const volumeRange = $('#volume-range');
-    if (volumeRange) {
-      volumeRange.addEventListener('input', (event) => {
-        const value = parseInt(event.target.value || '80', 10);
-        const safe = Math.max(0, Math.min(100, value));
-        if (state.ready && state.player && state.player.setVolume) {
-          state.player.setVolume(safe);
-          if (safe <= 0 && state.player.mute) {
-            state.player.mute();
-            state.muted = true;
-          } else if (state.player.unMute && state.muted) {
-            state.player.unMute();
-            state.muted = false;
-          }
-          syncMuteUi();
-          return;
-        }
-        postCommand('setVolume', [safe]);
-        if (safe <= 0) {
+    function applyVolume(value) {
+      const safe = Math.max(0, Math.min(100, parseInt(value || '80', 10)));
+      setVolumeInputs(safe);
+      if (state.ready && state.player && state.player.setVolume) {
+        state.player.setVolume(safe);
+        if (safe <= 0 && state.player.mute) {
+          state.player.mute();
           state.muted = true;
-          postCommand('mute');
-        } else if (state.muted) {
+        } else if (state.player.unMute && state.muted) {
+          state.player.unMute();
           state.muted = false;
-          postCommand('unMute');
         }
         syncMuteUi();
-      });
+        return;
+      }
+      postCommand('setVolume', [safe]);
+      if (safe <= 0) {
+        state.muted = true;
+        postCommand('mute');
+      } else if (state.muted) {
+        state.muted = false;
+        postCommand('unMute');
+      }
+      syncMuteUi();
     }
+
+    ['#volume-range', '#volume-range-panel'].forEach((selector) => {
+      const volumeRange = $(selector);
+      if (!volumeRange) return;
+      volumeRange.addEventListener('input', (event) => {
+        applyVolume(event.target.value);
+        showControlsTemporarily();
+      });
+    });
 
     const progressRange = $('#progress-range');
     if (progressRange) {
@@ -826,6 +997,7 @@
         const duration = state.player.getDuration() || 0;
         const value = parseInt(event.target.value || '0', 10);
         state.player.seekTo((value / 1000) * duration, true);
+        showControlsTemporarily();
       });
     }
 
@@ -838,6 +1010,7 @@
           postCommand('setPlaybackRate', [speed]);
         }
         setSpeedLabel(speed);
+        showControlsTemporarily();
       });
     });
 
@@ -886,6 +1059,7 @@
     if (btnFullscreen) {
       btnFullscreen.addEventListener('click', () => {
         if (!wrapper) return;
+        showControlsTemporarily();
         const target = wrapper;
         if (target.requestFullscreen) target.requestFullscreen();
         else if (target.webkitRequestFullscreen) target.webkitRequestFullscreen();
@@ -933,6 +1107,7 @@
         state.pendingPlay = false;
         setPlayButtonLabel(true);
         setPlayOverlayVisible(false);
+        scheduleControlsIdle();
         if (state.pendingAudiblePlayback) {
           window.setTimeout(() => {
             requestAudiblePlayback();
@@ -947,14 +1122,17 @@
         state.pendingPlay = false;
         setPlayButtonLabel(false);
         setPlayOverlayVisible(true);
+        setControlsVisible(true);
       } else if (event.data === window.YT.PlayerState.BUFFERING) {
         state.pendingPlay = true;
         setPlayButtonLabel(true);
         setPlayOverlayVisible(false);
+        scheduleControlsIdle();
       } else if (event.data === window.YT.PlayerState.ENDED) {
         state.pendingPlay = false;
         setPlayButtonLabel(false);
         setPlayOverlayVisible(true);
+        setControlsVisible(true);
         state.eligible = true;
         setMarkButtonsEnabled(true);
         if (AUTO_MARK && !state.autoMarked) {
@@ -976,6 +1154,8 @@
     notify('Impossible de lire cette video pour le moment.', 'error');
     state.pendingPlay = false;
     setPlayButtonLabel(false);
+    setPlayOverlayVisible(true);
+    setControlsVisible(true);
   }
 
   function initPlayer() {
@@ -1006,6 +1186,7 @@
 
   setSpeedLabel(1);
   setPlayButtonLabel(false);
+  setControlsVisible(true);
   syncMuteUi();
   setMarkButtonsEnabled(false);
 

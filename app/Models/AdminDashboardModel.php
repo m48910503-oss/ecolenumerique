@@ -44,13 +44,13 @@ final class AdminDashboardModel extends Model
         );
     }
 
-    public function countHighPrioritySupportTickets(): int
+    public function countWaitingSupportTickets(): int
     {
         if (!$this->tableExistsSafe('support_conversations')) {
             return 0;
         }
         return $this->intQuery(
-            'SELECT COUNT(*) FROM support_conversations WHERE status IN ("open","waiting_support") AND priority = "high"'
+            'SELECT COUNT(*) FROM support_conversations WHERE status = "waiting_support"'
         );
     }
 
@@ -180,23 +180,24 @@ final class AdminDashboardModel extends Model
     /**
      * @return array<int,array<string,mixed>>
      */
-    public function fetchSupportPriorityCandidates(int $limit = 6): array
+    public function fetchSupportQueueCandidates(int $limit = 6): array
     {
         if (!$this->tableExistsSafe('support_conversations')) {
             return [];
         }
         $safeLimit = max(1, min(20, $limit));
         return $this->rowsQuery(
-            'SELECT id, subject, priority, status, last_message_at, created_at
+            'SELECT id, subject, status, last_message_at, created_at
              FROM support_conversations
              WHERE status IN ("open","waiting_support","waiting_user")
              ORDER BY
-                CASE priority
-                    WHEN "high" THEN 0
-                    WHEN "normal" THEN 1
+                CASE status
+                    WHEN "waiting_user" THEN 0
+                    WHEN "waiting_support" THEN 1
                     ELSE 2
                 END ASC,
-                last_message_at ASC
+                last_message_at ASC,
+                created_at ASC
              LIMIT ' . $safeLimit
         );
     }

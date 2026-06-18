@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 $companySimplePage = 'billing';
 $companySimpleTitle = 'Factures';
-$companySimpleSubtitle = 'Consultez les achats effectués en mode entreprise et le nombre de places achetées.';
+$companySimpleSubtitle = 'Suivez les achats et les places achetées.';
 $billingRows = is_array($billingRows ?? null) ? $billingRows : [];
 $billingSummary = is_array($billingSummary ?? null) ? $billingSummary : [];
 $seatSummary = is_array($seatSummary ?? null) ? $seatSummary : [];
@@ -31,7 +31,7 @@ require __DIR__ . '/_simple_flash.php';
   <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
     <div>
       <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">Historique</p>
-      <h3 class="text-lg font-bold text-gray-900 dark:text-white">Achats entreprise</h3>
+      <h3 class="app-inline-title text-lg font-bold text-gray-900 dark:text-white"><?php echo dashboard_title_icon('receipt'); ?><span>Achats entreprise</span></h3>
     </div>
     <a href="<?php echo e(site_url('catalogue')); ?>" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">Acheter des places</a>
   </div>

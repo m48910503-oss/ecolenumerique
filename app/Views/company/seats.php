@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 $companySimplePage = 'seats';
 $companySimpleTitle = 'Formations / Places';
-$companySimpleSubtitle = 'Attribuez les places achetées aux collaborateurs actifs. Une place = un collaborateur = une formation.';
+$companySimpleSubtitle = 'Attribuez les places achetées aux collaborateurs actifs.';
 $seatCourseRows = is_array($seatCourseRows ?? null) ? $seatCourseRows : [];
 $seatSummary = is_array($seatSummary ?? null) ? $seatSummary : [];
 $seatMemberOptions = is_array($seatMemberOptions ?? null) ? $seatMemberOptions : [];
@@ -42,7 +42,7 @@ require __DIR__ . '/_simple_flash.php';
     <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">
       <i class="fas fa-shopping-cart"></i>
     </div>
-    <h3 class="mt-4 text-lg font-bold text-gray-900 dark:text-white">Aucune place entreprise achetée</h3>
+    <h3 class="app-inline-title mt-4 justify-center text-lg font-bold text-gray-900 dark:text-white"><?php echo dashboard_title_icon('receipt'); ?><span>Aucune place entreprise achetée</span></h3>
     <p class="mx-auto mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">Achetez en mode entreprise, puis choisissez les places.</p>
     <a href="<?php echo e(site_url('catalogue')); ?>" class="mt-5 inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">Aller au catalogue</a>
   </section>
@@ -71,7 +71,7 @@ require __DIR__ . '/_simple_flash.php';
 
       <div class="mt-5 grid gap-4 lg:grid-cols-[0.85fr,1.15fr]">
         <div class="rounded-2xl bg-gray-50 p-4 dark:bg-gray-900/40">
-          <h4 class="font-semibold text-gray-900 dark:text-white">Attribuer une place</h4>
+          <h4 class="app-inline-title font-semibold text-gray-900 dark:text-white"><?php echo dashboard_title_icon('user-plus'); ?><span>Attribuer une place</span></h4>
           <?php if ($available < 1): ?>
             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Toutes les places de cette formation sont déjà attribuées.</p>
           <?php elseif ($seatMemberOptions === []): ?>
@@ -93,7 +93,7 @@ require __DIR__ . '/_simple_flash.php';
         </div>
 
         <div class="rounded-2xl bg-gray-50 p-4 dark:bg-gray-900/40">
-          <h4 class="font-semibold text-gray-900 dark:text-white">Places déjà attribuées</h4>
+          <h4 class="app-inline-title font-semibold text-gray-900 dark:text-white"><?php echo dashboard_title_icon('users'); ?><span>Places déjà attribuées</span></h4>
           <div class="mt-3 space-y-2">
             <?php foreach ($assignedUsers as $assigned): ?>
               <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white p-3 dark:bg-gray-800">

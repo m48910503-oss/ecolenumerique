@@ -474,7 +474,7 @@ $courseStatusLabel = static function (string $status) use ($courseStatusLabels):
   <title>Promotions et codes promo · Enseignant · École Numérique</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time()))); ?>">
   <script src="<?php echo e(site_url('assets/js/sidebar_toggle.js')); ?>" defer></script>
@@ -604,51 +604,29 @@ $courseStatusLabel = static function (string $status) use ($courseStatusLabels):
       <?php require __DIR__ . '/_topbar.php'; ?>
 
       <div class="p-4 pb-24 space-y-6 animate-fade-up sm:p-6 sm:pb-24">
-      <section class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/80 shadow-soft dark:border-slate-700 dark:bg-slate-800">
-        <div class="grid gap-5 p-5 sm:p-6 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
-          <div class="max-w-3xl">
-            <p class="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">Pilotage commercial</p>
-            <h2 class="mt-2 text-2xl font-bold text-slate-950 dark:text-white">Offres commerciales</h2>
-        
-            <div class="mt-4 flex flex-wrap items-center gap-2">
-              <span class="inline-flex items-center rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 dark:bg-sky-900/30 dark:text-sky-200">
-                <?php echo e((string) ($promotionTotal + $couponTotal)); ?> offres
-              </span>
-              <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
-                <?php echo e((string) ($promotionActiveCount + $couponActiveCount)); ?> actives
-              </span>
-              <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
-                <?php echo e((string) count($courses)); ?> cours publiés
-              </span>
-            </div>
-          </div>
-          <div class="flex flex-col gap-3 sm:flex-row xl:flex-col xl:items-stretch">
-            <?php if ($courses === []): ?>
-              <button type="button" disabled class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-primary-600/20 transition cursor-not-allowed opacity-50 hover:bg-primary-600">
-                <i class="fas fa-plus-circle"></i>
-                <span>Créer une promotion</span>
-              </button>
-            <?php else: ?>
-              <a href="<?php echo e(site_url('teacher/promotions' . $buildQuery(['form' => 'promotion', 'step' => 1]))); ?>" class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-primary-600/20 transition hover:bg-primary-700">
-                <i class="fas fa-plus-circle"></i>
-                <span>Créer une promotion</span>
-              </a>
-            <?php endif; ?>
-            <?php if ($courses === [] || !$couponCodeSupported): ?>
-              <button type="button" disabled class="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-700 transition cursor-not-allowed opacity-50 hover:border-violet-300 hover:bg-violet-50 dark:border-violet-900/50 dark:bg-violet-900/20 dark:text-violet-200 dark:hover:bg-violet-900/20">
-                <i class="fas fa-ticket-alt"></i>
-                <span>Créer un code promo</span>
-              </button>
-            <?php else: ?>
-              <a href="<?php echo e(site_url('teacher/promotions' . $buildQuery(['form' => 'coupon', 'step' => 1]))); ?>" class="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-700 transition hover:border-violet-300 hover:bg-violet-100 dark:border-violet-900/50 dark:bg-violet-900/20 dark:text-violet-200 dark:hover:bg-violet-900/35">
-                <i class="fas fa-ticket-alt"></i>
-                <span>Créer un code promo</span>
-              </a>
-            <?php endif; ?>
-          </div>
-        </div>
+      <?php $teacherWelcomeTitle = 'Offres commerciales'; ?>
+      <?php $teacherWelcomeSummary = (string) ($promotionTotal + $couponTotal) . ' offres · ' . (string) ($promotionActiveCount + $couponActiveCount) . ' actives · ' . (string) count($courses) . ' cours publiés.'; ?>
+      <?php $teacherWelcomeActionType = $courses === [] ? 'button' : 'link'; ?>
+      <?php $teacherWelcomeActionUrl = $courses === [] ? '#' : site_url('teacher/promotions' . $buildQuery(['form' => 'promotion', 'step' => 1])); ?>
+      <?php $teacherWelcomeActionLabel = 'Créer une promotion'; ?>
+      <?php $teacherWelcomeActionIcon = 'plus-square'; ?>
+      <?php $teacherWelcomeActionAttrs = $courses === [] ? 'disabled aria-disabled="true"' : ''; ?>
+      <?php require __DIR__ . '/_welcome_hero.php'; ?>
+      <?php $teacherWelcomeActionType = $teacherWelcomeActionUrl = $teacherWelcomeActionLabel = $teacherWelcomeActionIcon = $teacherWelcomeActionAttrs = null; ?>
 
-      </section>
+      <div class="flex flex-wrap justify-end gap-3">
+        <?php if ($courses === [] || !$couponCodeSupported): ?>
+          <button type="button" disabled class="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-700 transition cursor-not-allowed opacity-50 hover:border-violet-300 hover:bg-violet-50 dark:border-violet-900/50 dark:bg-violet-900/20 dark:text-violet-200 dark:hover:bg-violet-900/20">
+            <i class="fas fa-ticket-alt"></i>
+            <span>Créer un code promo</span>
+          </button>
+        <?php else: ?>
+          <a href="<?php echo e(site_url('teacher/promotions' . $buildQuery(['form' => 'coupon', 'step' => 1]))); ?>" class="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-700 transition hover:border-violet-300 hover:bg-violet-100 dark:border-violet-900/50 dark:bg-violet-900/20 dark:text-violet-200 dark:hover:bg-violet-900/35">
+            <i class="fas fa-ticket-alt"></i>
+            <span>Créer un code promo</span>
+          </a>
+        <?php endif; ?>
+      </div>
 
       <?php if ($successToastMessage !== ''): ?>
         <div

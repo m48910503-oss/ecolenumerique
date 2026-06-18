@@ -162,7 +162,7 @@ $summaryPercent = (int) round(($summaryDone / $summaryTotal) * 100);
     <title>Contenu du cours · Enseignant · École Numérique</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time()))); ?>">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-course-builder.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-course-builder.css') ?: time()))); ?>">
@@ -180,6 +180,13 @@ $summaryPercent = (int) round(($summaryDone / $summaryTotal) * 100);
             <?php require __DIR__ . '/_topbar.php'; ?>
 
             <main class="mx-auto flex w-full max-w-[100rem] flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+                <?php $teacherWelcomeTitle = $courseTitle !== '' ? $courseTitle : 'Contenu du cours'; ?>
+                <?php $teacherWelcomeSummary = 'Organisez la pédagogie, les modules, les ressources, les rendez-vous et les examens.'; ?>
+                <?php $teacherWelcomeActionUrl = $courseEditUrl; ?>
+                <?php $teacherWelcomeActionLabel = 'Informations'; ?>
+                <?php $teacherWelcomeActionIcon = 'settings'; ?>
+                <?php require __DIR__ . '/_welcome_hero.php'; ?>
+
                 <section class="rounded-[1.75rem] border border-slate-700 bg-slate-800/85 p-4 shadow-[0_24px_60px_-30px_rgba(15,23,42,0.85)] backdrop-blur">
                     <div class="flex flex-wrap items-center justify-between gap-4">
                         <div class="flex min-w-0 flex-1 flex-wrap items-center gap-4 md:gap-6">

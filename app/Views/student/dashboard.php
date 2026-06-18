@@ -244,6 +244,11 @@ if ($primaryItemTitle !== '') {
     $heroActionUrl = $calendarUrl;
 }
 
+$studentWelcomeSummary = $heroSubtitle;
+$studentWelcomeActionUrl = $heroActionUrl;
+$studentWelcomeActionLabel = $heroActionLabel;
+$studentWelcomeActionIcon = $nextActionIcon;
+
 $resolveCourseUrl = static function (array $course): string {
     $slug = trim((string) ($course['slug'] ?? ''));
     if ($slug !== '') {
@@ -347,20 +352,7 @@ if (!is_string($chartPayloadJson) || $chartPayloadJson === '') {
       <?php require __DIR__ . '/_topbar.php'; ?>
 
       <div class="student-dashboard-content p-4 pb-24 space-y-5 animate-fade-up sm:p-6 sm:pb-24 sm:space-y-6 lg:space-y-8">
-        <div class="student-dashboard-hero bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-[1.5rem] p-4 text-white shadow-glow sm:rounded-2xl sm:p-6">
-          <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div class="min-w-0">
-              <h2 class="text-xl font-bold sm:text-2xl">Bon retour, <?php echo e($dashboardFirstName); ?> !</h2>
-              <?php if ($heroSubtitle !== ''): ?>
-                <p class="mt-1 text-sm text-blue-100 sm:text-base"><?php echo e($heroSubtitle); ?></p>
-              <?php endif; ?>
-            </div>
-            <a href="<?php echo e($heroActionUrl); ?>" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-white/70">
-              <i class="<?php echo e(dashboard_icon_fa_class($nextActionIcon)); ?>" aria-hidden="true"></i>
-              <span><?php echo e($heroActionLabel); ?></span>
-            </a>
-          </div>
-        </div>
+        <?php require __DIR__ . '/_welcome_hero.php'; ?>
 
         <div class="student-dashboard-stats-grid grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-5">
           <?php foreach ($dashboardStats as $stat): ?>
@@ -387,8 +379,8 @@ if (!is_string($chartPayloadJson) || $chartPayloadJson === '') {
           <?php endforeach; ?>
         </div>
 
-        <div class="student-dashboard-focus-grid grid grid-cols-1 gap-4 lg:grid-cols-3 sm:gap-6">
-          <section class="student-dashboard-panel student-dashboard-continue-panel lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-card border border-gray-100 dark:border-gray-700 sm:p-5">
+        <div class="student-dashboard-focus-grid grid grid-cols-1 gap-4 lg:grid-cols-2 sm:gap-6">
+          <section class="student-dashboard-panel student-dashboard-continue-panel bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-card border border-gray-100 dark:border-gray-700 sm:p-5">
             <div class="flex items-center justify-between gap-3">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">Priorité</p>

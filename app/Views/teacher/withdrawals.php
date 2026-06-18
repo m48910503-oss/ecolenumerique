@@ -404,7 +404,7 @@ $referralCanRequestWithdrawal = $referralWithdrawAvailable > 0 && ($referralMinW
   <title><?php echo e($pageTitle); ?> · Enseignant · École Numérique</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="<?php echo e(site_url('assets/css/teacher-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/teacher-dashboard.css') ?: time()))); ?>">
   <script src="<?php echo e(site_url('assets/js/sidebar_toggle.js')); ?>" defer></script>
@@ -428,6 +428,11 @@ $referralCanRequestWithdrawal = $referralWithdrawAvailable > 0 && ($referralMinW
     <?php $showCatalogue = false; ?>
     <?php require __DIR__ . '/_topbar.php'; ?>
     <div class="px-4 py-6 sm:px-6 lg:px-8 space-y-8">
+      <?php $teacherWelcomeTitle = $pageTitle; ?>
+      <?php $teacherWelcomeSummary = 'Suivez vos revenus, transactions et demandes de retrait' . ($periodLabel !== '' ? ' · ' . $periodLabel : '') . '.'; ?>
+      <?php $teacherWelcomeActionLabel = ''; ?>
+      <?php require __DIR__ . '/_welcome_hero.php'; ?>
+
       <?php if ($toastKind !== ''): ?>
         <div
           data-withdrawal-toast="1"

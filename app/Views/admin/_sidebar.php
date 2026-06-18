@@ -38,7 +38,7 @@ $pendingCoursesBadge = max(0, (int) ($adminSidebarBadges['pending_courses'] ?? 0
 $pendingSalesBadge = max(0, (int) ($adminSidebarBadges['pending_withdrawals'] ?? 0))
     + max(0, (int) ($adminSidebarBadges['pending_payments'] ?? 0))
     + max(0, (int) ($adminSidebarBadges['failed_payments'] ?? 0));
-$prioritySupportBadge = max(0, (int) ($adminSidebarBadges['support_priority'] ?? 0));
+$supportWaitingBadge = max(0, (int) ($adminSidebarBadges['support_waiting'] ?? 0));
 $pendingApplicationsBadge = max(0, (int) ($adminSidebarBadges['pending_teacher_applications'] ?? 0));
 
 $adminNavAliases = [
@@ -67,7 +67,7 @@ $adminNavSections = $hasAdminAccess ? [
         'section' => 'Opérations',
         'items' => [
             ['key' => 'sales', 'label' => 'Finances', 'icon' => 'fa-credit-card', 'url' => site_url('admin/sales'), 'permission' => 'sales', 'badge' => $pendingSalesBadge, 'badgeClass' => 'bg-cyan-500'],
-            ['key' => 'support', 'label' => 'Tickets support', 'icon' => 'fa-headset', 'url' => site_url('admin/support'), 'permission' => 'support', 'badge' => $prioritySupportBadge, 'badgeClass' => 'bg-red-500'],
+            ['key' => 'support', 'label' => 'Tickets support', 'icon' => 'fa-headset', 'url' => site_url('admin/support'), 'permission' => 'support', 'badge' => $supportWaitingBadge, 'badgeClass' => 'bg-red-500'],
             ['key' => 'support_agents', 'label' => 'Équipe support', 'icon' => 'fa-headset', 'url' => site_url('admin/support_agents'), 'permission' => 'support_agents'],
             ['key' => 'secondary_admins', 'label' => 'Admins secondaires', 'icon' => 'fa-users-cog', 'url' => site_url('admin/secondary_admins'), 'permission' => 'dashboard', 'generalOnly' => true],
         ],

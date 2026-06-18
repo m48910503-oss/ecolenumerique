@@ -33,11 +33,6 @@
         ['other', 'Autre'],
       ],
     },
-    priorities: [
-      ['low', 'Faible'],
-      ['normal', 'Normal'],
-      ['high', 'Urgent'],
-    ],
     defaultSubjects: {
       billing: 'Paiement non validé',
       certificate: 'Certificat indisponible',
@@ -74,7 +69,6 @@
     form: null,
     subject: null,
     category: null,
-    priority: null,
     body: null,
     attachments: null,
     fileHint: null,
@@ -292,12 +286,6 @@
     const options = labels.categories[state.space] || labels.categories.student;
     return options
       .map(([value, label], index) => `<option value="${escapeHtml(value)}"${index === 0 ? ' selected' : ''}>${escapeHtml(label)}</option>`)
-      .join('');
-  }
-
-  function priorityOptionsHtml() {
-    return labels.priorities
-      .map(([value, label]) => `<option value="${escapeHtml(value)}"${value === 'normal' ? ' selected' : ''}>${escapeHtml(label)}</option>`)
       .join('');
   }
 
@@ -811,7 +799,6 @@
             <div class="en-support-modal__new-fields is-hidden" data-support-new-fields hidden></div>
             <input type="hidden" name="subject" data-support-subject>
             <select name="category" data-support-category hidden></select>
-            <select name="priority" data-support-priority hidden></select>
             <div class="en-support-modal__composer">
               <label class="en-support-modal__field">
                 <span class="en-support-modal__label" data-support-message-label>Message</span>
@@ -845,7 +832,6 @@
     els.form = modal.querySelector('[data-support-modal-form]');
     els.subject = modal.querySelector('[data-support-subject]');
     els.category = modal.querySelector('[data-support-category]');
-    els.priority = modal.querySelector('[data-support-priority]');
     els.body = modal.querySelector('[data-support-body]');
     els.attachments = modal.querySelector('[data-support-attachments]');
     els.fileHint = modal.querySelector('[data-support-file-hint]');
@@ -889,10 +875,6 @@
 
     if (els.category instanceof HTMLSelectElement) {
       els.category.innerHTML = categoryOptionsHtml();
-    }
-
-    if (els.priority instanceof HTMLSelectElement) {
-      els.priority.innerHTML = priorityOptionsHtml();
     }
 
     if (els.subject instanceof HTMLInputElement) {
@@ -964,9 +946,6 @@
     }
     if (els.category instanceof HTMLSelectElement) {
       els.category.value = defaultCategory;
-    }
-    if (els.priority instanceof HTMLSelectElement) {
-      els.priority.value = 'normal';
     }
     if (els.submit instanceof HTMLButtonElement) {
       const label = els.submit.querySelector('span');

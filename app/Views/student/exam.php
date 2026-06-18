@@ -187,6 +187,11 @@ if ($meetingMyUi) {
     $headerCtaLabel = 'Commencer';
     $headerCtaIcon = 'check-circle';
 }
+$studentWelcomeSummary = trim((string) html_entity_decode(strip_tags($heroStateSummary), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+$studentWelcomeTitle = $examTitle;
+$studentWelcomeActionUrl = '#exam-action';
+$studentWelcomeActionLabel = $headerCtaLabel;
+$studentWelcomeActionIcon = $headerCtaIcon;
 $actionTitle = $u('&Eacute;tat de la session');
 $actionSummary = $u('Consultez le statut actuel et les tentatives enregistr&eacute;es.');
 if ($examType === 'meeting' && $meetingMyUi) {
@@ -324,6 +329,8 @@ if (!$onsiteDisclaimerRequired) {
             <?php require __DIR__ . '/_topbar.php'; ?>
 
             <main class="student-content-main max-w-7xl mx-auto px-4 py-6 md:px-6 xl:px-8 space-y-6 pb-10">
+                <?php require __DIR__ . '/_welcome_hero.php'; ?>
+
                 <section class="app-page-hero student-exam-hero">
                     <div class="student-exam-orb student-exam-orb--one" aria-hidden="true"></div>
                     <div class="student-exam-orb student-exam-orb--two" aria-hidden="true"></div>

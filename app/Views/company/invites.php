@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 $companySimplePage = 'invites';
 $companySimpleTitle = 'Invitations';
-$companySimpleSubtitle = 'Invitez uniquement par e-mail. Le collaborateur rejoint l’entreprise, puis vous lui attribuez une place de formation.';
+$companySimpleSubtitle = 'Invitez par e-mail, puis attribuez une place.';
 $inviteRows = is_array($inviteRows ?? null) ? $inviteRows : [];
 $inviteSummary = is_array($inviteSummary ?? null) ? $inviteSummary : [];
 $csrfToken = function_exists('view_csrf_token') ? view_csrf_token() : '';
@@ -14,7 +14,7 @@ require __DIR__ . '/_simple_flash.php';
 <section class="grid grid-cols-1 gap-4 lg:grid-cols-[0.8fr,1.2fr] sm:gap-6">
   <article id="invite-form" class="rounded-2xl border border-gray-100 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
     <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">Nouvelle invitation</p>
-    <h3 class="mt-1 text-lg font-bold text-gray-900 dark:text-white">Ajouter un collaborateur</h3>
+    <h3 class="app-inline-title mt-1 text-lg font-bold text-gray-900 dark:text-white"><?php echo dashboard_title_icon('user-plus'); ?><span>Ajouter un collaborateur</span></h3>
     <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Invitez un membre, puis attribuez ses formations depuis Places.</p>
     <form method="post" class="mt-5 space-y-4">
       <input type="hidden" name="_csrf" value="<?php echo e($csrfToken); ?>">
@@ -28,7 +28,7 @@ require __DIR__ . '/_simple_flash.php';
   </article>
 
   <article class="rounded-2xl border border-gray-100 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
-    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Statuts des invitations</h3>
+    <h3 class="app-inline-title text-lg font-bold text-gray-900 dark:text-white"><?php echo dashboard_title_icon('bell'); ?><span>Statuts des invitations</span></h3>
     <div class="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
       <?php
       $summaryCards = [
@@ -52,7 +52,7 @@ require __DIR__ . '/_simple_flash.php';
   <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
     <div>
       <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">Historique</p>
-      <h3 class="text-lg font-bold text-gray-900 dark:text-white">Invitations envoyées</h3>
+      <h3 class="app-inline-title text-lg font-bold text-gray-900 dark:text-white"><?php echo dashboard_title_icon('mail'); ?><span>Invitations envoyées</span></h3>
     </div>
   </div>
 

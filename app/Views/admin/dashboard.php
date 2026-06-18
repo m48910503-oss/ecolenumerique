@@ -134,7 +134,7 @@ $pendingCourses = max(0, (int) ($summary['pending_courses'] ?? 0));
 $pendingTeacherApplications = max(0, (int) ($summary['pending_teacher_applications'] ?? 0));
 $pendingPayments = max(0, (int) ($summary['pending_payments'] ?? 0));
 $pendingWithdrawals = max(0, (int) ($summary['pending_withdrawals'] ?? 0));
-$highPriorityTickets = max(0, (int) ($summary['high_priority_tickets'] ?? 0));
+$waitingSupportTickets = max(0, (int) ($summary['waiting_support_tickets'] ?? 0));
 $failedPayments = max(0, (int) ($summary['failed_payments'] ?? 0));
 
 $chartLabels = [];
@@ -166,7 +166,7 @@ $navItems = [
     ['key' => 'categories', 'label' => 'Catégories', 'icon' => 'fa-tags', 'url' => site_url('admin/categories'), 'permission' => 'categories'],
     ['key' => 'teacher_applications', 'label' => 'Enseignants', 'icon' => 'fa-chalkboard-teacher', 'url' => site_url('admin/teacher_applications'), 'permission' => 'teacher_applications', 'badge' => $pendingTeacherApplications, 'badgeClass' => 'bg-orange-500'],
     ['key' => 'sales', 'label' => 'Finances', 'icon' => 'fa-credit-card', 'url' => site_url('admin/sales'), 'permission' => 'sales', 'badge' => $pendingPayments + $pendingWithdrawals + $failedPayments, 'badgeClass' => 'bg-cyan-500'],
-    ['key' => 'support', 'label' => 'Tickets support', 'icon' => 'fa-headset', 'url' => site_url('admin/support'), 'permission' => 'support', 'badge' => $highPriorityTickets, 'badgeClass' => 'bg-red-500'],
+    ['key' => 'support', 'label' => 'Tickets support', 'icon' => 'fa-headset', 'url' => site_url('admin/support'), 'permission' => 'support', 'badge' => $waitingSupportTickets, 'badgeClass' => 'bg-red-500'],
     ['key' => 'support_agents', 'label' => 'Équipe support', 'icon' => 'fa-headset', 'url' => site_url('admin/support_agents'), 'permission' => 'support_agents'],
     ['key' => 'secondary_admins', 'label' => 'Admins secondaires', 'icon' => 'fa-users-cog', 'url' => site_url('admin/secondary_admins'), 'permission' => 'dashboard', 'generalOnly' => true],
     ['key' => 'announcements', 'label' => 'Annonces', 'icon' => 'fa-bullhorn', 'url' => site_url('admin/announcements'), 'permission' => 'announcements'],
@@ -181,7 +181,7 @@ $navItems = [
 $quickActions = [
     ['label' => 'Gérer les enseignants (' . $formatNumber($pendingTeacherApplications) . ' en attente)', 'icon' => 'fa-chalkboard-teacher text-cyan-600', 'url' => site_url('admin/teacher_applications'), 'class' => 'bg-cyan-50 dark:bg-cyan-900/20 hover:bg-cyan-100 dark:hover:bg-cyan-900/40'],
     ['label' => 'Valider les cours en attente (' . $formatNumber($pendingCourses) . ')', 'icon' => 'fa-check-circle text-green-600', 'url' => site_url('admin/courses'), 'class' => 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40'],
-    ['label' => 'Tickets prioritaires (' . $formatNumber($highPriorityTickets) . ')', 'icon' => 'fa-exclamation-triangle text-yellow-600', 'url' => site_url('admin/support?status=open&priority=high'), 'class' => 'bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/40'],
+    ['label' => 'Tickets à traiter (' . $formatNumber($waitingSupportTickets) . ')', 'icon' => 'fa-headset text-yellow-600', 'url' => site_url('admin/support?status=waiting_support'), 'class' => 'bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/40'],
     ['label' => 'Paiements à vérifier (' . $formatNumber($pendingPayments + $failedPayments) . ')', 'icon' => 'fa-credit-card text-purple-600', 'url' => site_url('admin/sales'), 'class' => 'bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40'],
     ['label' => 'Publier une annonce', 'icon' => 'fa-plus-circle text-primary-600', 'url' => site_url('admin/announcements'), 'class' => 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700'],
 ];
@@ -360,7 +360,7 @@ $quickActions = [
             <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <article class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border border-gray-100 dark:border-gray-700">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-bold text-gray-900 dark:text-white">Croissance des inscriptions</h3>
+                        <h3 class="app-inline-title font-bold text-gray-900 dark:text-white"><?php echo dashboard_title_icon('trending-up'); ?><span>Croissance des inscriptions</span></h3>
                         <span class="text-xs bg-gray-100 dark:bg-gray-700 rounded-lg px-2 py-1.5 text-gray-600 dark:text-gray-300">6 derniers mois</span>
                     </div>
                     <div class="h-64">
@@ -369,7 +369,7 @@ $quickActions = [
                 </article>
 
                 <article class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border border-gray-100 dark:border-gray-700">
-                    <h3 class="font-bold text-gray-900 dark:text-white mb-4">Actions rapides</h3>
+                    <h3 class="app-inline-title font-bold text-gray-900 dark:text-white mb-4"><?php echo dashboard_title_icon('settings'); ?><span>Actions rapides</span></h3>
                     <div class="space-y-3">
                         <?php foreach ($quickActions as $action): ?>
                             <a href="<?php echo e((string) $action['url']); ?>" class="flex items-center gap-3 p-3 rounded-xl transition <?php echo e((string) $action['class']); ?>">
@@ -406,7 +406,7 @@ $quickActions = [
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <article class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border border-gray-100 dark:border-gray-700">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-bold text-gray-900 dark:text-white">Cours en attente de validation</h3>
+                        <h3 class="app-inline-title font-bold text-gray-900 dark:text-white"><?php echo dashboard_title_icon('book-open'); ?><span>Cours en attente de validation</span></h3>
                         <a href="<?php echo e(site_url('admin/courses')); ?>" class="text-xs text-primary-600 hover:underline">Tout voir</a>
                     </div>
                     <div class="space-y-3">
@@ -455,7 +455,7 @@ $quickActions = [
 
                 <article class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border border-gray-100 dark:border-gray-700">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-bold text-gray-900 dark:text-white">Derniers inscrits</h3>
+                        <h3 class="app-inline-title font-bold text-gray-900 dark:text-white"><?php echo dashboard_title_icon('users'); ?><span>Derniers inscrits</span></h3>
                         <a href="<?php echo e(site_url($isGeneralAdmin ? 'admin/secondary_admins' : 'admin/support_agents')); ?>" class="text-xs text-primary-600 hover:underline">Voir tous</a>
                     </div>
                     <div class="space-y-3">
@@ -492,7 +492,7 @@ $quickActions = [
             </section>
 
             <section class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border border-gray-100 dark:border-gray-700">
-                <h3 class="font-bold text-gray-900 dark:text-white mb-4">Dernières transactions</h3>
+                <h3 class="app-inline-title font-bold text-gray-900 dark:text-white mb-4"><?php echo dashboard_title_icon('receipt'); ?><span>Dernières transactions</span></h3>
                 <div class="overflow-x-auto admin-dashboard-scrollbar">
                     <table class="w-full text-sm">
                         <thead class="text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">

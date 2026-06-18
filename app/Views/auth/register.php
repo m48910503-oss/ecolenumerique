@@ -80,7 +80,7 @@ $renderNotice = static function (string $tone, string $title, array $messages): 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="<?php echo e($authAsset('assets/vendor/fontawesome/all.min.css')); ?>">
     <link rel="stylesheet" href="<?php echo e($authAsset('assets/css/auth-teacher.css')); ?>">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         @font-face {
             font-family: "Font Awesome 6 Free";

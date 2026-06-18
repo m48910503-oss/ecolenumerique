@@ -22,6 +22,12 @@ $firstEmbedTitle = trim((string) ($firstEmbedTitle ?? ''));
 $videoPlaylist = is_array($videoPlaylist ?? null) ? $videoPlaylist : [];
 $doneCount = max(0, (int) ($doneCount ?? 0));
 $totalLessonsAll = max(0, (int) ($totalLessonsAll ?? 0));
+if ($totalLessons > 0) {
+    $doneCount = min($doneCount, $totalLessons);
+} else {
+    $doneCount = 0;
+}
+$progressPercent = max(0, min(100, $progressPercent));
 $objectivesList = is_array($objectivesList ?? null) ? $objectivesList : [];
 $prerequisitesList = is_array($prerequisitesList ?? null) ? $prerequisitesList : [];
 $equipmentList = is_array($equipmentList ?? null) ? $equipmentList : [];
@@ -116,7 +122,7 @@ $isGenericResourceLabel = static function (string $label): bool {
         return true;
     }
 
-    return in_array($normalized, ['ressource', 'document', 'fichier', 'support', 'google drive'], true);
+    return in_array($normalized, ['ressource', 'document', 'fichier', 'support', 'google drive', 'rien', 'aucun', 'aucune', 'none', 'null', 'n/a', 'sans titre'], true);
 };
 
 $normalizeDocuments = static function (array $documents, string $contextLabel = '') use ($resolveDocumentUrl, $isGenericResourceLabel): array {
@@ -166,6 +172,7 @@ $normalizeDocuments = static function (array $documents, string $contextLabel = 
 
 $currentQueueItem = is_array($videoPlaylist[0] ?? null) ? $videoPlaylist[0] : null;
 $currentLessonId = $firstVideoId ?: (int) ($currentQueueItem['id'] ?? 0);
+$currentLessonDone = $currentLessonId > 0 && in_array($currentLessonId, $doneByLesson, true);
 $currentLessonTitle = trim((string) ($currentQueueItem['title'] ?? $firstEmbedTitle));
 $currentLessonLabel = $buildLessonLabel($currentQueueItem);
 $chapterCount = count($chapters);
@@ -179,6 +186,11 @@ foreach ($videoPlaylist as $video) {
     $playlistByChapter[$chapterId][] = $video;
 }
 $progressSummary = $totalLessons > 0 ? $doneCount . ' / ' . $totalLessons : '0 / 0';
+$isCourseCompleted = $totalLessons > 0 && $doneCount >= $totalLessons;
+$courseProgressStateLabel = $isCourseCompleted ? 'Cours terminé' : 'En cours';
+$courseProgressStateClass = $isCourseCompleted
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-900/25 dark:text-emerald-200'
+    : 'border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-900/50 dark:bg-primary-900/25 dark:text-primary-200';
 $courseStatusLabel = $isEnrolled ? 'Accès complet' : 'Accès limité';
 $watchRatingValue = $userRating ? max(0, min(5, (int) ($userRating['rating'] ?? 0))) : 0;
 $watchRatingComment = $userRating ? trim((string) ($userRating['comment'] ?? '')) : '';
@@ -335,7 +347,7 @@ $activeLessonResources = $sidebarResources;
   <title><?php echo e($courseTitle); ?> · Lecture · École Numérique</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?php echo e(site_url('assets/vendor/fontawesome/all.min.css?v=' . (@filemtime(__DIR__ . '/../../../assets/vendor/fontawesome/all.min.css') ?: time()))); ?>">
   <script src="<?php echo e(site_url('assets/js/web_theme.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/web_theme.js') ?: time()))); ?>" defer></script>
   <script src="https://www.youtube.com/iframe_api" defer></script>
@@ -420,6 +432,7 @@ $activeLessonResources = $sidebarResources;
   data-base-progress="<?php echo e((string) $progressPercent); ?>"
   data-current-lesson-id="<?php echo e((string) $currentLessonId); ?>"
   data-course-title="<?php echo e($courseTitle); ?>"
+  data-course-completed="<?php echo $isCourseCompleted ? '1' : '0'; ?>"
   data-rating-api-url="<?php echo e(site_url('api/rating')); ?>"
   data-rating-auto-prompts="1"
   data-rating-value="<?php echo e((string) $watchRatingValue); ?>"
@@ -428,8 +441,8 @@ $activeLessonResources = $sidebarResources;
 >
   <div class="flex h-screen min-h-0 flex-col overflow-hidden">
     <header class="sticky top-0 z-30 border-b border-gray-200 bg-white/90 backdrop-blur-xl shadow-xs dark:border-gray-700 dark:bg-gray-800/90">
-      <div class="flex items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-        <div class="flex min-w-0 items-center gap-4">
+      <div class="flex min-w-0 items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        <div class="flex min-w-0 flex-1 items-center gap-4">
           <a href="<?php echo e($courseDetailsUrl); ?>" class="flex items-center gap-2 text-gray-700 transition hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-300">
             <i class="fas fa-arrow-left"></i>
             <span class="hidden sm:inline text-sm font-medium">Retour au cours</span>
@@ -440,31 +453,37 @@ $activeLessonResources = $sidebarResources;
           </div>
         </div>
 
-        <div class="flex items-center gap-2 sm:gap-3">
-          <div class="hidden items-center gap-2 sm:flex">
-            <span class="text-xs text-gray-500 dark:text-gray-400">Progression du cours</span>
-            <div class="h-1.5 w-24 rounded-full bg-gray-200 dark:bg-gray-700">
+        <div class="flex min-w-0 shrink-0 items-center justify-end gap-1.5 sm:gap-2">
+          <div class="hidden min-w-0 items-center gap-2 lg:flex">
+            <span class="hidden text-xs text-gray-500 dark:text-gray-400 2xl:inline">Progression du cours</span>
+            <div class="h-1.5 w-16 shrink-0 rounded-full bg-gray-200 dark:bg-gray-700 xl:w-24">
               <div id="progress-bar" class="h-1.5 rounded-full bg-primary-600 transition-all duration-500" style="width: <?php echo e((string) $progressPercent); ?>%"></div>
             </div>
-            <span id="progress-percent" class="text-xs font-medium text-gray-700 dark:text-gray-200"><?php echo e((string) $progressPercent); ?>% · <?php echo e($progressSummary); ?></span>
+            <span id="progress-percent" class="whitespace-nowrap text-xs font-medium text-gray-700 dark:text-gray-200"><?php echo e((string) $progressPercent); ?>% · <?php echo e($progressSummary); ?></span>
+            <span id="course-completion-badge" class="<?php echo $isCourseCompleted ? '' : 'hidden '; ?>inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-900/25 dark:text-emerald-200 xl:px-2.5">
+              <i class="fas fa-check" aria-hidden="true"></i>
+              <span class="hidden xl:inline">Cours terminé</span>
+              <span class="xl:hidden">Terminé</span>
+            </span>
           </div>
-          <button type="button" data-watch-tab-target="notes" class="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition" aria-label="Prendre des notes" title="Prendre des notes">
+          <button type="button" data-watch-tab-target="notes" class="shrink-0 p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition" aria-label="Prendre des notes" title="Prendre des notes">
             <i class="far fa-sticky-note"></i>
           </button>
-          <button type="button" data-course-rating-open data-rating-source="course_watch_player" data-course-id="<?php echo e((string) ($course['id'] ?? '')); ?>" data-title="<?php echo e($courseTitle); ?>" data-rating-value="<?php echo e((string) $watchRatingValue); ?>" data-rating-comment="<?php echo e($watchRatingComment); ?>" class="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition" aria-label="<?php echo e($watchRatingLabel); ?>" title="<?php echo e($watchRatingLabel); ?>">
+          <button type="button" data-course-rating-open data-rating-source="course_watch_player" data-course-id="<?php echo e((string) ($course['id'] ?? '')); ?>" data-title="<?php echo e($courseTitle); ?>" data-rating-value="<?php echo e((string) $watchRatingValue); ?>" data-rating-comment="<?php echo e($watchRatingComment); ?>" class="inline-flex shrink-0 items-center gap-2 rounded-lg p-2 <?php echo $watchRatingValue > 0 ? 'text-amber-500' : 'text-gray-600 dark:text-gray-400'; ?> transition hover:bg-gray-100 hover:text-amber-500 dark:hover:bg-gray-700" aria-label="<?php echo e($watchRatingLabel); ?>" title="<?php echo e($watchRatingLabel); ?>">
             <i class="fas fa-star"></i>
+            <span class="hidden text-xs font-semibold 2xl:inline">Avis</span>
             <span class="sr-only" data-rating-trigger-label><?php echo e($watchRatingLabel); ?></span>
           </button>
-          <button id="btn-mark" type="button" data-lesson-id="<?php echo e($currentLessonId > 0 ? (string) $currentLessonId : ''); ?>" data-done="<?php echo $firstVideoId && in_array($firstVideoId, $doneByLesson, true) ? '1' : '0'; ?>" class="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition" aria-label="<?php echo $firstVideoId && in_array($firstVideoId, $doneByLesson, true) ? 'Marquée comme vue' : 'Marquer comme vue'; ?>" title="<?php echo $firstVideoId && in_array($firstVideoId, $doneByLesson, true) ? 'Marquée comme vue' : 'Marquer comme vue'; ?>">
+          <button id="btn-mark" type="button" data-lesson-id="<?php echo e($currentLessonId > 0 ? (string) $currentLessonId : ''); ?>" data-done="<?php echo $currentLessonDone ? '1' : '0'; ?>" class="shrink-0 p-2 rounded-lg <?php echo $currentLessonDone ? 'text-emerald-600 dark:text-emerald-300' : 'text-gray-600 dark:text-gray-400'; ?> hover:bg-gray-100 dark:hover:bg-gray-700 transition" aria-label="<?php echo $currentLessonDone ? 'Marquée comme vue' : 'Marquer comme vue'; ?>" title="<?php echo $currentLessonDone ? 'Marquée comme vue' : 'Marquer comme vue'; ?>">
             <i class="far fa-check-circle"></i>
-            <span class="sr-only" data-mark-label><?php echo $firstVideoId && in_array($firstVideoId, $doneByLesson, true) ? 'Marquée comme vue' : 'Marquer comme vue'; ?></span>
+            <span class="sr-only" data-mark-label><?php echo $currentLessonDone ? 'Marquée comme vue' : 'Marquer comme vue'; ?></span>
           </button>
-          <button type="button" data-web-theme-toggle class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition" aria-label="Changer le thème">
+          <button type="button" data-web-theme-toggle class="shrink-0 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition" aria-label="Changer le thème">
             <i class="fas fa-moon" data-theme-icon-dark aria-hidden="true"></i>
             <i class="fas fa-sun hidden" data-theme-icon-light aria-hidden="true"></i>
             <span class="sr-only">Changer le thème</span>
           </button>
-          <div class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200">
+          <div class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200">
             <?php if ($watchAvatarUrl !== ''): ?>
               <img src="<?php echo e($watchAvatarUrl); ?>" alt="<?php echo e($watchDisplayName); ?>" class="h-full w-full object-cover">
             <?php else: ?>
@@ -475,12 +494,12 @@ $activeLessonResources = $sidebarResources;
       </div>
     </header>
 
-    <div class="flex min-h-0 flex-1 overflow-hidden">
+    <div class="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
       <main class="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-gray-100 dark:bg-gray-900" data-scroll-top-root="1">
         <section class="bg-black">
           <div class="relative mx-auto w-full">
             <?php if ($isEnrolled && $firstEmbedUrl !== ''): ?>
-              <div id="player-wrapper" class="video-wrapper relative overflow-hidden bg-black">
+              <div id="player-wrapper" class="video-wrapper group/player relative overflow-hidden bg-black" data-player-wrapper oncontextmenu="return false">
                 <div id="main-player-card" data-current-lesson-id="<?php echo e((string) $currentLessonId); ?>" class="sr-only">
                   <p id="current-lesson-meta"><?php echo e($currentLessonLabel !== '' ? $currentLessonLabel : 'Leçon active'); ?></p>
                   <p id="player-title"><?php echo e($currentLessonTitle !== '' ? $currentLessonTitle : $courseTitle); ?></p>
@@ -489,29 +508,47 @@ $activeLessonResources = $sidebarResources;
                   <span id="progress-label"><?php echo e((string) $progressPercent); ?>% complété</span>
                   <span id="remaining-label">Temps restant : --</span>
                 </div>
-                <iframe id="main-player" src="<?php echo e($firstEmbedUrl); ?>" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" title="Lecteur vidéo principal" class="h-full w-full"></iframe>
+                <iframe id="main-player" src="<?php echo e($firstEmbedUrl); ?>" allow="autoplay; encrypted-media; picture-in-picture" title="Lecteur vidéo principal" class="pointer-events-none h-full w-full" oncontextmenu="return false"></iframe>
                 <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" aria-hidden="true"></div>
-                <div id="play-overlay" class="absolute inset-0 flex items-center justify-center transition-opacity duration-200">
-                  <button id="btn-play" type="button" class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary-600/95 text-white shadow-[0_18px_40px_-12px_rgba(37,99,235,0.8)] transition hover:scale-105 hover:bg-primary-700" aria-label="Lecture">
+                <button id="player-click-layer" type="button" class="absolute inset-0 z-10 cursor-pointer bg-transparent" aria-label="Lecture ou pause" oncontextmenu="return false"></button>
+                <div id="play-overlay" class="absolute inset-0 z-20 flex items-center justify-center transition-opacity duration-200">
+                  <button id="btn-play" type="button" data-player-toggle class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary-600/95 text-white shadow-[0_18px_40px_-12px_rgba(37,99,235,0.8)] transition hover:scale-105 hover:bg-primary-700" aria-label="Lecture">
                     <i class="fas fa-play ml-1 text-2xl" data-play-icon aria-hidden="true"></i>
                     <span class="sr-only" data-control-label>Lecture</span>
                   </button>
                 </div>
-                <input id="progress-range" type="range" min="0" max="1000" value="0" class="absolute inset-x-0 bottom-0 z-10 h-1.5 w-full cursor-pointer appearance-none bg-transparent accent-primary-500">
-                <div id="time-label" class="absolute bottom-4 left-4 rounded bg-black/50 px-2 py-1 text-xs font-semibold text-white">00:00 / 00:00</div>
-                <div class="absolute bottom-4 right-4 flex items-center gap-2">
-                  <button id="btn-fullscreen" type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-black/50 text-white transition hover:bg-black/70" aria-label="Plein écran" title="Plein écran">
-                    <i class="fas fa-expand"></i>
-                  </button>
-                  <button id="btn-mute" type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-black/50 text-white transition hover:bg-black/70" aria-label="Couper le son" title="Couper le son">
-                    <i class="fas fa-volume-high text-sm" data-mute-icon aria-hidden="true"></i>
-                    <span class="sr-only" data-control-label>Couper le son</span>
-                  </button>
-                  <button id="btn-pip" type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-black/50 text-white transition hover:bg-black/70" aria-label="Paramètres" title="Paramètres">
-                    <i class="fas fa-cog"></i>
-                  </button>
+                <div id="player-controls" class="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-3 pt-16 text-white transition duration-200 sm:px-4">
+                  <input id="progress-range" type="range" min="0" max="1000" value="0" class="mb-3 h-1.5 w-full cursor-pointer appearance-none bg-transparent accent-primary-500">
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex min-w-0 items-center gap-1 sm:gap-2">
+                      <button id="btn-inline-play" type="button" data-player-toggle class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/12 text-white transition hover:bg-white/20" aria-label="Lecture" title="Lecture">
+                        <i class="fas fa-play ml-0.5 text-sm" data-play-icon aria-hidden="true"></i>
+                        <span class="sr-only" data-control-label>Lecture</span>
+                      </button>
+                      <button type="button" data-action="back10" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/12 text-white transition hover:bg-white/20" aria-label="Reculer de 10 secondes" title="Reculer de 10 secondes">
+                        <i class="fas fa-rotate-left text-sm"></i>
+                      </button>
+                      <button type="button" data-action="fwd10" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/12 text-white transition hover:bg-white/20" aria-label="Avancer de 10 secondes" title="Avancer de 10 secondes">
+                        <i class="fas fa-rotate-right text-sm"></i>
+                      </button>
+                      <div id="time-label" class="ml-1 min-w-[7.5rem] text-xs font-semibold text-white/90 sm:min-w-[8rem]">00:00 / 00:00</div>
+                    </div>
+                    <div class="flex items-center gap-1 sm:gap-2">
+                      <button id="btn-mute" type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/12 text-white transition hover:bg-white/20" aria-label="Couper le son" title="Couper le son">
+                        <i class="fas fa-volume-high text-sm" data-mute-icon aria-hidden="true"></i>
+                        <span class="sr-only" data-control-label>Couper le son</span>
+                      </button>
+                      <input id="volume-range" type="range" min="0" max="100" value="80" class="hidden w-20 accent-primary-500 sm:block" aria-label="Volume">
+                      <button id="btn-pip" type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/12 text-white transition hover:bg-white/20" aria-label="Paramètres" title="Paramètres">
+                        <i class="fas fa-cog text-sm"></i>
+                      </button>
+                      <button id="btn-fullscreen" type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/12 text-white transition hover:bg-white/20" aria-label="Plein écran" title="Plein écran">
+                        <i class="fas fa-expand text-sm"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div id="player-settings-panel" class="absolute bottom-16 right-4 z-30 hidden w-80 max-w-[calc(100vw-2rem)] rounded-3xl border border-white/10 bg-slate-950/95 p-4 text-white shadow-2xl backdrop-blur" aria-hidden="true">
+                <div id="player-settings-panel" class="absolute bottom-24 right-4 z-40 hidden w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-white/10 bg-slate-950/95 p-4 text-white shadow-2xl backdrop-blur" aria-hidden="true">
                   <div class="flex items-start justify-between gap-3">
                     <div>
                       <p class="text-[11px] font-semibold uppercase tracking-[0.25em] text-white/50">Paramètres</p>
@@ -538,7 +575,7 @@ $activeLessonResources = $sidebarResources;
                         <span>Volume</span>
                         <span class="font-semibold text-white/90">Ajustable</span>
                       </div>
-                      <input id="volume-range" type="range" min="0" max="100" value="80" class="mt-3 w-full accent-primary-500">
+                      <input id="volume-range-panel" type="range" min="0" max="100" value="80" class="mt-3 w-full accent-primary-500">
                     </div>
                   </div>
                 </div>
@@ -561,7 +598,7 @@ $activeLessonResources = $sidebarResources;
           <div class="px-4 sm:px-6 lg:px-8">
             <nav class="watch-tab-scroll flex gap-6 overflow-x-auto text-sm font-medium">
               <button type="button" data-watch-tab="overview" aria-selected="true" class="border-b-2 border-primary-600 py-4 text-primary-600 transition whitespace-nowrap dark:text-primary-400">Aperçu</button>
-              <button type="button" data-watch-tab="resources" aria-selected="false" class="border-b-2 border-transparent py-4 text-gray-600 transition hover:text-primary-600 whitespace-nowrap dark:text-gray-400 dark:hover:text-primary-400">Ressources <span class="ml-1 rounded bg-gray-200 px-1.5 py-0.5 text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-200"><?php echo e((string) count($activeLessonResources)); ?></span></button>
+              <button type="button" data-watch-tab="resources" aria-selected="false" class="border-b-2 border-transparent py-4 text-gray-600 transition hover:text-primary-600 whitespace-nowrap dark:text-gray-400 dark:hover:text-primary-400">Ressources <span class="ml-1 rounded bg-gray-200 px-1.5 py-0.5 text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-200" data-lesson-resources-count><?php echo e((string) count($activeLessonResources)); ?></span></button>
               <button type="button" data-watch-tab="meetings" aria-selected="false" class="border-b-2 border-transparent py-4 text-gray-600 transition hover:text-primary-600 whitespace-nowrap dark:text-gray-400 dark:hover:text-primary-400">Rendez-vous <span class="ml-1 rounded bg-gray-200 px-1.5 py-0.5 text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-200"><?php echo e((string) $meetingCount); ?></span></button>
               <button type="button" data-watch-tab="notes" aria-selected="false" class="border-b-2 border-transparent py-4 text-gray-600 transition hover:text-primary-600 whitespace-nowrap dark:text-gray-400 dark:hover:text-primary-400">Notes</button>
               <button type="button" data-watch-tab="qna" aria-selected="false" class="border-b-2 border-transparent py-4 text-gray-600 transition hover:text-primary-600 whitespace-nowrap dark:text-gray-400 dark:hover:text-primary-400">Questions &amp; Réponses</button>
@@ -595,6 +632,30 @@ $activeLessonResources = $sidebarResources;
                 <h2 class="text-xl font-bold text-gray-900 dark:text-white"><?php echo e($courseTitle); ?></h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400"><?php echo e($currentLessonLabel !== '' ? $currentLessonLabel : 'Leçon active'); ?></p>
               </div>
+
+              <section id="course-completion-panel" class="<?php echo $isCourseCompleted ? '' : 'hidden '; ?>rounded-xl border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-900/50 dark:bg-emerald-900/20">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div class="flex min-w-0 items-start gap-3">
+                    <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
+                      <i class="fas fa-check"></i>
+                    </span>
+                    <div class="min-w-0">
+                      <h3 class="font-semibold text-emerald-900 dark:text-emerald-100">Cours terminé</h3>
+                      <p class="mt-1 text-sm text-emerald-800/80 dark:text-emerald-100/75">Votre progression est complète. Vous pouvez revoir une leçon ou laisser votre avis.</p>
+                    </div>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <button type="button" data-scroll-top class="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-gray-950 dark:text-emerald-200 dark:hover:bg-emerald-950/40">
+                      <i class="fas fa-rotate-left"></i>
+                      Revoir
+                    </button>
+                    <button type="button" data-course-rating-open data-rating-source="course_watch_completed" data-course-id="<?php echo e((string) ($course['id'] ?? '')); ?>" data-title="<?php echo e($courseTitle); ?>" data-rating-value="<?php echo e((string) $watchRatingValue); ?>" data-rating-comment="<?php echo e($watchRatingComment); ?>" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700">
+                      <i class="fas fa-star"></i>
+                      <span data-rating-trigger-label><?php echo e($watchRatingLabel); ?></span>
+                    </button>
+                  </div>
+                </div>
+              </section>
 
               <p class="text-gray-600 dark:text-gray-400"><?php echo e($courseDescriptionDisplay); ?></p>
 
@@ -957,7 +1018,7 @@ $activeLessonResources = $sidebarResources;
         </div>
       </main>
 
-      <aside class="hidden w-96 shrink-0 overflow-y-auto border-l border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 lg:block">
+      <aside class="max-h-[42vh] w-full shrink-0 overflow-y-auto border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 lg:max-h-none lg:w-96 lg:border-l lg:border-t-0">
         <div class="space-y-4 p-5">
           <div class="flex items-center gap-3">
             <?php if ($courseCoverUrl !== ''): ?>
@@ -980,6 +1041,16 @@ $activeLessonResources = $sidebarResources;
             </div>
             <div class="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
               <div id="sidebar-progress-bar" class="h-2 rounded-full bg-primary-600 transition-all duration-500" style="width: <?php echo e((string) $progressPercent); ?>%"></div>
+            </div>
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+              <span id="course-progress-state" class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold <?php echo e($courseProgressStateClass); ?>">
+                <i class="fas <?php echo $isCourseCompleted ? 'fa-check' : 'fa-play'; ?>" aria-hidden="true"></i>
+                <?php echo e($courseProgressStateLabel); ?>
+              </span>
+              <button type="button" data-course-rating-open data-rating-source="course_watch_sidebar" data-course-id="<?php echo e((string) ($course['id'] ?? '')); ?>" data-title="<?php echo e($courseTitle); ?>" data-rating-value="<?php echo e((string) $watchRatingValue); ?>" data-rating-comment="<?php echo e($watchRatingComment); ?>" class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-gray-600 transition hover:border-amber-300 hover:text-amber-600 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-300 dark:hover:border-amber-500 dark:hover:text-amber-300">
+                <i class="fas fa-star"></i>
+                <span data-rating-trigger-label><?php echo e($watchRatingLabel); ?></span>
+              </button>
             </div>
           </div>
 
