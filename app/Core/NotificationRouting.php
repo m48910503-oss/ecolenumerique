@@ -168,7 +168,14 @@ final class NotificationRouting
                     return 'company/dashboard#invites';
                 }
                 if (str_contains($text, 'siege') || str_contains($text, 'seat') || str_contains($text, 'place')) {
-                    return 'company/dashboard#course-seats';
+                    return 'company/seats';
+                }
+                if (
+                    str_contains($text, 'cours')
+                    || str_contains($text, 'attribu')
+                    || str_contains($text, 'lecture')
+                ) {
+                    return 'company/courses';
                 }
                 return 'company/dashboard';
             }
@@ -181,13 +188,13 @@ final class NotificationRouting
                     || str_contains($text, 'seat')
                     || str_contains($text, 'place')
                 ) {
-                    return 'company/dashboard#assigned-courses';
+                    return 'company/courses';
                 }
                 return 'company/dashboard';
             }
 
             if (str_contains($text, 'approuv') || str_contains($text, 'cours') || str_contains($text, 'attribu')) {
-                return 'student/my_courses';
+                return 'company/courses';
             }
         }
 
@@ -263,10 +270,10 @@ final class NotificationRouting
             || str_contains($text, 'facture')
         ) {
             if ($isCompanyAdmin && (str_contains($text, 'entreprise') || str_contains($text, 'siege') || str_contains($text, 'seat') || str_contains($text, 'place'))) {
-                return 'company/dashboard#course-seats';
+                return 'company/seats';
             }
             if ($isCompanyMember && (str_contains($text, 'entreprise') || str_contains($text, 'siege') || str_contains($text, 'seat') || str_contains($text, 'place'))) {
-                return 'company/dashboard#assigned-courses';
+                return 'company/courses';
             }
             return 'student/orders';
         }
@@ -299,8 +306,8 @@ final class NotificationRouting
             if ($isTeacher || $useTeacherSpace) {
                 return 'teacher/courses';
             }
-            if ($isStudent || $isCompanyMember) {
-                return 'student/my_courses';
+            if ($isCompanyMember || $isCompanyAdmin || $isStudent) {
+                return 'company/courses';
             }
         }
 

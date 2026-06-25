@@ -78,10 +78,14 @@ $isProfileComplete = $profileCompletionPct >= 100;
 ?>
 <aside id="student-sidebar" class="student-dashboard-sidebar js-sidebar fixed -left-full top-0 z-40 flex h-screen w-64 flex-col overflow-y-auto border-r border-gray-200 bg-white shadow-soft transition-[left] duration-200 dark:border-gray-700 dark:bg-gray-800 sm:w-72 md:left-0 md:shadow-none">
   <div class="p-3 sm:p-4 flex items-center gap-2 border-b border-gray-100 dark:border-gray-700">
-    <span class="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-xl flex items-center justify-center text-white shadow-md">
-      <i class="fas fa-graduation-cap"></i>
-    </span>
-    <span class="text-lg font-bold tracking-tight text-gray-900 dark:text-white sm:text-xl">École <span class="text-blue-600 dark:text-blue-400">Numérique</span></span>
+    <?php if ($siteLogoUrl !== ''): ?>
+      <img src="<?php echo e($siteLogoUrl); ?>" alt="Logo École Numérique" class="h-8 w-8 shrink-0 rounded-xl object-cover shadow-md sm:h-9 sm:w-9">
+    <?php else: ?>
+      <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-md sm:h-9 sm:w-9">
+        <i class="fas fa-graduation-cap"></i>
+      </span>
+    <?php endif; ?>
+    <span class="whitespace-nowrap text-lg font-bold tracking-tight text-gray-900 dark:text-white sm:text-xl">École <span class="text-blue-600 dark:text-blue-400">Numérique</span></span>
   </div>
 
   <div class="p-4 sm:p-5 border-b border-gray-100 dark:border-gray-700">

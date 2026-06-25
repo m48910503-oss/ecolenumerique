@@ -248,6 +248,75 @@ final class WebHomeModel extends Model
         }
     }
 
+    public function countPublishedPublicCourses(): int
+    {
+        try {
+            if (!$this->tableExists('courses')) {
+                return 0;
+            }
+
+            $stmt = $this->pdo->prepare(
+                'SELECT COUNT(*)
+                 FROM courses
+                 WHERE status = "approved"
+                   AND deleted_at IS NULL'
+            );
+            $stmt->execute();
+
+            return max(0, (int) $stmt->fetchColumn());
+        } catch (\Throwable $e) {
+            return 0;
+        }
+    }
+
+    public function countPublicTeachers(): int
+    {
+        try {
+            if (!$this->tableExists('courses')) {
+                return 0;
+            }
+
+            $stmt = $this->pdo->prepare(
+                'SELECT COUNT(DISTINCT teacher_id)
+                 FROM courses
+                 WHERE status = "approved"
+                   AND deleted_at IS NULL
+                   AND teacher_id IS NOT NULL'
+            );
+            $stmt->execute();
+
+            return max(0, (int) $stmt->fetchColumn());
+        } catch (\Throwable $e) {
+            return 0;
+        }
+    }
+
+    public function countPublicCategories(): int
+    {
+        try {
+            if (!$this->tableExists('courses')) {
+                return 0;
+            }
+
+            if ($this->columnExists('courses', 'category_id')) {
+                $stmt = $this->pdo->prepare(
+                    'SELECT COUNT(DISTINCT category_id)
+                     FROM courses
+                     WHERE status = "approved"
+                       AND deleted_at IS NULL
+                       AND category_id IS NOT NULL'
+                );
+                $stmt->execute();
+
+                return max(0, (int) $stmt->fetchColumn());
+            }
+
+            return 0;
+        } catch (\Throwable $e) {
+            return 0;
+        }
+    }
+
     /**
      * @return array<int,array<string,mixed>>
      */

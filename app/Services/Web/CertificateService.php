@@ -65,10 +65,21 @@ final class CertificateService extends Service
             $teacherName = 'Formateur';
         }
 
-        $siteLogoUrl = $this->siteLogoUrl();
-        $siteName = trim($this->settings->get('site_name', 'École Numérique'));
+        $identity = $this->settings->publicIdentity();
+        $siteName = trim((string) ($identity['siteName'] ?? 'École Numérique'));
         if ($siteName === '') {
             $siteName = 'École Numérique';
+        }
+        $siteTagline = trim((string) ($identity['siteTagline'] ?? ''));
+        $siteDescription = trim((string) ($identity['siteDescription'] ?? ''));
+        $supportEmail = trim((string) ($identity['supportEmail'] ?? ''));
+        $supportPhone = trim((string) ($identity['supportPhone'] ?? ''));
+        $supportWhatsapp = trim((string) ($identity['supportWhatsapp'] ?? ''));
+        $siteAddress = trim((string) ($identity['siteAddress'] ?? ''));
+        $footerText = trim((string) ($identity['footerText'] ?? ''));
+        $siteLogoUrl = trim((string) ($identity['siteLogoUrl'] ?? ''));
+        if ($siteLogoUrl === '') {
+            $siteLogoUrl = $this->siteLogoUrl();
         }
         $teacherSignaturePath = $hasSignatureColumn ? (string) ($cert['teacher_signature_path'] ?? '') : '';
         $teacherSignatureUrl = $this->toAssetUrl($teacherSignaturePath);
@@ -87,7 +98,7 @@ final class CertificateService extends Service
         }
 
         $verifyUrl = $this->absUrl('certificate?code=' . urlencode((string) ($cert['code'] ?? '')));
-        $qrVerifyUrl = '';
+        $qrVerifyUrl = $verifyUrl;
         if (!in_array($format, ['html', 'pdf', 'word'], true)) {
             $format = 'html';
         }
@@ -99,6 +110,13 @@ final class CertificateService extends Service
             'view' => [
                 'cert' => $cert,
                 'siteName' => $siteName,
+                'siteTagline' => $siteTagline,
+                'siteDescription' => $siteDescription,
+                'supportEmail' => $supportEmail,
+                'supportPhone' => $supportPhone,
+                'supportWhatsapp' => $supportWhatsapp,
+                'siteAddress' => $siteAddress,
+                'footerText' => $footerText,
                 'fullName' => $fullName,
                 'teacherName' => $teacherName,
                 'dgName' => $dgName,

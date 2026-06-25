@@ -6,24 +6,30 @@ namespace App\Services\Admin;
 
 use App\Core\Service;
 use App\Models\AdminSupportAgentsModel;
+use App\Models\AdminDashboardModel;
 
 final class SupportAgentsService extends Service
 {
     private AdminSupportAgentsModel $model;
+    private AdminDashboardModel $auditModel;
 
-    public function __construct(AdminSupportAgentsModel $model)
+    public function __construct(AdminSupportAgentsModel $model, AdminDashboardModel $auditModel)
     {
         $this->model = $model;
+        $this->auditModel = $auditModel;
     }
 
     /**
      * @param array<string,mixed> $post
+     * @param array<string,mixed> $currentUser
      * @return array{redirectTo:?string,view:array<string,mixed>}
      */
-    public function handle(string $method, array $post): array
+    public function handle(string $method, array $post, array $currentUser): array
     {
         $errors = [];
         $successMessage = (string) $this->flashGet('success', '');
+        $currentPage = max(1, (int) ($post['page'] ?? 1));
+        $searchQuery = trim((string) ($post['q'] ?? ''));
 
         if ($method === 'POST') {
             $action = (string) ($post['action'] ?? '');
@@ -49,13 +55,18 @@ final class SupportAgentsService extends Service
 
                 if ($errors === []) {
                     try {
-                        $this->model->createSupportUser(
+                        $userId = $this->model->createSupportUser(
                             $first,
                             $last,
                             $email,
                             password_hash($password, PASSWORD_DEFAULT),
                             $this->encodeRoles(['support'])
                         );
+                        $this->recordAudit((int) ($currentUser['id'] ?? 0), 'support_agent_create', $userId, [
+                            'email' => $email,
+                            'first_name' => $first,
+                            'last_name' => $last,
+                        ]);
                         $successMessage = 'Compte support créé.';
                     } catch (\Throwable $e) {
                         $errors[] = 'Erreur lors de la création du compte support.';
@@ -75,6 +86,10 @@ final class SupportAgentsService extends Service
                             $rolesList[] = 'support';
                         }
                         $this->model->updateRolesByUserId((int) ($user['id'] ?? 0), $this->encodeRoles($rolesList));
+                        $this->recordAudit((int) ($currentUser['id'] ?? 0), 'support_agent_grant', (int) ($user['id'] ?? 0), [
+                            'email' => $email,
+                            'roles' => implode(',', $rolesList),
+                        ]);
                         $successMessage = 'Rôle support ajouté.';
                     }
                 }
@@ -93,6 +108,10 @@ final class SupportAgentsService extends Service
                             static fn ($role): bool => $role !== 'support'
                         ));
                         $this->model->updateRolesByUserId($userId, $this->encodeRoles($rolesList));
+                        $this->recordAudit((int) ($currentUser['id'] ?? 0), 'support_agent_revoke', $userId, [
+                            'email' => (string) ($user['email'] ?? ''),
+                            'roles' => implode(',', $rolesList),
+                        ]);
                         $successMessage = 'Rôle support retiré.';
                     }
                 }
@@ -103,8 +122,15 @@ final class SupportAgentsService extends Service
 
         if ($method === 'POST' && $errors === [] && $successMessage !== '') {
             $this->flashSet('success', $successMessage);
+            $query = [];
+            if ($searchQuery !== '') {
+                $query['q'] = $searchQuery;
+            }
+            if ($currentPage > 1) {
+                $query['page'] = $currentPage;
+            }
             return [
-                'redirectTo' => $this->siteUrl('admin/support_agents'),
+                'redirectTo' => $this->siteUrl('admin/support_agents' . ($query !== [] ? ('?' . http_build_query($query)) : '')),
                 'view' => [],
             ];
         }
@@ -150,5 +176,13 @@ final class SupportAgentsService extends Service
     {
         $encoded = json_encode(array_values($roles));
         return is_string($encoded) ? $encoded : '[]';
+    }
+
+    /**
+     * @param array<string,mixed> $meta
+     */
+    private function recordAudit(int $actorId, string $action, int $targetId, array $meta = []): void
+    {
+        $this->auditModel->insertAuditLog($actorId > 0 ? $actorId : null, $action, 'support_agent', $targetId, $meta);
     }
 }

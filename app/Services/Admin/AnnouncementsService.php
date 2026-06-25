@@ -137,9 +137,7 @@ final class AnnouncementsService extends Service
                     $payload['audience'],
                     $payload['category'],
                     $payload['importance'],
-                    $payload['summary'],
-                    $payload['ab_enabled'],
-                    $payload['title_b']
+                    $payload['summary']
                 );
 
                 $this->model->logEvent($announcementId, (int) ($user['id'] ?? 0), 'created');
@@ -151,8 +149,8 @@ final class AnnouncementsService extends Service
                     $this->model->logEvent($announcementId, (int) ($user['id'] ?? 0), 'submitted');
                     $successMessage = 'Annonce soumise pour validation.';
                 } else {
-                    $sent = $this->publishAnnouncement($announcementId, $payload, (int) ($user['id'] ?? 0), $isGeneralAdmin);
-                    $successMessage = 'Annonce publiée. Notifications envoyées à ' . $sent['total'] . ' utilisateur(s).';
+                    $sentTotal = $this->publishAnnouncement($announcementId, $payload, (int) ($user['id'] ?? 0), $isGeneralAdmin);
+                    $successMessage = 'Annonce publiée. Notifications envoyées à ' . $sentTotal . ' utilisateur(s).';
                 }
 
                 $this->model->commit();
@@ -203,8 +201,8 @@ final class AnnouncementsService extends Service
 
                 try {
                     $this->model->beginTransaction();
-                    $sent = $this->publishAnnouncement($announcementId, $payload, (int) ($user['id'] ?? 0), true);
-                    $successMessage = 'Annonce publiée. Notifications envoyées à ' . $sent['total'] . ' utilisateur(s).';
+                    $sentTotal = $this->publishAnnouncement($announcementId, $payload, (int) ($user['id'] ?? 0), true);
+                    $successMessage = 'Annonce publiée. Notifications envoyées à ' . $sentTotal . ' utilisateur(s).';
                     $this->model->commit();
                 } catch (\Throwable $e) {
                     if ($this->model->inTransaction()) {
@@ -223,8 +221,8 @@ final class AnnouncementsService extends Service
                 try {
                     $this->model->beginTransaction();
                     $this->model->updateAnnouncementApproval($announcementId, (int) ($user['id'] ?? 0));
-                    $sent = $this->publishAnnouncement($announcementId, $announcement, (int) ($user['id'] ?? 0), true);
-                    $successMessage = 'Annonce validée et publiée. Notifications envoyées à ' . $sent['total'] . ' utilisateur(s).';
+                    $sentTotal = $this->publishAnnouncement($announcementId, $announcement, (int) ($user['id'] ?? 0), true);
+                    $successMessage = 'Annonce validée et publiée. Notifications envoyées à ' . $sentTotal . ' utilisateur(s).';
                     $this->model->commit();
                 } catch (\Throwable $e) {
                     if ($this->model->inTransaction()) {
@@ -285,16 +283,14 @@ final class AnnouncementsService extends Service
 
     /**
      * @param array<string,mixed> $payload
-     * @return array{total:int,sentB:int}
+     * @return int
      */
-    private function publishAnnouncement(int $announcementId, array $payload, int $actorId, bool $isGeneralAdmin): array
+    private function publishAnnouncement(int $announcementId, array $payload, int $actorId, bool $isGeneralAdmin): int
     {
         $audience = (string) ($payload['audience'] ?? 'all');
         $audience = $this->normalizeAudience($audience);
         $userIds = $this->model->fetchUserIdsForAudience($audience);
         $title = (string) ($payload['title'] ?? 'Annonce');
-        $titleB = trim((string) ($payload['title_b'] ?? ''));
-        $abEnabled = !empty($payload['ab_enabled']) && $titleB !== '';
         $body = (string) ($payload['body'] ?? '');
         $summary = trim((string) ($payload['summary'] ?? ''));
         if ($summary === '') {
@@ -303,32 +299,14 @@ final class AnnouncementsService extends Service
         $importance = (string) ($payload['importance'] ?? 'info');
         $actionUrl = (string) ($payload['action_url'] ?? '');
 
-        $sentTotal = 0;
-        $sentB = 0;
+        $sentTotal = $this->model->insertNotificationsForUsers($userIds, $title, $body, $actionUrl, $summary, $importance, $announcementId);
 
-        if ($abEnabled) {
-            $groupA = [];
-            $groupB = [];
-            foreach ($userIds as $userId) {
-                if ($userId % 2 === 0) {
-                    $groupB[] = $userId;
-                } else {
-                    $groupA[] = $userId;
-                }
-            }
-            $sentA = $this->model->insertNotificationsForUsers($groupA, $title, $body, $actionUrl, $summary, $importance, $announcementId, 'A');
-            $sentB = $this->model->insertNotificationsForUsers($groupB, $titleB, $body, $actionUrl, $summary, $importance, $announcementId, 'B');
-            $sentTotal = $sentA + $sentB;
-        } else {
-            $sentTotal = $this->model->insertNotificationsForUsers($userIds, $title, $body, $actionUrl, $summary, $importance, $announcementId, 'A');
-        }
-
-        $this->model->updateAnnouncementSentCounts($announcementId, $sentTotal, $sentB);
+        $this->model->updateAnnouncementSentCounts($announcementId, $sentTotal);
         $approverId = $isGeneralAdmin ? $actorId : null;
         $this->model->updateAnnouncementPublish($announcementId, $actorId, $approverId);
         $this->model->logEvent($announcementId, $actorId, 'published', 'Audience: ' . $audience);
 
-        return ['total' => $sentTotal, 'sentB' => $sentB];
+        return $sentTotal;
     }
 
     /**
@@ -338,14 +316,12 @@ final class AnnouncementsService extends Service
     private function normalizeAnnouncementInput(array $post): array
     {
         $title = trim((string) ($post['title'] ?? ''));
-        $titleB = '';
         $body = trim((string) ($post['body'] ?? ''));
         $summary = trim((string) ($post['summary'] ?? ''));
         $actionUrl = $this->normalizeActionUrl((string) ($post['action_url'] ?? ''));
         $audience = $this->normalizeAudience((string) ($post['audience'] ?? 'all'));
         $category = $this->normalizeCategory((string) ($post['category'] ?? 'general'));
         $importance = $this->normalizeImportance((string) ($post['importance'] ?? 'info'));
-        $abEnabled = false;
 
         if ($summary === '') {
             $summary = $this->buildSummary($body);
@@ -353,14 +329,12 @@ final class AnnouncementsService extends Service
 
         return [
             'title' => $title,
-            'title_b' => $titleB,
             'body' => $body,
             'summary' => $summary,
             'action_url' => $actionUrl,
             'audience' => $audience,
             'category' => $category,
             'importance' => $importance,
-            'ab_enabled' => $abEnabled,
         ];
     }
 

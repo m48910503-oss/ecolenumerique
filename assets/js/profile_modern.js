@@ -12,10 +12,8 @@
             tab.classList.toggle('tab-active', isActive);
             tab.classList.toggle('border-primary-600', isActive);
             tab.classList.toggle('dark:border-primary-400', isActive);
-            tab.classList.toggle('font-semibold', isActive);
             tab.classList.toggle('text-primary-600', isActive);
             tab.classList.toggle('dark:text-primary-400', isActive);
-            tab.classList.toggle('font-medium', !isActive);
             tab.classList.toggle('text-gray-500', !isActive);
             tab.classList.toggle('dark:text-gray-400', !isActive);
             tab.classList.toggle('border-transparent', !isActive);

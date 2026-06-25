@@ -22,11 +22,11 @@ use App\Controllers\Api\SupportConversationsController as ApiSupportConversation
 use App\Controllers\Api\SupportMessagesController as ApiSupportMessagesController;
 use App\Controllers\Admin\CategoriesController;
 use App\Controllers\Admin\CertificatePreviewController as AdminCertificatePreviewController;
+use App\Controllers\Admin\AnnouncementsController as AdminAnnouncementsController;
 use App\Controllers\Admin\CoursePreviewController as AdminCoursePreviewController;
 use App\Controllers\Admin\CoursesController;
 use App\Controllers\Admin\CourseInsightsController as AdminCourseInsightsController;
 use App\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Controllers\Admin\AnnouncementsController as AdminAnnouncementsController;
 use App\Controllers\Admin\ErrorLogsController;
 use App\Controllers\Admin\NotificationsController as AdminNotificationsController;
 use App\Controllers\Admin\SalesController;
@@ -35,6 +35,7 @@ use App\Controllers\Admin\SiteSettingsController;
 use App\Controllers\Admin\StatisticsController as AdminStatisticsController;
 use App\Controllers\Admin\SupportAgentsController;
 use App\Controllers\Admin\SupportController;
+use App\Controllers\Admin\TeacherDossierController;
 use App\Controllers\Admin\TeacherApplicationsController;
 use App\Controllers\Auth\ForgotController;
 use App\Controllers\Auth\LoginController;
@@ -44,6 +45,7 @@ use App\Controllers\Auth\VerifyController;
 use App\Controllers\Company\Auth\SsoController as CompanySsoController;
 use App\Controllers\Company\DashboardController as CompanyDashboardController;
 use App\Controllers\Company\AnalyticsController as CompanyAnalyticsController;
+use App\Controllers\Company\CoursesController as CompanyCoursesController;
 use App\Controllers\Company\BillingController as CompanyBillingController;
 use App\Controllers\Company\HelpController as CompanyHelpController;
 use App\Controllers\Company\InvitesController as CompanyInvitesController;
@@ -88,6 +90,7 @@ use App\Controllers\Teacher\SignatureController as TeacherSignatureController;
 use App\Controllers\Teacher\WithdrawalsController;
 use App\Controllers\Web\CheckoutController;
 use App\Controllers\Web\CertificateController;
+use App\Controllers\Web\BecomeTeacherController;
 use App\Controllers\Web\CguController;
 use App\Controllers\Web\CatalogueController;
 use App\Controllers\Web\CourseController;
@@ -110,6 +113,7 @@ use App\Controllers\Web\VideoStreamController;
 $routes = [
     '' => HomeController::class,
     'catalogue' => CatalogueController::class,
+    'become-teacher' => BecomeTeacherController::class,
     'course' => CourseController::class,
     'course/watch' => CourseWatchController::class,
     'student/course/watch' => CourseWatchController::class,
@@ -141,6 +145,7 @@ $routes = [
     'company/sso' => CompanySsoController::class,
     'company/dashboard' => CompanyDashboardController::class,
     'company/analytics' => CompanyAnalyticsController::class,
+    'company/courses' => CompanyCoursesController::class,
     'company/billing' => CompanyBillingController::class,
     'company/invites' => CompanyInvitesController::class,
     'company/members' => CompanyMembersController::class,
@@ -187,10 +192,15 @@ $routes = [
     'admin/certificate_preview' => AdminCertificatePreviewController::class,
     'admin/sales' => SalesController::class,
     'admin/site_settings' => SiteSettingsController::class,
+    'admin/teacher_dossier' => TeacherDossierController::class,
     'admin/teacher_applications' => TeacherApplicationsController::class,
     'admin/support' => SupportController::class,
     'admin/support_agents' => SupportAgentsController::class,
     'admin/secondary_admins' => SecondaryAdminsController::class,
+    'admin/secondary_admins/create' => SecondaryAdminsController::class,
+    'admin/secondary_admins/grant' => SecondaryAdminsController::class,
+    'admin/secondary_admins/edit' => SecondaryAdminsController::class,
+    'admin/secondary_admins/activity' => SecondaryAdminsController::class,
 
     'student/dashboard' => StudentDashboardController::class,
     'student/certificates' => StudentCertificatesController::class,

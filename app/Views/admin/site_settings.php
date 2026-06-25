@@ -11,15 +11,9 @@ $siteAddress = (string) ($siteAddress ?? '');
 $siteLogoUrl = (string) ($siteLogoUrl ?? '');
 $siteLogoPath = (string) ($siteLogoPath ?? '');
 $logoMaxMb = (int) ($logoMaxMb ?? 5);
-$siteFaviconUrl = (string) ($siteFaviconUrl ?? '');
-$siteFaviconPath = (string) ($siteFaviconPath ?? '');
-$faviconMaxMb = (int) ($faviconMaxMb ?? 2);
 $seoTitle = (string) ($seoTitle ?? '');
 $seoDescription = (string) ($seoDescription ?? '');
 $seoKeywords = (string) ($seoKeywords ?? '');
-$socialImageUrl = (string) ($socialImageUrl ?? '');
-$socialImagePath = (string) ($socialImagePath ?? '');
-$socialImageMaxMb = (int) ($socialImageMaxMb ?? 3);
 $maintenanceEnabled = !empty($maintenanceEnabled);
 $maintenanceMessage = (string) ($maintenanceMessage ?? '');
 $registrationsEnabled = !empty($registrationsEnabled);
@@ -157,9 +151,9 @@ $adminPageScripts = ['admin_site_settings.js'];
                         <p class="mt-1 text-xl font-black text-slate-950 dark:text-white"><?php echo e($seoTitle !== '' ? 'Configuré' : 'À compléter'); ?></p>
                     </article>
                     <article class="admin-settings-kpi admin-settings-tone--amber rounded-2xl p-5">
-                        <span class="admin-settings-kpi__icon"><i class="fas fa-toggle-on" aria-hidden="true"></i></span>
+                        <span class="admin-settings-kpi__icon"><i class="fas <?php echo $maintenanceEnabled ? 'fa-tools' : 'fa-globe'; ?>" aria-hidden="true"></i></span>
                         <p class="mt-4 text-sm font-bold text-slate-500 dark:text-slate-400">Accès</p>
-                        <p class="mt-1 text-xl font-black text-slate-950 dark:text-white"><?php echo $registrationsEnabled ? 'Inscriptions ouvertes' : 'Inscriptions fermées'; ?></p>
+                        <p class="mt-1 text-xl font-black text-slate-950 dark:text-white"><?php echo $maintenanceEnabled ? 'Maintenance active' : 'Site public actif'; ?></p>
                     </article>
                     <article class="admin-settings-kpi admin-settings-tone--emerald rounded-2xl p-5">
                         <span class="admin-settings-kpi__icon"><i class="fas fa-credit-card" aria-hidden="true"></i></span>
@@ -249,103 +243,37 @@ $adminPageScripts = ['admin_site_settings.js'];
                     </section>
 
                     <section class="<?php echo e($panelClass('brand')); ?>" data-settings-panel="brand">
-                        <div class="grid gap-5 xl:grid-cols-3">
-                            <article class="admin-settings-upload-card rounded-3xl p-5">
-                                <div class="flex items-start justify-between gap-4">
-                                    <div>
-                                        <h3 class="text-lg font-black inline-flex items-center gap-2"><i class="fas fa-image text-primary-600 dark:text-primary-300" aria-hidden="true"></i>Logo</h3>
-                                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">PNG, JPG ou WebP. Taille maximale : <?php echo e((string) $logoMaxMb); ?> Mo.</p>
-                                    </div>
-                                    <span class="admin-dashboard-count <?php echo e($assetTone($siteLogoPath)); ?>"><?php echo e($assetStatus($siteLogoPath)); ?></span>
+                        <article class="admin-settings-upload-card rounded-3xl p-5">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <h3 class="text-lg font-black inline-flex items-center gap-2"><i class="fas fa-image text-primary-600 dark:text-primary-300" aria-hidden="true"></i>Logo du site</h3>
+                                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">PNG, JPG ou WebP. Taille maximale : <?php echo e((string) $logoMaxMb); ?> Mo. Ce logo sert aussi de favicon.</p>
                                 </div>
-                                <div class="admin-settings-preview mt-5">
-                                    <?php if ($siteLogoUrl !== ''): ?>
-                                        <img src="<?php echo e($siteLogoUrl); ?>" alt="Logo actuel">
-                                    <?php else: ?>
-                                        <i class="fas fa-image" aria-hidden="true"></i>
-                                    <?php endif; ?>
-                                </div>
-                                <label class="admin-settings-upload-control mt-4">
-                                    <input type="file" name="site_logo" accept="image/png,image/jpeg,image/webp" data-settings-file="logo">
-                                    <span class="admin-settings-upload-control__button"><i class="fas fa-upload" aria-hidden="true"></i>Choisir un fichier</span>
-                                    <span class="admin-settings-upload-control__name" data-settings-file-name="logo">Aucun fichier choisi</span>
-                                </label>
-                                <?php if ($siteLogoPath !== ''): ?>
-                                    <div class="admin-settings-remove-box mt-3" data-remove-box="logo">
-                                        <input type="hidden" name="remove_logo" value="0" data-remove-input="logo">
-                                        <button type="button" class="admin-settings-remove-button" data-remove-trigger="logo" data-remove-label="Supprimer" data-cancel-label="Annuler la suppression">
-                                            <i class="fas fa-trash-alt" aria-hidden="true"></i>
-                                            <span>Supprimer</span>
-                                        </button>
-                                        <p class="admin-settings-remove-note hidden" data-remove-note="logo">Le logo sera supprimé uniquement après l’enregistrement.</p>
-                                    </div>
+                                <span class="admin-dashboard-count <?php echo e($assetTone($siteLogoPath)); ?>"><?php echo e($assetStatus($siteLogoPath)); ?></span>
+                            </div>
+                            <div class="admin-settings-preview mt-5">
+                                <?php if ($siteLogoUrl !== ''): ?>
+                                    <img src="<?php echo e($siteLogoUrl); ?>" alt="Logo actuel">
+                                <?php else: ?>
+                                    <i class="fas fa-image" aria-hidden="true"></i>
                                 <?php endif; ?>
-                            </article>
-
-                            <article class="admin-settings-upload-card rounded-3xl p-5">
-                                <div class="flex items-start justify-between gap-4">
-                                    <div>
-                                        <h3 class="text-lg font-black inline-flex items-center gap-2"><i class="fas fa-star text-amber-600 dark:text-amber-300" aria-hidden="true"></i>Favicon</h3>
-                                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Format carré recommandé. Taille maximale : <?php echo e((string) $faviconMaxMb); ?> Mo.</p>
-                                    </div>
-                                    <span class="admin-dashboard-count <?php echo e($assetTone($siteFaviconPath)); ?>"><?php echo e($assetStatus($siteFaviconPath)); ?></span>
+                            </div>
+                            <label class="admin-settings-upload-control mt-4">
+                                <input type="file" name="site_logo" accept="image/png,image/jpeg,image/webp" data-settings-file="logo">
+                                <span class="admin-settings-upload-control__button"><i class="fas fa-upload" aria-hidden="true"></i>Choisir un fichier</span>
+                                <span class="admin-settings-upload-control__name" data-settings-file-name="logo">Aucun fichier choisi</span>
+                            </label>
+                            <?php if ($siteLogoPath !== ''): ?>
+                                <div class="admin-settings-remove-box mt-3" data-remove-box="logo">
+                                    <input type="hidden" name="remove_logo" value="0" data-remove-input="logo">
+                                    <button type="button" class="admin-settings-remove-button" data-remove-trigger="logo" data-remove-label="Supprimer" data-cancel-label="Annuler la suppression">
+                                        <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                                        <span>Supprimer</span>
+                                    </button>
+                                    <p class="admin-settings-remove-note hidden" data-remove-note="logo">Le logo sera supprimé uniquement après l’enregistrement.</p>
                                 </div>
-                                <div class="admin-settings-preview admin-settings-preview--small mt-5">
-                                    <?php if ($siteFaviconUrl !== ''): ?>
-                                        <img src="<?php echo e($siteFaviconUrl); ?>" alt="Favicon actuel">
-                                    <?php else: ?>
-                                        <i class="fas fa-star" aria-hidden="true"></i>
-                                    <?php endif; ?>
-                                </div>
-                                <label class="admin-settings-upload-control mt-4">
-                                    <input type="file" name="site_favicon" accept="image/png,image/jpeg,image/webp" data-settings-file="favicon">
-                                    <span class="admin-settings-upload-control__button"><i class="fas fa-upload" aria-hidden="true"></i>Choisir un fichier</span>
-                                    <span class="admin-settings-upload-control__name" data-settings-file-name="favicon">Aucun fichier choisi</span>
-                                </label>
-                                <?php if ($siteFaviconPath !== ''): ?>
-                                    <div class="admin-settings-remove-box mt-3" data-remove-box="favicon">
-                                        <input type="hidden" name="remove_favicon" value="0" data-remove-input="favicon">
-                                        <button type="button" class="admin-settings-remove-button" data-remove-trigger="favicon" data-remove-label="Supprimer" data-cancel-label="Annuler la suppression">
-                                            <i class="fas fa-trash-alt" aria-hidden="true"></i>
-                                            <span>Supprimer</span>
-                                        </button>
-                                        <p class="admin-settings-remove-note hidden" data-remove-note="favicon">Le favicon sera supprimé uniquement après l’enregistrement.</p>
-                                    </div>
-                                <?php endif; ?>
-                            </article>
-
-                            <article class="admin-settings-upload-card rounded-3xl p-5">
-                                <div class="flex items-start justify-between gap-4">
-                                    <div>
-                                        <h3 class="text-lg font-black inline-flex items-center gap-2"><i class="fas fa-share-alt text-indigo-600 dark:text-indigo-300" aria-hidden="true"></i>Image sociale</h3>
-                                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Image utilisée pour les aperçus de partage. Max : <?php echo e((string) $socialImageMaxMb); ?> Mo.</p>
-                                    </div>
-                                    <span class="admin-dashboard-count <?php echo e($assetTone($socialImagePath)); ?>"><?php echo e($assetStatus($socialImagePath)); ?></span>
-                                </div>
-                                <div class="admin-settings-preview mt-5">
-                                    <?php if ($socialImageUrl !== ''): ?>
-                                        <img src="<?php echo e($socialImageUrl); ?>" alt="Image sociale actuelle">
-                                    <?php else: ?>
-                                        <i class="fas fa-share-alt" aria-hidden="true"></i>
-                                    <?php endif; ?>
-                                </div>
-                                <label class="admin-settings-upload-control mt-4">
-                                    <input type="file" name="seo_social_image" accept="image/png,image/jpeg,image/webp" data-settings-file="social">
-                                    <span class="admin-settings-upload-control__button"><i class="fas fa-upload" aria-hidden="true"></i>Choisir un fichier</span>
-                                    <span class="admin-settings-upload-control__name" data-settings-file-name="social">Aucun fichier choisi</span>
-                                </label>
-                                <?php if ($socialImagePath !== ''): ?>
-                                    <div class="admin-settings-remove-box mt-3" data-remove-box="social">
-                                        <input type="hidden" name="remove_social_image" value="0" data-remove-input="social">
-                                        <button type="button" class="admin-settings-remove-button" data-remove-trigger="social" data-remove-label="Supprimer" data-cancel-label="Annuler la suppression">
-                                            <i class="fas fa-trash-alt" aria-hidden="true"></i>
-                                            <span>Supprimer</span>
-                                        </button>
-                                        <p class="admin-settings-remove-note hidden" data-remove-note="social">L’image sociale sera supprimée uniquement après l’enregistrement.</p>
-                                    </div>
-                                <?php endif; ?>
-                            </article>
-                        </div>
+                            <?php endif; ?>
+                        </article>
                     </section>
 
                     <section class="<?php echo e($panelClass('seo')); ?>" data-settings-panel="seo">
@@ -372,36 +300,12 @@ $adminPageScripts = ['admin_site_settings.js'];
                     </section>
 
                     <section class="<?php echo e($panelClass('access')); ?>" data-settings-panel="access">
-                        <div class="grid gap-5 xl:grid-cols-3">
-                            <article class="admin-settings-toggle-card rounded-3xl p-5">
-                                <i class="fas fa-user-plus" aria-hidden="true"></i>
-                                <div>
-                                    <h3>Inscriptions apprenants</h3>
-                                    <p>Autorise ou bloque les nouvelles inscriptions des apprenants.</p>
-                                </div>
-                                <label class="admin-settings-switch">
-                                    <input type="checkbox" name="registrations_enabled" value="1" <?php echo $registrationsEnabled ? 'checked' : ''; ?>>
-                                    <span></span>
-                                </label>
-                            </article>
-
-                            <article class="admin-settings-toggle-card rounded-3xl p-5">
-                                <i class="fas fa-chalkboard-teacher" aria-hidden="true"></i>
-                                <div>
-                                    <h3>Candidatures enseignants</h3>
-                                    <p>Permet aux utilisateurs d’envoyer une candidature enseignant.</p>
-                                </div>
-                                <label class="admin-settings-switch">
-                                    <input type="checkbox" name="teacher_applications_enabled" value="1" <?php echo $teacherApplicationsEnabled ? 'checked' : ''; ?>>
-                                    <span></span>
-                                </label>
-                            </article>
-
+                        <div class="grid gap-5 xl:grid-cols-1">
                             <article class="admin-settings-toggle-card rounded-3xl p-5">
                                 <i class="fas fa-tools" aria-hidden="true"></i>
                                 <div>
                                     <h3>Mode maintenance</h3>
-                                    <p>Indique que la plateforme est en maintenance dans les paramètres globaux.</p>
+                                    <p>Quand il est activé, les visiteurs voient un écran de maintenance à la place des pages publiques.</p>
                                 </div>
                                 <label class="admin-settings-switch admin-settings-switch--warning">
                                     <input type="checkbox" name="maintenance_enabled" value="1" <?php echo $maintenanceEnabled ? 'checked' : ''; ?>>

@@ -20,10 +20,18 @@
     overviewFilter: 'all',
     overviewSearch: '',
     initialCourseId: normalizeCourseId(data.initialCourseId),
+    overviewPages: {
+      reviewed: 1,
+      no_reviews: 1,
+      archived: 1,
+    },
+    detailPage: 1,
   };
 
   var coursesById = buildCourseIndex(data.courses || []);
   var reviewsByCourse = buildReviewIndex(data.reviews || []);
+  var overviewPageSize = 8;
+  var detailPageSize = 5;
 
   function parseData() {
     var container = document.getElementById('teacher-reviews-data');
@@ -132,6 +140,78 @@
       parsed = 0;
     }
     return new Intl.NumberFormat('fr-FR').format(parsed);
+  }
+
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  function buildPaginationMarkup(config) {
+    var currentPage = clamp(parseInt(String(config.currentPage || 1), 10) || 1, 1, Math.max(1, parseInt(String(config.totalPages || 1), 10) || 1));
+    var totalPages = Math.max(1, parseInt(String(config.totalPages || 1), 10) || 1);
+    var totalItems = Math.max(0, parseInt(String(config.totalItems || 0), 10) || 0);
+    var startItem = totalItems > 0 ? Math.max(1, parseInt(String(config.startItem || 1), 10) || 1) : 0;
+    var endItem = totalItems > 0 ? Math.max(startItem, parseInt(String(config.endItem || 0), 10) || 0) : 0;
+    var attrName = String(config.attrName || 'page');
+    var attrValue = String(config.attrValue || '');
+
+    if (totalPages <= 1) {
+      return '';
+    }
+
+    var windowStart = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+    var windowEnd = Math.min(totalPages, Math.max(5, currentPage + 2));
+    var buttons = '';
+
+    for (var page = windowStart; page <= windowEnd; page += 1) {
+      var isActive = page === currentPage;
+      buttons += '<button type="button" ' + attrName + '="' + page + '"';
+      if (attrValue !== '') {
+        buttons += ' data-page-group="' + escapeHtml(attrValue) + '"';
+      }
+      buttons += ' class="inline-flex h-10 min-w-[2.5rem] items-center justify-center rounded-xl border px-3 text-sm font-semibold transition '
+        + (isActive
+          ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm dark:border-primary-400/50 dark:bg-primary-500/15 dark:text-primary-100'
+          : 'border-gray-200 bg-white text-gray-600 hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-primary-500/60 dark:hover:text-primary-200')
+        + '"'
+        + (isActive ? ' aria-current="page"' : '')
+        + '>'
+        + page
+        + '</button>';
+    }
+
+    return ''
+      + '<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">'
+      + '  <p class="text-sm text-gray-500 dark:text-gray-400">Affichage ' + startItem + ' à ' + endItem + ' sur ' + totalItems + '</p>'
+      + '  <div class="flex flex-wrap items-center gap-2">'
+      + '    <button type="button" data-page-action="prev"'
+      + (attrValue !== '' ? ' data-page-group="' + escapeHtml(attrValue) + '"' : '')
+      + ' class="inline-flex h-10 items-center justify-center rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-600 transition hover:border-primary-300 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-45 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-primary-500/60 dark:hover:text-primary-200"'
+      + (currentPage <= 1 ? ' disabled' : '')
+      + '>Précédent</button>'
+      + buttons
+      + '    <button type="button" data-page-action="next"'
+      + (attrValue !== '' ? ' data-page-group="' + escapeHtml(attrValue) + '"' : '')
+      + ' class="inline-flex h-10 items-center justify-center rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-600 transition hover:border-primary-300 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-45 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-primary-500/60 dark:hover:text-primary-200"'
+      + (currentPage >= totalPages ? ' disabled' : '')
+      + '>Suivant</button>'
+      + '  </div>'
+      + '</div>';
+  }
+
+  function updatePaginationHost(host, markup) {
+    if (!(host instanceof HTMLElement)) {
+      return;
+    }
+
+    if (markup === '') {
+      host.innerHTML = '';
+      host.classList.add('hidden');
+      return;
+    }
+
+    host.innerHTML = markup;
+    host.classList.remove('hidden');
   }
 
   function renderStars(rating, wrapperClass) {
@@ -359,8 +439,67 @@
     reviews.forEach(function (review) {
       html += renderReviewCard(review, course);
     });
-    html += '</div></div>';
+    html += '</div>';
+    html += '<div class="mt-5 hidden" data-review-pagination></div>';
+    html += '</div>';
     return html;
+  }
+
+  function paginateOverviewSection(section) {
+    if (!(section instanceof HTMLElement)) {
+      return;
+    }
+
+    var sectionKey = String(section.dataset.sectionKey || '');
+    var grid = section.querySelector('[data-course-grid]');
+    var paginationHost = section.querySelector('[data-course-pagination]');
+    if (!(grid instanceof HTMLElement)) {
+      updatePaginationHost(paginationHost, '');
+      return;
+    }
+
+    var cards = Array.prototype.slice.call(grid.querySelectorAll('[data-course-card]')).filter(function (card) {
+      return card instanceof HTMLElement;
+    });
+    if (!cards.length) {
+      updatePaginationHost(paginationHost, '');
+      return;
+    }
+
+    cards.forEach(function (card) {
+      card.style.display = '';
+    });
+
+    var visibleCards = cards.filter(function (card) {
+      return !card.classList.contains('hidden');
+    });
+    if (!visibleCards.length) {
+      updatePaginationHost(paginationHost, '');
+      return;
+    }
+
+    var currentPage = clamp(state.overviewPages[sectionKey] || 1, 1, Math.max(1, Math.ceil(visibleCards.length / overviewPageSize)));
+    state.overviewPages[sectionKey] = currentPage;
+
+    var startIndex = (currentPage - 1) * overviewPageSize;
+    var endIndex = Math.min(startIndex + overviewPageSize, visibleCards.length);
+
+    visibleCards.forEach(function (card, index) {
+      card.style.display = index >= startIndex && index < endIndex ? '' : 'none';
+    });
+
+    updatePaginationHost(
+      paginationHost,
+      buildPaginationMarkup({
+        currentPage: currentPage,
+        totalPages: Math.ceil(visibleCards.length / overviewPageSize),
+        totalItems: visibleCards.length,
+        startItem: startIndex + 1,
+        endItem: endIndex,
+        attrName: 'data-overview-page',
+        attrValue: sectionKey,
+      })
+    );
   }
 
   function findCourse(courseId) {
@@ -416,6 +555,7 @@
     }
 
     state.currentCourseId = course.courseId;
+    state.detailPage = 1;
     if (!options || options.preserveFilters !== true) {
       state.currentFilters = { rating: 'all', search: '' };
     }
@@ -440,7 +580,7 @@
       updateHistory('detail', course.courseId);
     }
 
-    applyFilters();
+    applyFilters(true);
 
     if (!options || options.scroll !== false) {
       scrollToTop();
@@ -466,7 +606,7 @@
     }
   }
 
-  function applyFilters() {
+  function applyFilters(resetPage) {
     if (!(detailContent instanceof HTMLElement)) {
       return;
     }
@@ -478,6 +618,10 @@
 
     if (!(ratingFilter instanceof HTMLSelectElement) || !(searchInput instanceof HTMLInputElement)) {
       return;
+    }
+
+    if (resetPage === true) {
+      state.detailPage = 1;
     }
 
     state.currentFilters = {
@@ -509,11 +653,58 @@
         emptyState.textContent = cards.length > 0 ? 'Aucun avis trouvé.' : 'Aucun avis visible pour le moment.';
       }
     }
+
+    var paginationHost = detailContent.querySelector('[data-review-pagination]');
+    if (!(paginationHost instanceof HTMLElement)) {
+      return;
+    }
+
+    var visibleCards = Array.prototype.slice.call(cards).filter(function (card) {
+      return card instanceof HTMLElement && !card.classList.contains('hidden');
+    });
+
+    cards.forEach(function (card) {
+      if (card instanceof HTMLElement && !card.classList.contains('hidden')) {
+        card.style.display = '';
+      }
+    });
+
+    if (!visibleCards.length) {
+      updatePaginationHost(paginationHost, '');
+      return;
+    }
+
+    var totalPages = Math.max(1, Math.ceil(visibleCards.length / detailPageSize));
+    state.detailPage = clamp(state.detailPage, 1, totalPages);
+    var startIndex = (state.detailPage - 1) * detailPageSize;
+    var endIndex = Math.min(startIndex + detailPageSize, visibleCards.length);
+
+    visibleCards.forEach(function (card, index) {
+      card.style.display = index >= startIndex && index < endIndex ? '' : 'none';
+    });
+
+    updatePaginationHost(
+      paginationHost,
+      buildPaginationMarkup({
+        currentPage: state.detailPage,
+        totalPages: totalPages,
+        totalItems: visibleCards.length,
+        startItem: startIndex + 1,
+        endItem: endIndex,
+        attrName: 'data-detail-page',
+      })
+    );
   }
 
-  function applyOverviewFilters() {
+  function applyOverviewFilters(resetPages) {
     if (!(coursesGrid instanceof HTMLElement)) {
       return;
+    }
+
+    if (resetPages === true) {
+      state.overviewPages.reviewed = 1;
+      state.overviewPages.no_reviews = 1;
+      state.overviewPages.archived = 1;
     }
 
     var cards = coursesGrid.querySelectorAll('[data-course-card]');
@@ -563,6 +754,8 @@
       if (filteredEmpty instanceof HTMLElement) {
         filteredEmpty.classList.toggle('hidden', visibleCards > 0 || sectionCards.length === 0);
       }
+
+      paginateOverviewSection(section);
     });
   }
 
@@ -623,6 +816,27 @@
           return;
         }
 
+        var overviewPageButton = target.closest('[data-overview-page]');
+        if (overviewPageButton instanceof HTMLButtonElement) {
+          event.preventDefault();
+          var sectionKey = String(overviewPageButton.dataset.pageGroup || '');
+          if (sectionKey !== '') {
+            state.overviewPages[sectionKey] = Math.max(1, parseInt(overviewPageButton.getAttribute('data-overview-page') || '1', 10) || 1);
+            applyOverviewFilters(false);
+          }
+          return;
+        }
+
+        var overviewActionButton = target.closest('[data-page-action]');
+        if (overviewActionButton instanceof HTMLButtonElement && overviewActionButton.dataset.pageGroup) {
+          event.preventDefault();
+          var groupKey = String(overviewActionButton.dataset.pageGroup || '');
+          var delta = overviewActionButton.getAttribute('data-page-action') === 'prev' ? -1 : 1;
+          state.overviewPages[groupKey] = Math.max(1, (state.overviewPages[groupKey] || 1) + delta);
+          applyOverviewFilters(false);
+          return;
+        }
+
         var button = target.closest('.view-reviews-btn');
         if (!(button instanceof HTMLElement)) {
           return;
@@ -654,14 +868,14 @@
             candidate.classList.toggle('is-active', candidate === button);
           }
         });
-        applyOverviewFilters();
+        applyOverviewFilters(true);
       });
     });
 
     if (overviewSearchInput instanceof HTMLInputElement) {
       overviewSearchInput.addEventListener('input', function () {
         state.overviewSearch = overviewSearchInput.value;
-        applyOverviewFilters();
+        applyOverviewFilters(true);
       });
     }
 
@@ -676,6 +890,26 @@
       detailContent.addEventListener('click', function (event) {
         var target = event.target;
         if (!(target instanceof Element)) {
+          return;
+        }
+
+        var detailPageButton = target.closest('[data-detail-page]');
+        if (detailPageButton instanceof HTMLButtonElement) {
+          event.preventDefault();
+          state.detailPage = Math.max(1, parseInt(detailPageButton.getAttribute('data-detail-page') || '1', 10) || 1);
+          applyFilters(false);
+          return;
+        }
+
+        var detailPageActionButton = target.closest('[data-page-action]');
+        if (detailPageActionButton instanceof HTMLButtonElement && !detailPageActionButton.dataset.pageGroup) {
+          event.preventDefault();
+          if (detailPageActionButton.getAttribute('data-page-action') === 'prev') {
+            state.detailPage = Math.max(1, state.detailPage - 1);
+          } else {
+            state.detailPage += 1;
+          }
+          applyFilters(false);
           return;
         }
 
@@ -696,14 +930,14 @@
       detailContent.addEventListener('input', function (event) {
         var target = event.target;
         if (target instanceof HTMLInputElement && target.id === 'search-review') {
-          applyFilters();
+          applyFilters(true);
         }
       });
 
       detailContent.addEventListener('change', function (event) {
         var target = event.target;
         if (target instanceof HTMLSelectElement && target.id === 'rating-filter') {
-          applyFilters();
+          applyFilters(true);
         }
       });
     }
@@ -721,7 +955,7 @@
 
   function initialize() {
     bindStaticEvents();
-    applyOverviewFilters();
+    applyOverviewFilters(true);
 
     var params = new URLSearchParams(window.location.search || '');
     var locationCourseId = normalizeCourseId(params.get('course_id'));

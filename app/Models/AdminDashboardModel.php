@@ -239,16 +239,52 @@ final class AdminDashboardModel extends Model
     }
 
     /**
-     * @param array{from:string,to:string,admin_id:int,module:string} $filters
-     * @return array<int,array<string,mixed>>
+     * @param array<string,mixed> $meta
      */
-    public function fetchRecentAuditLogs(array $filters, int $limit = 20): array
+    public function insertAuditLog(?int $userId, string $action, string $targetType, ?int $targetId = null, array $meta = []): void
     {
         if (!$this->tableExistsSafe('audit_logs')) {
-            return [];
+            return;
         }
 
-        $safeLimit = max(1, min(100, $limit));
+        if (!array_key_exists('actor_role', $meta) && $userId !== null && $userId > 0) {
+            $actorRole = $this->resolveAuditActorRole($userId);
+            if ($actorRole !== null) {
+                $meta['actor_role'] = $actorRole;
+            }
+        }
+
+        $metaJson = null;
+        if ($meta !== []) {
+            $encoded = json_encode($meta, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            if (is_string($encoded) && $encoded !== '') {
+                $metaJson = $encoded;
+            }
+        }
+
+        try {
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO audit_logs (user_id, action, target_type, target_id, meta_json, created_at)
+                 VALUES (:user_id, :action, :target_type, :target_id, :meta_json, NOW())'
+            );
+            $stmt->execute([
+                ':user_id' => $userId !== null && $userId > 0 ? $userId : null,
+                ':action' => $action,
+                ':target_type' => $targetType,
+                ':target_id' => $targetId,
+                ':meta_json' => $metaJson,
+            ]);
+        } catch (\Throwable $e) {
+            // Audit logging must not block the requested admin action.
+        }
+    }
+
+    /**
+     * @param array<string,mixed> $filters
+     * @return array{0:string,1:array<string,mixed>}
+     */
+    private function buildAuditFilters(array $filters, bool $includeSearch = true): array
+    {
         $where = [];
         $params = [];
 
@@ -264,7 +300,7 @@ final class AdminDashboardModel extends Model
             $params[':to_at'] = $to . ' 23:59:59';
         }
 
-        $adminId = (int) ($filters['admin_id'] ?? 0);
+        $adminId = max(0, (int) ($filters['admin_id'] ?? 0));
         if ($adminId > 0) {
             $where[] = 'al.user_id = :admin_id';
             $params[':admin_id'] = $adminId;
@@ -276,64 +312,172 @@ final class AdminDashboardModel extends Model
             $params[':module'] = $module;
         }
 
-        $whereSql = $where !== [] ? ('WHERE ' . implode(' AND ', $where)) : '';
+        if (!empty($filters['secondary_only'])) {
+            $where[] = '(u.roles_json LIKE :secondary_role_pattern OR COALESCE(al.meta_json, "") LIKE :secondary_role_meta_pattern)';
+            $params[':secondary_role_pattern'] = '%"admin_secondary"%';
+            $params[':secondary_role_meta_pattern'] = '%"actor_role":"admin_secondary"%';
+        }
+
+        if ($includeSearch) {
+            $search = trim((string) ($filters['search'] ?? ''));
+            if ($search !== '') {
+                $where[] = '(
+                    al.action LIKE :search
+                    OR al.target_type LIKE :search
+                    OR CAST(al.target_id AS CHAR) LIKE :search
+                    OR u.first_name LIKE :search
+                    OR u.last_name LIKE :search
+                    OR u.email LIKE :search
+                    OR COALESCE(al.meta_json, "") LIKE :search
+                )';
+                $params[':search'] = '%' . $search . '%';
+            }
+        }
+
+        return [$where !== [] ? ('WHERE ' . implode(' AND ', $where)) : '', $params];
+    }
+
+    private function resolveAuditActorRole(int $userId): ?string
+    {
+        if ($userId < 1 || !$this->tableExistsSafe('users')) {
+            return null;
+        }
+
+        try {
+            $stmt = $this->pdo->prepare(
+                'SELECT roles_json
+                 FROM users
+                 WHERE id = :id
+                 LIMIT 1'
+            );
+            $stmt->execute([':id' => $userId]);
+            $row = $stmt->fetch();
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        if (!is_array($row)) {
+            return null;
+        }
+
+        $roles = json_decode((string) ($row['roles_json'] ?? '[]'), true);
+        if (!is_array($roles)) {
+            return null;
+        }
+
+        if (in_array('admin_secondary', $roles, true)) {
+            return 'admin_secondary';
+        }
+        if (in_array('admin', $roles, true)) {
+            return 'admin';
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string,mixed> $filters
+     */
+    public function countRecentAuditLogs(array $filters): int
+    {
+        if (!$this->tableExistsSafe('audit_logs')) {
+            return 0;
+        }
+
+        [$whereSql, $params] = $this->buildAuditFilters($filters);
+
+        return $this->intQuery(
+            'SELECT COUNT(*)
+             FROM audit_logs al
+             LEFT JOIN users u ON u.id = al.user_id
+             ' . $whereSql,
+            $params
+        );
+    }
+
+    /**
+     * @param array<string,mixed> $filters
+     * @return array<int,array<string,mixed>>
+     */
+    public function fetchRecentAuditLogs(array $filters, int $limit = 20, int $offset = 0): array
+    {
+        if (!$this->tableExistsSafe('audit_logs')) {
+            return [];
+        }
+
+        $safeLimit = max(1, min(100, $limit));
+        $safeOffset = max(0, $offset);
+        [$whereSql, $params] = $this->buildAuditFilters($filters);
         $sql = 'SELECT
                     al.id,
                     al.action,
                     al.target_type,
                     al.target_id,
+                    al.meta_json,
                     al.created_at,
                     u.id AS actor_id,
                     u.first_name AS actor_first_name,
-                    u.last_name AS actor_last_name
+                    u.last_name AS actor_last_name,
+                    u.email AS actor_email
                 FROM audit_logs al
                 LEFT JOIN users u ON u.id = al.user_id
                 ' . $whereSql . '
-                ORDER BY al.created_at DESC
-                LIMIT ' . $safeLimit;
+                ORDER BY al.created_at DESC, al.id DESC
+                LIMIT ' . $safeLimit . ' OFFSET ' . $safeOffset;
 
         return $this->rowsQuery($sql, $params);
     }
 
     /**
+     * @param array<string,mixed> $filters
      * @return array<int,array<string,mixed>>
      */
-    public function fetchAuditActors(int $limit = 25): array
+    public function fetchAuditActors(array $filters = [], int $limit = 25): array
     {
         if (!$this->tableExistsSafe('audit_logs')) {
             return [];
         }
         $safeLimit = max(1, min(100, $limit));
+        [$whereSql, $params] = $this->buildAuditFilters($filters, false);
         return $this->rowsQuery(
             'SELECT
                 u.id,
                 u.first_name,
                 u.last_name,
+                u.email,
                 COUNT(*) AS action_count
              FROM audit_logs al
              JOIN users u ON u.id = al.user_id
-             GROUP BY u.id, u.first_name, u.last_name
+             ' . $whereSql . '
+             GROUP BY u.id, u.first_name, u.last_name, u.email
              ORDER BY action_count DESC, u.last_name ASC
-             LIMIT ' . $safeLimit
+             LIMIT ' . $safeLimit,
+            $params
         );
     }
 
     /**
+     * @param array<string,mixed> $filters
      * @return array<int,string>
      */
-    public function fetchAuditModules(int $limit = 30): array
+    public function fetchAuditModules(array $filters = [], int $limit = 30): array
     {
         if (!$this->tableExistsSafe('audit_logs')) {
             return [];
         }
         $safeLimit = max(1, min(100, $limit));
-        $rows = $this->rowsQuery(
-            'SELECT DISTINCT target_type
-             FROM audit_logs
-             WHERE target_type IS NOT NULL AND target_type <> ""
-             ORDER BY target_type ASC
-             LIMIT ' . $safeLimit
-        );
+        [$whereSql, $params] = $this->buildAuditFilters($filters, false);
+        $sql = 'SELECT DISTINCT al.target_type
+                FROM audit_logs al
+                LEFT JOIN users u ON u.id = al.user_id
+                ';
+        $sql .= $whereSql !== ''
+            ? $whereSql . ' AND al.target_type IS NOT NULL AND al.target_type <> ""'
+            : 'WHERE al.target_type IS NOT NULL AND al.target_type <> ""';
+        $sql .= '
+                ORDER BY al.target_type ASC
+                LIMIT ' . $safeLimit;
+        $rows = $this->rowsQuery($sql, $params);
         $modules = [];
         foreach ($rows as $row) {
             $module = trim((string) ($row['target_type'] ?? ''));

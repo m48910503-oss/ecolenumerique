@@ -37,6 +37,44 @@ if (str_starts_with($normalizedPath, $sharePrefix)) {
     $normalizedPath = 'share';
 }
 
+$isMaintenanceExempt = static function (string $path): bool {
+    if ($path === 'admin' || str_starts_with($path, 'admin/')) {
+        return true;
+    }
+
+    if ($path === 'api' || str_starts_with($path, 'api/')) {
+        return true;
+    }
+
+    return in_array($path, ['service_worker.js', 'robots.txt', 'sitemap.xml'], true);
+};
+
+if (function_exists('site_maintenance_enabled') && site_maintenance_enabled() && !$isMaintenanceExempt($normalizedPath)) {
+    http_response_code(503);
+    header('Retry-After: 3600');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    $siteName = trim(platform_setting_get('site_name', defined('APP_FROM_NAME') ? (string) APP_FROM_NAME : 'École Numérique'));
+    if ($siteName === '') {
+        $siteName = defined('APP_FROM_NAME') ? (string) APP_FROM_NAME : 'École Numérique';
+    }
+
+    \App\Core\View::render('web/maintenance', [
+        'injectGlobalAssets' => false,
+        'siteName' => $siteName,
+        'siteLogoUrl' => function_exists('site_logo_url') ? (string) site_logo_url() : '',
+        'maintenanceMessage' => function_exists('site_maintenance_message')
+            ? (string) site_maintenance_message()
+            : 'Maintenance temporaire en cours. Merci de revenir dans quelques minutes.',
+        'supportEmail' => platform_setting_get('support_email', defined('APP_FROM_EMAIL') ? (string) APP_FROM_EMAIL : ''),
+        'supportPhone' => platform_setting_get('support_phone', ''),
+        'supportWhatsapp' => platform_setting_get('support_whatsapp', ''),
+    ]);
+    return;
+}
+
 $routes = require __DIR__ . '/app/routes.php';
 if (\App\Core\RouteDispatcher::dispatch($normalizedPath, $routes)) {
     return;

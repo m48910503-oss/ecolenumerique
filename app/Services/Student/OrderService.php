@@ -108,9 +108,6 @@ final class OrderService extends Service
             }
 
             $siteLogoUrl = trim($this->siteLogoUrl());
-            if ($siteLogoUrl === '') {
-                $siteLogoUrl = 'assets/img/logo-site.png';
-            }
 
             return [
                 'order' => $order,
@@ -120,7 +117,7 @@ final class OrderService extends Service
                 'provider_label' => $this->providerLabelFor((string) ($order['provider'] ?? '')),
                 'status_meta' => $this->statusMetaFor($statusRaw),
                 'site_name' => defined('APP_FROM_NAME') ? (string) APP_FROM_NAME : 'École Numérique',
-                'site_logo_url' => $this->absoluteUrlFromSiteAsset($siteLogoUrl),
+                'site_logo_url' => $siteLogoUrl !== '' ? $this->absoluteUrlFromSiteAsset($siteLogoUrl) : '',
                 'support_url' => $this->siteUrl('support?space=student'),
                 'orders_url' => $this->siteUrl('student/orders'),
                 'courses_url' => $this->siteUrl('student/my_courses'),

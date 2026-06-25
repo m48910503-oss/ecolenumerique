@@ -383,7 +383,8 @@ body.app-auth-page.auth-page--login {
     overflow-x: hidden;
 }
 
-body.app-auth-page.auth-page--login .app-site-announcement {
+body.app-auth-page.auth-page--login .app-site-announcement,
+body.app-auth-page.auth-page--login .mk-announcement {
     display: none !important;
 }
 

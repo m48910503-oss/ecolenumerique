@@ -39,19 +39,19 @@ require __DIR__ . '/_simple_flash.php';
 </div>
 
 <section class="grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr,0.8fr] sm:gap-6">
-  <article class="rounded-2xl border border-gray-100 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
+    <article class="rounded-2xl border border-gray-100 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
     <div class="mb-5 flex items-center justify-between gap-3">
       <div>
         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">A suivre</p>
         <h3 class="app-inline-title text-lg font-bold text-gray-900 dark:text-white"><?php echo dashboard_title_icon('book-open'); ?><span>Formations attribuées par l’entreprise</span></h3>
       </div>
-      <a href="<?php echo e(site_url('student/my_courses')); ?>" class="text-sm font-semibold text-blue-600 hover:underline">Mes cours</a>
+      <a href="<?php echo e(site_url('company/courses')); ?>" class="text-sm font-semibold text-blue-600 hover:underline">Mes cours</a>
     </div>
 
     <div class="space-y-3">
       <?php foreach ($assignedCourses as $course): ?>
         <?php $progress = max(0, min(100, (int) ($course['progress_pct'] ?? 0))); ?>
-        <a href="<?php echo e((string) ($course['course_url'] ?? site_url('student/my_courses'))); ?>" class="block rounded-2xl bg-gray-50 p-4 transition hover:bg-blue-50 dark:bg-gray-900/40 dark:hover:bg-blue-500/10">
+        <a href="<?php echo e((string) ($course['course_url'] ?? site_url('company/courses'))); ?>" class="block rounded-2xl bg-gray-50 p-4 transition hover:bg-blue-50 dark:bg-gray-900/40 dark:hover:bg-blue-500/10">
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
               <p class="truncate font-semibold text-gray-900 dark:text-white"><?php echo e((string) ($course['title'] ?? 'Cours')); ?></p>

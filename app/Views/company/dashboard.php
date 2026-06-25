@@ -117,7 +117,13 @@ require __DIR__ . '/_simple_flash.php';
     <article class="rounded-2xl border border-gray-100 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
       <div class="mb-4 flex items-center justify-between gap-3">
         <h3 class="app-inline-title font-bold text-gray-900 dark:text-white"><?php echo dashboard_title_icon('book-open'); ?><span>Formations achetées</span></h3>
-        <a href="<?php echo e(site_url('company/seats')); ?>" class="text-sm font-semibold text-blue-600 hover:underline">Attribuer</a>
+        <div class="flex items-center gap-3">
+          <a href="<?php echo e(site_url('company/courses')); ?>" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            Mes cours
+          </a>
+          <a href="<?php echo e(site_url('company/seats')); ?>" class="text-sm font-semibold text-blue-600 hover:underline">Attribuer</a>
+        </div>
       </div>
       <div class="space-y-3">
         <?php foreach (array_slice($seatCourseRows, 0, 5) as $course): ?>
@@ -129,6 +135,13 @@ require __DIR__ . '/_simple_flash.php';
               <p class="mt-1 text-xs text-gray-500 dark:text-gray-400"><?php echo e((string) ((int) ($course['seats_assigned'] ?? 0))); ?> attribuées sur <?php echo e((string) ((int) ($course['seats_total'] ?? 0))); ?> places</p>
           </div>
         <?php endforeach; ?>
+        <?php if ($seatCourseRows !== []): ?>
+          <p class="pt-1 text-xs text-gray-500 dark:text-gray-400">
+            La lecture s’ouvre dans
+            <a href="<?php echo e(site_url('company/courses')); ?>" class="font-semibold text-blue-600 hover:underline">Mes cours</a>
+            après attribution d’une place.
+          </p>
+        <?php endif; ?>
         <?php if ($seatCourseRows === []): ?>
           <p class="rounded-2xl bg-gray-50 p-4 text-sm text-gray-500 dark:bg-gray-900/40 dark:text-gray-400">Aucune place achetée. Passez par le catalogue et activez le mode entreprise au paiement.</p>
         <?php endif; ?>

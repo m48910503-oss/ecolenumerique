@@ -1,73 +1,184 @@
 <?php
-$teacherFilters = is_array($teacherFilters ?? null) ? $teacherFilters : [];
-$selectedTeacherId = max(0, (int) ($selectedTeacherId ?? 0));
-$selectedTeacher = is_array($selectedTeacher ?? null) ? $selectedTeacher : null;
-$searchQuery = trim((string) ($searchQuery ?? ''));
-$courseRows = is_array($courseRows ?? null) ? $courseRows : [];
-$summary = is_array($summary ?? null) ? $summary : [];
+$course = is_array($course ?? null) ? $course : [];
+$stats = is_array($stats ?? null) ? $stats : [];
 $updatedAt = trim((string) ($updatedAt ?? ''));
- 
-$totalCourses = max(0, (int) ($summary['course_count'] ?? 0));
-$coursesWithRevenue = max(0, (int) ($summary['courses_with_revenue_count'] ?? 0));
-$totalEnrollments = max(0, (int) ($summary['enrolled_count'] ?? 0));
-$totalPaidUnits = max(0, (int) ($summary['paid_units'] ?? 0));
-$totalRevenue = max(0, (int) ($summary['revenue_total_xof'] ?? 0));
-$directRevenue = max(0, (int) ($summary['revenue_direct_xof'] ?? 0));
-$promoRevenue = max(0, (int) ($summary['revenue_promo_xof'] ?? 0));
-$enterpriseRevenue = max(0, (int) ($summary['revenue_enterprise_xof'] ?? 0));
-$directUnits = max(0, (int) ($summary['units_direct'] ?? 0));
-$promoUnits = max(0, (int) ($summary['units_promo'] ?? 0));
-$enterpriseUnits = max(0, (int) ($summary['units_enterprise'] ?? 0));
+$mode = strtolower(trim((string) ($mode ?? 'course')));
+$teacherMode = $mode === 'teacher';
+$teacher = is_array($teacher ?? null) ? $teacher : [];
+$teacherCourses = is_array($teacherCourses ?? null) ? $teacherCourses : [];
+$teacherStats = is_array($teacherStats ?? null) ? $teacherStats : [];
 
-$isFilterActive = $selectedTeacherId > 0 || $searchQuery !== '';
-
-$adminNavActive = 'course_insights';
-$adminTopTitle = 'Cours approuvés';
-$adminTopSubtitle = 'Modération';
-$adminTopBadge = (string) $totalCourses . ' cours';
-$adminTopBadgeTone = $totalCourses > 0 ? 'active' : 'pending';
-$adminTopActions = [
-    ['label' => 'Cours à valider', 'url' => site_url('admin/courses'), 'tone' => 'neutral'],
-    ['label' => 'Transactions et retraits', 'url' => site_url('admin/sales'), 'tone' => 'neutral'],
-];
+$courseId = max(0, (int) ($course['id'] ?? 0));
+$courseTitle = trim((string) ($course['title'] ?? 'Cours approuvé'));
+$teacherName = trim((string) ($course['teacher_first_name'] ?? '') . ' ' . (string) ($course['teacher_last_name'] ?? ''));
+$categoryName = trim((string) ($course['category_name'] ?? 'Non renseignée'));
+$description = trim((string) strip_tags(html_entity_decode((string) ($course['description'] ?? ''), ENT_QUOTES, 'UTF-8')));
+$coverPath = trim((string) ($course['cover_path'] ?? ''));
+$previewUrl = site_url('admin/course_preview?id=' . $courseId);
+$backUrl = site_url('admin/courses');
+$durationHours = is_numeric($course['duration_hours'] ?? null) ? (float) $course['duration_hours'] : 0.0;
+$priceXof = max(0, (int) ($course['price_xof'] ?? 0));
+$levelRaw = trim((string) ($course['level'] ?? ''));
+$chartRows = is_array($stats['monthly_enrollments'] ?? null) ? array_values($stats['monthly_enrollments']) : [];
 
 $fmtMoney = static function (int $value): string {
     return number_format(max(0, $value), 0, ',', ' ') . ' F CFA';
 };
 
-$fmtDate = static function (string $dbDate): string {
-    if ($dbDate === null || trim($dbDate) === '') {
-        return '-';
-    }
-    $ts = strtotime($dbDate);
-    if ($ts === false) {
-        return (string) $dbDate;
-    }
-    return date('d/m/Y H:i', $ts);
+$fmtNumber = static function (int $value): string {
+    return number_format(max(0, $value), 0, ',', ' ');
 };
 
-$buildFilterUrl = static function (int $teacherId, string $searchQuery): string {
-    $params = [];
-    if ($teacherId > 0) {
-        $params['teacher_id'] = $teacherId;
+$fmtDateTime = static function (string $value): string {
+    $value = trim($value);
+    if ($value === '') {
+        return '-';
     }
-    if ($searchQuery !== '') {
-        $params['q'] = $searchQuery;
+    try {
+        return (new DateTimeImmutable($value))->format('d/m/Y H:i');
+    } catch (Throwable $e) {
+        return $value;
     }
-    $query = http_build_query($params);
-    return site_url('admin/course_insights') . ($query !== '' ? ('?' . $query) : '');
 };
+
+$resolveMediaUrl = static function (string $path): string {
+    $path = trim($path);
+    if ($path === '') {
+        return '';
+    }
+    if (preg_match('~^https?://~i', $path) === 1) {
+        return $path;
+    }
+
+    return site_url(ltrim($path, '/'));
+};
+
+$levelLabel = static function (string $level): string {
+    return match (strtolower(trim($level))) {
+        'beginner' => 'Débutant',
+        'intermediate' => 'Intermédiaire',
+        'advanced' => 'Avancé',
+        default => trim($level) !== '' ? ucfirst($level) : 'Non renseigné',
+    };
+};
+
+$ratingLabel = static function (float $average, int $count): string {
+    if ($count <= 0) {
+        return 'Aucun avis';
+    }
+
+    return number_format(max(0, min(5, $average)), 1, ',', ' ') . ' / 5';
+};
+
+$descriptionPreview = $description !== '' ? $description : 'Aucune description renseignée pour ce cours.';
+if (function_exists('mb_strlen') && function_exists('mb_substr') && mb_strlen($descriptionPreview) > 260) {
+    $descriptionPreview = rtrim(mb_substr($descriptionPreview, 0, 257)) . '...';
+} elseif (strlen($descriptionPreview) > 260) {
+    $descriptionPreview = rtrim(substr($descriptionPreview, 0, 257)) . '...';
+}
+
+$coverUrl = $resolveMediaUrl($coverPath);
+$durationLabel = $durationHours > 0 ? format_duration_hours_hm($durationHours) : 'Non renseignée';
+$levelLabelText = $levelLabel($levelRaw);
+$students = max(0, (int) ($stats['students'] ?? 0));
+$paidUnits = max(0, (int) ($stats['paid_units'] ?? 0));
+$totalRevenue = max(0, (int) ($stats['revenue_total_xof'] ?? 0));
+$directRevenue = max(0, (int) ($stats['revenue_direct_xof'] ?? 0));
+$promoRevenue = max(0, (int) ($stats['revenue_promo_xof'] ?? 0));
+$enterpriseRevenue = max(0, (int) ($stats['revenue_enterprise_xof'] ?? 0));
+$directUnits = max(0, (int) ($stats['units_direct'] ?? 0));
+$promoUnits = max(0, (int) ($stats['units_promo'] ?? 0));
+$enterpriseUnits = max(0, (int) ($stats['units_enterprise'] ?? 0));
+$ratingAverage = max(0.0, min(5.0, (float) ($stats['avg_rating'] ?? 0.0)));
+$ratingCount = max(0, (int) ($stats['rating_count'] ?? 0));
+$completionRate = max(0, min(100, (int) ($stats['completion_rate'] ?? 0)));
+$enrollmentChannels = is_array($stats['enrollment_channels'] ?? null) ? $stats['enrollment_channels'] : [];
+$channelTotal = max(0, (int) ($enrollmentChannels['total'] ?? $students));
+$channelDirect = max(0, (int) ($enrollmentChannels['direct'] ?? 0));
+$channelPromo = max(0, (int) ($enrollmentChannels['promo'] ?? 0));
+$channelEnterprise = max(0, (int) ($enrollmentChannels['enterprise'] ?? 0));
+$teacherId = max(0, (int) ($teacher['id'] ?? 0));
+$teacherDisplayName = trim((string) ($teacher['first_name'] ?? '') . ' ' . (string) ($teacher['last_name'] ?? ''));
+if ($teacherDisplayName === '') {
+    $teacherDisplayName = 'Enseignant';
+}
+$teacherEmail = trim((string) ($teacher['email'] ?? ''));
+$teacherAvatar = static function (string $firstName, string $lastName): string {
+    $initials = trim(mb_substr(trim($firstName), 0, 1) . mb_substr(trim($lastName), 0, 1));
+    return $initials !== '' ? mb_strtoupper($initials) : 'EN';
+};
+$teacherStatsApprovedCourses = max(0, (int) ($teacherStats['approved_courses'] ?? count($teacherCourses)));
+$teacherStatsStudents = max(0, (int) ($teacherStats['students'] ?? 0));
+$teacherStatsPaidUnits = max(0, (int) ($teacherStats['paid_units'] ?? 0));
+$teacherStatsRevenue = max(0, (int) ($teacherStats['revenue_total_xof'] ?? 0));
+$teacherStatsRatingAverage = max(0.0, min(5.0, (float) ($teacherStats['avg_rating'] ?? 0.0)));
+$teacherStatsRatingCount = max(0, (int) ($teacherStats['rating_count'] ?? 0));
+$teacherStatsCompletion = max(0, min(100, (int) ($teacherStats['completion_rate'] ?? 0)));
+$teacherStatsChannels = is_array($teacherStats['enrollment_channels'] ?? null) ? $teacherStats['enrollment_channels'] : [];
+$teacherStatsChannelTotal = max(0, (int) ($teacherStatsChannels['total'] ?? 0));
+$teacherStatsChannelDirect = max(0, (int) ($teacherStatsChannels['direct'] ?? 0));
+$teacherStatsChannelPromo = max(0, (int) ($teacherStatsChannels['promo'] ?? 0));
+$teacherStatsChannelEnterprise = max(0, (int) ($teacherStatsChannels['enterprise'] ?? 0));
+$teacherChartRows = is_array($teacherStats['monthly_enrollments'] ?? null) ? array_values($teacherStats['monthly_enrollments']) : [];
+$channelCards = [
+    [
+        'label' => 'Total',
+        'tone' => 'blue',
+        'students' => $channelTotal,
+        'units' => $paidUnits,
+        'revenue' => $totalRevenue,
+    ],
+    [
+        'label' => 'Direct',
+        'tone' => 'green',
+        'students' => $channelDirect,
+        'units' => $directUnits,
+        'revenue' => $directRevenue,
+    ],
+    [
+        'label' => 'Coupon / promo',
+        'tone' => 'amber',
+        'students' => $channelPromo,
+        'units' => $promoUnits,
+        'revenue' => $promoRevenue,
+    ],
+    [
+        'label' => 'Entreprise',
+        'tone' => 'indigo',
+        'students' => $channelEnterprise,
+        'units' => $enterpriseUnits,
+        'revenue' => $enterpriseRevenue,
+    ],
+];
+
+if ($teacherMode) {
+    $chartRows = $teacherChartRows;
+}
+
+$chartJson = json_encode($chartRows, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP);
+if (!is_string($chartJson)) {
+    $chartJson = '[]';
+}
+
+$adminNavActive = 'courses';
+$adminTopTitle = $teacherMode ? 'Statistiques de l’enseignant' : 'Statistiques du cours';
+$adminTopSubtitle = $teacherMode ? 'Cours validés et performance' : 'Cours approuvé';
+$adminTopBadge = $teacherMode ? ($teacherStatsApprovedCourses . ' cours validés') : 'Publié';
+$adminTopBadgeTone = 'done';
+$adminPageScripts = ['admin_course_insights.js'];
+$teacherBackUrl = site_url('admin/courses?tab=approved&teacher_id=' . $teacherId);
+$teacherDossierUrl = site_url('admin/teacher_dossier?teacher_id=' . $teacherId);
 ?>
-<!doctype html> 
+<!doctype html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administrateur - Cours approuvés</title>
+    <title><?php echo e($teacherMode ? 'Statistiques de l’enseignant · Administrateur' : 'Statistiques du cours · Administrateur'); ?></title>
     <?php require __DIR__ . '/_head_assets.php'; ?>
 <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
 </head>
-<body class="app-view app-role-admin min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-body" data-view="admin/course_insights" data-sidebar-desktop-toggle="1">
+<body class="app-view app-role-admin admin-course-insights-page min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-body" data-view="admin/course_insights" data-sidebar-desktop-toggle="1">
     <div class="admin-shell-backdrop">
         <div class="admin-shell-backdrop__orb admin-shell-backdrop__orb--one"></div>
         <div class="admin-shell-backdrop__orb admin-shell-backdrop__orb--two"></div>
@@ -80,227 +191,332 @@ $buildFilterUrl = static function (int $teacherId, string $searchQuery): string 
         <div class="admin-shell-main flex min-w-0 flex-1 flex-col">
             <?php require __DIR__ . '/_topbar.php'; ?>
 
-            <main class="admin-shell-content admin-shell-dense space-y-5 px-4 py-5 sm:px-6 sm:py-6">
-                <section class="admin-shell-hero rounded-3xl p-5">
-                    <div class="flex flex-wrap items-start justify-between gap-4">
-                        <div class="max-w-3xl">
-                            <p class="admin-shell-section-title inline-flex items-center gap-2"><i class="fas fa-chart-line" aria-hidden="true"></i>Pilotage des cours</p>
-                            <h2 class="mt-2 inline-flex items-center gap-3 text-2xl font-semibold font-display text-slate-900 dark:text-slate-100">
-                                <i class="fas fa-book-open text-primary-600 dark:text-primary-300" aria-hidden="true"></i>
-                                Cours approuv&eacute;s et revenus d&eacute;taill&eacute;s
-                            </h2>
-                            <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                                Filtrez par enseignant, suivez le nombre d&apos;inscrits, et comparez les revenus directs, coupon/promotion et entreprise.
-                            </p>
+            <main class="admin-shell-content admin-shell-dense px-4 py-5 sm:px-6 sm:py-6 space-y-5">
+                <?php if ($teacherMode): ?>
+                    <?php
+                    $teacherStatus = strtolower(trim((string) ($teacher['status'] ?? 'active')));
+                    $teacherStatusLabel = $teacherStatus === 'suspended' ? 'Suspendu' : 'Actif';
+                    $teacherStatusClass = $teacherStatus === 'suspended'
+                        ? 'admin-course-badge admin-course-badge--neutral'
+                        : 'admin-course-badge admin-course-badge--active';
+                    $teacherInitials = $teacherAvatar((string) ($teacher['first_name'] ?? ''), (string) ($teacher['last_name'] ?? ''));
+                    $teacherCoursesEmpty = $teacherCourses === [];
+                    ?>
+                    <section class="admin-course-panel p-4 sm:p-5 xl:p-6">
+                        <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="admin-course-badge admin-course-badge--neutral">Enseignant validé</span>
+                                    <span class="admin-course-badge admin-course-badge--active"><?php echo e($teacherStatsApprovedCourses); ?> cours validés</span>
+                                </div>
+                                <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start">
+                                    <div class="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-primary-600 to-accent-600 text-2xl font-black text-white shadow-lg">
+                                        <?php echo e($teacherInitials); ?>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-[2rem]"><?php echo e($teacherDisplayName); ?></h2>
+                                        <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+                                            Vue globale des cours validés de cet enseignant et accès direct à chaque statistique de cours.
+                                        </p>
+                                        <div class="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
+                                            <span class="admin-course-mini admin-course-mini--teacher"><i class="fas fa-envelope" aria-hidden="true"></i><?php echo e($teacherEmail !== '' ? $teacherEmail : 'Email non renseigné'); ?></span>
+                                            <span class="<?php echo e($teacherStatusClass); ?>"><i class="fas fa-circle" aria-hidden="true"></i><?php echo e($teacherStatusLabel); ?></span>
+                                            <span class="admin-course-mini admin-course-mini--date"><i class="far fa-calendar-alt" aria-hidden="true"></i>Profil lié depuis <?php echo e($fmtDateTime((string) ($teacher['created_at'] ?? ''))); ?></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-3 sm:flex-row xl:flex-col">
+                                <a href="<?php echo e($teacherBackUrl); ?>" class="admin-shell-button admin-shell-button--primary inline-flex items-center justify-center gap-2">
+                                    <i class="fas fa-book-open" aria-hidden="true"></i>
+                                    Cours validés
+                                </a>
+                                <a href="<?php echo e($teacherDossierUrl); ?>" class="admin-shell-button admin-shell-button--secondary inline-flex items-center justify-center gap-2">
+                                    <i class="fas fa-folder-open" aria-hidden="true"></i>
+                                    Fiche enseignant
+                                </a>
+                            </div>
                         </div>
-                        <div class="flex flex-wrap gap-2 text-xs">
-                            <span class="admin-dashboard-count admin-dashboard-count--info inline-flex items-center gap-1.5"><i class="fas fa-chalkboard-teacher" aria-hidden="true"></i><?php echo e((string) count($teacherFilters)); ?> enseignant(s)</span>
-                            <span class="admin-dashboard-count admin-dashboard-count--success inline-flex items-center gap-1.5"><i class="fas fa-money-bill-wave" aria-hidden="true"></i><?php echo e((string) $coursesWithRevenue); ?> cours générant des revenus</span>
-                            <?php if ($updatedAt !== ''): ?>
-                                <span class="admin-dashboard-count admin-dashboard-count--warning inline-flex items-center gap-1.5"><i class="fas fa-clock" aria-hidden="true"></i>Mis &agrave; jour : <?php echo e($updatedAt); ?></span>
+                    </section>
+
+                    <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        <article class="admin-course-stats-kpi admin-course-stats-kpi--blue">
+                            <div class="admin-course-stats-kpi__icon"><i class="fas fa-book-open" aria-hidden="true"></i></div>
+                            <p class="admin-course-stats-kpi__label">Cours validés</p>
+                            <p class="admin-course-stats-kpi__value"><?php echo e($fmtNumber($teacherStatsApprovedCourses)); ?></p>
+                            <p class="admin-course-stats-kpi__meta">Cours publiés par cet enseignant</p>
+                        </article>
+
+                        <article class="admin-course-stats-kpi admin-course-stats-kpi--green">
+                            <div class="admin-course-stats-kpi__icon"><i class="fas fa-users" aria-hidden="true"></i></div>
+                            <p class="admin-course-stats-kpi__label">Inscrits actifs</p>
+                            <p class="admin-course-stats-kpi__value"><?php echo e($fmtNumber($teacherStatsStudents)); ?></p>
+                            <p class="admin-course-stats-kpi__meta">Apprenants sur l’ensemble des cours</p>
+                        </article>
+
+                        <article class="admin-course-stats-kpi admin-course-stats-kpi--amber">
+                            <div class="admin-course-stats-kpi__icon"><i class="fas fa-wallet" aria-hidden="true"></i></div>
+                            <p class="admin-course-stats-kpi__label">Revenus générés</p>
+                            <p class="admin-course-stats-kpi__value"><?php echo e($fmtMoney($teacherStatsRevenue)); ?></p>
+                            <p class="admin-course-stats-kpi__meta"><?php echo e($fmtNumber($teacherStatsPaidUnits)); ?> commande(s) payée(s)</p>
+                        </article>
+
+                        <article class="admin-course-stats-kpi admin-course-stats-kpi--indigo">
+                            <div class="admin-course-stats-kpi__icon"><i class="fas fa-star" aria-hidden="true"></i></div>
+                            <p class="admin-course-stats-kpi__label">Note moyenne</p>
+                            <p class="admin-course-stats-kpi__value"><?php echo e($teacherStatsRatingCount > 0 ? number_format($teacherStatsRatingAverage, 1, ',', ' ') . ' / 5' : '0 / 5'); ?></p>
+                            <p class="admin-course-stats-kpi__meta"><?php echo e($fmtNumber($teacherStatsRatingCount)); ?> avis publiés</p>
+                        </article>
+                    </section>
+
+                    <section class="grid gap-5 2xl:grid-cols-[minmax(0,1.35fr)_minmax(24rem,0.95fr)]">
+                        <section class="admin-course-panel p-4 sm:p-5">
+                            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <h3 class="text-base font-black text-slate-900 dark:text-white">Évolution des inscriptions</h3>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">Volume cumulé sur les six derniers mois</p>
+                                </div>
+                                <span class="admin-course-badge admin-course-badge--neutral">Données agrégées</span>
+                            </div>
+                            <div id="admin-course-insights-chart" class="mt-4" data-chart="<?php echo e($chartJson); ?>"></div>
+                        </section>
+
+                        <section class="admin-course-panel p-4 sm:p-5">
+                            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <h3 class="text-base font-black text-slate-900 dark:text-white">Répartition des inscriptions</h3>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">Vue par canal d’acquisition</p>
+                                </div>
+                                <span class="admin-course-badge admin-course-badge--neutral"><?php echo e($fmtNumber($teacherStatsChannelTotal)); ?> au total</span>
+                            </div>
+
+                            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                                <article class="admin-course-channel-card admin-course-channel-card--blue">
+                                    <p class="admin-course-channel-card__label">Total</p>
+                                    <p class="admin-course-channel-card__revenue"><?php echo e($fmtNumber($teacherStatsChannelTotal)); ?> inscrits</p>
+                                </article>
+                                <article class="admin-course-channel-card admin-course-channel-card--green">
+                                    <p class="admin-course-channel-card__label">Direct</p>
+                                    <p class="admin-course-channel-card__revenue"><?php echo e($fmtNumber($teacherStatsChannelDirect)); ?> inscrits</p>
+                                </article>
+                                <article class="admin-course-channel-card admin-course-channel-card--amber">
+                                    <p class="admin-course-channel-card__label">Coupon / promo</p>
+                                    <p class="admin-course-channel-card__revenue"><?php echo e($fmtNumber($teacherStatsChannelPromo)); ?> inscrits</p>
+                                </article>
+                                <article class="admin-course-channel-card admin-course-channel-card--indigo">
+                                    <p class="admin-course-channel-card__label">Entreprise</p>
+                                    <p class="admin-course-channel-card__revenue"><?php echo e($fmtNumber($teacherStatsChannelEnterprise)); ?> inscrits</p>
+                                </article>
+                            </div>
+                        </section>
+                    </section>
+
+                    <section class="admin-course-panel p-4 sm:p-5">
+                        <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h3 class="text-base font-black text-slate-900 dark:text-white">Cours validés de l’enseignant</h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Chaque cours conserve ses propres statistiques détaillées.</p>
+                            </div>
+                            <span class="admin-course-badge admin-course-badge--neutral"><?php echo e($fmtNumber($teacherStatsApprovedCourses)); ?> cours</span>
+                        </div>
+
+                        <div class="mt-4 space-y-3">
+                            <?php if ($teacherCoursesEmpty): ?>
+                                <div class="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-10 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400">
+                                    Aucun cours validé pour cet enseignant.
+                                </div>
+                            <?php else: ?>
+                                <?php foreach ($teacherCourses as $teacherCourse): ?>
+                                    <?php
+                                    $teacherCourseId = (int) ($teacherCourse['id'] ?? 0);
+                                    if ($teacherCourseId < 1) {
+                                        continue;
+                                    }
+                                    $teacherCourseTitle = trim((string) ($teacherCourse['title'] ?? 'Cours sans titre'));
+                                    $teacherCourseDate = $fmtDateTime((string) ($teacherCourse['created_at'] ?? ''));
+                                    $teacherCourseStats = is_array($teacherCourse['stats'] ?? null) ? $teacherCourse['stats'] : [];
+                                    $teacherCourseStudents = max(0, (int) ($teacherCourseStats['students'] ?? 0));
+                                    $teacherCourseRevenue = max(0, (int) ($teacherCourseStats['revenue_xof'] ?? 0));
+                                    $teacherCourseRatingCount = max(0, (int) ($teacherCourseStats['rating_count'] ?? 0));
+                                    $teacherCourseRatingAverage = max(0.0, min(5.0, (float) ($teacherCourseStats['avg_rating'] ?? 0.0)));
+                                    $teacherCourseCompletion = max(0, min(100, (int) ($teacherCourseStats['completion_rate'] ?? 0)));
+                                    $teacherCourseStatsUrl = site_url('admin/course_insights?id=' . $teacherCourseId);
+                                    $teacherCoursePreviewUrl = site_url('admin/course_preview?id=' . $teacherCourseId);
+                                    ?>
+                                    <article class="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
+                                        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                                            <div class="min-w-0">
+                                                <div class="flex flex-wrap items-center gap-2">
+                                                    <h4 class="text-lg font-bold text-slate-900 dark:text-white"><?php echo e($teacherCourseTitle); ?></h4>
+                                                    <span class="admin-course-badge admin-course-badge--active">Validé</span>
+                                                </div>
+                                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Créé le <?php echo e($teacherCourseDate !== '-' ? $teacherCourseDate : 'date inconnue'); ?></p>
+                                                <div class="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+                                                    <span class="admin-course-mini admin-course-mini--teacher"><i class="fas fa-users" aria-hidden="true"></i><?php echo e($fmtNumber($teacherCourseStudents)); ?> inscrits</span>
+                                                    <span class="admin-course-mini admin-course-mini--date"><i class="fas fa-wallet" aria-hidden="true"></i><?php echo e($fmtMoney($teacherCourseRevenue)); ?></span>
+                                                    <span class="admin-course-mini admin-course-mini--category"><i class="fas fa-star" aria-hidden="true"></i><?php echo e($teacherCourseRatingCount > 0 ? number_format($teacherCourseRatingAverage, 1, ',', ' ') . ' / 5' : 'Aucun avis'); ?></span>
+                                                    <span class="admin-course-mini admin-course-mini--level"><i class="fas fa-chart-line" aria-hidden="true"></i><?php echo e($teacherCourseCompletion); ?>% complété</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex flex-col gap-2 sm:flex-row lg:flex-col">
+                                                <a href="<?php echo e($teacherCourseStatsUrl); ?>" class="admin-shell-button admin-shell-button--primary inline-flex items-center justify-center gap-2">
+                                                    <i class="fas fa-chart-line" aria-hidden="true"></i>
+                                                    Statistiques du cours
+                                                </a>
+                                                <a href="<?php echo e($teacherCoursePreviewUrl); ?>" target="_blank" rel="noopener noreferrer" class="admin-shell-button admin-shell-button--secondary inline-flex items-center justify-center gap-2">
+                                                    <i class="fas fa-up-right-from-square" aria-hidden="true"></i>
+                                                    Aperçu
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </article>
+                                <?php endforeach; ?>
                             <?php endif; ?>
                         </div>
-                    </div>
-                </section>
-
-                <section class="admin-shell-panel rounded-3xl p-5">
-                    <form method="get" action="<?php echo e(site_url('admin/course_insights')); ?>" class="grid gap-3 md:grid-cols-[1.2fr_1fr_auto_auto] md:items-end">
-                        <label class="admin-shell-field">
-                            <span class="admin-shell-label inline-flex items-center gap-2"><i class="fas fa-chalkboard-teacher" aria-hidden="true"></i>Enseignant</span>
-                            <select name="teacher_id" class="admin-shell-input">
-                                <option value="0">Tous les enseignants</option>
-                                <?php foreach ($teacherFilters as $teacher): ?>
-                                    <?php $teacherId = (int) ($teacher['teacher_id'] ?? 0); ?>
-                                    <option value="<?php echo e((string) $teacherId); ?>" <?php echo $selectedTeacherId === $teacherId ? 'selected' : ''; ?>>
-                                        <?php echo e(trim((string) ($teacher['teacher_first_name'] ?? '') . ' ' . (string) ($teacher['teacher_last_name'] ?? ''))); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </label>
-
-                        <label class="admin-shell-field">
-                            <span class="admin-shell-label inline-flex items-center gap-2"><i class="fas fa-search" aria-hidden="true"></i>Rechercher un cours</span>
-                            <input type="search" name="q" value="<?php echo e($searchQuery); ?>" class="admin-shell-input" placeholder="Titre, slug ou nom enseignant">
-                        </label>
-
-                        <button type="submit" class="admin-shell-button admin-shell-button--primary inline-flex items-center justify-center gap-2"><i class="fas fa-filter" aria-hidden="true"></i>Filtrer</button>
-                        <a href="<?php echo e(site_url('admin/course_insights')); ?>" class="admin-shell-button admin-shell-button--secondary inline-flex items-center justify-center gap-2"><i class="fas fa-undo" aria-hidden="true"></i>Réinitialiser</a>
-                    </form>
-
-                    <?php if ($teacherFilters !== []): ?>
-                        <div class="mt-4 flex flex-wrap gap-2">
-                            <a href="<?php echo e($buildFilterUrl(0, $searchQuery)); ?>" class="app-segmented-link rounded-full px-3 py-1.5 text-xs font-semibold <?php echo $selectedTeacherId === 0 ? 'app-segmented-link--active' : ''; ?>">
-                                <i class="fas fa-layer-group mr-1" aria-hidden="true"></i>Tous
-                            </a>
-                            <?php foreach ($teacherFilters as $teacher): ?>
-                                <?php
-                                    $teacherId = (int) ($teacher['teacher_id'] ?? 0);
-                                    $teacherName = trim((string) ($teacher['teacher_first_name'] ?? '') . ' ' . (string) ($teacher['teacher_last_name'] ?? ''));
-                                    $teacherCourses = max(0, (int) ($teacher['approved_course_count'] ?? 0));
-                                ?>
-                                <a href="<?php echo e($buildFilterUrl($teacherId, $searchQuery)); ?>" class="app-segmented-link rounded-full px-3 py-1.5 text-xs font-semibold <?php echo $selectedTeacherId === $teacherId ? 'app-segmented-link--active' : ''; ?>">
-                                    <i class="fas fa-user-tie mr-1" aria-hidden="true"></i><?php echo e($teacherName !== '' ? $teacherName : ('#' . $teacherId)); ?>
-                                    <span class="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-200/80 px-1.5 text-[10px] dark:bg-slate-700/80"><?php echo e((string) $teacherCourses); ?></span>
-                                </a>
-                            <?php endforeach; ?>
+                    </section>
+                <?php else: ?>
+                <section class="admin-course-panel p-4 sm:p-5 xl:p-6">
+                    <div class="admin-course-header-grid">
+                        <div class="admin-course-cover-frame">
+                            <?php if ($coverUrl !== ''): ?>
+                                <img src="<?php echo e($coverUrl); ?>" alt="" class="h-full w-full object-cover">
+                            <?php else: ?>
+                                <div class="flex h-full min-h-[8rem] items-center justify-center text-4xl text-slate-400 dark:text-slate-600">
+                                    <i class="fas fa-book-open" aria-hidden="true"></i>
+                                </div>
+                            <?php endif; ?>
                         </div>
-                    <?php endif; ?>
+
+                        <div class="min-w-0">
+                            <div class="admin-course-heading-badges">
+                                <span class="admin-course-badge admin-course-badge--active">Cours validé</span>
+                                <span class="admin-course-badge admin-course-badge--neutral">Analyse de performance</span>
+                            </div>
+                            <h2 class="mt-3 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-[2rem]"><?php echo e($courseTitle); ?></h2>
+                            <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300"><?php echo e($descriptionPreview); ?></p>
+
+                            <div class="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
+                                <span class="admin-course-mini admin-course-mini--teacher"><i class="fas fa-chalkboard-teacher" aria-hidden="true"></i><?php echo e($teacherName !== '' ? $teacherName : 'Non renseigné'); ?></span>
+                                <span class="admin-course-mini admin-course-mini--category"><i class="fas fa-layer-group" aria-hidden="true"></i><?php echo e($categoryName); ?></span>
+                                <span class="admin-course-mini admin-course-mini--date"><i class="far fa-calendar-alt" aria-hidden="true"></i>Créé le <?php echo e($fmtDateTime((string) ($course['created_at'] ?? ''))); ?></span>
+                                <span class="admin-course-chip admin-course-chip--duration"><i class="fas fa-hourglass-half" aria-hidden="true"></i><?php echo e($durationLabel); ?></span>
+                                <span class="admin-course-chip admin-course-chip--price"><i class="fas fa-money-bill-wave" aria-hidden="true"></i><?php echo e($fmtMoney($priceXof)); ?></span>
+                                <span class="admin-course-chip admin-course-chip--level"><i class="fas fa-chart-bar" aria-hidden="true"></i><?php echo e($levelLabelText); ?></span>
+                            </div>
+                        </div>
+
+                        <aside class="admin-course-header-actions">
+                            <a href="<?php echo e($previewUrl); ?>" target="_blank" rel="noopener noreferrer" class="admin-shell-button admin-shell-button--primary inline-flex items-center justify-center gap-2">
+                                <i class="fas fa-up-right-from-square" aria-hidden="true"></i>
+                                Aperçu du cours
+                            </a>
+                            <a href="<?php echo e($backUrl); ?>" class="admin-shell-button admin-shell-button--secondary inline-flex items-center justify-center gap-2">
+                                <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                                Retour aux cours
+                            </a>
+                            <div class="admin-course-summary-panel">
+                                <div class="admin-course-summary-item">
+                                    <span>Mise à jour</span>
+                                    <strong><?php echo e($updatedAt !== '' ? $updatedAt : '-'); ?></strong>
+                                </div>
+                                <div class="admin-course-summary-item">
+                                    <span>Inscrits actifs</span>
+                                    <strong><?php echo e($fmtNumber($students)); ?></strong>
+                                </div>
+                                <div class="admin-course-summary-item">
+                                    <span>Ventes payées</span>
+                                    <strong><?php echo e($fmtNumber($paidUnits)); ?></strong>
+                                </div>
+                                <div class="admin-course-summary-item">
+                                    <span>Total généré</span>
+                                    <strong><?php echo e($fmtMoney($totalRevenue)); ?></strong>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
                 </section>
 
                 <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <article class="app-kpi-card app-kpi-card--blue rounded-2xl border p-4">
-                        <p class="app-kpi-card__head">
-                            <span class="app-kpi-card__icon"><?php echo dashboard_icon_svg('book-open'); ?></span>
-                            <span>Cours approuvés</span>
-                        </p>
-                        <p class="app-kpi-card__value text-2xl"><?php echo e((string) $totalCourses); ?></p>
-                        <p class="app-kpi-card__meta"><?php echo e((string) $coursesWithRevenue); ?> générant des revenus</p>
+                    <article class="admin-course-stats-kpi admin-course-stats-kpi--blue">
+                        <div class="admin-course-stats-kpi__icon"><i class="fas fa-user-graduate" aria-hidden="true"></i></div>
+                        <p class="admin-course-stats-kpi__label">Inscrits actifs</p>
+                        <p class="admin-course-stats-kpi__value"><?php echo e($fmtNumber($students)); ?></p>
+                        <p class="admin-course-stats-kpi__meta">Apprenants actuellement actifs</p>
                     </article>
 
-                    <article class="app-kpi-card app-kpi-card--sky rounded-2xl border p-4">
-                        <p class="app-kpi-card__head">
-                            <span class="app-kpi-card__icon"><?php echo dashboard_icon_svg('users'); ?></span>
-                            <span>Inscrits actifs</span>
-                        </p>
-                        <p class="app-kpi-card__value text-2xl"><?php echo e(number_format($totalEnrollments, 0, ',', ' ')); ?></p>
-                        <p class="app-kpi-card__meta"><?php echo e(number_format($totalPaidUnits, 0, ',', ' ')); ?> vente(s) payées</p>
+                    <article class="admin-course-stats-kpi admin-course-stats-kpi--green">
+                        <div class="admin-course-stats-kpi__icon"><i class="fas fa-wallet" aria-hidden="true"></i></div>
+                        <p class="admin-course-stats-kpi__label">Montant total généré</p>
+                        <p class="admin-course-stats-kpi__value"><?php echo e($fmtMoney($totalRevenue)); ?></p>
+                        <p class="admin-course-stats-kpi__meta"><?php echo e($fmtNumber($paidUnits)); ?> commande(s) comptabilisées</p>
                     </article>
 
-                    <article class="app-kpi-card app-kpi-card--emerald rounded-2xl border p-4">
-                        <p class="app-kpi-card__head">
-                            <span class="app-kpi-card__icon"><?php echo dashboard_icon_svg('wallet'); ?></span>
-                            <span>Montant total généré</span>
-                        </p>
-                        <p class="app-kpi-card__value text-2xl"><?php echo e($fmtMoney($totalRevenue)); ?></p>
-                        <p class="app-kpi-card__meta">Direct : <?php echo e($fmtMoney($directRevenue)); ?></p>
+                    <article class="admin-course-stats-kpi admin-course-stats-kpi--amber">
+                        <div class="admin-course-stats-kpi__icon"><i class="fas fa-star" aria-hidden="true"></i></div>
+                        <p class="admin-course-stats-kpi__label">Note moyenne</p>
+                        <p class="admin-course-stats-kpi__value"><?php echo e($ratingLabel($ratingAverage, $ratingCount)); ?></p>
+                        <p class="admin-course-stats-kpi__meta"><?php echo e($fmtNumber($ratingCount)); ?> avis publiés</p>
                     </article>
 
-                    <article class="app-kpi-card app-kpi-card--amber rounded-2xl border p-4">
-                        <p class="app-kpi-card__head">
-                            <span class="app-kpi-card__icon"><?php echo dashboard_icon_svg('ticket'); ?></span>
-                            <span>Promos / Entreprise</span>
-                        </p>
-                        <p class="app-kpi-card__value text-2xl"><?php echo e($fmtMoney($promoRevenue + $enterpriseRevenue)); ?></p>
-                        <p class="app-kpi-card__meta">Promo : <?php echo e($fmtMoney($promoRevenue)); ?> &middot; Entreprise : <?php echo e($fmtMoney($enterpriseRevenue)); ?></p>
+                    <article class="admin-course-stats-kpi admin-course-stats-kpi--indigo">
+                        <div class="admin-course-stats-kpi__icon"><i class="fas fa-circle-check" aria-hidden="true"></i></div>
+                        <p class="admin-course-stats-kpi__label">Taux de complétion</p>
+                        <p class="admin-course-stats-kpi__value"><?php echo e($fmtNumber($completionRate)); ?>%</p>
+                        <p class="admin-course-stats-kpi__meta">Basé sur les leçons terminées</p>
                     </article>
                 </section>
 
-                <?php if ($selectedTeacher !== null): ?>
-                    <?php
-                        $selectedTeacherName = trim((string) ($selectedTeacher['teacher_first_name'] ?? '') . ' ' . (string) ($selectedTeacher['teacher_last_name'] ?? ''));
-                        $selectedTeacherCourses = max(0, (int) ($selectedTeacher['approved_course_count'] ?? 0));
-                        $selectedTeacherEnrollments = max(0, (int) ($selectedTeacher['enrolled_students_count'] ?? 0));
-                        $selectedTeacherRevenue = max(0, (int) ($selectedTeacher['total_generated_xof'] ?? 0));
-                    ?>
-                    <section class="admin-shell-card rounded-3xl p-4">
-                        <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                            Filtre actif : <?php echo e($selectedTeacherName !== '' ? $selectedTeacherName : ('Enseignant #' . $selectedTeacherId)); ?>
-                        </p>
-                        <p class="mt-1 text-xs text-slate-600 dark:text-slate-300">
-                            <?php echo e((string) $selectedTeacherCourses); ?> cours &middot;
-                            <?php echo e(number_format($selectedTeacherEnrollments, 0, ',', ' ')); ?> inscrits &middot;
-                            <?php echo e($fmtMoney($selectedTeacherRevenue)); ?>
-                        </p>
+                <section class="grid gap-5 2xl:grid-cols-[minmax(0,1.3fr)_minmax(22rem,0.95fr)]">
+                    <section class="admin-course-panel p-4 sm:p-5">
+                        <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h3 class="text-base font-black text-slate-900 dark:text-white">Évolution des inscriptions</h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Lecture directe sur les six derniers mois</p>
+                            </div>
+                            <span class="admin-course-badge admin-course-badge--neutral">Données réelles</span>
+                        </div>
+                        <div id="admin-course-insights-chart" class="mt-4" data-chart="<?php echo e($chartJson); ?>"></div>
                     </section>
+
+                    <section class="admin-course-panel p-4 sm:p-5">
+                        <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h3 class="text-base font-black text-slate-900 dark:text-white">Acquisition et revenus</h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Inscrits, ventes et chiffre par canal</p>
+                            </div>
+                            <span class="admin-course-badge admin-course-badge--neutral">Inscrits · Total · Direct · Coupon / promo · Entreprise</span>
+                        </div>
+
+                        <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                            <?php foreach ($channelCards as $card): ?>
+                                <article class="admin-course-channel-card admin-course-channel-card--<?php echo e((string) $card['tone']); ?>">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p class="admin-course-channel-card__label"><?php echo e((string) $card['label']); ?></p>
+                                            <p class="admin-course-channel-card__revenue"><?php echo e($fmtMoney((int) $card['revenue'])); ?></p>
+                                        </div>
+                                        <span class="admin-course-badge admin-course-badge--neutral"><?php echo e($fmtNumber((int) $card['units'])); ?> vente(s)</span>
+                                    </div>
+                                    <div class="mt-4 grid gap-2 sm:grid-cols-2">
+                                        <div class="admin-course-channel-card__metric">
+                                            <span>Inscrits</span>
+                                            <strong><?php echo e($fmtNumber((int) $card['students'])); ?></strong>
+                                        </div>
+                                        <div class="admin-course-channel-card__metric">
+                                            <span>Ventes</span>
+                                            <strong><?php echo e($fmtNumber((int) $card['units'])); ?></strong>
+                                        </div>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                    </section>
+                </section>
                 <?php endif; ?>
-
-                <section class="admin-shell-card rounded-3xl p-5">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <h3 class="inline-flex items-center gap-2 text-lg font-semibold font-display text-slate-900 dark:text-slate-100"><i class="fas fa-list text-primary-600 dark:text-primary-300" aria-hidden="true"></i>Liste des cours approuvés</h3>
-                        <span class="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400"><i class="fas fa-table" aria-hidden="true"></i><?php echo e((string) count($courseRows)); ?> ligne(s)</span>
-                    </div>
-
-                    <?php if ($courseRows === []): ?>
-                        <div class="mt-4 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950/30 dark:text-slate-300">
-                            <i class="fas fa-info-circle mr-1 text-primary-600 dark:text-primary-300" aria-hidden="true"></i>Aucun cours approuvé ne correspond aux filtres actuels.
-                        </div>
-                    <?php else: ?>
-                        <div class="mt-4 overflow-x-auto rounded-2xl border border-slate-200/70 bg-white/80 dark:border-slate-800 dark:bg-slate-950/40">
-                            <table class="admin-shell-table min-w-[980px] text-sm">
-                                <thead>
-                                    <tr>
-                                        <th class="px-4 py-3">Cours</th>
-                                        <th class="px-4 py-3">Enseignant</th>
-                                        <th class="px-4 py-3 text-right">Inscrits</th>
-                                        <th class="px-4 py-3 text-right">Total</th>
-                                        <th class="px-4 py-3 text-right">Direct</th>
-                                        <th class="px-4 py-3 text-right">Coupon / promo</th>
-                                        <th class="px-4 py-3 text-right">Entreprise</th>
-                                        <th class="px-4 py-3 text-right">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($courseRows as $row): ?>
-                                        <?php
-                                            $courseId = (int) ($row['id'] ?? 0);
-                                            $teacherName = trim((string) ($row['teacher_first_name'] ?? '') . ' ' . (string) ($row['teacher_last_name'] ?? ''));
-                                            $enrolledCount = max(0, (int) ($row['enrolled_count'] ?? 0));
-                                            $courseTotalRevenue = max(0, (int) ($row['total_generated_xof'] ?? 0));
-                                            $courseDirectRevenue = max(0, (int) ($row['direct_generated_xof'] ?? 0));
-                                            $coursePromoRevenue = max(0, (int) ($row['promo_generated_xof'] ?? 0));
-                                            $courseEnterpriseRevenue = max(0, (int) ($row['enterprise_generated_xof'] ?? 0));
-                                            $courseDirectUnits = max(0, (int) ($row['direct_units'] ?? 0));
-                                            $coursePromoUnits = max(0, (int) ($row['promo_units'] ?? 0));
-                                            $courseEnterpriseUnits = max(0, (int) ($row['enterprise_units'] ?? 0));
-                                        ?>
-                                        <tr>
-                                            <td class="px-4 py-3 align-top">
-                                                <p class="font-semibold text-slate-900 dark:text-slate-100"><?php echo e((string) ($row['title'] ?? 'Cours')); ?></p>
-                                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Créé le <?php echo e($fmtDate((string) ($row['created_at'] ?? ''))); ?></p>
-                                            </td>
-                                            <td class="px-4 py-3 align-top text-slate-700 dark:text-slate-200">
-                                                <?php echo e($teacherName !== '' ? $teacherName : ('#' . (int) ($row['teacher_id'] ?? 0))); ?>
-                                            </td>
-                                            <td class="px-4 py-3 text-right align-top font-medium"><?php echo e(number_format($enrolledCount, 0, ',', ' ')); ?></td>
-                                            <td class="px-4 py-3 text-right align-top font-semibold"><?php echo e($fmtMoney($courseTotalRevenue)); ?></td>
-                                            <td class="px-4 py-3 text-right align-top">
-                                                <p><?php echo e($fmtMoney($courseDirectRevenue)); ?></p>
-                                                <p class="text-[11px] text-slate-500 dark:text-slate-400"><?php echo e(number_format($courseDirectUnits, 0, ',', ' ')); ?> vente(s)</p>
-                                            </td>
-                                            <td class="px-4 py-3 text-right align-top">
-                                                <p><?php echo e($fmtMoney($coursePromoRevenue)); ?></p>
-                                                <p class="text-[11px] text-slate-500 dark:text-slate-400"><?php echo e(number_format($coursePromoUnits, 0, ',', ' ')); ?> vente(s)</p>
-                                            </td>
-                                            <td class="px-4 py-3 text-right align-top">
-                                                <p><?php echo e($fmtMoney($courseEnterpriseRevenue)); ?></p>
-                                                <p class="text-[11px] text-slate-500 dark:text-slate-400"><?php echo e(number_format($courseEnterpriseUnits, 0, ',', ' ')); ?> place(s)</p>
-                                            </td>
-                                            <td class="px-4 py-3 text-right align-top">
-                                                <a href="<?php echo e(site_url('admin/course_preview?id=' . $courseId)); ?>" class="admin-shell-button admin-shell-button--secondary" target="_blank" rel="noopener">
-                                                    <i class="fas fa-external-link-alt mr-1" aria-hidden="true"></i>Ouvrir
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    <?php endif; ?>
-                </section>
-
-                <section class="admin-shell-card rounded-3xl p-5">
-                    <h3 class="inline-flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-100"><i class="fas fa-chart-pie text-primary-600 dark:text-primary-300" aria-hidden="true"></i>Répartition globale des ventes</h3>
-                    <div class="mt-3 grid gap-3 sm:grid-cols-3">
-                        <article class="rounded-2xl border border-slate-200/80 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-950/45">
-                            <p class="inline-flex items-center gap-1.5 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400"><i class="fas fa-credit-card" aria-hidden="true"></i>Paiement direct</p>
-                            <p class="mt-2 text-xl font-semibold text-slate-900 dark:text-slate-100"><?php echo e($fmtMoney($directRevenue)); ?></p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400"><?php echo e(number_format($directUnits, 0, ',', ' ')); ?> vente(s)</p>
-                        </article>
-                        <article class="rounded-2xl border border-slate-200/80 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-950/45">
-                            <p class="inline-flex items-center gap-1.5 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400"><i class="fas fa-ticket-alt" aria-hidden="true"></i>Coupon / promotion</p>
-                            <p class="mt-2 text-xl font-semibold text-slate-900 dark:text-slate-100"><?php echo e($fmtMoney($promoRevenue)); ?></p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400"><?php echo e(number_format($promoUnits, 0, ',', ' ')); ?> vente(s)</p>
-                        </article>
-                        <article class="rounded-2xl border border-slate-200/80 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-950/45">
-                            <p class="inline-flex items-center gap-1.5 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400"><i class="fas fa-building" aria-hidden="true"></i>Canal entreprise</p>
-                            <p class="mt-2 text-xl font-semibold text-slate-900 dark:text-slate-100"><?php echo e($fmtMoney($enterpriseRevenue)); ?></p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400"><?php echo e(number_format($enterpriseUnits, 0, ',', ' ')); ?> place(s)</p>
-                        </article>
-                    </div>
-                </section>
             </main>
         </div>
     </div>
 </body>
 </html>
-

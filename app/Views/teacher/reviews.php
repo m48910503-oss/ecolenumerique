@@ -594,7 +594,7 @@ $teacherTopContextLabel = $detailMode ? $selectedCourseTitle : 'Par cours';
         </div>
 
         <div id="courses-grid" class="space-y-8">
-          <section class="space-y-4" data-course-section>
+          <section class="space-y-4" data-course-section data-section-key="reviewed">
             <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h2 class="text-lg font-bold text-gray-900 dark:text-white">Cours avec avis</h2>
@@ -607,16 +607,17 @@ $teacherTopContextLabel = $detailMode ? $selectedCourseTitle : 'Par cours';
                 Aucun cours avec avis pour le moment.
               </div>
             <?php else: ?>
-              <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+              <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" data-course-grid>
                 <?php foreach ($activeReviewedCards as $courseCard): ?>
                   <?php echo $renderCourseCard($courseCard); ?>
                 <?php endforeach; ?>
               </div>
               <p class="hidden rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" data-section-empty-filter>Aucun cours ne correspond aux filtres.</p>
+              <div class="hidden pt-2" data-course-pagination></div>
             <?php endif; ?>
           </section>
 
-          <section class="space-y-4" data-course-section>
+          <section class="space-y-4" data-course-section data-section-key="no_reviews">
             <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h2 class="text-lg font-bold text-gray-900 dark:text-white">Cours sans avis</h2>
@@ -629,16 +630,17 @@ $teacherTopContextLabel = $detailMode ? $selectedCourseTitle : 'Par cours';
                 Tous les cours actifs ont déjà reçu au moins un avis.
               </div>
             <?php else: ?>
-              <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+              <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" data-course-grid>
                 <?php foreach ($activePendingCards as $courseCard): ?>
                   <?php echo $renderCourseCard($courseCard); ?>
                 <?php endforeach; ?>
               </div>
               <p class="hidden rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" data-section-empty-filter>Aucun cours ne correspond aux filtres.</p>
+              <div class="hidden pt-2" data-course-pagination></div>
             <?php endif; ?>
           </section>
 
-          <section class="space-y-4" data-course-section>
+          <section class="space-y-4" data-course-section data-section-key="archived">
             <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h2 class="text-lg font-bold text-gray-900 dark:text-white">Historique archivé</h2>
@@ -651,12 +653,13 @@ $teacherTopContextLabel = $detailMode ? $selectedCourseTitle : 'Par cours';
                 Aucun cours archivé à afficher.
               </div>
             <?php else: ?>
-              <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+              <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" data-course-grid>
                 <?php foreach ($archivedCourseCards as $courseCard): ?>
                   <?php echo $renderCourseCard($courseCard); ?>
                 <?php endforeach; ?>
               </div>
               <p class="hidden rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" data-section-empty-filter>Aucun cours ne correspond aux filtres.</p>
+              <div class="hidden pt-2" data-course-pagination></div>
             <?php endif; ?>
           </section>
         </div>
@@ -768,7 +771,7 @@ $teacherTopContextLabel = $detailMode ? $selectedCourseTitle : 'Par cours';
               >
             </div>
 
-            <div class="max-w-5xl" id="reviews-list">
+            <div class="max-w-5xl" id="reviews-list" data-review-list>
               <?php if ($detailRows === []): ?>
                 <p class="rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" data-review-empty-state>Aucun avis visible pour le moment.</p>
               <?php else: ?>
@@ -898,6 +901,7 @@ $teacherTopContextLabel = $detailMode ? $selectedCourseTitle : 'Par cours';
                     </article>
                   <?php endforeach; ?>
                 </div>
+                <div class="mt-5 hidden" data-review-pagination></div>
               <?php endif; ?>
             </div>
           <?php endif; ?>

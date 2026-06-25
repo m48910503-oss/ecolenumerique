@@ -13,11 +13,9 @@ $perPage = max(1, (int) ($perPage ?? 10));
 $unreadCount = max(0, (int) ($unreadCount ?? 0));
 $allowedScopes = is_array($allowedScopes ?? null) ? $allowedScopes : ['all', 'unread', 'important', 'support', 'admin'];
 $defaultScope = (string) ($defaultScope ?? 'all');
-$siteLogoUrl = (string) ($siteLogoUrl ?? ''); 
 $hasAdminAccess = !empty($hasAdminAccess);
 
 $supportUrl = site_url('admin/support');
-$announcementsUrl = site_url('admin/announcements');
 
 $scopeFilters = [
     'all' => 'Toutes',
@@ -39,20 +37,6 @@ $importanceMeta = [
     'important' => ['label' => 'Important', 'class' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'],
     'urgent' => ['label' => 'Urgent', 'class' => 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'],
 ];
-$scopeIcons = [
-    'all' => 'bell',
-    'unread' => 'bell',
-    'important' => 'bell',
-    'support' => 'bell',
-    'learning' => 'bell',
-    'business' => 'bell',
-    'admin' => 'bell',
-    'other' => 'bell',
-];
-
-$icon = static function (string $name): string {
-    return function_exists('dashboard_icon_svg') ? (string) dashboard_icon_svg($name) : '';
-};
 
 $baseQuery = $_GET;
 unset($baseQuery['scope'], $baseQuery['action'], $baseQuery['notif_id'], $baseQuery['_csrf'], $baseQuery['open'], $baseQuery['page']);
@@ -140,7 +124,21 @@ $scopeToneMeta = [
     ],
 ];
 $unreadLabel = $unreadCount === 1 ? '1 non lue' : ($unreadCount . ' non lues');
-$totalLabel = $totalItems === 1 ? '1 notification' : ($totalItems . ' notifications');
+$notificationFilterButtonClass = static fn (bool $active): string => $active
+    ? 'inline-flex items-center gap-2 rounded-full border border-blue-600 bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:border-blue-700 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-blue-400 dark:bg-blue-500 dark:hover:border-blue-300 dark:hover:bg-blue-400 dark:focus-visible:ring-offset-slate-950'
+    : 'inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300 dark:hover:border-blue-500/40 dark:hover:bg-slate-800 dark:hover:text-white dark:focus-visible:ring-offset-slate-950';
+$notificationFilterBadgeClass = static fn (bool $active): string => $active
+    ? 'inline-flex min-w-[1.45rem] items-center justify-center rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-bold leading-none text-white'
+    : 'inline-flex min-w-[1.45rem] items-center justify-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold leading-none text-slate-600 dark:bg-slate-700 dark:text-slate-100';
+$notificationFilterIconClass = static fn (string $scopeKey, bool $active): string => $active
+    ? 'text-white'
+    : ($scopeKey === 'support'
+        ? 'text-sky-500 dark:text-sky-300'
+        : ($scopeKey === 'important'
+            ? 'text-amber-500 dark:text-amber-300'
+            : ($scopeKey === 'admin'
+                ? 'text-rose-500 dark:text-rose-300'
+                : 'text-primary-500 dark:text-primary-300')));
 $adminPageScripts = ['notifications_page.js'];
 ?>
 <!doctype html>
@@ -165,117 +163,34 @@ $adminPageScripts = ['notifications_page.js'];
 
         <div class="admin-shell-main flex min-w-0 flex-1 flex-col">
             <?php
-            $adminTopTitle = 'Notifications';
-            $adminTopSubtitle = $hasAdminAccess ? 'Administration' : 'Support';
-            $adminTopBadge = $unreadCount > 0 ? $unreadLabel : 'Aucune alerte';
-            $adminTopBadgeTone = $unreadCount > 0 ? 'urgent' : 'done';
-            $adminTopActions = [
-                ['label' => 'Tableau de bord', 'url' => $dashboardUrl, 'tone' => 'neutral'],
-                ['label' => 'Annonces générales', 'url' => $announcementsUrl, 'tone' => 'neutral', 'visible' => $hasAdminAccess],
-                ['label' => 'Tickets support', 'url' => $supportUrl, 'tone' => 'neutral'],
-            ];
+$adminTopTitle = 'Notifications';
+$adminTopSubtitle = $hasAdminAccess ? 'Administration' : 'Support';
+$adminTopBadge = $unreadCount > 0 ? $unreadLabel : 'Aucune alerte';
+$adminTopBadgeTone = $unreadCount > 0 ? 'urgent' : 'done';
             ?>
             <?php require __DIR__ . '/_topbar.php'; ?>
 
             <main class="admin-shell-content admin-shell-dense admin-notifications admin-notifications-inspired px-4 py-5 pb-32 sm:px-6 sm:pb-24 space-y-5">
-                <section class="admin-shell-card admin-notifications-hero rounded-3xl border border-slate-200/70 bg-white/90 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950/40">
-                    <div class="flex flex-wrap items-start justify-between gap-4">
-                        <div class="flex items-center gap-3">
-                            <div class="admin-notifications-hero__logo h-12 w-12 rounded-xl border border-slate-200 bg-white flex items-center justify-center overflow-hidden dark:border-slate-700 dark:bg-slate-900">
-                                <?php if ($siteLogoUrl !== ''): ?>
-                                    <img src="<?php echo e($siteLogoUrl); ?>" alt="Logo" class="h-full w-full object-contain">
-                                <?php else: ?>
-                                    <span class="text-[10px] font-bold text-slate-600 dark:text-slate-200"><?php echo $hasAdminAccess ? 'ADM' : 'SUP'; ?></span>
-                                <?php endif; ?>
-                            </div>
-                            <div>
-                                <p class="inline-flex items-center gap-2 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400"><i class="fas <?php echo $hasAdminAccess ? 'fa-user-shield' : 'fa-headset'; ?>" aria-hidden="true"></i><?php echo $hasAdminAccess ? 'Espace administrateur' : 'Centre de support'; ?></p>
-                                <h1 class="inline-flex items-center gap-2 text-lg font-display font-semibold text-slate-900 dark:text-slate-100"><i class="fas fa-bell text-primary-600 dark:text-primary-300" aria-hidden="true"></i>Centre de notifications</h1>
-                                <p class="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400"><i class="fas fa-envelope-open-text" aria-hidden="true"></i><?php echo e($unreadLabel); ?></p>
-                            </div>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <form method="post" action="<?php echo e(site_url('admin/notifications')); ?>">
-                                <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
-                                <input type="hidden" name="action" value="mark_all_read">
-                                <input type="hidden" name="scope" value="<?php echo e($scope); ?>">
-                                <input type="hidden" name="page" value="<?php echo e((string) $page); ?>">
-                                <button class="inline-flex items-center gap-2 rounded-full border border-blue-600 bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:border-blue-700 hover:bg-blue-700 dark:border-blue-400 dark:bg-blue-500 dark:hover:bg-blue-400" type="submit">
-                                    <i class="fas fa-check-circle" aria-hidden="true"></i>
-                                    <span>Tout marquer comme lu</span>
-                                </button>
-                            </form>
-                            <a class="app-segmented-link inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold" href="<?php echo e($supportUrl); ?>">
-                                <i class="fas fa-life-ring" aria-hidden="true"></i>
-                                <span>Tickets support</span>
-                            </a>
-                            <?php if ($hasAdminAccess): ?>
-                                <a class="app-segmented-link inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold" href="<?php echo e($announcementsUrl); ?>">
-                                    <i class="fas fa-bullhorn" aria-hidden="true"></i>
-                                    <span>Annonces</span>
-                                </a>
-                            <?php endif; ?>
-                            <a class="app-segmented-link inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold" href="<?php echo e($dashboardUrl); ?>">
-                                <i class="fas fa-tachometer-alt" aria-hidden="true"></i>
-                                <span>Tableau de bord</span>
-                            </a>
-                        </div>
-                    </div>
-                </section>
-
                 <?php if ($success !== ''): ?>
                     <section class="admin-shell-alert admin-shell-alert--success">
                         <i class="fas fa-check-circle mr-1" aria-hidden="true"></i><?php echo e($success); ?>
                     </section>
                 <?php endif; ?>
 
-                <section class="admin-notifications-kpis grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <article class="app-kpi-card app-kpi-card--blue rounded-2xl border p-4">
-                        <p class="app-kpi-card__head">
-                            <span class="app-kpi-card__icon" aria-hidden="true"><i class="fas fa-bell"></i></span>
-                            <span>Total</span>
-                        </p>
-                        <p class="app-kpi-card__value text-2xl"><?php echo e((string) (int) ($scopeCounts['all'] ?? 0)); ?></p>
-                        <p class="app-kpi-card__meta"><?php echo e($totalLabel); ?></p>
-                    </article>
-                    <article class="app-kpi-card app-kpi-card--rose rounded-2xl border p-4">
-                        <p class="app-kpi-card__head">
-                            <span class="app-kpi-card__icon" aria-hidden="true"><i class="fas fa-envelope"></i></span>
-                            <span>Non lues</span>
-                        </p>
-                        <p class="app-kpi-card__value text-2xl"><?php echo e((string) (int) ($scopeCounts['unread'] ?? $unreadCount)); ?></p>
-                        <p class="app-kpi-card__meta">&Agrave; traiter rapidement</p>
-                    </article>
-                    <article class="app-kpi-card app-kpi-card--amber rounded-2xl border p-4">
-                        <p class="app-kpi-card__head">
-                            <span class="app-kpi-card__icon" aria-hidden="true"><i class="fas fa-exclamation-triangle"></i></span>
-                            <span>Importantes</span>
-                        </p>
-                        <p class="app-kpi-card__value text-2xl"><?php echo e((string) (int) ($scopeCounts['important'] ?? 0)); ?></p>
-                        <p class="app-kpi-card__meta">&Agrave; surveiller</p>
-                    </article>
-                    <article class="app-kpi-card app-kpi-card--sky rounded-2xl border p-4">
-                        <p class="app-kpi-card__head">
-                            <span class="app-kpi-card__icon" aria-hidden="true"><i class="fas fa-headset"></i></span>
-                            <span>Support</span>
-                        </p>
-                        <p class="app-kpi-card__value text-2xl"><?php echo e((string) (int) ($scopeCounts['support'] ?? 0)); ?></p>
-                        <p class="app-kpi-card__meta">Demandes en attente</p>
-                    </article>
-                </section>
-
-                <section class="admin-notifications-filter sticky top-2 z-20 rounded-2xl border border-slate-200/80 bg-white/95 p-2 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+                <section class="admin-notifications-filter sticky top-2 z-20 overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-r from-white via-slate-50 to-sky-50/70 p-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
                     <div class="flex flex-wrap items-center gap-2">
                         <?php foreach ($visibleFilters as $scopeKey => $scopeLabel): ?>
                             <?php
                                 $active = $scope === $scopeKey;
                                 $count = (int) ($scopeCounts[$scopeKey] ?? 0);
-                                $scopeIcon = $scopeIcons[$scopeKey] ?? 'bell';
+                                $buttonClass = $notificationFilterButtonClass($active);
+                                $badgeClass = $notificationFilterBadgeClass($active);
+                                $iconClass = $notificationFilterIconClass($scopeKey, $active);
                             ?>
-                            <a href="<?php echo e($buildScopeUrl($scopeKey)); ?>" class="app-segmented-link inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold<?php echo $active ? ' app-segmented-link--active' : ''; ?>">
-                                <i class="fas <?php echo e($scopeKey === 'support' ? 'fa-headset' : ($scopeKey === 'important' ? 'fa-exclamation-triangle' : ($scopeKey === 'admin' ? 'fa-user-shield' : ($scopeKey === 'unread' ? 'fa-envelope' : 'fa-bell')))); ?>" aria-hidden="true"></i>
+                            <a href="<?php echo e($buildScopeUrl($scopeKey)); ?>" class="<?php echo e($buttonClass); ?>" aria-current="<?php echo $active ? 'page' : 'false'; ?>">
+                                <i class="fas <?php echo e($scopeKey === 'support' ? 'fa-headset' : ($scopeKey === 'important' ? 'fa-exclamation-triangle' : ($scopeKey === 'admin' ? 'fa-user-shield' : ($scopeKey === 'unread' ? 'fa-envelope' : 'fa-bell')))); ?> <?php echo e($iconClass); ?>" aria-hidden="true"></i>
                                 <span><?php echo e($scopeLabel); ?></span>
-                                <span class="app-shell-chip__badge"><?php echo e((string) $count); ?></span>
+                                <span class="<?php echo e($badgeClass); ?>"><?php echo e((string) $count); ?></span>
                             </a>
                         <?php endforeach; ?>
                     </div>

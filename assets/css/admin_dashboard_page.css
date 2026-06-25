@@ -41,25 +41,6 @@
   min-height: 100vh;
 }
 
-.admin-dashboard-sidebar {
-  transition: transform 0.25s ease;
-}
-
-.admin-dashboard-backdrop {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-}
-
-.admin-dashboard-page.sidebar-open .admin-dashboard-sidebar {
-  transform: translateX(0) !important;
-}
-
-.admin-dashboard-page.sidebar-open .admin-dashboard-backdrop {
-  opacity: 1;
-  pointer-events: auto;
-}
-
 .admin-chart-canvas {
   display: block;
   height: 100%;
@@ -85,14 +66,4 @@
 .admin-dashboard-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(148, 163, 184, 0.55);
   border-radius: 999px;
-}
-
-@media (min-width: 1024px) {
-  .admin-dashboard-sidebar {
-    transform: none !important;
-  }
-
-  .admin-dashboard-backdrop {
-    display: none;
-  }
 }

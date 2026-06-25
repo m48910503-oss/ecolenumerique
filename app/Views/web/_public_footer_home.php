@@ -1,15 +1,23 @@
 <?php
 $appFromName = defined('APP_FROM_NAME') ? (string) APP_FROM_NAME : 'École Numérique';
-$platformName = trim((string) ($platformName ?? platform_setting_get('site_name', $appFromName)));
+$platformName = trim((string) ($platformName ?? ($siteName ?? platform_setting_get('site_name', $appFromName))));
 if ($platformName === '') {
     $platformName = $appFromName;
 }
+$siteTagline = trim((string) ($siteTagline ?? ''));
+$siteDescription = trim((string) ($siteDescription ?? ''));
+$supportEmail = trim((string) ($supportEmail ?? ''));
+$supportPhone = trim((string) ($supportPhone ?? ''));
+$supportWhatsapp = trim((string) ($supportWhatsapp ?? ''));
+$siteAddress = trim((string) ($siteAddress ?? ''));
+$supportPhoneDigits = preg_replace('/\D+/', '', $supportPhone) ?: '';
+$supportWhatsappDigits = preg_replace('/\D+/', '', $supportWhatsapp) ?: '';
 
 $platformLogoUrl = trim((string) ($platformLogoUrl ?? ($siteLogoUrl ?? '')));
 $platformLogoAlt = trim((string) ($platformLogoAlt ?? ('Logo ' . $platformName)));
 $homeUrl = trim((string) ($homeUrl ?? site_url('')));
 $catalogueUrl = trim((string) ($catalogueUrl ?? site_url('catalogue')));
-$teacherApplyUrl = trim((string) ($teacherApplyUrl ?? site_url('teacher/apply')));
+$teacherApplyUrl = trim((string) ($teacherApplyUrl ?? site_url('become-teacher')));
 $supportUrl = trim((string) ($supportUrl ?? site_url('support')));
 $privacyUrl = trim((string) ($privacyUrl ?? site_url('privacy')));
 $cguUrl = trim((string) ($cguUrl ?? site_url('cgu')));
@@ -41,9 +49,16 @@ $footerSupportLinks = [
               <i class="fas fa-graduation-cap" aria-hidden="true"></i>
             </span>
           <?php endif; ?>
-          <span><?php echo e($platformName); ?></span>
+          <span class="min-w-0">
+            <span class="block"><?php echo e($platformName); ?></span>
+            <?php if ($siteTagline !== ''): ?>
+              <span class="mt-1 block text-xs font-medium text-slate-400"><?php echo e($siteTagline); ?></span>
+            <?php endif; ?>
+          </span>
         </a>
-        <p class="mt-4 max-w-md text-sm leading-7 text-slate-400">Formation claire, mobile et adaptée à l’Afrique francophone.</p>
+        <p class="mt-4 max-w-md text-sm leading-7 text-slate-400">
+          <?php echo e($siteDescription !== '' ? $siteDescription : 'Formation claire, mobile et adaptée à l’Afrique francophone.'); ?>
+        </p>
         <div class="mt-6 flex flex-wrap gap-3">
           <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-slate-200"><i class="fas fa-wallet text-blue-300" aria-hidden="true"></i> Mobile Money</span>
           <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-slate-200"><i class="fas fa-comments text-emerald-300" aria-hidden="true"></i> WhatsApp</span>
@@ -75,25 +90,44 @@ $footerSupportLinks = [
       </div>
 
       <div>
-        <h3 class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Rester informé</h3>
-        <p class="mt-5 text-sm leading-6 text-slate-400">Recevez les nouvelles formations, les conseils utiles et les offres ponctuelles.</p>
-        <div class="mt-5 flex overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
-          <input type="email" placeholder="Votre email" class="w-full bg-transparent px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none">
-          <a href="<?php echo e($registerUrl); ?>" class="inline-flex items-center justify-center bg-blue-600 px-5 text-sm font-semibold text-white transition hover:bg-blue-500">S'inscrire</a>
-        </div>
-        <div class="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-slate-300">
-          <p class="font-semibold text-white">Besoin d’aide pour choisir ?</p>
-          <p class="mt-2 text-slate-400">Notre équipe peut vous orienter vers la bonne formation selon votre objectif.</p>
-          <a href="<?php echo e($supportUrl); ?>" class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 transition hover:text-cyan-200">
-            <i class="fas fa-comments" aria-hidden="true"></i>
-            Contacter le support
-          </a>
-        </div>
+        <h3 class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Contact</h3>
+        <ul class="mt-5 space-y-3 text-sm">
+          <?php if ($supportEmail !== ''): ?>
+            <li>
+              <a href="<?php echo e('mailto:' . $supportEmail); ?>" class="inline-flex items-center gap-2 transition hover:text-white">
+                <i class="fas fa-envelope text-cyan-300" aria-hidden="true"></i>
+                <span><?php echo e($supportEmail); ?></span>
+              </a>
+            </li>
+          <?php endif; ?>
+          <?php if ($supportPhone !== ''): ?>
+            <li>
+              <a href="<?php echo e($supportPhoneDigits !== '' ? 'tel:' . $supportPhoneDigits : '#'); ?>" class="inline-flex items-center gap-2 transition hover:text-white">
+                <i class="fas fa-phone text-emerald-300" aria-hidden="true"></i>
+                <span><?php echo e($supportPhone); ?></span>
+              </a>
+            </li>
+          <?php endif; ?>
+          <?php if ($supportWhatsapp !== ''): ?>
+            <li>
+              <a href="<?php echo e($supportWhatsappDigits !== '' ? 'https://wa.me/' . $supportWhatsappDigits : $supportUrl); ?>" class="inline-flex items-center gap-2 transition hover:text-white" target="<?php echo e($supportWhatsappDigits !== '' ? '_blank' : '_self'); ?>" rel="<?php echo e($supportWhatsappDigits !== '' ? 'noopener noreferrer' : ''); ?>">
+                <i class="fab fa-whatsapp text-green-300" aria-hidden="true"></i>
+                <span><?php echo e($supportWhatsapp); ?></span>
+              </a>
+            </li>
+          <?php endif; ?>
+          <?php if ($siteAddress !== ''): ?>
+            <li class="inline-flex items-start gap-2 text-slate-400">
+              <i class="fas fa-location-dot mt-0.5 text-orange-300" aria-hidden="true"></i>
+              <span><?php echo e($siteAddress); ?></span>
+            </li>
+          <?php endif; ?>
+        </ul>
       </div>
     </div>
 
     <div class="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-sm text-slate-500 md:flex-row md:items-center md:justify-between">
-      <p>&copy; <?php echo e((string) date('Y')); ?> <?php echo e($platformName); ?>. Tous droits réservés.</p>
+      <p><?php echo e($footerText !== '' ? $footerText : ('© ' . date('Y') . ' ' . $platformName . '. Tous droits réservés.')); ?></p>
       <div class="flex flex-wrap gap-4">
         <a href="<?php echo e($privacyUrl); ?>" class="transition hover:text-slate-300">Politique de confidentialité</a>
         <a href="<?php echo e($cguUrl); ?>" class="transition hover:text-slate-300">Conditions d'utilisation</a>

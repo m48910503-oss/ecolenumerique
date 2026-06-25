@@ -235,6 +235,7 @@ final class CourseService extends Service
         $meetingErrors = [];
         $meetingSuccess = (string) $this->flashGet('meeting_success', '');
         $lessonsFlat = [];
+        $firstLessonId = null;
 
         foreach ($chapters as $chapter) {
             $chapterId = (int) ($chapter['id'] ?? 0);
@@ -243,6 +244,13 @@ final class CourseService extends Service
             }
             foreach (($lessonsByChapter[$chapterId] ?? []) as $lesson) {
                 $lessonsFlat[] = $lesson;
+
+                if ($firstLessonId === null) {
+                    $lessonIdCandidate = (int) ($lesson['id'] ?? 0);
+                    if ($lessonIdCandidate > 0) {
+                        $firstLessonId = $lessonIdCandidate;
+                    }
+                }
 
                 if (($lesson['lesson_type'] ?? '') !== 'video' || empty($lesson['youtube_url'])) {
                     continue;
@@ -504,6 +512,7 @@ final class CourseService extends Service
                 'doneByLesson' => $doneByLesson,
                 'progressPercent' => $progressPercent,
                 'totalLessons' => $totalLessons,
+                'firstLessonId' => $firstLessonId,
                 'firstVideoId' => $firstVideoId,
                 'firstEmbedUrl' => $firstEmbedUrl,
                 'firstEmbedTitle' => $firstEmbedTitle,

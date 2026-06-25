@@ -1,6 +1,13 @@
 <?php
 $cert = is_array($cert ?? null) ? $cert : [];
 $siteName = trim((string) ($siteName ?? 'École Numérique'));
+$siteTagline = trim((string) ($siteTagline ?? ''));
+$siteDescription = trim((string) ($siteDescription ?? ''));
+$supportEmail = trim((string) ($supportEmail ?? ''));
+$supportPhone = trim((string) ($supportPhone ?? ''));
+$supportWhatsapp = trim((string) ($supportWhatsapp ?? ''));
+$siteAddress = trim((string) ($siteAddress ?? ''));
+$footerText = trim((string) ($footerText ?? ''));
 $fullName = trim((string) ($fullName ?? ''));
 $teacherName = trim((string) ($teacherName ?? 'Formateur'));
 $dgName = trim((string) ($dgName ?? 'Direction générale'));
@@ -49,6 +56,13 @@ if ($examTitle === '') {
 
 $publicHost = parse_url($verifyUrl, PHP_URL_HOST);
 $publicHost = is_string($publicHost) && $publicHost !== '' ? $publicHost : 'ecolenumerique.local';
+$brandSubtitle = $siteTagline !== '' ? $siteTagline : $siteDescription;
+$supportParts = array_values(array_filter([
+    $supportEmail !== '' ? $supportEmail : null,
+    $supportPhone !== '' ? $supportPhone : null,
+    $supportWhatsapp !== '' ? $supportWhatsapp : null,
+], static fn ($value): bool => is_string($value) && trim($value) !== ''));
+$supportLine = implode(' · ', $supportParts);
 $htmlUrl = site_url('certificate?code=' . urlencode($certificateCode));
 $pdfUrl = site_url('certificate?code=' . urlencode($certificateCode) . '&format=pdf');
 $wordUrl = site_url('certificate?code=' . urlencode($certificateCode) . '&format=docx');
@@ -58,12 +72,14 @@ $wordUrl = site_url('certificate?code=' . urlencode($certificateCode) . '&format
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
     <meta name="app-global-assets" content="off">
-    <title>Certificat - <?php echo e($fullName); ?></title>
+    <title>Certificat - <?php echo e($fullName); ?> · <?php echo e($siteName); ?></title>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/standalone-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/standalone-dashboard.css') ?: time()))); ?>">
     <?php if (!$isWordExport): ?>
-        <script src="<?php echo e(site_url('assets/js/web_theme.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/web_theme.js') ?: time()))); ?>" defer></script>
+        <script src="<?php echo e(site_url('assets/vendor/qrcode-generator/qrcode.js')); ?>" defer></script>
+        <script src="<?php echo e(site_url('assets/js/web_certificate.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/web_certificate.js') ?: time()))); ?>" defer></script>
     <?php endif; ?>
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
 </head>
@@ -103,7 +119,9 @@ $wordUrl = site_url('certificate?code=' . urlencode($certificateCode) . '&format
                         </span>
                         <span>
                             <strong><?php echo e($siteName); ?></strong>
-                            <small>Attestation officielle de réussite</small>
+                            <?php if ($brandSubtitle !== ''): ?>
+                                <small class="cert-brand__tagline"><?php echo e($brandSubtitle); ?></small>
+                            <?php endif; ?>
                         </span>
                     </div>
                     <div class="cert-number">
@@ -142,14 +160,13 @@ $wordUrl = site_url('certificate?code=' . urlencode($certificateCode) . '&format
                     <div class="cert-verification__text">
                         <p class="cert-section-label">Vérification</p>
                         <p>Authenticité contrôlable uniquement via le lien officiel ci-dessous.</p>
+                        <?php if ($supportLine !== ''): ?>
+                            <p class="cert-verification__contact">Support : <?php echo e($supportLine); ?></p>
+                        <?php endif; ?>
                         <strong><?php echo e($verifyUrl); ?></strong>
                     </div>
-                    <div class="cert-qr" aria-label="Vérification locale">
-                        <?php if ($qrVerifyUrl !== ''): ?>
-                            <img src="<?php echo e($qrVerifyUrl); ?>" alt="QR de vérification">
-                        <?php else: ?>
-                            <span>Vérification locale uniquement</span>
-                        <?php endif; ?>
+                    <div class="cert-qr" aria-label="QR de vérification"<?php if (!$isWordExport): ?> data-certificate-qr="<?php echo e($qrVerifyUrl !== '' ? $qrVerifyUrl : $verifyUrl); ?>"<?php endif; ?>>
+                        <span><?php echo e($isWordExport ? 'Vérification par lien' : 'QR de vérification'); ?></span>
                     </div>
                 </section>
 

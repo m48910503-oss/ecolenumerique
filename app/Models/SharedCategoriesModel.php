@@ -72,6 +72,24 @@ class SharedCategoriesModel extends Model
         return $row ?: null;
     }
 
+    public function findCategoryById(int $id): ?array
+    {
+        if ($id < 1) {
+            return null;
+        }
+
+        $stmt = $this->pdo->prepare(
+            'SELECT id, name, slug, is_deleted
+             FROM categories
+             WHERE id = :id
+             LIMIT 1'
+        );
+        $stmt->execute([':id' => $id]);
+
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
     private function findCategoryBySlug(string $slug): ?array
     {
         $stmt = $this->pdo->prepare('SELECT id, name, slug FROM categories WHERE slug = :slug LIMIT 1');

@@ -36,7 +36,7 @@ if ($platformName === '') {
 $homeUrl = site_url('');
 $catalogueUrl = site_url('catalogue');
 $supportUrl = site_url('support');
-$teacherApplyUrl = site_url('teacher/apply');
+$teacherApplyUrl = site_url('become-teacher');
 $privacyUrl = site_url('privacy');
 $cguUrl = site_url('cgu');
 $loginUrl = site_url('login');
@@ -63,6 +63,16 @@ if ($courseTitle === '') {
     $courseTitle = 'Cours';
 }
 $courseDescriptionDisplay = trim((string) ($courseDescriptionDisplay ?? ($course['description'] ?? '')));
+if ($courseDescriptionDisplay !== '') {
+    $courseDescriptionDisplay = html_entity_decode($courseDescriptionDisplay, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $courseDescriptionDisplay = strip_tags($courseDescriptionDisplay);
+    $courseDescriptionDisplay = preg_replace(
+        '~(?:Un brouillon local est disponible\.\s*Vous pouvez restaurer les champs tels qu\'ils étaient\.\s*Restaurer\s*Ignorer\s*)+~iu',
+        '',
+        $courseDescriptionDisplay
+    ) ?? $courseDescriptionDisplay;
+    $courseDescriptionDisplay = trim(preg_replace('/\s+/u', ' ', $courseDescriptionDisplay) ?? $courseDescriptionDisplay);
+}
 if ($courseDescriptionDisplay === '') {
     $courseDescriptionDisplay = "La présentation détaillée de ce cours n'a pas encore été publiée.";
 }
@@ -114,6 +124,7 @@ $courseCoverAlt = trim((string) ($coverAlt ?? ''));
 if ($courseCoverAlt === '') {
     $courseCoverAlt = 'Visuel du cours ' . $courseTitle;
 }
+$firstLessonId = isset($firstLessonId) && $firstLessonId !== null ? (int) $firstLessonId : null;
 $courseShareUrl = trim((string) ($courseShareUrl ?? ''));
 $referralCode = trim((string) ($referralCode ?? ''));
 $referralLink = trim((string) ($referralLink ?? ''));
@@ -243,54 +254,32 @@ if ($promoActive && $priceBase > 0 && $priceBase > $priceFinal) {
     }
 }
 
+$purchaseHref = site_url('checkout?course=' . (int) ($course['id'] ?? 0));
 $summaryActionLabel = $isEnrolled
     ? 'Continuer le programme'
     : ($priceFinal <= 0
         ? ($currentUser ? 'Commencer gratuitement' : 'Créer un compte pour commencer')
-        : ($currentUser ? 'Acheter ce cours' : 'Se connecter pour acheter'));
+        : 'Acheter maintenant');
 $summaryActionHref = $isEnrolled ? '#programme' : $ctaHref;
-$summarySecondaryLabel = $publicPreviewAvailable && $publicPreviewOpenUrl !== ''
-    ? 'Voir l’aperçu gratuit'
-    : 'Contacter le support';
-$summarySecondaryHref = $publicPreviewAvailable && $publicPreviewOpenUrl !== ''
-    ? $publicPreviewOpenUrl
-    : $supportUrl;
-$heroPreviewBadgeLabel = $publicPreviewAvailable && $publicPreviewOpenUrl !== ''
+$previewSourceUrl = $publicPreviewOpenUrl !== '' ? $publicPreviewOpenUrl : $publicPreviewEmbedUrl;
+$previewPlayerUrl = $publicPreviewEmbedUrl !== '' ? $publicPreviewEmbedUrl : $previewSourceUrl;
+$summarySecondaryLabel = $isEnrolled
+    ? 'Voir le programme'
+    : ($priceFinal > 0
+        ? 'Ajouter au panier'
+        : ($publicPreviewAvailable && $previewSourceUrl !== ''
+            ? 'Voir l’aperçu gratuit'
+            : 'Contacter le support'));
+$summarySecondaryHref = $isEnrolled
+    ? '#programme'
+    : ($priceFinal > 0
+        ? $purchaseHref
+        : ($publicPreviewAvailable && $previewSourceUrl !== ''
+            ? $previewSourceUrl
+            : $supportUrl));
+$heroPreviewBadgeLabel = $publicPreviewAvailable && $previewSourceUrl !== ''
     ? 'Aperçu gratuit'
     : 'Visuel du cours';
-
-$courseFacts = [
-    [
-        'icon' => 'layer-group',
-        'label' => 'Chapitres publiés',
-        'value' => $chapterCount > 0 ? view_pluralize($chapterCount, 'chapitre') : 'Aucun chapitre',
-    ],
-    [
-        'icon' => 'book-open',
-        'label' => 'Leçons publiées',
-        'value' => $totalLessonsAll > 0 ? view_pluralize($totalLessonsAll, 'leçon') : 'Aucune leçon',
-    ],
-    [
-        'icon' => 'file-alt',
-        'label' => 'Ressources publiées',
-        'value' => $resourceCount > 0 ? view_pluralize($resourceCount, 'ressource') : 'Aucune ressource',
-    ],
-    [
-        'icon' => 'calendar-check',
-        'label' => 'Sessions de rendez-vous',
-        'value' => $meetingCount > 0 ? view_pluralize($meetingCount, 'session') : 'Aucune session',
-    ],
-    [
-        'icon' => 'clipboard-list',
-        'label' => 'Évaluations publiées',
-        'value' => $examCount > 0 ? view_pluralize($examCount, 'évaluation') : 'Aucune évaluation',
-    ],
-    [
-        'icon' => 'play-circle',
-        'label' => 'Aperçu gratuit',
-        'value' => $publicPreviewAvailable && $publicPreviewOpenUrl !== '' ? 'Disponible' : 'Non publié',
-    ],
-];
 
 $platformLogoUrl = trim($siteLogoUrl);
 $platformLogoAlt = 'Logo ' . $platformName;
@@ -335,7 +324,7 @@ if ($courseShareUrl === '') {
   <script src="<?php echo e(site_url('assets/js/course_rating.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/course_rating.js') ?: time()))); ?>" defer></script>
   <script src="<?php echo e(site_url('assets/js/course_share.js')); ?>" defer></script>
   <style>
-   
+
     .hover-lift {
       transition: transform 0.25s ease, box-shadow 0.25s ease;
     }
@@ -537,21 +526,22 @@ if ($courseShareUrl === '') {
       }
     }
   </style>
+  <link rel="stylesheet" href="<?php echo e(site_url('assets/css/course-details.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/course-details.css') ?: time()))); ?>">
 </head>
-<body class="font-sans antialiased text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-900 transition-colors duration-300" data-view="web/course_details" data-course-id="<?php echo e((string) ($course['id'] ?? '')); ?>" data-current-lesson-id="<?php echo e($firstVideoId ? (string) $firstVideoId : ''); ?>">
+<body class="course-detail-page font-sans antialiased text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-900 transition-colors duration-300" data-view="web/course_details" data-course-id="<?php echo e((string) ($course['id'] ?? '')); ?>" data-current-lesson-id="<?php echo e($firstVideoId ? (string) $firstVideoId : ''); ?>">
   <?php require __DIR__ . '/_public_header_catalogue.php'; ?>
 
-  <main class="pb-20 course-page-compact">
-    <section class="container mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+  <main class="course-detail-main pb-20 course-page-compact">
+    <section class="course-hero-wrap container mx-auto px-4 sm:px-6 lg:px-8 pb-6">
       <div id="overview" class="course-hero-panel relative overflow-hidden rounded-[2rem] border border-slate-800/80 text-white shadow-2xl">
         <div class="absolute inset-0">
           <div class="absolute -right-24 top-10 h-72 w-72 rounded-full bg-primary-500/20 blur-3xl"></div>
           <div class="absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl"></div>
         </div>
 
-        <div class="relative grid gap-8 p-6 md:p-8 lg:p-10 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.82fr)]">
-          <div class="min-w-0 space-y-6">
-            <div class="flex flex-wrap items-center gap-2 text-sm text-slate-300">
+        <div class="course-hero-grid relative grid gap-8 p-6 md:p-8 lg:p-10 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.82fr)]">
+          <div class="course-hero-copy min-w-0 space-y-6">
+            <div class="course-breadcrumb flex flex-wrap items-center gap-2 text-sm text-slate-300">
               <a href="<?php echo e($homeUrl); ?>" class="hover:text-white transition">Accueil</a>
               <i class="fas fa-chevron-right text-[10px] text-slate-500"></i>
               <a href="<?php echo e($catalogueUrl); ?>" class="hover:text-white transition">Catalogue</a>
@@ -559,12 +549,12 @@ if ($courseShareUrl === '') {
               <span class="font-medium text-white/90"><?php echo e($courseTitle); ?></span>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2">
+            <div class="course-hero-badges flex flex-wrap items-center gap-2">
               <span class="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-200"><?php echo e($categoryLabel); ?></span>
               <span class="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200"><?php echo e($levelLabel); ?></span>
-              <span class="inline-flex items-center rounded-full <?php echo $publicPreviewAvailable && $publicPreviewOpenUrl !== '' ? 'bg-emerald-500/15 text-emerald-200' : 'bg-white/10 text-slate-200'; ?> px-3 py-1 text-xs font-semibold">
-                <i class="fas <?php echo e($publicPreviewAvailable && $publicPreviewOpenUrl !== '' ? 'fa-play-circle' : 'fa-lock'); ?> mr-1"></i>
-                <?php echo e($publicPreviewAvailable && $publicPreviewOpenUrl !== '' ? 'Aperçu gratuit disponible' : 'Accès complet après inscription'); ?>
+              <span class="inline-flex items-center rounded-full <?php echo $publicPreviewAvailable && $previewSourceUrl !== '' ? 'bg-emerald-500/15 text-emerald-200' : 'bg-white/10 text-slate-200'; ?> px-3 py-1 text-xs font-semibold">
+                <i class="fas <?php echo e($publicPreviewAvailable && $previewSourceUrl !== '' ? 'fa-play-circle' : 'fa-lock'); ?> mr-1"></i>
+                <?php echo e($publicPreviewAvailable && $previewSourceUrl !== '' ? 'Aperçu gratuit disponible' : 'Accès complet après inscription'); ?>
               </span>
               <span class="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
                 <?php echo e(view_pluralize($chapterCount, 'chapitre')); ?>
@@ -573,10 +563,10 @@ if ($courseShareUrl === '') {
 
             <div class="space-y-4">
               <h1 class="text-2xl font-black tracking-tight text-white md:text-4xl"><?php echo e($courseTitle); ?></h1>
-              <p class="max-w-3xl text-base leading-7 text-slate-300 md:text-lg"><?php echo e($courseDescriptionDisplay); ?></p>
+              <p class="course-hero-description max-w-3xl text-base leading-7 text-slate-300 md:text-lg"><?php echo e($courseDescriptionDisplay); ?></p>
             </div>
 
-            <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-300">
+            <div class="course-hero-meta flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-300">
               <?php if ($ratingCount > 0): ?>
                 <div class="flex items-center gap-2 text-yellow-300">
                   <?php
@@ -591,18 +581,30 @@ if ($courseShareUrl === '') {
                 <span class="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">Aucun avis pour le moment</span>
               <?php endif; ?>
               <div class="flex items-center"><i class="fas fa-user-graduate mr-2 text-primary-300"></i> <?php echo e(number_format($buyersCount, 0, ',', ' ')); ?> apprenants</div>
-              <div class="flex items-center"><i class="fas fa-clock mr-2 text-primary-300"></i> <?php echo e($durationDisplay); ?></div>
+              <div class="flex items-center"><i class="fas fa-signal mr-2 text-primary-300"></i> <?php echo e($levelLabel); ?></div>
               <div class="flex items-center"><i class="fas fa-layer-group mr-2 text-primary-300"></i> <?php echo e(view_pluralize($chapterCount, 'chapitre')); ?></div>
-              <div class="flex items-center"><i class="fas fa-calendar-alt mr-2 text-primary-300"></i> Mis à jour : <?php echo e($courseUpdatedDisplay); ?></div>
+            </div>
+
+            <div class="course-hero-author flex flex-wrap items-center gap-3 pt-2">
+              <img src="<?php echo e($teacherAvatarUrl); ?>" alt="<?php echo e($teacherFullName); ?>" class="h-11 w-11 rounded-full object-cover ring-2 ring-white/15">
+              <div class="min-w-0">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Créé par</p>
+                <p class="text-base font-semibold text-white"><?php echo e($teacherFullName); ?></p>
+              </div>
+              <div class="hidden h-10 w-px bg-white/10 sm:block"></div>
+              <div class="flex items-center gap-2 text-sm text-slate-300">
+                <i class="far fa-clock text-primary-300"></i>
+                <span>Dernière mise à jour : <?php echo e($courseUpdatedDisplay); ?></span>
+              </div>
             </div>
           </div>
 
-          <div class="lg:pl-4 space-y-4">
+          <div class="course-hero-side lg:pl-4 space-y-4">
             <div class="overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/5 course-preview-media shadow-2xl">
               <div class="relative">
-                <img src="<?php echo e($heroCoverUrl); ?>" alt="<?php echo e($courseCoverAlt); ?>" class="h-52 w-full object-cover md:h-64">
+                <img src="<?php echo e($heroCoverUrl); ?>" alt="<?php echo e($courseCoverAlt); ?>" class="h-60 w-full object-cover md:h-72">
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent"></div>
-                <?php if ($publicPreviewAvailable && $publicPreviewOpenUrl !== ''): ?>
+                <?php if ($publicPreviewAvailable && $previewSourceUrl !== ''): ?>
                   <button type="button" data-public-preview-play class="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white transition hover:bg-black/10">
                     <span class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-white text-slate-900 shadow-lg">
                       <i class="fas fa-play text-xl"></i>
@@ -619,267 +621,38 @@ if ($courseShareUrl === '') {
                 <?php endif; ?>
               </div>
               <div class="border-t border-white/10 bg-slate-950/35 px-4 py-3 text-xs text-slate-300">
-                <?php echo e($publicPreviewAvailable && $publicPreviewOpenUrl !== '' ? 'L’aperçu est disponible juste au-dessus.' : 'Visuel de présentation du cours.'); ?>
+                <?php echo e($publicPreviewAvailable && $previewSourceUrl !== '' ? 'L’aperçu est disponible juste au-dessus.' : 'Visuel de présentation du cours.'); ?>
               </div>
-            </div>
-
-            <div class="sticky-summary rounded-[1.75rem] border border-white/10 bg-white/95 p-4 shadow-2xl dark:bg-gray-800/70 md:p-5">
-              <p class="text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-gray-500 dark:text-gray-400">Achat unique</p>
-              <div class="text-center mb-4">
-                <?php if ($isEnrolled): ?>
-                  <span class="text-2xl font-extrabold text-gray-900 dark:text-white"><?php echo e((string) $progressPercent); ?>%</span>
-                  <span class="mt-1 block text-sm font-medium text-primary-600 dark:text-primary-400">Accès complet au cours</span>
-                <?php else: ?>
-                  <span class="text-2xl font-extrabold text-gray-900 dark:text-white"><?php echo e(view_format_money_xof($priceFinal)); ?></span>
-                  <?php if ($priceBase > $priceFinal): ?>
-                    <span class="ml-2 text-lg text-gray-400 line-through"><?php echo e(view_format_money_xof($priceBase)); ?></span>
-                  <?php endif; ?>
-                  <?php if ($promoPercentDisplay !== ''): ?>
-                    <span class="mt-1 block text-sm font-medium text-green-600 dark:text-green-400"><?php echo e($promoPercentDisplay); ?></span>
-                  <?php elseif ($promoActive && $promoDiscountLabel !== ''): ?>
-                    <span class="mt-1 block text-sm font-medium text-green-600 dark:text-green-400"><?php echo e($promoDiscountLabel); ?></span>
-                  <?php endif; ?>
-                <?php endif; ?>
-              </div>
-
-              <?php if ($isEnrolled && $totalLessons > 0): ?>
-                <div class="mb-5">
-                  <div class="mb-2 flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                    <span>Progression</span>
-                    <span><?php echo e((string) $doneCount); ?> / <?php echo e((string) $totalLessons); ?></span>
-                  </div>
-                  <div class="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                    <div class="h-full rounded-full bg-gradient-to-r from-primary-600 to-accent-500" style="width: <?php echo e((string) $progressPercent); ?>%;"></div>
-                  </div>
-                </div>
-              <?php endif; ?>
-
-              <div class="space-y-3">
-                <a href="<?php echo e($summaryActionHref); ?>" class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 py-3.5 font-bold text-white shadow-md transition hover:bg-primary-700 hover:shadow-lg">
-                  <i class="fas <?php echo e($isEnrolled ? 'fa-play' : 'fa-cart-plus'); ?>"></i> <?php echo e($summaryActionLabel); ?>
-                </a>
-                <a href="<?php echo e($summarySecondaryHref); ?>" <?php echo $summarySecondaryHref !== $supportUrl ? 'target="_blank" rel="noopener noreferrer"' : ''; ?> class="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white py-3.5 font-semibold text-gray-800 shadow-sm transition hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
-                  <i class="fas <?php echo e($publicPreviewAvailable && $publicPreviewOpenUrl !== '' ? 'fa-play-circle' : 'fa-headset'); ?>"></i> <?php echo e($summarySecondaryLabel); ?>
-                </a>
-              </div>
-
-              <div class="mt-6 space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                <p class="flex items-center gap-2"><i class="fas <?php echo e($publicPreviewAvailable && $publicPreviewOpenUrl !== '' ? 'fa-play-circle' : 'fa-lock'); ?> text-primary-500 w-5"></i> <?php echo e($publicPreviewAvailable && $publicPreviewOpenUrl !== '' ? 'Aperçu gratuit disponible' : 'Aucun aperçu public publié'); ?></p>
-                <p class="flex items-center gap-2"><i class="fas fa-layer-group text-primary-500 w-5"></i> <?php echo e(view_pluralize($chapterCount, 'chapitre')); ?> · <?php echo e(view_pluralize($totalLessonsAll, 'leçon')); ?></p>
-                <p class="flex items-center gap-2"><i class="fas fa-file-alt text-primary-500 w-5"></i> <?php echo e($resourceCount > 0 ? view_pluralize($resourceCount, 'ressource') : 'Aucune ressource publiée'); ?></p>
-                <p class="flex items-center gap-2"><i class="fas fa-calendar-check text-primary-500 w-5"></i> <?php echo e($meetingCount > 0 ? view_pluralize($meetingCount, 'session de rendez-vous') : 'Aucune session publiée'); ?></p>
-                <p class="flex items-center gap-2"><i class="fas fa-clipboard-list text-primary-500 w-5"></i> <?php echo e($examCount > 0 ? view_pluralize($examCount, 'évaluation') : 'Aucune évaluation publiée'); ?></p>
-              </div>
-
-              <?php if ($promoActive && $promoEndLabel !== '' && !$isEnrolled): ?>
-                <div class="mt-6 border-t border-gray-200 pt-4 text-center dark:border-gray-700">
-                  <p class="text-xs text-gray-500">Promotion valable jusqu’au <?php echo e($promoEndLabel); ?>.</p>
-                </div>
-              <?php elseif ($isEnrolled): ?>
-                <div class="mt-6 border-t border-gray-200 pt-4 text-center dark:border-gray-700">
-                  <p class="text-xs text-gray-500">Votre progression est enregistrée automatiquement.</p>
-                </div>
-              <?php else: ?>
-                <div class="mt-6 border-t border-gray-200 pt-4 text-center dark:border-gray-700">
-                  <p class="text-xs text-gray-500">Conditions d’achat et modalités d’accès disponibles avant paiement.</p>
-                </div>
-              <?php endif; ?>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="container mx-auto px-4 sm:px-6 lg:px-8 pb-2">
+    <section class="course-tabs-wrap container mx-auto px-4 sm:px-6 lg:px-8 pb-2">
       <div class="course-tab-bar sticky top-16 z-30 flex gap-2 overflow-x-auto rounded-[1.25rem] border border-gray-200 bg-white/90 px-3 py-3 shadow-sm dark:border-gray-700 dark:bg-gray-900/85 md:top-20">
         <a href="#overview" class="inline-flex shrink-0 items-center rounded-full bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700">Aperçu</a>
         <a href="#apercu" class="inline-flex shrink-0 items-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">Objectifs</a>
         <a href="#programme" class="inline-flex shrink-0 items-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">Programme</a>
+        <?php if ($meetingCount > 0): ?>
+          <a href="#sessions" class="inline-flex shrink-0 items-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">Sessions</a>
+        <?php endif; ?>
+        <a href="#evaluations" class="inline-flex shrink-0 items-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">Évaluations</a>
         <a href="#formateur" class="inline-flex shrink-0 items-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">Formateur</a>
         <a href="#avis" class="inline-flex shrink-0 items-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">Avis</a>
-        <a href="#sessions" class="inline-flex shrink-0 items-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">Sessions</a>
       </div>
     </section>
 
-    <section id="apercu" class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 scroll-mt-28">
-      <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-800 course-compact-shell md:p-6">
-        <h2 class="mb-6 flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-          <i class="fas fa-bullseye text-primary-500"></i> Ce que vous apprendrez
-        </h2>
-        <?php if ($objectivesList !== []): ?>
-          <div class="grid gap-3 sm:grid-cols-2">
-            <?php foreach ($objectivesList as $objective): ?>
-              <div class="flex items-start gap-2 text-gray-700 dark:text-gray-300">
-                <i class="fas fa-check-circle mt-1 text-green-500"></i>
-                <span><?php echo e((string) $objective); ?></span>
-              </div>
-            <?php endforeach; ?>
-          </div>
-        <?php else: ?>
-          <div class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-5 py-6 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900/30 dark:text-gray-400">
-            Aucun objectif n’a encore été renseigné pour ce cours.
-          </div>
-        <?php endif; ?>
-
-        <?php if ($prerequisitesList !== [] || $equipmentList !== []): ?>
-          <div class="mt-6 grid gap-4 md:grid-cols-2">
-            <?php if ($prerequisitesList !== []): ?>
-              <div class="rounded-2xl border border-gray-100 bg-gray-50/90 p-4 dark:border-gray-700 dark:bg-gray-900/30">
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-gray-500 dark:text-gray-400">Prérequis</p>
-                <ul class="mt-3 space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                  <?php foreach ($prerequisitesList as $prerequisite): ?>
-                    <li class="flex items-start gap-2">
-                      <i class="fas fa-check-circle mt-1 text-emerald-500"></i>
-                      <span><?php echo e((string) $prerequisite); ?></span>
-                    </li>
-                  <?php endforeach; ?>
-                </ul>
-              </div>
-            <?php endif; ?>
-            <?php if ($equipmentList !== []): ?>
-              <div class="rounded-2xl border border-gray-100 bg-gray-50/90 p-4 dark:border-gray-700 dark:bg-gray-900/30">
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-gray-500 dark:text-gray-400">Équipement</p>
-                <ul class="mt-3 space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                  <?php foreach ($equipmentList as $equipment): ?>
-                    <li class="flex items-start gap-2">
-                      <i class="fas fa-check-circle mt-1 text-emerald-500"></i>
-                      <span><?php echo e((string) $equipment); ?></span>
-                    </li>
-                  <?php endforeach; ?>
-                </ul>
-              </div>
-            <?php endif; ?>
-          </div>
-        <?php endif; ?>
-
-        <div class="mt-6 rounded-2xl border border-gray-100 bg-slate-50/90 p-4 dark:border-gray-700 dark:bg-gray-900/30 md:p-5">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.22em] text-gray-500 dark:text-gray-400">Ce cours comprend</p>
-              <h3 class="mt-2 text-xl font-bold text-gray-900 dark:text-white">Tout ce qui est actuellement publié pour ce cours</h3>
-            </div>
-            <span class="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-600 shadow-sm dark:bg-gray-800 dark:text-gray-300">
-              <?php echo e(view_pluralize($chapterCount, 'chapitre')); ?> · <?php echo e(view_pluralize($totalLessonsAll, 'leçon')); ?>
-            </span>
-          </div>
-
-          <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <?php foreach ($courseFacts as $include): ?>
-              <div class="flex items-start gap-3 rounded-2xl border border-white/70 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
-                <span class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary-600 text-white shadow-md">
-                  <i class="fas <?php echo e((string) ($include['icon'] ?? 'check')); ?>"></i>
-                </span>
-                <div class="min-w-0">
-                  <p class="font-semibold text-gray-900 dark:text-white"><?php echo e((string) ($include['label'] ?? 'Avantage')); ?></p>
-                  <p class="mt-1 text-sm text-gray-600 dark:text-gray-400"><?php echo e((string) ($include['value'] ?? '')); ?></p>
-                </div>
-              </div>
-            <?php endforeach; ?>
-          </div>
-        </div>
-
-        <div class="mt-6">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-gray-500 dark:text-gray-400">
-              <?php echo e($relatedCoursesLabel !== '' ? $relatedCoursesLabel : 'Cours similaires'); ?>
-            </p>
-          </div>
-          <?php if ($relatedCourses !== []): ?>
-            <div class="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <?php foreach ($relatedCourses as $relatedCourse): ?>
-                <?php
-                $relatedTitle = trim((string) ($relatedCourse['title'] ?? 'Cours'));
-                if ($relatedTitle === '') {
-                    $relatedTitle = 'Cours';
-                }
-                $relatedDescription = trim((string) ($relatedCourse['description'] ?? ''));
-                if ($relatedDescription === '') {
-                    $relatedDescription = 'Présentation non renseignée.';
-                }
-                $relatedTeacher = trim(((string) ($relatedCourse['first_name'] ?? '')) . ' ' . ((string) ($relatedCourse['last_name'] ?? '')));
-                if ($relatedTeacher === '') {
-                    $relatedTeacher = 'Formateur';
-                }
-                $relatedCategory = trim((string) ($relatedCourse['category_name'] ?? 'Formation'));
-                if ($relatedCategory === '') {
-                    $relatedCategory = 'Formation';
-                }
-                $relatedSlug = trim((string) ($relatedCourse['slug'] ?? ''));
-                $relatedUrl = $relatedSlug !== ''
-                    ? site_url('course?slug=' . urlencode($relatedSlug))
-                    : site_url('course?id=' . (int) ($relatedCourse['id'] ?? 0));
-                $relatedCoverUrl = trim((string) ($relatedCourse['cover_path'] ?? ''));
-                $relatedCoverUrl = $relatedCoverUrl !== '' && preg_match('~^(?:https?://|data:)~i', $relatedCoverUrl) !== 1
-                    ? $resolveMediaUrl($relatedCoverUrl)
-                    : $relatedCoverUrl;
-                if ($relatedCoverUrl === '') {
-                    $relatedCoverUrl = $makeCoverPlaceholder($relatedTitle, $relatedCategory);
-                }
-                $relatedCoverAlt = trim((string) ($relatedCourse['cover_alt'] ?? ''));
-                if ($relatedCoverAlt === '') {
-                    $relatedCoverAlt = 'Visuel du cours ' . $relatedTitle;
-                }
-                $relatedRatingCount = max(0, (int) ($relatedCourse['rating_count'] ?? 0));
-                $relatedAvgRating = max(0.0, (float) ($relatedCourse['avg_rating'] ?? 0));
-                $relatedRatingLabel = $relatedRatingCount > 0
-                    ? number_format($relatedAvgRating, 1, ',', ' ')
-                    : 'Pas encore d’avis';
-                $relatedEnrollments = max(0, (int) ($relatedCourse['enrolled_count'] ?? 0));
-                $relatedDurationMin = max(0, (int) ($relatedCourse['total_min'] ?? 0));
-                $relatedDurationLabel = $relatedDurationMin > 0
-                    ? format_duration_minutes_hm($relatedDurationMin, true)
-                    : 'Durée non définie';
-                $relatedPrice = max(0, (int) ($relatedCourse['price_xof'] ?? 0));
-                $relatedPriceLabel = $relatedPrice > 0 ? view_format_money_xof($relatedPrice) : 'Gratuit';
-                ?>
-                <a href="<?php echo e($relatedUrl); ?>" class="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800">
-                  <div class="relative aspect-[16/9] overflow-hidden bg-gray-100 dark:bg-gray-900">
-                    <img src="<?php echo e($relatedCoverUrl); ?>" alt="<?php echo e($relatedCoverAlt); ?>" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent"></div>
-                    <div class="absolute left-3 top-3 flex flex-wrap gap-2">
-                      <span class="inline-flex items-center rounded-full bg-black/65 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
-                        <?php echo e($relatedCategory); ?>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="space-y-3 p-4">
-                    <div class="flex items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
-                      <span><?php echo e($relatedTeacher); ?></span>
-                      <span><?php echo e($relatedDurationLabel); ?></span>
-                    </div>
-                    <h4 class="line-clamp-2 text-lg font-bold text-gray-900 dark:text-white"><?php echo e($relatedTitle); ?></h4>
-                    <p class="line-clamp-3 text-sm leading-6 text-gray-600 dark:text-gray-400"><?php echo e($relatedDescription); ?></p>
-                    <div class="flex flex-wrap items-center justify-between gap-3 text-sm">
-                      <span class="inline-flex items-center gap-1 font-semibold text-yellow-500">
-                        <i class="fas fa-star"></i>
-                        <?php echo e($relatedRatingLabel); ?>
-                        <?php if ($relatedRatingCount > 0): ?>
-                          <span class="font-medium text-gray-500 dark:text-gray-400">· <?php echo e(view_pluralize($relatedRatingCount, 'avis', 'avis')); ?></span>
-                        <?php endif; ?>
-                      </span>
-                      <span class="font-extrabold text-gray-900 dark:text-white"><?php echo e($relatedPriceLabel); ?></span>
-                    </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400"><?php echo e($relatedEnrollments > 0 ? view_pluralize($relatedEnrollments, 'apprenant', 'apprenants') : 'Aucun apprenant publié'); ?></p>
-                  </div>
-                </a>
-              <?php endforeach; ?>
-            </div>
-          <?php else: ?>
-            <div class="mt-3 rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-5 py-6 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900/30 dark:text-gray-400">
-              Aucun autre cours public n’a encore été publié dans ce périmètre.
-            </div>
-          <?php endif; ?>
-        </div>
-      </div>
-    </section>
-
-    <section class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div class="grid lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 space-y-8">
+    <section class="course-content-wrap container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="course-content-grid grid lg:grid-cols-3 gap-6">
+        <div class="course-content-main lg:col-span-2 space-y-8">
           <div id="programme" class="scroll-mt-28 bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-6 shadow-card border border-gray-100 dark:border-gray-700 course-compact-shell">
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
               <i class="fas fa-list-ul text-primary-500"></i> Contenu du cours
             </h2>
+            <p class="-mt-4 mb-5 text-sm text-gray-500 dark:text-gray-400">
+              <?php echo e(view_pluralize($chapterCount, 'chapitre')); ?> • <?php echo e(view_pluralize($totalLessonsAll, 'leçon')); ?> • <?php echo e($durationDisplay); ?> de contenu total
+            </p>
             <?php if ($chapters === []): ?>
               <div class="rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 px-5 py-6 text-gray-600 dark:text-gray-400">
                 Aucun chapitre n’a encore été publié pour ce cours.
@@ -908,7 +681,8 @@ if ($courseShareUrl === '') {
                             <?php if (!empty($chapter['description'])): ?><p class="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2"><?php echo e((string) $chapter['description']); ?></p><?php endif; ?>
                           </div>
                         </div>
-                        <div class="text-right shrink-0">
+                        <div class="text-right shrink-0 flex flex-col items-end gap-2">
+                          <i class="course-details-chevron fas fa-chevron-down text-xs text-gray-400"></i>
                           <span class="inline-flex items-center rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1 text-xs font-semibold text-gray-600 dark:text-gray-300"><?php echo e(view_pluralize($countLessons, 'leçon')); ?></span>
                           <p class="text-sm text-gray-500 dark:text-gray-400 mt-2"><?php echo e($chapterDurationLabel); ?></p>
                           <?php if ($isEnrolled && $countLessons > 0): ?>
@@ -952,8 +726,14 @@ if ($courseShareUrl === '') {
                                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                   <?php echo e($lessonType === 'video' ? 'Vidéo' : 'Leçon'); ?>
                                   <?php if ($lessonDuration !== ''): ?> · <?php echo e($lessonDuration); ?><?php endif; ?>
-                                  <?php if ($publicPreviewAvailable && $publicPreviewOpenUrl !== '' && $publicPreviewLessonId !== null && $lessonId === $publicPreviewLessonId): ?> · <span class="text-primary-600 dark:text-primary-400">Aperçu gratuit</span><?php elseif (!empty($lesson['youtube_url'])): ?> · <span class="text-gray-500 dark:text-gray-400">Vidéo du cours</span><?php endif; ?>
+                                  <?php if ($firstLessonId !== null && $lessonId === $firstLessonId): ?> · <span class="text-primary-600 dark:text-primary-400">Aperçu gratuit</span><?php elseif (!empty($lesson['youtube_url'])): ?> · <span class="text-gray-500 dark:text-gray-400">Vidéo du cours</span><?php endif; ?>
                                 </p>
+                                <?php if ($firstLessonId !== null && $lessonId === $firstLessonId && $publicPreviewAvailable && $previewSourceUrl !== ''): ?>
+                                  <button type="button" data-public-preview-play class="mt-2 inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-[11px] font-semibold text-primary-700 transition hover:bg-primary-100 dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/45">
+                                    <i class="fas fa-play-circle"></i>
+                                    Ouvrir l’aperçu gratuit
+                                  </button>
+                                <?php endif; ?>
                               </div>
                               <?php if ($isEnrolled): ?>
                                 <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold <?php echo $lessonDone ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300'; ?>">
@@ -1119,8 +899,8 @@ if ($courseShareUrl === '') {
                 </div>
               </div>
             </section>
-          <?php elseif ($publicPreviewAvailable && $publicPreviewOpenUrl !== ''): ?>
-            <section class="bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-6 shadow-card border border-gray-100 dark:border-gray-700 course-compact-shell">
+          <?php elseif ($publicPreviewAvailable && $previewSourceUrl !== ''): ?>
+            <section id="preview-player-card" hidden class="scroll-mt-28 bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-6 shadow-card border border-gray-100 dark:border-gray-700 course-compact-shell">
               <div class="flex items-start justify-between gap-4 flex-wrap">
                 <div class="flex items-center gap-2">
                   <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary-600 text-white shadow-md"><i class="fas fa-play-circle"></i></span>
@@ -1131,28 +911,74 @@ if ($courseShareUrl === '') {
                 </div>
                 <a href="<?php echo e($ctaHref); ?>" class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-primary-700 transition"><i class="fas fa-ticket-alt"></i> Acheter le cours</a>
               </div>
-              <p class="text-gray-600 dark:text-gray-400 mt-4">Visionnez un extrait avant inscription.</p>
-              <div class="mt-6 overflow-hidden rounded-2xl bg-slate-950 shadow-soft">
-                <div class="aspect-video">
-                  <iframe id="public-preview-player" data-preview-open-url="<?php echo e($publicPreviewOpenUrl); ?>" src="" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" title="Aperçu public du cours" class="h-full w-full"></iframe>
-                </div>
-              </div>
-              <div class="mt-6 grid md:grid-cols-2 gap-4">
-                <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-4">
-                  <p class="font-semibold text-gray-900 dark:text-white">Pourquoi passer à la version complète</p>
-                  <ul class="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                    <li class="flex items-start gap-2"><i class="fas fa-check-circle text-emerald-500 mt-1"></i><span>Accès à toutes les leçons et ressources du cours.</span></li>
-                    <li class="flex items-start gap-2"><i class="fas fa-check-circle text-emerald-500 mt-1"></i><span>Suivi de progression, évaluations et certification lorsqu’ils sont proposés.</span></li>
-                    <li class="flex items-start gap-2"><i class="fas fa-check-circle text-emerald-500 mt-1"></i><span>Possibilité de réserver un rendez-vous avec le formateur lorsque des sessions sont disponibles.</span></li>
-                  </ul>
-                </div>
-                <div class="rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-4">
-                  <p class="font-semibold text-gray-900 dark:text-white">Raccourcis</p>
-                  <div class="mt-3 flex flex-wrap gap-2">
-                    <a href="<?php echo e($ctaHref); ?>" class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-primary-700 transition"><i class="fas fa-ticket-alt"></i> Acheter le cours</a>
-                    <button type="button" class="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:border-primary-300 hover:text-primary-600 transition" data-public-preview-play><i class="fas fa-external-link-alt"></i> Voir l’aperçu gratuit</button>
+              <p class="text-gray-600 dark:text-gray-400 mt-4">Visionnez un extrait avant inscription, avec le même lecteur que le cours complet.</p>
+
+              <div id="main-player-card" data-current-lesson-id="<?php echo e($publicPreviewLessonId ? (string) $publicPreviewLessonId : ''); ?>" class="mt-6 grid xl:grid-cols-[minmax(0,1.15fr)_360px] gap-6">
+                <div class="space-y-4">
+                  <div id="player-wrapper" class="relative overflow-hidden rounded-2xl bg-slate-950 shadow-soft" aria-label="Lecteur principal" oncontextmenu="return false">
+                    <div class="aspect-video">
+                      <iframe id="main-player" src="<?php echo e($previewPlayerUrl); ?>" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" title="Lecteur vidéo d’aperçu" class="pointer-events-none h-full w-full" oncontextmenu="return false"></iframe>
+                    </div>
+                    <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" aria-hidden="true"></div>
+                    <button id="player-click-layer" type="button" class="absolute inset-0 z-10 cursor-pointer bg-transparent" aria-label="Lecture ou pause" oncontextmenu="return false"></button>
+                    <div id="play-overlay" class="absolute inset-0 z-20 flex items-center justify-center transition-opacity duration-200">
+                      <button id="btn-play" type="button" data-player-toggle class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary-600/95 text-white shadow-[0_18px_40px_-12px_rgba(37,99,235,0.8)] transition hover:scale-105 hover:bg-primary-700" aria-label="Lecture">
+                        <i class="fas fa-play ml-1 text-2xl" data-play-icon aria-hidden="true"></i>
+                        <span class="sr-only" data-control-label>Lecture</span>
+                      </button>
+                    </div>
+                    <div id="player-controls" class="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-3 pt-16 text-white transition duration-200 sm:px-4">
+                      <input id="progress-range" type="range" min="0" max="1000" value="0" class="mb-3 h-1.5 w-full cursor-pointer appearance-none bg-transparent accent-primary-500">
+                      <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex min-w-0 items-center gap-1 sm:gap-2">
+                          <button id="btn-inline-play" type="button" data-player-toggle class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/12 text-white transition hover:bg-white/20" aria-label="Lecture" title="Lecture">
+                            <i class="fas fa-play ml-0.5 text-sm" data-play-icon aria-hidden="true"></i>
+                            <span class="sr-only" data-control-label>Lecture</span>
+                          </button>
+                          <button type="button" data-action="back10" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/12 text-white transition hover:bg-white/20" aria-label="Reculer de 10 secondes" title="Reculer de 10 secondes">
+                            <i class="fas fa-rotate-left text-sm"></i>
+                          </button>
+                          <button type="button" data-action="fwd10" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/12 text-white transition hover:bg-white/20" aria-label="Avancer de 10 secondes" title="Avancer de 10 secondes">
+                            <i class="fas fa-rotate-right text-sm"></i>
+                          </button>
+                          <div id="time-label" class="ml-1 min-w-[7.5rem] text-xs font-semibold text-white/90 sm:min-w-[8rem]">00:00 / 00:00</div>
+                        </div>
+                        <div class="flex items-center gap-1 sm:gap-2">
+                          <button id="btn-mute" type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/12 text-white transition hover:bg-white/20" aria-label="Couper le son" title="Couper le son">
+                            <i class="fas fa-volume-high text-sm" data-mute-icon aria-hidden="true"></i>
+                            <span class="sr-only" data-control-label>Couper le son</span>
+                          </button>
+                          <input id="volume-range" type="range" min="0" max="100" value="80" class="hidden w-20 accent-primary-500 sm:block" aria-label="Volume">
+                          <button id="btn-fullscreen" type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/12 text-white transition hover:bg-white/20" aria-label="Plein écran" title="Plein écran">
+                            <i class="fas fa-expand text-sm"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex flex-wrap items-center gap-2">
+                          <?php foreach (['0.75', '1', '1.25', '1.5', '2'] as $speed): ?>
+                            <button type="button" class="speed-chip inline-flex items-center rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-medium text-white/90 transition hover:bg-white/15 <?php echo $speed === '1' ? 'border-primary-400 bg-primary-500/20 text-white' : ''; ?>" data-speed="<?php echo e($speed); ?>"><?php echo e($speed); ?>x</button>
+                          <?php endforeach; ?>
+                        </div>
+                        <span id="player-speed-status" data-player-speed-status class="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/90">Vitesse active : 1.00x</span>
+                      </div>
+                    </div>
                   </div>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">Le lecteur réagit comme après achat : lecture, pause, avance, retour et plein écran utilisent le même moteur.</p>
                 </div>
+
+                <aside class="course-note-box">
+                  <p style="color: var(--course-title); font-weight: 700; font-size: 1.05rem;">Pourquoi passer à la version complète</p>
+                  <ul class="course-list">
+                    <li><span class="course-list__bullet app-icon" aria-hidden="true"><?php echo $icon('check'); ?></span><span>Accès à toutes les leçons et à toutes les ressources du cours.</span></li>
+                    <li><span class="course-list__bullet app-icon" aria-hidden="true"><?php echo $icon('check'); ?></span><span>Suivi de progression, évaluations et certification lorsqu’ils sont proposés.</span></li>
+                    <li><span class="course-list__bullet app-icon" aria-hidden="true"><?php echo $icon('check'); ?></span><span>Possibilité de réserver un rendez-vous avec le formateur lorsque des sessions sont disponibles.</span></li>
+                  </ul>
+                  <div class="course-chip-row" style="margin-top: 1rem;">
+                    <a href="<?php echo e($ctaHref); ?>" class="course-primary-btn">Acheter le cours</a>
+                    <button type="button" class="course-secondary-btn" data-public-preview-play><span class="app-icon" aria-hidden="true"><?php echo $icon('play-circle'); ?></span> Lancer l’aperçu</button>
+                  </div>
+                </aside>
               </div>
             </section>
           <?php else: ?>
@@ -1281,7 +1107,7 @@ if ($courseShareUrl === '') {
             </section>
           <?php endif; ?>
 
-          <section id="avis" class="scroll-mt-28 bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-6 shadow-card border border-gray-100 dark:border-gray-700 course-compact-shell">
+          <section id="evaluations" class="scroll-mt-28 bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-6 shadow-card border border-gray-100 dark:border-gray-700 course-compact-shell">
             <div class="flex items-center justify-between gap-4 mb-6">
               <div class="flex items-center gap-2">
                 <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary-600 text-white shadow-md"><i class="fas fa-clipboard-list"></i></span>
@@ -1328,6 +1154,168 @@ if ($courseShareUrl === '') {
             <?php else: ?>
               <div class="rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 px-5 py-6 text-gray-600 dark:text-gray-400">Aucun examen n’est publié pour le moment.</div>
             <?php endif; ?>
+          </section>
+
+          <section id="apercu" class="course-overview-wrap scroll-mt-28 bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-6 shadow-card border border-gray-100 dark:border-gray-700 course-compact-shell">
+            <?php if ($prerequisitesList !== [] || $equipmentList !== []): ?>
+              <div class="mt-6 grid gap-4 md:grid-cols-2">
+                <?php if ($prerequisitesList !== []): ?>
+                  <div class="rounded-2xl border border-gray-100 bg-gray-50/90 p-4 dark:border-gray-700 dark:bg-gray-900/30">
+                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-gray-500 dark:text-gray-400">Prérequis</p>
+                    <ul class="mt-3 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                      <?php foreach ($prerequisitesList as $prerequisite): ?>
+                        <li class="flex items-start gap-2">
+                          <i class="fas fa-check-circle mt-1 text-emerald-500"></i>
+                          <span><?php echo e((string) $prerequisite); ?></span>
+                        </li>
+                      <?php endforeach; ?>
+                    </ul>
+                  </div>
+                <?php endif; ?>
+                <?php if ($equipmentList !== []): ?>
+                  <div class="rounded-2xl border border-gray-100 bg-gray-50/90 p-4 dark:border-gray-700 dark:bg-gray-900/30">
+                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-gray-500 dark:text-gray-400">Équipement</p>
+                    <ul class="mt-3 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                      <?php foreach ($equipmentList as $equipment): ?>
+                        <li class="flex items-start gap-2">
+                          <i class="fas fa-check-circle mt-1 text-emerald-500"></i>
+                          <span><?php echo e((string) $equipment); ?></span>
+                        </li>
+                      <?php endforeach; ?>
+                    </ul>
+                  </div>
+                <?php endif; ?>
+              </div>
+            <?php endif; ?>
+
+            <div class="mt-6 rounded-2xl border border-gray-100 bg-gray-50/90 p-4 dark:border-gray-700 dark:bg-gray-900/30 md:p-5">
+              <p class="text-xs font-semibold uppercase tracking-[0.22em] text-gray-500 dark:text-gray-400">Description</p>
+              <p class="mt-3 text-sm leading-7 text-gray-700 dark:text-gray-300"><?php echo e($courseDescriptionDisplay); ?></p>
+            </div>
+
+            <div class="mt-6">
+              <h2 class="mb-4 flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
+                <i class="fas fa-bullseye text-primary-500"></i> Ce que vous apprendrez
+              </h2>
+              <?php if ($objectivesList !== []): ?>
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <?php foreach ($objectivesList as $objective): ?>
+                    <div class="flex items-start gap-2 text-gray-700 dark:text-gray-300">
+                      <i class="fas fa-check-circle mt-1 text-green-500"></i>
+                      <span><?php echo e((string) $objective); ?></span>
+                    </div>
+                  <?php endforeach; ?>
+                </div>
+              <?php else: ?>
+                <div class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-5 py-6 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900/30 dark:text-gray-400">
+                  Aucun objectif n’a encore été renseigné pour ce cours.
+                </div>
+              <?php endif; ?>
+            </div>
+          </section>
+
+          <section class="course-related-wrap py-4 pb-12">
+            <div class="course-related course-compact-shell rounded-2xl border border-gray-100 bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-800 md:p-6">
+              <div class="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.22em] text-gray-500 dark:text-gray-400">
+                    <?php echo e($relatedCoursesLabel !== '' ? $relatedCoursesLabel : 'Cours similaires'); ?>
+                  </p>
+                  <h2 class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">Les participants ont également acheté</h2>
+                  <p class="mt-2 max-w-2xl text-sm leading-6 text-gray-600 dark:text-gray-400">Les cours publics restent visibles ici, hors du flux principal, pour garder une lecture continue.</p>
+                </div>
+                <?php if ($relatedCourses !== []): ?>
+                  <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600 shadow-sm dark:bg-gray-800 dark:text-gray-300">
+                    <?php echo e(view_pluralize(count($relatedCourses), 'cours')); ?>
+                  </span>
+                <?php endif; ?>
+              </div>
+              <?php if ($relatedCourses !== []): ?>
+                <div class="course-related-grid mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  <?php foreach ($relatedCourses as $relatedCourse): ?>
+                    <?php
+                    $relatedTitle = trim((string) ($relatedCourse['title'] ?? 'Cours'));
+                    if ($relatedTitle === '') {
+                        $relatedTitle = 'Cours';
+                    }
+                    $relatedDescription = trim((string) ($relatedCourse['description'] ?? ''));
+                    if ($relatedDescription === '') {
+                        $relatedDescription = 'Présentation non renseignée.';
+                    }
+                    $relatedTeacher = trim(((string) ($relatedCourse['first_name'] ?? '')) . ' ' . ((string) ($relatedCourse['last_name'] ?? '')));
+                    if ($relatedTeacher === '') {
+                        $relatedTeacher = 'Formateur';
+                    }
+                    $relatedCategory = trim((string) ($relatedCourse['category_name'] ?? 'Formation'));
+                    if ($relatedCategory === '') {
+                        $relatedCategory = 'Formation';
+                    }
+                    $relatedSlug = trim((string) ($relatedCourse['slug'] ?? ''));
+                    $relatedUrl = $relatedSlug !== ''
+                        ? site_url('course?slug=' . urlencode($relatedSlug))
+                        : site_url('course?id=' . (int) ($relatedCourse['id'] ?? 0));
+                    $relatedCoverUrl = trim((string) ($relatedCourse['cover_path'] ?? ''));
+                    $relatedCoverUrl = $relatedCoverUrl !== '' && preg_match('~^(?:https?://|data:)~i', $relatedCoverUrl) !== 1
+                        ? $resolveMediaUrl($relatedCoverUrl)
+                        : $relatedCoverUrl;
+                    if ($relatedCoverUrl === '') {
+                        $relatedCoverUrl = $makeCoverPlaceholder($relatedTitle, $relatedCategory);
+                    }
+                    $relatedCoverAlt = trim((string) ($relatedCourse['cover_alt'] ?? ''));
+                    if ($relatedCoverAlt === '') {
+                        $relatedCoverAlt = 'Visuel du cours ' . $relatedTitle;
+                    }
+                    $relatedRatingCount = max(0, (int) ($relatedCourse['rating_count'] ?? 0));
+                    $relatedAvgRating = max(0.0, (float) ($relatedCourse['avg_rating'] ?? 0));
+                    $relatedRatingLabel = $relatedRatingCount > 0
+                        ? number_format($relatedAvgRating, 1, ',', ' ')
+                        : 'Pas encore d’avis';
+                    $relatedEnrollments = max(0, (int) ($relatedCourse['enrolled_count'] ?? 0));
+                    $relatedDurationMin = max(0, (int) ($relatedCourse['total_min'] ?? 0));
+                    $relatedDurationLabel = $relatedDurationMin > 0
+                        ? format_duration_minutes_hm($relatedDurationMin, true)
+                        : 'Durée non définie';
+                    $relatedPrice = max(0, (int) ($relatedCourse['price_xof'] ?? 0));
+                    $relatedPriceLabel = $relatedPrice > 0 ? view_format_money_xof($relatedPrice) : 'Gratuit';
+                    ?>
+                    <a href="<?php echo e($relatedUrl); ?>" class="course-related-card group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                      <div class="relative aspect-[16/9] overflow-hidden bg-gray-100 dark:bg-gray-900">
+                        <img src="<?php echo e($relatedCoverUrl); ?>" alt="<?php echo e($relatedCoverAlt); ?>" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent"></div>
+                        <div class="absolute left-3 top-3 flex flex-wrap gap-2">
+                          <span class="inline-flex items-center rounded-full bg-black/65 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
+                            <?php echo e($relatedCategory); ?>
+                          </span>
+                        </div>
+                      </div>
+                      <div class="space-y-3 p-4">
+                        <div class="flex items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
+                          <span><?php echo e($relatedTeacher); ?></span>
+                          <span><?php echo e($relatedDurationLabel); ?></span>
+                        </div>
+                        <h4 class="line-clamp-2 text-lg font-bold text-gray-900 dark:text-white"><?php echo e($relatedTitle); ?></h4>
+                        <p class="line-clamp-3 text-sm leading-6 text-gray-600 dark:text-gray-400"><?php echo e($relatedDescription); ?></p>
+                        <div class="flex flex-wrap items-center justify-between gap-3 text-sm">
+                          <span class="inline-flex items-center gap-1 font-semibold text-yellow-500">
+                            <i class="fas fa-star"></i>
+                            <?php echo e($relatedRatingLabel); ?>
+                            <?php if ($relatedRatingCount > 0): ?>
+                              <span class="font-medium text-gray-500 dark:text-gray-400">· <?php echo e(view_pluralize($relatedRatingCount, 'avis', 'avis')); ?></span>
+                            <?php endif; ?>
+                          </span>
+                          <span class="font-extrabold text-gray-900 dark:text-white"><?php echo e($relatedPriceLabel); ?></span>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400"><?php echo e($relatedEnrollments > 0 ? view_pluralize($relatedEnrollments, 'apprenant', 'apprenants') : 'Aucun apprenant publié'); ?></p>
+                      </div>
+                    </a>
+                  <?php endforeach; ?>
+                </div>
+              <?php else: ?>
+                <div class="mt-5 rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-5 py-6 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900/30 dark:text-gray-400">
+                  Aucun autre cours public n’a encore été publié dans ce périmètre.
+                </div>
+              <?php endif; ?>
+            </div>
           </section>
 
           <section id="formateur" class="scroll-mt-28 bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-6 shadow-card border border-gray-100 dark:border-gray-700 course-compact-shell">
@@ -1397,7 +1385,7 @@ if ($courseShareUrl === '') {
             </div>
           </section>
 
-          <section class="bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-6 shadow-card border border-gray-100 dark:border-gray-700 course-compact-shell">
+          <section id="avis" class="scroll-mt-28 bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-6 shadow-card border border-gray-100 dark:border-gray-700 course-compact-shell">
             <div class="flex items-center justify-between gap-4 mb-6">
               <div class="flex items-center gap-2">
                 <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary-600 text-white shadow-md"><i class="fas fa-comments"></i></span>
@@ -1493,70 +1481,130 @@ if ($courseShareUrl === '') {
           </section>
         </div>
 
-        <div class="lg:col-span-1 space-y-6">
-          <div id="course-share" class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-card border border-gray-100 dark:border-gray-700" data-share-url="<?php echo e($courseShareUrl); ?>" data-share-title="<?php echo e($courseTitle); ?>">
-            <h3 class="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2"><i class="fas fa-share-alt text-primary-500"></i> Partager</h3>
-            <div class="flex gap-3 flex-wrap">
-              <?php if ($shareLinks['whatsapp'] !== ''): ?><a href="<?php echo e($shareLinks['whatsapp']); ?>" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-primary-100 hover:text-primary-600 transition"><i class="fab fa-whatsapp"></i></a><?php endif; ?>
-              <?php if ($shareLinks['facebook'] !== ''): ?><a href="<?php echo e($shareLinks['facebook']); ?>" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-primary-100 hover:text-primary-600 transition"><i class="fab fa-facebook-f"></i></a><?php endif; ?>
-              <?php if ($shareLinks['x'] !== ''): ?><a href="<?php echo e($shareLinks['x']); ?>" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-primary-100 hover:text-primary-600 transition"><i class="fab fa-twitter"></i></a><?php endif; ?>
-              <?php if ($shareLinks['linkedin'] !== ''): ?><a href="<?php echo e($shareLinks['linkedin']); ?>" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-primary-100 hover:text-primary-600 transition"><i class="fab fa-linkedin-in"></i></a><?php endif; ?>
-              <button type="button" id="btn-toggle-share" aria-controls="course-share-panel" aria-expanded="false" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-primary-100 hover:text-primary-600 transition"><i class="fas fa-link"></i></button>
+        <div class="course-content-aside lg:col-span-1 space-y-6">
+          <div class="course-purchase-card sticky-summary overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/95 shadow-2xl dark:bg-gray-800/70">
+            <div class="relative border-b border-gray-100 dark:border-gray-700">
+              <img src="<?php echo e($heroCoverUrl); ?>" alt="<?php echo e($courseCoverAlt); ?>" class="h-44 w-full object-cover md:h-52">
+              <div class="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-950/10 to-transparent"></div>
+              <div class="absolute left-4 bottom-4">
+                <span class="inline-flex items-center rounded-full bg-black/70 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm">
+                  <i class="fas fa-play-circle mr-1"></i> Aperçu de ce cours
+                </span>
+              </div>
             </div>
 
-            <div id="course-share-panel" class="hidden mt-4">
-              <button type="button" id="btn-native-share" class="hidden w-full inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:border-primary-300 hover:text-primary-600 transition">
-                <i class="fas fa-external-link-alt"></i> Partager avec l’appareil
-              </button>
-
-              <div class="mt-4">
-                <label for="course-share-url" class="block text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400 mb-2">Lien public</label>
-                <div class="flex gap-2">
-                  <input id="course-share-url" class="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200" readonly value="<?php echo e($courseShareUrl); ?>">
-                  <button type="button" id="btn-copy-course-link" class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:border-primary-300 hover:text-primary-600 transition">Copier</button>
-                </div>
+            <div class="p-4 md:p-5">
+              <p class="text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-gray-500 dark:text-gray-400">Achat unique</p>
+              <div class="text-center mb-4">
+                <?php if ($isEnrolled): ?>
+                  <span class="text-2xl font-extrabold text-gray-900 dark:text-white"><?php echo e((string) $progressPercent); ?>%</span>
+                  <span class="mt-1 block text-sm font-medium text-primary-600 dark:text-primary-400">Accès complet au cours</span>
+                <?php else: ?>
+                  <span class="text-2xl font-extrabold text-gray-900 dark:text-white"><?php echo e(view_format_money_xof($priceFinal)); ?></span>
+                  <?php if ($priceBase > $priceFinal): ?>
+                    <span class="ml-2 text-lg text-gray-400 line-through"><?php echo e(view_format_money_xof($priceBase)); ?></span>
+                  <?php endif; ?>
+                  <?php if ($promoPercentDisplay !== ''): ?>
+                    <span class="mt-1 block text-sm font-medium text-green-600 dark:text-green-400"><?php echo e($promoPercentDisplay); ?></span>
+                  <?php elseif ($promoActive && $promoDiscountLabel !== ''): ?>
+                    <span class="mt-1 block text-sm font-medium text-green-600 dark:text-green-400"><?php echo e($promoDiscountLabel); ?></span>
+                  <?php endif; ?>
+                <?php endif; ?>
               </div>
 
-              <?php if ($referralCode !== ''): ?>
-                <div class="mt-4">
-                  <label for="course-ref-code" class="block text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400 mb-2">Code de parrainage</label>
-                  <div class="flex gap-2">
-                    <input id="course-ref-code" class="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200" readonly value="<?php echo e($referralCode); ?>">
-                    <button type="button" id="btn-copy-ref-code" class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:border-primary-300 hover:text-primary-600 transition">Copier</button>
+              <?php if ($isEnrolled && $totalLessons > 0): ?>
+                <div class="mb-5">
+                  <div class="mb-2 flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+                    <span>Progression</span>
+                    <span><?php echo e((string) $doneCount); ?> / <?php echo e((string) $totalLessons); ?></span>
+                  </div>
+                  <div class="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                    <div class="h-full rounded-full bg-gradient-to-r from-primary-600 to-accent-500" style="width: <?php echo e((string) $progressPercent); ?>%;"></div>
                   </div>
                 </div>
               <?php endif; ?>
 
-              <?php if ($referralLink !== ''): ?>
-                <div class="mt-4">
-                  <label for="course-ref-link" class="block text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400 mb-2">Lien de parrainage</label>
+              <div class="course-purchase-actions space-y-3">
+                <a href="<?php echo e($summaryActionHref); ?>" class="course-primary-action flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 py-3.5 font-bold text-white shadow-md transition hover:bg-primary-700 hover:shadow-lg">
+                  <i class="fas <?php echo e($isEnrolled ? 'fa-play' : 'fa-cart-shopping'); ?>"></i> <?php echo e($summaryActionLabel); ?>
+                </a>
+                <a href="<?php echo e($summarySecondaryHref); ?>" <?php echo ($summarySecondaryHref === $previewSourceUrl && $previewSourceUrl !== '') ? 'target="_blank" rel="noopener noreferrer"' : ''; ?> class="course-secondary-action flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white py-3.5 font-semibold text-gray-800 shadow-sm transition hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
+                  <i class="fas <?php echo e($isEnrolled ? 'fa-book-open' : ($priceFinal > 0 ? 'fa-cart-plus' : ($publicPreviewAvailable && $previewSourceUrl !== '' ? 'fa-play-circle' : 'fa-headset'))); ?>"></i> <?php echo e($summarySecondaryLabel); ?>
+                </a>
+              </div>
+
+              <div class="mt-3 grid grid-cols-2 gap-2">
+                <button type="button" class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-200">
+                  <i class="far fa-heart"></i>
+                </button>
+                <button type="button" id="btn-toggle-share" aria-controls="course-share-panel" aria-expanded="false" class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-200">
+                  <i class="fas fa-share-alt"></i>
+                </button>
+              </div>
+
+              <div id="course-share-panel" class="hidden mt-4 rounded-2xl border border-gray-200 bg-gray-50/90 p-4 dark:border-gray-700 dark:bg-gray-900/40">
+                <button type="button" id="btn-native-share" class="hidden w-full inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:border-primary-300 hover:text-primary-600 transition">
+                  <i class="fas fa-external-link-alt"></i> Partager avec l’appareil
+                </button>
+
+                <div class="mt-3">
+                  <label for="course-share-url" class="block text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400 mb-2">Lien public</label>
                   <div class="flex gap-2">
-                    <input id="course-ref-link" class="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200" readonly value="<?php echo e($referralLink); ?>">
-                    <button type="button" id="btn-copy-ref-link" class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:border-primary-300 hover:text-primary-600 transition">Copier le lien</button>
+                    <input id="course-share-url" class="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200" readonly value="<?php echo e($courseShareUrl); ?>">
+                    <button type="button" id="btn-copy-course-link" class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:border-primary-300 hover:text-primary-600 transition">Copier</button>
                   </div>
                 </div>
-              <?php endif; ?>
 
-              <p id="course-share-status" class="mt-3 text-sm text-gray-500 dark:text-gray-400"></p>
-            </div>
-          </div>
+                <?php if ($referralCode !== ''): ?>
+                  <div class="mt-3">
+                    <label for="course-ref-code" class="block text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400 mb-2">Code de parrainage</label>
+                    <div class="flex gap-2">
+                      <input id="course-ref-code" class="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200" readonly value="<?php echo e($referralCode); ?>">
+                      <button type="button" id="btn-copy-ref-code" class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:border-primary-300 hover:text-primary-600 transition">Copier</button>
+                    </div>
+                  </div>
+                <?php endif; ?>
 
-          <div class="bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 rounded-2xl p-6 border border-primary-100 dark:border-primary-800">
-            <h3 class="font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2"><i class="fas fa-gift text-primary-600"></i> Offre de lancement</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              <?php if ($promoActive && $promoDiscountLabel !== ''): ?>
-                Réduction active sur ce cours : <?php echo e($promoDiscountLabel); ?>.
+                <?php if ($referralLink !== ''): ?>
+                  <div class="mt-3">
+                    <label for="course-ref-link" class="block text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400 mb-2">Lien de parrainage</label>
+                    <div class="flex gap-2">
+                      <input id="course-ref-link" class="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200" readonly value="<?php echo e($referralLink); ?>">
+                      <button type="button" id="btn-copy-ref-link" class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:border-primary-300 hover:text-primary-600 transition">Copier le lien</button>
+                    </div>
+                  </div>
+                <?php endif; ?>
+
+                <p id="course-share-status" class="mt-3 text-sm text-gray-500 dark:text-gray-400"></p>
+              </div>
+
+              <div class="course-purchase-facts mt-5 space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                <p class="flex items-center gap-2"><i class="fas <?php echo e($publicPreviewAvailable && $previewSourceUrl !== '' ? 'fa-play-circle' : 'fa-lock'); ?> text-primary-500 w-5"></i> <?php echo e($publicPreviewAvailable && $previewSourceUrl !== '' ? 'Aperçu gratuit disponible' : 'Aucun aperçu public publié'); ?></p>
+                <p class="flex items-center gap-2"><i class="fas fa-layer-group text-primary-500 w-5"></i> <?php echo e(view_pluralize($chapterCount, 'chapitre')); ?> · <?php echo e(view_pluralize($totalLessonsAll, 'leçon')); ?></p>
+                <p class="flex items-center gap-2"><i class="fas fa-file-alt text-primary-500 w-5"></i> <?php echo e($resourceCount > 0 ? view_pluralize($resourceCount, 'ressource') : 'Aucune ressource publiée'); ?></p>
+                <p class="flex items-center gap-2"><i class="fas fa-calendar-check text-primary-500 w-5"></i> <?php echo e($meetingCount > 0 ? view_pluralize($meetingCount, 'session de rendez-vous') : 'Aucune session publiée'); ?></p>
+                <p class="flex items-center gap-2"><i class="fas fa-clipboard-list text-primary-500 w-5"></i> <?php echo e($examCount > 0 ? view_pluralize($examCount, 'évaluation') : 'Aucune évaluation publiée'); ?></p>
+              </div>
+
+              <?php if ($promoActive && $promoEndLabel !== '' && !$isEnrolled): ?>
+                <div class="mt-5 border-t border-gray-200 pt-4 text-center dark:border-gray-700">
+                  <p class="text-xs text-gray-500">Promotion valable jusqu’au <?php echo e($promoEndLabel); ?>.</p>
+                </div>
+              <?php elseif ($isEnrolled): ?>
+                <div class="mt-5 border-t border-gray-200 pt-4 text-center dark:border-gray-700">
+                  <p class="text-xs text-gray-500">Votre progression est enregistrée automatiquement.</p>
+                </div>
               <?php else: ?>
-                Ce cours publie <?php echo e(view_pluralize($chapterCount, 'chapitre')); ?>, <?php echo e(view_pluralize($totalLessonsAll, 'leçon')); ?> et <?php echo e($resourceCount > 0 ? view_pluralize($resourceCount, 'ressource') : 'aucune ressource'); ?>.
+                <div class="mt-5 border-t border-gray-200 pt-4 text-center dark:border-gray-700">
+                  <p class="text-xs text-gray-500">Conditions d’achat et modalités d’accès disponibles avant paiement.</p>
+                </div>
               <?php endif; ?>
-            </p>
-            <span class="inline-block bg-primary-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-              <?php echo e($publicPreviewAvailable && $publicPreviewOpenUrl !== '' ? 'Aperçu gratuit' : 'Contenu publié'); ?>
-            </span>
+            </div>
           </div>
         </div>
       </div>
     </section>
+
   </main>
 
   <?php require __DIR__ . '/_public_footer_home.php'; ?>

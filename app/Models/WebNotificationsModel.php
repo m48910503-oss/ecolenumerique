@@ -40,7 +40,7 @@ final class WebNotificationsModel extends Model
         if ($userId < 1 || !$this->hasAnnouncementColumn()) {
             return [];
         }
-        $sql = 'SELECT announcement_id, variant, COUNT(*) AS total
+        $sql = 'SELECT announcement_id, COUNT(*) AS total
              FROM notifications
              WHERE user_id = :uid
                AND is_read = 0
@@ -48,7 +48,7 @@ final class WebNotificationsModel extends Model
         if ($this->hasArchivedAtColumn()) {
             $sql .= ' AND archived_at IS NULL';
         }
-        $sql .= ' GROUP BY announcement_id, variant';
+        $sql .= ' GROUP BY announcement_id';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([':uid' => $userId]);
         return $stmt->fetchAll() ?: [];
@@ -207,34 +207,26 @@ final class WebNotificationsModel extends Model
         ]);
     }
 
-    public function incrementAnnouncementReadCount(int $announcementId, string $variant, int $delta = 1): void
+    public function incrementAnnouncementReadCount(int $announcementId, int $delta = 1): void
     {
         if ($announcementId < 1) {
             return;
         }
         $delta = max(1, $delta);
-        if (strtoupper($variant) === 'B') {
-            $stmt = $this->pdo->prepare('UPDATE admin_announcements SET read_count_b = read_count_b + :delta, updated_at = NOW() WHERE id = :id');
-        } else {
-            $stmt = $this->pdo->prepare('UPDATE admin_announcements SET read_count = read_count + :delta, updated_at = NOW() WHERE id = :id');
-        }
+        $stmt = $this->pdo->prepare('UPDATE admin_announcements SET read_count = read_count + :delta, updated_at = NOW() WHERE id = :id');
         $stmt->execute([
             ':delta' => $delta,
             ':id' => $announcementId,
         ]);
     }
 
-    public function incrementAnnouncementClickCount(int $announcementId, string $variant, int $delta = 1): void
+    public function incrementAnnouncementClickCount(int $announcementId, int $delta = 1): void
     {
         if ($announcementId < 1) {
             return;
         }
         $delta = max(1, $delta);
-        if (strtoupper($variant) === 'B') {
-            $stmt = $this->pdo->prepare('UPDATE admin_announcements SET click_count_b = click_count_b + :delta, updated_at = NOW() WHERE id = :id');
-        } else {
-            $stmt = $this->pdo->prepare('UPDATE admin_announcements SET click_count = click_count + :delta, updated_at = NOW() WHERE id = :id');
-        }
+        $stmt = $this->pdo->prepare('UPDATE admin_announcements SET click_count = click_count + :delta, updated_at = NOW() WHERE id = :id');
         $stmt->execute([
             ':delta' => $delta,
             ':id' => $announcementId,

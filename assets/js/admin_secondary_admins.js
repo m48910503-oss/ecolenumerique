@@ -7,7 +7,6 @@
   const SELECTOR_MODAL = ".js-admin-modal";
   const REVOKE_INPUT_ID = "secondary-revoke-user-id";
   const REVOKE_TEXT_ID = "secondary-revoke-text";
-  const TOGGLE_SELECTOR = ".js-secondary-toggle";
 
   function getModal(id) {
     if (!id) return null;
@@ -52,43 +51,6 @@
         'Vous allez retirer le rôle administrateur secondaire pour "' +
         String(userName || "cet utilisateur") +
         '".';
-    }
-  }
-
-  function toggleDetails(button) {
-    if (!button) return;
-    const targetId =
-      button.getAttribute("data-toggle-target") ||
-      button.getAttribute("aria-controls");
-    if (!targetId) return;
-    const panel = document.getElementById(targetId);
-    if (!panel) return;
-
-    const isHidden = panel.classList.contains("hidden");
-    if (isHidden) {
-      panel.classList.remove("hidden");
-    } else {
-      panel.classList.add("hidden");
-    }
-
-    const expanded = isHidden;
-    button.setAttribute("aria-expanded", expanded ? "true" : "false");
-
-    const icon = button.querySelector(".js-secondary-toggle-icon");
-    if (
-      icon &&
-      (icon.classList.contains("fa-chevron-down") ||
-        icon.classList.contains("fa-chevron-up"))
-    ) {
-      icon.classList.toggle("rotate-180", expanded);
-    }
-    button.classList.toggle("is-open", expanded);
-
-    const label = button.querySelector(".js-secondary-toggle-label");
-    if (label) {
-      label.textContent = expanded
-        ? button.getAttribute("data-label-open") || "Masquer"
-        : button.getAttribute("data-label-closed") || "Détails";
     }
   }
 
@@ -151,13 +113,6 @@
     const target = event.target;
     if (!(target instanceof Element)) return;
 
-    const toggleButton = target.closest(TOGGLE_SELECTOR);
-    if (toggleButton) {
-      event.preventDefault();
-      toggleDetails(toggleButton);
-      return;
-    }
-
     const revokeButton = target.closest(".js-secondary-revoke");
     if (revokeButton) {
       event.preventDefault();
@@ -166,16 +121,6 @@
         revokeButton.getAttribute("data-user-name")
       );
       openModal("secondary-revoke-modal");
-      return;
-    }
-
-    const openButton = target.closest(".js-modal-open");
-    if (openButton) {
-      event.preventDefault();
-      const modalId = openButton.getAttribute("data-modal-target");
-      if (modalId) {
-        openModal(modalId);
-      }
       return;
     }
 
@@ -206,9 +151,4 @@
   });
 
   setupAdminFilters();
-
-  const modalToOpen = String(document.body?.dataset.secondaryOpenModal || "").trim();
-  if (modalToOpen !== "") {
-    openModal(modalToOpen);
-  }
 })();

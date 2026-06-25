@@ -70,32 +70,55 @@ final class PlatformSettingsService extends Service
 
     public function siteLogoUrl(): string
     {
-        $path = trim($this->get('site_logo_path', ''));
-        if ($path === '') {
-            return '';
-        }
-        if (preg_match('/^https?:\\/\\//i', $path) === 1) {
-            return $path;
-        }
-        return $this->siteUrl(ltrim($path, '/'));
+        return $this->pathToUrl($this->get('site_logo_path', ''));
     }
 
     public function siteFaviconUrl(): string
     {
-        $path = trim($this->get('site_favicon_path', ''));
-        if ($path !== '') {
-            if (preg_match('/^https?:\\/\\//i', $path) === 1) {
-                return $path;
-            }
-            return $this->siteUrl(ltrim($path, '/'));
+        $logoUrl = $this->siteLogoUrl();
+        if ($logoUrl !== '') {
+            return $logoUrl;
         }
 
-        return $this->siteLogoUrl();
+        return 'data:image/svg+xml,%3Csvg xmlns%3D%22http://www.w3.org/2000/svg%22/%3E';
     }
 
     public function footerText(): string
     {
         return $this->get('site_footer_text', '');
+    }
+
+    /**
+     * @return array{
+     *   siteName:string,
+     *   siteTagline:string,
+     *   siteDescription:string,
+     *   supportEmail:string,
+     *   supportPhone:string,
+     *   supportWhatsapp:string,
+     *   siteAddress:string,
+     *   footerText:string,
+     *   siteLogoUrl:string
+     * }
+     */
+    public function publicIdentity(): array
+    {
+        $siteName = trim($this->get('site_name', defined('APP_FROM_NAME') ? (string) APP_FROM_NAME : 'École Numérique'));
+        if ($siteName === '') {
+            $siteName = defined('APP_FROM_NAME') ? (string) APP_FROM_NAME : 'École Numérique';
+        }
+
+        return [
+            'siteName' => $siteName,
+            'siteTagline' => trim($this->get('site_tagline', '')),
+            'siteDescription' => trim($this->get('site_description', '')),
+            'supportEmail' => trim($this->get('support_email', defined('APP_FROM_EMAIL') ? (string) APP_FROM_EMAIL : '')),
+            'supportPhone' => trim($this->get('support_phone', '')),
+            'supportWhatsapp' => trim($this->get('support_whatsapp', '')),
+            'siteAddress' => trim($this->get('site_address', '')),
+            'footerText' => trim($this->get('site_footer_text', '')),
+            'siteLogoUrl' => $this->siteLogoUrl(),
+        ];
     }
 
     /**
@@ -155,6 +178,30 @@ final class PlatformSettingsService extends Service
         }
 
         return $options;
+    }
+
+    private function pathToUrl(string $path): string
+    {
+        $path = trim($path);
+        if ($path === '') {
+            return '';
+        }
+        if (preg_match('/^https?:\\/\\//i', $path) === 1) {
+            return $path;
+        }
+
+        $url = $this->siteUrl(ltrim($path, '/'));
+        $localPath = dirname(__DIR__, 3) . '/' . ltrim($path, '/');
+        if (!is_file($localPath)) {
+            return '';
+        }
+
+        $version = (string) filemtime($localPath);
+        if ($version !== '') {
+            $url .= (str_contains($url, '?') ? '&' : '?') . 'v=' . $version;
+        }
+
+        return $url;
     }
 }
 

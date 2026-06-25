@@ -16,7 +16,7 @@ $adminTopSearchAction = site_url('admin/support_agents');
 $adminTopSearchValue = $agentSearchQuery;
 $adminTopSearchPlaceholder = 'Rechercher un agent support...';
 $adminTopActions = [
-    ['label' => 'Tickets support', 'url' => site_url('admin/support'), 'tone' => 'neutral'],
+    ['label' => 'Demandes support', 'url' => site_url('admin/support'), 'tone' => 'neutral'],
     ['label' => 'Tableau de bord', 'url' => site_url('admin/dashboard'), 'tone' => 'neutral'],
 ];
 if ($isGeneralAdmin) {
@@ -140,6 +140,32 @@ foreach ($agents as $agent) {
     ];
 }
 
+$filteredAgentCards = $agentCards;
+if ($agentSearchQuery !== '') {
+    $needle = strtolower($agentSearchQuery);
+    $filteredAgentCards = array_values(array_filter(
+        $filteredAgentCards,
+        static fn (array $agent): bool => str_contains((string) ($agent['search'] ?? ''), $needle)
+    ));
+}
+$totalAgentCards = count($filteredAgentCards);
+
+$agentPage = \App\Support\Pagination::pageFromQuery($_GET, 'page', 1);
+$agentPagination = \App\Support\Pagination::build($totalAgentCards, $agentPage, 8);
+$agentCards = \App\Support\Pagination::slice($filteredAgentCards, $agentPagination);
+
+$buildAgentPageUrl = static function (int $targetPage) use ($agentSearchQuery): string {
+    $query = [];
+    if ($agentSearchQuery !== '') {
+        $query['q'] = $agentSearchQuery;
+    }
+    if ($targetPage > 1) {
+        $query['page'] = max(1, $targetPage);
+    }
+
+    return site_url('admin/support_agents' . ($query !== [] ? ('?' . http_build_query($query)) : ''));
+};
+
 $modalToAutoOpen = '';
 if ($errors !== [] && strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) === 'POST') {
     $postedAction = (string) ($_POST['action'] ?? '');
@@ -197,7 +223,7 @@ $adminPageScripts = ['admin_support_agents.js'];
                                 <i class="fas fa-user-shield mr-2"></i>Accès support
                             </p>
                             <h2 class="mt-2 text-2xl font-bold sm:text-3xl">Gérer les agents de support</h2>
-                            <p class="mt-2 text-sm text-primary-100 sm:text-base">Créez, attribuez ou retirez l’accès aux personnes qui traitent les tickets.</p>
+                            <p class="mt-2 text-sm text-primary-100 sm:text-base">Créez, attribuez ou retirez l’accès aux personnes qui traitent les demandes.</p>
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <button type="button" class="js-modal-open inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-primary-700 shadow-sm transition hover:bg-primary-50" data-modal-target="support-create-modal">
@@ -210,7 +236,7 @@ $adminPageScripts = ['admin_support_agents.js'];
                             </button>
                             <a href="<?php echo e($supportConsoleUrl); ?>" class="inline-flex items-center gap-2 rounded-xl bg-white/15 px-4 py-3 text-sm font-bold text-white ring-1 ring-white/25 transition hover:bg-white/25">
                                 <i class="fas fa-inbox" aria-hidden="true"></i>
-                                Tickets
+                                Demandes
                             </a>
                         </div>
                     </div>
@@ -289,13 +315,13 @@ $adminPageScripts = ['admin_support_agents.js'];
                         </div>
                     </div>
 
-                    <?php if ($agentCards === []): ?>
+                    <?php if ($totalAgentCards === 0): ?>
                         <div class="mt-5 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-900/40">
                             <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
-                                <i class="fas fa-headset"></i>
+                                <i class="fas <?php echo $agentSearchQuery !== '' ? 'fa-search' : 'fa-headset'; ?>"></i>
                             </span>
-                            <h4 class="mt-3 text-base font-bold text-gray-900 dark:text-white">Aucun agent support</h4>
-                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Ajoutez un compte pour commencer à traiter les tickets.</p>
+                            <h4 class="mt-3 text-base font-bold text-gray-900 dark:text-white"><?php echo e($agentSearchQuery !== '' ? 'Aucun agent trouvé' : 'Aucun agent support'); ?></h4>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400"><?php echo e($agentSearchQuery !== '' ? 'Essayez une autre recherche.' : 'Ajoutez un compte pour commencer à traiter les demandes.'); ?></p>
                         </div>
                     <?php else: ?>
                         <div id="support-agents-grid" class="mt-5 grid gap-4 xl:grid-cols-2">
@@ -323,9 +349,9 @@ $adminPageScripts = ['admin_support_agents.js'];
                                             </div>
                                         </div>
                                         <div class="flex shrink-0 gap-2 sm:flex-col">
-                                            <a href="<?php echo e($supportConsoleUrl); ?>" class="support-agent-action support-agent-action--primary" title="Ouvrir les tickets">
+                                            <a href="<?php echo e($supportConsoleUrl); ?>" class="support-agent-action support-agent-action--primary" title="Ouvrir les demandes">
                                                 <i class="fas fa-inbox" aria-hidden="true"></i>
-                                                <span class="sm:sr-only">Tickets</span>
+                                                <span class="sm:sr-only">Demandes</span>
                                             </a>
                                             <button
                                                 type="button"
@@ -349,6 +375,14 @@ $adminPageScripts = ['admin_support_agents.js'];
                             <h4 class="mt-3 text-base font-bold text-gray-900 dark:text-white">Aucun agent trouvé</h4>
                             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Modifiez la recherche ou le filtre de statut.</p>
                         </div>
+
+                        <?php
+                        $paginationData = $agentPagination;
+                        $paginationUrlBuilder = $buildAgentPageUrl;
+                        $paginationLabel = 'agents support';
+                        $paginationAriaLabel = 'Pagination des agents support';
+                        require __DIR__ . '/_pagination.php';
+                        ?>
                     <?php endif; ?>
                 </section>
             </main>
@@ -371,6 +405,8 @@ $adminPageScripts = ['admin_support_agents.js'];
             <form class="mt-4 admin-shell-form-grid" method="post" action="<?php echo e(site_url('admin/support_agents')); ?>">
                 <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
                 <input type="hidden" name="action" value="create">
+                <input type="hidden" name="page" value="<?php echo e((string) $agentPage); ?>">
+                <input type="hidden" name="q" value="<?php echo e($agentSearchQuery); ?>">
 
                 <div class="admin-shell-field">
                     <label class="admin-shell-label inline-flex items-center gap-2" for="support-create-first-name"><i class="fas fa-user" aria-hidden="true"></i>Prénom</label>
@@ -420,6 +456,8 @@ $adminPageScripts = ['admin_support_agents.js'];
             <form class="mt-4 admin-shell-form-grid" method="post" action="<?php echo e(site_url('admin/support_agents')); ?>">
                 <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
                 <input type="hidden" name="action" value="grant">
+                <input type="hidden" name="page" value="<?php echo e((string) $agentPage); ?>">
+                <input type="hidden" name="q" value="<?php echo e($agentSearchQuery); ?>">
 
                 <div class="admin-shell-field">
                     <label class="admin-shell-label inline-flex items-center gap-2" for="support-grant-email"><i class="fas fa-envelope" aria-hidden="true"></i>E-mail utilisateur</label>
@@ -451,6 +489,8 @@ $adminPageScripts = ['admin_support_agents.js'];
                 <form id="support-remove-form" method="post" action="<?php echo e(site_url('admin/support_agents')); ?>">
                     <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
                     <input type="hidden" name="action" value="revoke">
+                    <input type="hidden" name="page" value="<?php echo e((string) $agentPage); ?>">
+                    <input type="hidden" name="q" value="<?php echo e($agentSearchQuery); ?>">
                     <input type="hidden" name="user_id" id="support-remove-user-id" value="">
                     <button type="submit" class="admin-shell-button admin-shell-button--danger inline-flex items-center gap-2">
                         <i class="fas fa-user-minus" aria-hidden="true"></i>

@@ -64,10 +64,9 @@ final class NotificationsService extends Service
                         if ($announcementId < 1) {
                             continue;
                         }
-                        $variant = (string) ($row['variant'] ?? 'A');
                         $delta = (int) ($row['total'] ?? 0);
                         if ($delta > 0) {
-                            $this->notifications->incrementAnnouncementReadCount($announcementId, $variant, $delta);
+                            $this->notifications->incrementAnnouncementReadCount($announcementId, $delta);
                         }
                     }
                 }
@@ -526,8 +525,7 @@ final class NotificationsService extends Service
         if ($announcementId < 1) {
             return;
         }
-        $variant = (string) ($notification['variant'] ?? 'A');
-        $this->notifications->incrementAnnouncementReadCount($announcementId, $variant, $delta);
+        $this->notifications->incrementAnnouncementReadCount($announcementId, $delta);
     }
 
     /**
@@ -539,8 +537,7 @@ final class NotificationsService extends Service
         if ($announcementId < 1) {
             return;
         }
-        $variant = (string) ($notification['variant'] ?? 'A');
-        $this->notifications->incrementAnnouncementClickCount($announcementId, $variant, $delta);
+        $this->notifications->incrementAnnouncementClickCount($announcementId, $delta);
     }
 
 }

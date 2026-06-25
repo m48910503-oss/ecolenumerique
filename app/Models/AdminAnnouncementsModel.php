@@ -38,13 +38,9 @@ final class AdminAnnouncementsModel extends Model
             'category',
             'importance',
             'summary',
-            'title_b',
-            'ab_enabled',
-            'sent_count_b',
+            'sent_count',
             'read_count',
-            'read_count_b',
             'click_count',
-            'click_count_b',
             'published_by',
             'approved_by',
             'published_at',
@@ -63,7 +59,6 @@ final class AdminAnnouncementsModel extends Model
             'announcement_id',
             'importance',
             'summary',
-            'variant',
             'read_at',
             'clicked_at',
         ];
@@ -121,22 +116,19 @@ final class AdminAnnouncementsModel extends Model
         string $audience,
         string $category,
         string $importance,
-        string $summary,
-        bool $abEnabled,
-        ?string $titleB
+        string $summary
     ): int {
         $announcementId = $this->nextNumericId('admin_announcements');
         $stmt = $this->pdo->prepare(
             'INSERT INTO admin_announcements
-                (id, admin_user_id, title, title_b, body, summary, action_url, status, audience, category, importance, ab_enabled, sent_count, sent_count_b, read_count, read_count_b, click_count, click_count_b, created_at, updated_at)
+                (id, admin_user_id, title, body, summary, action_url, status, audience, category, importance, sent_count, read_count, click_count, created_at, updated_at)
              VALUES
-                (:id, :admin_user_id, :title, :title_b, :body, :summary, :action_url, :status, :audience, :category, :importance, :ab_enabled, 0, 0, 0, 0, 0, 0, NOW(), NOW())'
+                (:id, :admin_user_id, :title, :body, :summary, :action_url, :status, :audience, :category, :importance, 0, 0, 0, NOW(), NOW())'
         );
         $stmt->execute([
             ':id' => $announcementId,
             ':admin_user_id' => $adminUserId,
             ':title' => $title,
-            ':title_b' => $titleB,
             ':body' => $body,
             ':summary' => $summary,
             ':action_url' => $actionUrl,
@@ -144,7 +136,6 @@ final class AdminAnnouncementsModel extends Model
             ':audience' => $audience,
             ':category' => $category,
             ':importance' => $importance,
-            ':ab_enabled' => $abEnabled ? 1 : 0,
         ]);
         return $announcementId;
     }
@@ -228,18 +219,16 @@ final class AdminAnnouncementsModel extends Model
         $stmt->execute([':id' => $announcementId]);
     }
 
-    public function updateAnnouncementSentCounts(int $announcementId, int $sentTotal, int $sentB): void
+    public function updateAnnouncementSentCounts(int $announcementId, int $sentTotal): void
     {
         $stmt = $this->pdo->prepare(
             'UPDATE admin_announcements
              SET sent_count = :sent_count,
-                 sent_count_b = :sent_count_b,
                  updated_at = NOW()
              WHERE id = :id'
         );
         $stmt->execute([
             ':sent_count' => max(0, $sentTotal),
-            ':sent_count_b' => max(0, $sentB),
             ':id' => $announcementId,
         ]);
     }
@@ -268,42 +257,6 @@ final class AdminAnnouncementsModel extends Model
             'DELETE FROM admin_announcements WHERE id = :id'
         );
         $stmt->execute([':id' => $announcementId]);
-    }
-
-    public function incrementAnnouncementReadCount(int $announcementId, string $variant, int $delta = 1): void
-    {
-        $delta = max(1, $delta);
-        if (strtoupper($variant) === 'B') {
-            $stmt = $this->pdo->prepare(
-                'UPDATE admin_announcements SET read_count_b = read_count_b + :delta, updated_at = NOW() WHERE id = :id'
-            );
-        } else {
-            $stmt = $this->pdo->prepare(
-                'UPDATE admin_announcements SET read_count = read_count + :delta, updated_at = NOW() WHERE id = :id'
-            );
-        }
-        $stmt->execute([
-            ':delta' => $delta,
-            ':id' => $announcementId,
-        ]);
-    }
-
-    public function incrementAnnouncementClickCount(int $announcementId, string $variant, int $delta = 1): void
-    {
-        $delta = max(1, $delta);
-        if (strtoupper($variant) === 'B') {
-            $stmt = $this->pdo->prepare(
-                'UPDATE admin_announcements SET click_count_b = click_count_b + :delta, updated_at = NOW() WHERE id = :id'
-            );
-        } else {
-            $stmt = $this->pdo->prepare(
-                'UPDATE admin_announcements SET click_count = click_count + :delta, updated_at = NOW() WHERE id = :id'
-            );
-        }
-        $stmt->execute([
-            ':delta' => $delta,
-            ':id' => $announcementId,
-        ]);
     }
 
     public function logEvent(int $announcementId, ?int $actorId, string $action, ?string $note = null): void
@@ -384,8 +337,7 @@ final class AdminAnnouncementsModel extends Model
         string $url,
         string $summary,
         string $importance,
-        int $announcementId,
-        string $variant
+        int $announcementId
     ): int {
         if ($userIds === []) {
             return 0;
@@ -393,8 +345,8 @@ final class AdminAnnouncementsModel extends Model
 
         $nextId = $this->nextNumericId('notifications');
         $stmt = $this->pdo->prepare(
-            'INSERT INTO notifications (id, user_id, title, body, summary, importance, url, announcement_id, variant, created_at)
-             VALUES (:id, :uid, :title, :body, :summary, :importance, :url, :announcement_id, :variant, NOW())'
+            'INSERT INTO notifications (id, user_id, title, body, summary, importance, url, announcement_id, created_at)
+             VALUES (:id, :uid, :title, :body, :summary, :importance, :url, :announcement_id, NOW())'
         );
         $sentCount = 0;
         foreach ($userIds as $userId) {
@@ -411,7 +363,6 @@ final class AdminAnnouncementsModel extends Model
                 ':importance' => $importance,
                 ':url' => $url,
                 ':announcement_id' => $announcementId,
-                ':variant' => $variant,
             ]);
             $sentCount++;
         }
@@ -459,7 +410,6 @@ final class AdminAnnouncementsModel extends Model
                 aa.id,
                 aa.admin_user_id,
                 aa.title,
-                aa.title_b,
                 aa.body,
                 aa.summary,
                 aa.action_url,
@@ -467,13 +417,9 @@ final class AdminAnnouncementsModel extends Model
                 aa.audience,
                 aa.category,
                 aa.importance,
-                aa.ab_enabled,
                 aa.sent_count,
-                aa.sent_count_b,
                 aa.read_count,
-                aa.read_count_b,
                 aa.click_count,
-                aa.click_count_b,
                 aa.published_by,
                 aa.approved_by,
                 aa.published_at,

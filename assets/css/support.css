@@ -215,6 +215,7 @@ body.font-sans {
     border-radius: 0.85rem;
     border: 1px solid rgba(148, 163, 184, 0.45);
     background: rgba(255, 255, 255, 0.75);
+    cursor: zoom-in;
     padding: 0.18rem;
     transition: border-color 0.2s ease, transform 0.2s ease;
 }

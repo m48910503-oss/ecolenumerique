@@ -155,6 +155,7 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/course_create_builder.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/course_create_builder.css') ?: time()))); ?>">
     <script src="<?php echo e(site_url('assets/js/sidebar_toggle.js')); ?>" defer></script>
     <script src="<?php echo e(site_url('assets/js/teacher_dashboard.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/teacher_dashboard.js') ?: time()))); ?>" defer></script>
+    <script src="<?php echo e(site_url('assets/vendor/xlsx.full.min.js')); ?>" defer></script>
     <script src="<?php echo e(site_url('assets/js/course_complete_builder.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/course_complete_builder.js') ?: time()))); ?>" defer></script>
 <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
 </head>
@@ -195,7 +196,7 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                         </div>
 
             <?php if ($errors !== []): ?>
-                <section class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700 shadow-card">
+                <section class="course-builder-error-banner mb-6 rounded-2xl px-5 py-4 text-sm shadow-card">
                     <div class="flex items-start gap-3">
                         <i class="fas fa-exclamation-triangle mt-0.5"></i>
                         <div class="space-y-1">

@@ -157,9 +157,7 @@ final class ProfileService extends Service
         $lastName = trim((string) ($post['last_name'] ?? ''));
         $email = trim((string) ($post['email'] ?? ($user['email'] ?? '')));
         $phone = trim((string) ($post['phone'] ?? ''));
-        $phoneCode = trim((string) ($post['phone_code'] ?? ($user['phone_country_code'] ?? '')));
-        [$phoneCode, $phone] = $this->normalizePhoneInput($phoneCode, $phone);
-        $city = trim((string) ($post['city'] ?? ''));
+        $phone = $this->normalizePhoneInput($phone);
         $country = trim((string) ($post['country'] ?? ''));
 
         $studentProfile['certificate_display_name'] = trim((string) ($post['certificate_display_name'] ?? ($studentProfile['certificate_display_name'] ?? '')));
@@ -173,8 +171,6 @@ final class ProfileService extends Service
         $user['last_name'] = $lastName;
         $user['email'] = $email;
         $user['phone'] = $phone;
-        $user['phone_country_code'] = $phoneCode;
-        $user['city'] = $city;
         $user['country'] = $country;
         $user['notification_preferences_json'] = json_encode($notificationPreferences);
 
@@ -217,12 +213,12 @@ final class ProfileService extends Service
                 }
             }
 
-            if ($phone === '' || $phoneCode === '') {
-                $errors[] = 'Numéro de retrait obligatoire (indicatif + numéro).';
+            if ($phone === '') {
+                $errors[] = 'Numéro de retrait obligatoire.';
             }
         }
 
-        [$phoneCodeNormalized, $phoneE164, $phoneErrors] = $this->validatePhone($phone, $phoneCode);
+        [$phoneNormalized, $phoneErrors] = $this->validatePhone($phone);
         $errors = array_merge($errors, $phoneErrors);
 
         $avatarPath = trim((string) ($user['avatar_url'] ?? ''));
@@ -291,10 +287,7 @@ final class ProfileService extends Service
                 'first_name' => $firstName,
                 'last_name' => $lastName,
                 'email' => $email,
-                'phone' => $phone !== '' ? $phone : null,
-                'phone_country_code' => $phoneCodeNormalized,
-                'phone_e164' => $phoneE164,
-                'city' => $city !== '' ? $city : null,
+                'phone' => $phoneNormalized !== '' ? $phoneNormalized : null,
                 'country' => $country !== '' ? $country : null,
                 'avatar_url' => $avatarPath !== '' ? $avatarPath : null,
                 'signature_path' => $signaturePath !== '' ? $signaturePath : null,
@@ -487,76 +480,37 @@ final class ProfileService extends Service
         ];
     }
 
-    private function validatePhone(string $phone, string $phoneCode): array
+    private function validatePhone(string $phone): array
     {
         $errors = [];
-        $phoneDigits = preg_replace('/\D+/', '', $phone);
-        $phoneCodeNormalized = null;
-        $phoneE164 = null;
+        $normalizedPhone = $this->normalizePhoneInput($phone);
+        $phoneDigits = preg_replace('/\D+/', '', $normalizedPhone);
 
-        if ($phone !== '' && ($phoneDigits === '' || strlen($phoneDigits) < 6)) {
+        if ($normalizedPhone !== '' && ($phoneDigits === '' || strlen($phoneDigits) < 6 || strlen($phoneDigits) > 15)) {
             $errors[] = 'Numéro de téléphone invalide.';
         }
 
-        if ($phoneCode !== '') {
-            $phoneCodeNormalized = preg_replace('/\s+/', '', $phoneCode);
-            if (!str_starts_with((string) $phoneCodeNormalized, '+')) {
-                $phoneCodeNormalized = '+' . ltrim((string) $phoneCodeNormalized, '+');
-            }
-            if (preg_match('/^\+[0-9]{1,4}$/', (string) $phoneCodeNormalized) !== 1) {
-                $errors[] = 'Code pays invalide (ex. : +229).';
-            }
-        }
-        if ($phoneCodeNormalized && $phoneDigits) {
-            $phoneE164 = $phoneCodeNormalized . $phoneDigits;
-            $numericLength = strlen(ltrim($phoneE164, '+'));
-            if ($numericLength < 8 || $numericLength > 15) {
-                $errors[] = 'Combinaison code pays / numéro invalide.';
-            }
-        }
-
-        return [$phoneCodeNormalized, $phoneE164, $errors];
+        return [$normalizedPhone, $errors];
     }
 
-    private function normalizePhoneInput(string $phoneCode, string $phone): array
+    private function normalizePhoneInput(string $phone): string
     {
-        $phoneCode = trim($phoneCode);
         $phone = trim($phone);
-
-        if ($phoneCode === '' && preg_match('/^\s*\+(\d{1,4})(\d+)\s*$/', $phone, $matches) === 1) {
-            $phoneCode = '+' . $matches[1];
-            $phone = $matches[2];
+        if ($phone === '') {
+            return '';
         }
 
-        if ($phoneCode !== '' && preg_match('/^\s*(\+?\d{1,4})(.*)$/', $phoneCode, $matches) === 1) {
-            $codeCandidate = trim((string) $matches[1]);
-            $extraDigits = preg_replace('/\D+/', '', (string) $matches[2]);
-            if (!str_starts_with($codeCandidate, '+')) {
-                $codeCandidate = '+' . ltrim($codeCandidate, '+');
-            }
-            $codeDigits = ltrim($codeCandidate, '+');
-            if (strlen($codeDigits) === 4 && str_ends_with($codeDigits, '0')) {
-                if ($extraDigits !== '') {
-                    $extraDigits = substr($codeDigits, -1) . $extraDigits;
-                    $codeDigits = substr($codeDigits, 0, -1);
-                    $codeCandidate = '+' . $codeDigits;
-                } elseif ($phone !== '') {
-                    $codeDigits = substr($codeDigits, 0, -1);
-                    $codeCandidate = '+' . $codeDigits;
-                }
-            }
-            $phoneCode = $codeCandidate;
-            if ($phone === '' && $extraDigits !== '') {
-                $phone = $extraDigits;
-            }
+        $phone = preg_replace('/[^\d+]+/', '', $phone);
+        if (!is_string($phone)) {
+            return '';
         }
 
-        if ($phoneCode !== '') {
-            $phoneDigits = preg_replace('/\D+/', '', $phone);
-            $phone = $phoneDigits;
+        $phone = preg_replace('/(?!^)\+/', '', $phone);
+        if (!is_string($phone)) {
+            return '';
         }
 
-        return [$phoneCode, $phone];
+        return $phone;
     }
 
     private function handleImageUpload(?array $file, int $maxMb, string $folder, string $prefix, string $currentPath): array

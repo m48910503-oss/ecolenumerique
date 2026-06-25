@@ -15,7 +15,7 @@ $isTeacherPreview = $previewMode === 'teacher';
                     <p class="text-[9px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Cours #<?php echo e((string) $courseId); ?></p>
                     <h2 class="mt-1 break-all text-sm font-display font-semibold text-slate-900 dark:text-slate-100 sm:text-base"><?php echo e($courseTitle); ?></h2>
                     <p class="mt-2 max-w-full break-all text-[10px] leading-5 text-slate-600 dark:text-slate-300">
-                        <?php echo e($courseDescription !== '' ? $courseDescription : 'Ajoutez une description claire pour présenter le contenu et la promesse pédagogique du cours.'); ?>
+                        <?php echo e($courseDescription !== '' ? $courseDescription : 'Ajoutez une description du cours.'); ?>
                     </p>
                 </div>
             </div> 
@@ -97,7 +97,7 @@ $isTeacherPreview = $previewMode === 'teacher';
                         <div>
                             <h3 class="text-[11px] font-semibold text-slate-900 dark:text-slate-100">État de soumission</h3>
                             <p class="mt-1 text-[10px] leading-5 text-slate-600 dark:text-slate-300">
-                                <?php echo $isLocked ? "Le cours est verrouillé car il a déjà été soumis ou approuvé." : "Le cours reste modifiable. Vous pouvez encore ajuster le contenu avant l'envoi."; ?>
+                                <?php echo $isLocked ? "Cours verrouillé." : "Cours modifiable."; ?>
                             </p>
                         </div>
                     </div>
@@ -148,7 +148,7 @@ $isTeacherPreview = $previewMode === 'teacher';
         </div>
     <?php endif; ?>
     <p class="mt-2.5 text-[9px] text-slate-500 dark:text-slate-400">
-        <?php echo $isTeacherPreview ? "Aperçu réservé à l'enseignant pour vérifier le rendu avant publication." : "Aperçu réservé à l'administration pour le contrôle qualité et la validation."; ?>
+        <?php echo $isTeacherPreview ? "Aperçu enseignant avant publication." : "Aperçu admin pour validation."; ?>
     </p>
 </section>
 
@@ -157,7 +157,7 @@ $isTeacherPreview = $previewMode === 'teacher';
         <div>
             <p class="text-[9px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Repères pédagogiques</p>
             <h2 class="mt-1.5 text-[10px] font-display font-semibold text-slate-900 dark:text-slate-100 sm:text-xs">Objectifs, prérequis et matériel</h2>
-            <p class="mt-1.5 text-[10px] text-slate-600 dark:text-slate-300">Vérifiez que les informations utiles aux apprenants sont complètes et compréhensibles.</p>
+            <p class="mt-1.5 text-[10px] text-slate-600 dark:text-slate-300">Complétez les infos clés du cours.</p>
         </div>
         <span class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300">
             <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg('check-circle'); ?></span>
@@ -167,7 +167,7 @@ $isTeacherPreview = $previewMode === 'teacher';
 
     <?php if (!$hasPedagogicalInfo): ?>
         <div class="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-3 text-[11px] text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
-            Ajoutez des objectifs pédagogiques, des prérequis ou une ressource générale pour renforcer la compréhension du cours.
+            Ajoutez des objectifs, des prérequis ou une ressource.
         </div>
     <?php else: ?>
         <div class="mt-3 grid gap-2.5 lg:grid-cols-2">
@@ -207,7 +207,7 @@ $isTeacherPreview = $previewMode === 'teacher';
                         <span class="app-icon text-blue-600 dark:text-blue-300" aria-hidden="true"><?php echo dashboard_icon_svg('external-link'); ?></span>
                         <h3 class="text-[11px] font-semibold text-slate-900 dark:text-slate-100">Ressource générale</h3>
                     </div>
-                    <p class="mt-2 text-[10px] text-slate-600 dark:text-slate-300">Ouvrez ici le lien de référence associé au cours.</p>
+                    <p class="mt-2 text-[10px] text-slate-600 dark:text-slate-300">Lien de référence du cours.</p>
                     <a href="<?php echo e($generalResourceUrl); ?>" target="_blank" rel="noopener" class="mt-3 inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-[10px] font-semibold text-slate-700 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100 dark:hover:border-slate-500">
                         <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg('external-link'); ?></span>
                         <span>Ouvrir la ressource</span>

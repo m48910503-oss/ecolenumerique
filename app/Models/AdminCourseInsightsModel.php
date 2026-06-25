@@ -63,6 +63,40 @@ final class AdminCourseInsightsModel extends Model
     }
 
     /**
+     * @return array<string,mixed>|null
+     */
+    public function findTeacherById(int $teacherId): ?array
+    {
+        $teacherId = max(0, $teacherId);
+        if ($teacherId < 1) {
+            return null;
+        }
+
+        $stmt = $this->pdo->prepare(
+            'SELECT
+                u.id,
+                u.first_name,
+                u.last_name,
+                u.email,
+                u.status,
+                u.created_at,
+                u.updated_at
+             FROM users u
+             WHERE u.id = :id
+               AND u.roles_json LIKE :teacher_role
+               AND u.status IN ("active", "suspended")
+             LIMIT 1'
+        );
+        $stmt->execute([
+            ':id' => $teacherId,
+            ':teacher_role' => '%"teacher"%',
+        ]);
+        $row = $stmt->fetch();
+
+        return is_array($row) ? $row : null;
+    }
+
+    /**
      * @return array<int,array<string,mixed>>
      */
     public function fetchApprovedCourseRows(int $teacherId = 0, string $search = ''): array
@@ -148,6 +182,92 @@ final class AdminCourseInsightsModel extends Model
                 ORDER BY total_generated_xof DESC, enrolled_count DESC, c.created_at DESC';
 
         return $this->rowsQuery($sql, $params);
+    }
+
+    /**
+     * @return array<string,mixed>|null
+     */
+    public function findApprovedCourseById(int $courseId): ?array
+    {
+        $courseId = max(0, $courseId);
+        if ($courseId < 1) {
+            return null;
+        }
+
+        $enrollmentJoin = '';
+        $enrollmentSelect = '0 AS enrolled_count';
+        if ($this->hasEnrollmentsTable()) {
+            $enrollmentJoin = '
+                LEFT JOIN (
+                    SELECT e.course_id, COUNT(*) AS enrolled_count
+                    FROM enrollments e
+                    WHERE e.status = "active"
+                    GROUP BY e.course_id
+                ) enr ON enr.course_id = c.id
+            ';
+            $enrollmentSelect = 'COALESCE(enr.enrolled_count, 0) AS enrolled_count';
+        }
+
+        $salesJoin = '';
+        $salesSelect = '
+            0 AS paid_units,
+            0 AS total_generated_xof,
+            0 AS direct_units,
+            0 AS direct_generated_xof,
+            0 AS promo_units,
+            0 AS promo_generated_xof,
+            0 AS enterprise_units,
+            0 AS enterprise_generated_xof
+        ';
+        if ($this->salesSchemaReady()) {
+            $salesJoin = '
+                LEFT JOIN (
+                    ' . $this->salesAggregateSubquery() . '
+                ) sales ON sales.course_id = c.id
+            ';
+            $salesSelect = '
+                COALESCE(sales.paid_units, 0) AS paid_units,
+                COALESCE(sales.total_generated_xof, 0) AS total_generated_xof,
+                COALESCE(sales.direct_units, 0) AS direct_units,
+                COALESCE(sales.direct_generated_xof, 0) AS direct_generated_xof,
+                COALESCE(sales.promo_units, 0) AS promo_units,
+                COALESCE(sales.promo_generated_xof, 0) AS promo_generated_xof,
+                COALESCE(sales.enterprise_units, 0) AS enterprise_units,
+                COALESCE(sales.enterprise_generated_xof, 0) AS enterprise_generated_xof
+            ';
+        }
+
+        $rows = $this->rowsQuery(
+            'SELECT
+                c.id,
+                c.slug,
+                c.title,
+                c.description,
+                c.cover_path,
+                c.duration_hours,
+                c.level,
+                c.price_xof,
+                c.created_at,
+                c.updated_at,
+                c.teacher_id,
+                COALESCE(cat.name, "") AS category_name,
+                u.first_name AS teacher_first_name,
+                u.last_name AS teacher_last_name,
+                ' . $enrollmentSelect . ',
+                ' . $salesSelect . '
+             FROM courses c
+             JOIN users u ON u.id = c.teacher_id
+             LEFT JOIN categories cat ON cat.id = c.category_id
+             ' . $enrollmentJoin . '
+             ' . $salesJoin . '
+             WHERE c.id = :course_id
+               AND c.status = "approved"
+               AND c.deleted_at IS NULL
+             LIMIT 1',
+            [':course_id' => $courseId]
+        );
+
+        return is_array($rows[0] ?? null) ? $rows[0] : null;
     }
 
     private function salesAggregateSubquery(): string

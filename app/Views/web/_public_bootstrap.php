@@ -1,22 +1,36 @@
 <?php
+require_once __DIR__ . '/../../../includes/helpers.php';
+
 $isLoggedIn = !empty($isLoggedIn);
-$siteLogoUrl = trim((string) ($siteLogoUrl ?? ''));
-$footerText = trim((string) ($footerText ?? ''));
+
+$siteIdentity = function_exists('site_public_identity') ? site_public_identity() : [];
+$siteName = trim((string) ($siteName ?? ($siteIdentity['siteName'] ?? '')));
+if ($siteName === '') {
+    $siteName = defined('APP_FROM_NAME') ? (string) APP_FROM_NAME : 'École Numérique';
+}
+$siteTagline = trim((string) ($siteTagline ?? ($siteIdentity['siteTagline'] ?? '')));
+$siteDescription = trim((string) ($siteDescription ?? ($siteIdentity['siteDescription'] ?? '')));
+$supportEmail = trim((string) ($supportEmail ?? ($siteIdentity['supportEmail'] ?? '')));
+$supportPhone = trim((string) ($supportPhone ?? ($siteIdentity['supportPhone'] ?? '')));
+$supportWhatsapp = trim((string) ($supportWhatsapp ?? ($siteIdentity['supportWhatsapp'] ?? '')));
+$siteAddress = trim((string) ($siteAddress ?? ($siteIdentity['siteAddress'] ?? '')));
+$siteLogoUrl = trim((string) ($siteLogoUrl ?? ($siteIdentity['siteLogoUrl'] ?? '')));
+$footerText = trim((string) ($footerText ?? ($siteIdentity['footerText'] ?? '')));
 $dashboardUrl = trim((string) ($dashboardUrl ?? site_url('student/dashboard')));
 $publicPage = trim((string) ($publicPage ?? 'home'));
-$publicBrandSubtitle = trim((string) ($publicBrandSubtitle ?? 'Des formations numériques conçues pour devenir utiles.'));
+$publicBrandSubtitle = trim((string) ($publicBrandSubtitle ?? ($siteTagline !== '' ? $siteTagline : ($siteDescription !== '' ? $siteDescription : 'Des formations numériques conçues pour devenir utiles.'))));
 $publicHeaderMetaLabel = trim((string) ($publicHeaderMetaLabel ?? ($isLoggedIn ? 'Compte connecté' : 'Déjà membre ?')));
 $publicHeaderSecondaryLabel = trim((string) ($publicHeaderSecondaryLabel ?? ($isLoggedIn ? 'Mon profil' : 'Se connecter')));
 $publicHeaderSecondaryUrl = trim((string) ($publicHeaderSecondaryUrl ?? ($isLoggedIn ? site_url('profile') : site_url('login'))));
 $publicHeaderPrimaryLabel = trim((string) ($publicHeaderPrimaryLabel ?? ($isLoggedIn ? 'Accéder à mon espace' : 'Créer un compte')));
 $publicHeaderPrimaryUrl = trim((string) ($publicHeaderPrimaryUrl ?? ($isLoggedIn ? $dashboardUrl : site_url('register'))));
-$publicFooterNote = trim((string) ($publicFooterNote ?? "L'espace public est pensé pour découvrir les formations. Les espaces personnels restent dédiés au suivi et à l'apprentissage."));
+$publicFooterNote = trim((string) ($publicFooterNote ?? ($siteDescription !== '' ? $siteDescription : "L'espace public est pensé pour découvrir les formations. Les espaces personnels restent dédiés au suivi et à l'apprentissage.")));
 
 $publicAnnouncement = is_array($publicAnnouncement ?? null) ? $publicAnnouncement : [];
 
 $homeUrl = site_url('');
 $catalogueUrl = site_url('catalogue');
-$teacherApplyUrl = site_url('teacher/apply');
+$teacherApplyUrl = site_url('become-teacher');
 $supportUrl = site_url('support');
 $privacyUrl = site_url('privacy');
 $cguUrl = site_url('cgu');

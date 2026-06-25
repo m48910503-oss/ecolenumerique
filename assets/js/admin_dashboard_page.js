@@ -2,68 +2,7 @@
   "use strict";
 
   var root = document.documentElement;
-  var body = document.body;
-
-  function setTheme(theme) {
-    var nextTheme = theme === "dark" ? "dark" : "light";
-    root.classList.toggle("dark", nextTheme === "dark");
-    root.classList.toggle("light", nextTheme === "light");
-    root.setAttribute("data-theme", nextTheme);
-    root.style.colorScheme = nextTheme;
-
-    try {
-      localStorage.setItem("theme", nextTheme);
-    } catch (_error) {
-      // Storage can be unavailable in private modes, but the visible theme still changed.
-    }
-
-    updateThemeLabels(nextTheme);
-  }
-
-  function updateThemeLabels(theme) {
-    var labels = document.querySelectorAll("[data-theme-label]");
-    labels.forEach(function (label) {
-      label.textContent = theme === "dark" ? "Mode clair" : "Mode sombre";
-    });
-  }
-
-  function initializeThemeToggles() {
-    updateThemeLabels(root.classList.contains("dark") ? "dark" : "light");
-
-    document.querySelectorAll("[data-admin-theme-toggle]").forEach(function (button) {
-      button.addEventListener("click", function () {
-        setTheme(root.classList.contains("dark") ? "light" : "dark");
-        drawAllCharts();
-      });
-    });
-  }
-
-  function setSidebarOpen(open) {
-    body.classList.toggle("sidebar-open", open);
-    document.querySelectorAll("[data-admin-menu-toggle]").forEach(function (button) {
-      button.setAttribute("aria-expanded", open ? "true" : "false");
-    });
-  }
-
-  function initializeMobileSidebar() {
-    document.querySelectorAll("[data-admin-menu-toggle]").forEach(function (button) {
-      button.addEventListener("click", function () {
-        setSidebarOpen(!body.classList.contains("sidebar-open"));
-      });
-    });
-
-    document.querySelectorAll("[data-admin-menu-close]").forEach(function (button) {
-      button.addEventListener("click", function () {
-        setSidebarOpen(false);
-      });
-    });
-
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape") {
-        setSidebarOpen(false);
-      }
-    });
-  }
+  var scheduledFrame = 0;
 
   function readJsonAttribute(element, attributeName) {
     var raw = element.getAttribute(attributeName) || "[]";
@@ -126,7 +65,7 @@
     ctx.lineWidth = 1;
 
     for (var grid = 0; grid <= 4; grid += 1) {
-      var y = padding.top + chartHeight - (chartHeight * grid / 4);
+      var y = padding.top + chartHeight - chartHeight * grid / 4;
       var value = Math.round(roundedMax * grid / 4);
       ctx.strokeStyle = colors.axis;
       ctx.beginPath();
@@ -139,8 +78,8 @@
     }
 
     var points = values.map(function (value, index) {
-      var x = padding.left + (xStep * index);
-      var y = padding.top + chartHeight - ((value / roundedMax) * chartHeight);
+      var x = padding.left + xStep * index;
+      var y = padding.top + chartHeight - value / roundedMax * chartHeight;
       return { x: x, y: y };
     });
 
@@ -196,27 +135,43 @@
     document.querySelectorAll("[data-admin-chart]").forEach(drawChart);
   }
 
+  function requestDrawAllCharts() {
+    if (scheduledFrame !== 0) {
+      window.cancelAnimationFrame(scheduledFrame);
+    }
+
+    scheduledFrame = window.requestAnimationFrame(function () {
+      scheduledFrame = 0;
+      drawAllCharts();
+    });
+  }
+
   function initializeCharts() {
-    drawAllCharts();
-    window.addEventListener("resize", drawAllCharts);
+    requestDrawAllCharts();
+    window.addEventListener("resize", requestDrawAllCharts, { passive: true });
+    window.addEventListener("load", requestDrawAllCharts, { once: true });
+
+    if ("ResizeObserver" in window) {
+      document.querySelectorAll("[data-admin-chart]").forEach(function (canvas) {
+        var parent = canvas.parentElement;
+        if (!parent) {
+          return;
+        }
+        new ResizeObserver(requestDrawAllCharts).observe(parent);
+      });
+    }
 
     if ("MutationObserver" in window) {
-      new MutationObserver(drawAllCharts).observe(root, {
+      new MutationObserver(requestDrawAllCharts).observe(root, {
         attributes: true,
         attributeFilter: ["class", "data-theme"]
       });
     }
   }
 
-  function initialize() {
-    initializeThemeToggles();
-    initializeMobileSidebar();
-    initializeCharts();
-  }
-
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initialize, { once: true });
+    document.addEventListener("DOMContentLoaded", initializeCharts, { once: true });
   } else {
-    initialize();
+    initializeCharts();
   }
 })();

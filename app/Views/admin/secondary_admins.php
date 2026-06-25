@@ -8,8 +8,6 @@ $pagination = is_array($pagination ?? null) ? $pagination : [];
 
 $adminDashboardUrl = (string) ($adminDashboardUrl ?? site_url('admin/dashboard'));
 $adminSupportAgentsUrl = (string) ($adminSupportAgentsUrl ?? site_url('admin/support_agents'));
-$secondaryLoginUrl = (string) site_url('admin/secondary_login');
-$secondaryLoginDisplay = preg_replace('#^https?://#', '', $secondaryLoginUrl) ?: $secondaryLoginUrl;
 
 $secondaryTotal = max(0, (int) ($pagination['total'] ?? count($secondaryAdmins)));
 $paginationPage = max(1, (int) ($pagination['page'] ?? 1));
@@ -25,11 +23,23 @@ foreach ($secondaryAdmins as $adminRow) {
 }
 $inactiveSecondaryCount = max(0, count($secondaryAdmins) - $activeSecondaryCount);
 
+$buildPageUrl = static function (int $targetPage): string {
+    $page = max(1, $targetPage);
+
+    return site_url('admin/secondary_admins' . ($page > 1 ? ('?page=' . $page) : ''));
+};
+
+$createAdminUrl = site_url('admin/secondary_admins/create' . ($paginationPage > 1 ? ('?page=' . $paginationPage) : ''));
+$grantAdminUrl = site_url('admin/secondary_admins/grant' . ($paginationPage > 1 ? ('?page=' . $paginationPage) : ''));
+
 $adminNavActive = 'secondary_admins';
 $adminTopTitle = 'Administrateurs secondaires';
 $adminTopSubtitle = 'Gestion des droits';
 $adminTopBadge = (string) $secondaryTotal . ' ' . $secondaryCountLabel;
 $adminTopBadgeTone = $secondaryTotal > 0 ? 'active' : 'pending';
+$adminTopSearchAction = site_url('admin/secondary_admins');
+$adminTopSearchValue = trim((string) ($_GET['q'] ?? ''));
+$adminTopSearchPlaceholder = 'Rechercher un administrateur...';
 $adminTopActions = [
     ['label' => 'Tableau de bord', 'url' => $adminDashboardUrl, 'tone' => 'neutral'],
     ['label' => 'Équipe support', 'url' => $adminSupportAgentsUrl, 'tone' => 'neutral'],
@@ -71,8 +81,8 @@ $permissionIconMap = [
     'teacher_applications' => 'chalkboard-user',
     'sales' => 'receipt',
     'categories' => 'folder',
-    'announcements' => 'megaphone',
     'site_settings' => 'settings',
+    'error_logs' => 'bug',
 ];
 
 $permissionIcon = static function (string $permissionKey) use ($permissionIconMap, $icon): string {
@@ -93,7 +103,7 @@ $deriveRole = static function (array $permissions, int $availablePermissions): a
         return ['key' => 'superviseur', 'label' => 'Superviseur', 'icon' => 'fa-crown'];
     }
 
-    if ($has('courses') || $has('categories') || $has('teacher_applications') || $has('announcements')) {
+    if ($has('courses') || $has('categories') || $has('teacher_applications')) {
         return ['key' => 'moderateur', 'label' => 'Modérateur', 'icon' => 'fa-user-shield'];
     }
 
@@ -114,22 +124,6 @@ $formatDate = static function (string $date): string {
     return date('d/m/Y H:i', $timestamp);
 };
 
-$buildPageUrl = static function (int $targetPage): string {
-    $page = max(1, $targetPage);
-
-    return site_url('admin/secondary_admins' . ($page > 1 ? ('?page=' . $page) : ''));
-};
-
-$modalToAutoOpen = '';
-if ($errors !== [] && strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) === 'POST') {
-    $postedAction = (string) ($_POST['action'] ?? '');
-    if ($postedAction === 'create') {
-        $modalToAutoOpen = 'secondary-create-modal';
-    } elseif ($postedAction === 'grant') {
-        $modalToAutoOpen = 'secondary-grant-modal';
-    }
-}
-
 $adminPageScripts = ['admin_secondary_admins.js'];
 ?>
 
@@ -142,8 +136,8 @@ $adminPageScripts = ['admin_secondary_admins.js'];
     <?php require __DIR__ . '/_head_assets.php'; ?>
 <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
 </head>
-<body class="app-view app-role-admin min-h-screen bg-slate-50 text-slate-900 font-body dark:bg-slate-950 dark:text-slate-100" data-view="admin/secondary_admins" data-sidebar-desktop-toggle="1" data-secondary-open-modal="<?php echo e($modalToAutoOpen); ?>">
-    <div class="admin-shell-backdrop">
+<body class="app-view app-role-admin min-h-screen bg-slate-50 text-slate-900 font-body dark:bg-slate-950 dark:text-slate-100" data-view="admin/secondary_admins" data-sidebar-desktop-toggle="1">
+    <div class="admin-shell-backdrop" aria-hidden="true">
         <div class="admin-shell-backdrop__orb admin-shell-backdrop__orb--one"></div>
         <div class="admin-shell-backdrop__orb admin-shell-backdrop__orb--two"></div>
     </div>
@@ -185,18 +179,21 @@ $adminPageScripts = ['admin_secondary_admins.js'];
                                     Gouvernance
                                 </p>
                                 <h2 class="mt-3 text-2xl font-bold sm:text-3xl">Administrateurs secondaires</h2>
-                                <p class="mt-2 text-primary-100">Rôles lisibles, actions rapides et permissions visibles.</p>
                             </div>
 
-                            <div class="grid gap-3 sm:grid-cols-2 xl:min-w-[24rem]">
-                                <button type="button" class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-primary-700 shadow-card transition hover:bg-primary-50 js-modal-open" data-modal-target="secondary-create-modal">
+                            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 xl:min-w-[36rem]">
+                                <a href="<?php echo e($createAdminUrl); ?>" class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-primary-700 shadow-card transition hover:bg-primary-50">
                                     <i class="fas fa-plus" aria-hidden="true"></i>
                                     Nouvel administrateur
-                                </button>
-                                <button type="button" class="inline-flex items-center justify-center gap-2 rounded-xl bg-white/15 px-4 py-3 text-sm font-bold text-white ring-1 ring-white/25 transition hover:bg-white/25 js-modal-open" data-modal-target="secondary-grant-modal">
+                                </a>
+                                <a href="<?php echo e($grantAdminUrl); ?>" class="inline-flex items-center justify-center gap-2 rounded-xl bg-white/15 px-4 py-3 text-sm font-bold text-white ring-1 ring-white/25 transition hover:bg-white/25">
                                     <i class="fas fa-key" aria-hidden="true"></i>
                                     Attribuer un compte
-                                </button>
+                                </a>
+                                <a href="<?php echo e(site_url('admin/secondary_admins/activity')); ?>" class="inline-flex items-center justify-center gap-2 rounded-xl bg-white/15 px-4 py-3 text-sm font-bold text-white ring-1 ring-white/25 transition hover:bg-white/25">
+                                    <i class="fas fa-history" aria-hidden="true"></i>
+                                    Journal d'activité
+                                </a>
                             </div>
                         </div>
                     </section>
@@ -204,32 +201,55 @@ $adminPageScripts = ['admin_secondary_admins.js'];
                     <section class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
                         <article class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border border-gray-100 dark:border-gray-700 hover-lift">
                             <div class="flex items-center justify-between gap-4">
-                                <div><p class="text-sm text-gray-500 dark:text-gray-400">Total</p><p class="text-2xl font-bold text-gray-900 dark:text-white mt-1"><?php echo e((string) $secondaryTotal); ?></p></div>
-                                <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-primary-600"><i class="fas fa-user-shield"></i></div>
+                                <div>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Total</p>
+                                    <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1"><?php echo e((string) $secondaryTotal); ?></p>
+                                </div>
+                                <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-primary-600">
+                                    <i class="fas fa-user-shield"></i>
+                                </div>
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-2"><?php echo e($secondaryCountLabel); ?> administrateur<?php echo $secondaryTotal > 1 ? 's' : ''; ?></p>
                         </article>
 
                         <article class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border border-gray-100 dark:border-gray-700 hover-lift">
                             <div class="flex items-center justify-between gap-4">
-                                <div><p class="text-sm text-gray-500 dark:text-gray-400">Actifs</p><p class="text-2xl font-bold text-gray-900 dark:text-white mt-1"><?php echo e((string) $activeSecondaryCount); ?></p></div>
-                                <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center text-green-600"><i class="fas fa-check-circle"></i></div>
+                                <div>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Actifs</p>
+                                    <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1"><?php echo e((string) $activeSecondaryCount); ?></p>
+                                </div>
+                                <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center text-green-600">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
                             </div>
-                            <p class="text-xs text-green-600 dark:text-green-400 mt-2 flex items-center"><i class="fas fa-lock-open mr-1"></i>Accès autorisés</p>
+                            <p class="text-xs text-green-600 dark:text-green-400 mt-2 flex items-center">
+                                <i class="fas fa-lock-open mr-1"></i>
+                                Accès autorisés
+                            </p>
                         </article>
 
                         <article class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border border-gray-100 dark:border-gray-700 hover-lift">
                             <div class="flex items-center justify-between gap-4">
-                                <div><p class="text-sm text-gray-500 dark:text-gray-400">Suspendus</p><p class="text-2xl font-bold text-gray-900 dark:text-white mt-1"><?php echo e((string) $inactiveSecondaryCount); ?></p></div>
-                                <div class="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl flex items-center justify-center text-yellow-600"><i class="fas fa-ban"></i></div>
+                                <div>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Suspendus</p>
+                                    <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1"><?php echo e((string) $inactiveSecondaryCount); ?></p>
+                                </div>
+                                <div class="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl flex items-center justify-center text-yellow-600">
+                                    <i class="fas fa-ban"></i>
+                                </div>
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Compte conservé, accès bloqué</p>
                         </article>
 
                         <article class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border border-gray-100 dark:border-gray-700 hover-lift">
                             <div class="flex items-center justify-between gap-4">
-                                <div><p class="text-sm text-gray-500 dark:text-gray-400">Permissions</p><p class="text-2xl font-bold text-gray-900 dark:text-white mt-1"><?php echo e((string) $permissionsTotal); ?></p></div>
-                                <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center text-purple-600"><i class="fas fa-sliders-h"></i></div>
+                                <div>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Permissions</p>
+                                    <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1"><?php echo e((string) $permissionsTotal); ?></p>
+                                </div>
+                                <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center text-purple-600">
+                                    <i class="fas fa-sliders-h"></i>
+                                </div>
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Fonctionnalités délégables</p>
                         </article>
@@ -274,7 +294,11 @@ $adminPageScripts = ['admin_secondary_admins.js'];
                                 $avatarLetters = strtoupper(substr($email !== '' ? $email : 'AD', 0, 2));
                             }
                             $cardSearch = strtolower(trim($displayName . ' ' . $email));
-                            $detailsId = 'secondary-details-' . (string) ($secondaryAdmin['id'] ?? 0);
+                            $editUrl = site_url(
+                                'admin/secondary_admins/edit?user_id='
+                                . (string) ($secondaryAdmin['id'] ?? 0)
+                                . ($paginationPage > 1 ? ('&page=' . $paginationPage) : '')
+                            );
                             ?>
                             <article class="js-secondary-admin-card bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border border-gray-100 dark:border-gray-700 hover-lift" data-admin-name="<?php echo e($cardSearch); ?>" data-admin-email="<?php echo e(strtolower($email)); ?>" data-admin-role="<?php echo e((string) $role['key']); ?>">
                                 <div class="flex items-start justify-between gap-4">
@@ -286,12 +310,13 @@ $adminPageScripts = ['admin_secondary_admins.js'];
                                         </div>
                                     </div>
                                     <div class="flex shrink-0 gap-1">
-                                        <button type="button" class="js-secondary-toggle rounded-lg p-2 text-gray-500 transition hover:bg-primary-50 hover:text-primary-600 dark:text-gray-400 dark:hover:bg-primary-900/20" aria-expanded="false" aria-controls="<?php echo e($detailsId); ?>" data-toggle-target="<?php echo e($detailsId); ?>" data-label-open="Masquer" data-label-closed="Modifier" title="Modifier les permissions">
-                                            <i class="fas fa-edit js-secondary-toggle-icon" aria-hidden="true"></i>
-                                            <span class="sr-only js-secondary-toggle-label">Modifier</span>
-                                        </button>
+                                        <a href="<?php echo e($editUrl); ?>" class="rounded-lg p-2 text-gray-500 transition hover:bg-primary-50 hover:text-primary-600 dark:text-gray-400 dark:hover:bg-primary-900/20" title="Modifier les permissions">
+                                            <i class="fas fa-edit" aria-hidden="true"></i>
+                                            <span class="sr-only">Modifier</span>
+                                        </a>
                                         <button type="button" class="js-secondary-revoke rounded-lg p-2 text-gray-500 transition hover:bg-red-50 hover:text-red-600 dark:text-gray-400 dark:hover:bg-red-900/20" data-user-id="<?php echo e((string) ($secondaryAdmin['id'] ?? 0)); ?>" data-user-name="<?php echo e($displayName !== '' ? $displayName : $email); ?>" title="Retirer le rôle">
                                             <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                                            <span class="sr-only">Retirer</span>
                                         </button>
                                     </div>
                                 </div>
@@ -337,30 +362,6 @@ $adminPageScripts = ['admin_secondary_admins.js'];
                                         <p class="mt-2"><i class="fas fa-user-check mr-1" aria-hidden="true"></i>Créé par <?php echo e((string) $secondaryAdmin['created_by_name']); ?></p>
                                     <?php endif; ?>
                                 </div>
-
-                                <div id="<?php echo e($detailsId); ?>" class="hidden mt-4 rounded-2xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-700/30">
-                                    <form method="post" action="<?php echo e(site_url('admin/secondary_admins')); ?>" class="space-y-3">
-                                        <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
-                                        <input type="hidden" name="action" value="update_permissions">
-                                        <input type="hidden" name="page" value="<?php echo e((string) $paginationPage); ?>">
-                                        <input type="hidden" name="user_id" value="<?php echo e((string) ($secondaryAdmin['id'] ?? 0)); ?>">
-                                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                            <?php foreach ($permissionsCatalog as $permissionKey => $permissionLabel): ?>
-                                                <label class="admin-secondary-permission-option flex items-center gap-2">
-                                                    <input type="checkbox" name="permissions[]" value="<?php echo e((string) $permissionKey); ?>" <?php echo in_array((string) $permissionKey, $selectedPermissions, true) ? 'checked' : ''; ?> class="app-checkbox rounded border-slate-300">
-                                                    <span class="app-icon" aria-hidden="true"><?php echo $permissionIcon((string) $permissionKey); ?></span>
-                                                    <span><?php echo e((string) $permissionLabel); ?></span>
-                                                </label>
-                                            <?php endforeach; ?>
-                                        </div>
-                                        <div class="flex justify-end">
-                                            <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-primary-700">
-                                                <i class="fas fa-check" aria-hidden="true"></i>
-                                                Enregistrer
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
                             </article>
                         <?php endforeach; ?>
                     </section>
@@ -394,117 +395,6 @@ $adminPageScripts = ['admin_secondary_admins.js'];
                     <?php endif; ?>
                 </div>
             </main>
-        </div>
-    </div>
-
-    <div id="secondary-create-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4 js-admin-modal" role="dialog" aria-modal="true" aria-labelledby="secondary-create-modal-title">
-        <div class="admin-shell-modal admin-secondary-modal-panel admin-secondary-template-modal w-full max-w-2xl rounded-2xl">
-            <div class="admin-secondary-template-modal__head">
-                <h3 id="secondary-create-modal-title">
-                    <i class="fas fa-user-plus text-primary-500" aria-hidden="true"></i>
-                    Nouvel administrateur
-                </h3>
-                <button type="button" class="admin-secondary-template-modal__close js-modal-close" data-modal-target="secondary-create-modal">
-                    <i class="fas fa-times" aria-hidden="true"></i>
-                </button>
-            </div>
-
-            <form method="post" action="<?php echo e(site_url('admin/secondary_admins')); ?>">
-                <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
-                <input type="hidden" name="action" value="create">
-
-                <div class="admin-secondary-template-modal__body">
-                    <div class="grid gap-3 sm:grid-cols-2">
-                        <div class="admin-shell-field">
-                            <label class="admin-shell-label" for="secondary-create-first">Prénom</label>
-                            <input id="secondary-create-first" name="first_name" type="text" autocomplete="given-name" required class="admin-shell-input" placeholder="Jean">
-                        </div>
-                        <div class="admin-shell-field">
-                            <label class="admin-shell-label" for="secondary-create-last">Nom</label>
-                            <input id="secondary-create-last" name="last_name" type="text" autocomplete="family-name" required class="admin-shell-input" placeholder="Dupont">
-                        </div>
-                    </div>
-
-                    <div class="admin-shell-field">
-                        <label class="admin-shell-label" for="secondary-create-email">Adresse e-mail</label>
-                        <input id="secondary-create-email" name="email" type="email" autocomplete="email" required class="admin-shell-input" placeholder="jean@ecole.fr">
-                    </div>
-
-                    <div class="admin-shell-field">
-                        <label class="admin-shell-label" for="secondary-create-password">Mot de passe temporaire</label>
-                        <input id="secondary-create-password" name="password" type="password" minlength="8" required class="admin-shell-input">
-                        <p class="admin-secondary-template-help">8 caractères minimum, avec une majuscule, un chiffre et un caractère spécial.</p>
-                    </div>
-
-                    <div class="admin-shell-field">
-                        <p class="admin-shell-label">Fonctionnalités autorisées</p>
-                        <div class="admin-secondary-template-permission-grid">
-                            <?php foreach ($permissionsCatalog as $permissionKey => $permissionLabel): ?>
-                                <label class="admin-secondary-permission-option">
-                                    <input type="checkbox" name="permissions[]" value="<?php echo e((string) $permissionKey); ?>" class="app-checkbox rounded border-slate-300">
-                                    <span class="app-icon" aria-hidden="true"><?php echo $permissionIcon((string) $permissionKey); ?></span>
-                                    <span><?php echo e((string) $permissionLabel); ?></span>
-                                </label>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="admin-secondary-template-modal__foot">
-                    <button type="button" class="admin-secondary-template-modal__secondary js-modal-close" data-modal-target="secondary-create-modal">Annuler</button>
-                    <button type="submit" class="admin-secondary-template-modal__primary">
-                        <i class="fas fa-check" aria-hidden="true"></i>
-                        Enregistrer
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="secondary-grant-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4 js-admin-modal" role="dialog" aria-modal="true" aria-labelledby="secondary-grant-modal-title">
-        <div class="admin-shell-modal admin-secondary-modal-panel admin-secondary-template-modal w-full max-w-2xl rounded-2xl">
-            <div class="admin-secondary-template-modal__head">
-                <h3 id="secondary-grant-modal-title">
-                    <i class="fas fa-user-shield text-primary-500" aria-hidden="true"></i>
-                    Attribuer le rôle à un compte existant
-                </h3>
-                <button type="button" class="admin-secondary-template-modal__close js-modal-close" data-modal-target="secondary-grant-modal">
-                    <i class="fas fa-times" aria-hidden="true"></i>
-                </button>
-            </div>
-
-            <form method="post" action="<?php echo e(site_url('admin/secondary_admins')); ?>">
-                <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
-                <input type="hidden" name="action" value="grant">
-
-                <div class="admin-secondary-template-modal__body">
-                    <div class="admin-shell-field">
-                        <label class="admin-shell-label" for="secondary-grant-email">Adresse e-mail de l'utilisateur</label>
-                        <input id="secondary-grant-email" name="email" type="email" autocomplete="email" required class="admin-shell-input" placeholder="utilisateur@ecole.fr">
-                    </div>
-
-                    <div class="admin-shell-field">
-                        <p class="admin-shell-label">Fonctionnalités autorisées</p>
-                        <div class="admin-secondary-template-permission-grid">
-                            <?php foreach ($permissionsCatalog as $permissionKey => $permissionLabel): ?>
-                                <label class="admin-secondary-permission-option">
-                                    <input type="checkbox" name="permissions[]" value="<?php echo e((string) $permissionKey); ?>" class="app-checkbox rounded border-slate-300">
-                                    <span class="app-icon" aria-hidden="true"><?php echo $permissionIcon((string) $permissionKey); ?></span>
-                                    <span><?php echo e((string) $permissionLabel); ?></span>
-                                </label>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="admin-secondary-template-modal__foot">
-                    <button type="button" class="admin-secondary-template-modal__secondary js-modal-close" data-modal-target="secondary-grant-modal">Annuler</button>
-                    <button type="submit" class="admin-secondary-template-modal__primary">
-                        <i class="fas fa-key" aria-hidden="true"></i>
-                        Attribuer le rôle
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 

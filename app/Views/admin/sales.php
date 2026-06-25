@@ -21,11 +21,6 @@ $paidTotals = is_array($paidTotals ?? null) ? $paidTotals : [];
 $payouts = array_values(is_array($payouts ?? null) ? $payouts : []);
 $withdrawals = array_values(is_array($withdrawals ?? null) ? $withdrawals : []);
 $teacherCourses = is_array($teacherCourses ?? null) ? $teacherCourses : [];
-$teacherWithdrawalMethodCatalog = is_array($teacherWithdrawalMethodCatalog ?? null) ? $teacherWithdrawalMethodCatalog : [
-    'fedapay' => 'Mobile Money',
-    'crypto' => 'Crypto',
-];
-$teacherWithdrawalMethodsEnabled = array_values(is_array($teacherWithdrawalMethodsEnabled ?? null) ? $teacherWithdrawalMethodsEnabled : array_keys($teacherWithdrawalMethodCatalog));
 
 $formatMoney = static function (int $amount): string {
     return number_format(max(0, $amount), 0, ',', ' ') . ' F CFA';
@@ -68,6 +63,10 @@ $normalizeSearch = static function (string $value): string {
 
 $query = trim((string) ($_GET['q'] ?? ''));
 $normalizedQuery = $normalizeSearch($query);
+$withdrawalView = strtolower(trim((string) ($_GET['withdrawal_view'] ?? 'all')));
+if (!in_array($withdrawalView, ['all', 'teacher', 'student', 'processed'], true)) {
+    $withdrawalView = 'all';
+}
 $matchesSearch = static function (array $parts) use ($normalizedQuery, $normalizeSearch): bool {
     if ($normalizedQuery === '') {
         return true;
@@ -100,8 +99,8 @@ $statusClass = static function (string $status): string {
 
 $withdrawalTypeLabel = static function (string $type): string {
     return match (strtolower(trim($type))) {
-        'teacher_sales' => 'Ventes enseignants',
-        'referral' => 'Parrainage',
+        'teacher_sales' => 'Enseignants',
+        'referral' => 'Étudiants',
         default => trim($type) !== '' ? ucfirst($type) : 'Retrait',
     };
 };
@@ -236,21 +235,31 @@ $pendingWithdrawalAmount = 0;
 $withdrawalsByStatus = ['requested' => 0, 'approved' => 0, 'paid' => 0, 'rejected' => 0];
 foreach ($withdrawals as $withdrawal) {
     $status = strtolower(trim((string) ($withdrawal['status'] ?? 'requested')));
+    $type = (string) ($withdrawal['withdrawal_type'] ?? 'teacher_sales');
     $amount = (int) ($withdrawal['amount_xof'] ?? 0);
     $withdrawalsByStatus[$status] = ($withdrawalsByStatus[$status] ?? 0) + 1;
     if ($status === 'requested') {
         $pendingWithdrawalsCount++;
         $pendingWithdrawalAmount += $amount;
     }
+    if ($withdrawalView === 'teacher' && $type !== 'teacher_sales') {
+        continue;
+    }
+    if ($withdrawalView === 'student' && $type !== 'referral') {
+        continue;
+    }
+    if ($withdrawalView === 'processed' && $status === 'requested') {
+        continue;
+    }
     $requesterName = trim((string) ($withdrawal['teacher_first'] ?? '') . ' ' . (string) ($withdrawal['teacher_last'] ?? ''));
     $requesterName = $requesterName !== '' ? $requesterName : 'Utilisateur';
-    $type = (string) ($withdrawal['withdrawal_type'] ?? 'teacher_sales');
     $method = trim((string) ($withdrawal['method'] ?? ''));
     $destination = trim((string) ($withdrawal['destination'] ?? ''));
     $searchParts = [
         $requesterName,
         (string) ($withdrawal['requester_email'] ?? ''),
         $withdrawalTypeLabel($type),
+        $type === 'referral' ? 'Parrainage' : '',
         $method,
         $destination,
         $formatMoney($amount),
@@ -340,6 +349,14 @@ foreach ($payouts as $payout) {
         'search' => implode(' ', $searchParts),
     ];
 }
+
+$saleRowsTotal = count($saleRows);
+$pendingOrderRowsTotal = count($pendingOrderRows);
+$withdrawalRowsTotal = count($withdrawalRows);
+$teacherRowsTotal = count($teacherRows);
+$courseDetailsGroupsTotal = count($courseDetailsList);
+$payoutRowsTotal = count($payoutRows);
+$recentStudentPaymentRows = array_slice($saleRows, 0, 5);
 
 $remainingToPay = max(0, $totalTeacher - $totalPaidToTeachers);
 $pendingOrdersCount = count($pendingOrders);
@@ -431,9 +448,9 @@ $renderLineChart = static function (array $chart, string $emptyLabel): void {
     <?php
 };
 
-$selectedTab = strtolower(trim((string) ($_GET['tab'] ?? 'transactions')));
-if (!in_array($selectedTab, ['transactions', 'withdrawals', 'teachers', 'settings'], true)) {
-    $selectedTab = 'transactions';
+$selectedTab = strtolower(trim((string) ($_GET['tab'] ?? 'home')));
+if (!in_array($selectedTab, ['home', 'transactions', 'withdrawals', 'teachers', 'settings'], true)) {
+    $selectedTab = 'home';
 }
 
 $tabClass = static function (string $tab) use ($selectedTab): string {
@@ -443,6 +460,84 @@ $tabClass = static function (string $tab) use ($selectedTab): string {
 $panelClass = static function (string $tab) use ($selectedTab): string {
     return $selectedTab === $tab ? 'space-y-5' : 'hidden space-y-5';
 };
+
+$withdrawalViewClass = static function (string $view) use ($withdrawalView): string {
+    $base = 'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition';
+    if ($withdrawalView === $view) {
+        return $base . ' border-primary-600 bg-primary-600 text-white shadow-sm';
+    }
+
+    return $base . ' border-slate-200 bg-white/80 text-slate-700 hover:border-primary-500 hover:text-primary-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:border-primary-400 dark:hover:text-primary-300';
+};
+
+$buildWithdrawalViewUrl = static function (string $view) use ($query): string {
+    $params = ['tab' => 'withdrawals'];
+    if ($query !== '') {
+        $params['q'] = $query;
+    }
+    if ($view !== 'all') {
+        $params['withdrawal_view'] = $view;
+    }
+
+    return site_url('admin/sales?' . http_build_query($params));
+};
+
+$buildFinancePageUrl = static function (string $pageKey, int $targetPage) use ($query, $selectedTab, $withdrawalView): string {
+    $params = ['tab' => $selectedTab];
+    if ($query !== '') {
+        $params['q'] = $query;
+    }
+    if ($selectedTab === 'withdrawals' && $withdrawalView !== 'all') {
+        $params['withdrawal_view'] = $withdrawalView;
+    }
+    if ($targetPage > 1) {
+        $params[$pageKey] = max(1, $targetPage);
+    }
+
+    return site_url('admin/sales?' . http_build_query($params));
+};
+
+$salePagination = \App\Support\Pagination::build(
+    $saleRowsTotal,
+    \App\Support\Pagination::pageFromQuery($_GET, 'transactions_page', 1),
+    20
+);
+$saleRows = \App\Support\Pagination::slice($saleRows, $salePagination);
+
+$pendingOrderPagination = \App\Support\Pagination::build(
+    $pendingOrderRowsTotal,
+    \App\Support\Pagination::pageFromQuery($_GET, 'orders_page', 1),
+    10
+);
+$pendingOrderRows = \App\Support\Pagination::slice($pendingOrderRows, $pendingOrderPagination);
+
+$withdrawalPagination = \App\Support\Pagination::build(
+    $withdrawalRowsTotal,
+    \App\Support\Pagination::pageFromQuery($_GET, 'withdrawals_page', 1),
+    10
+);
+$withdrawalRows = \App\Support\Pagination::slice($withdrawalRows, $withdrawalPagination);
+
+$payoutPagination = \App\Support\Pagination::build(
+    $payoutRowsTotal,
+    \App\Support\Pagination::pageFromQuery($_GET, 'payouts_page', 1),
+    10
+);
+$payoutRows = \App\Support\Pagination::slice($payoutRows, $payoutPagination);
+
+$teacherPagination = \App\Support\Pagination::build(
+    $teacherRowsTotal,
+    \App\Support\Pagination::pageFromQuery($_GET, 'teachers_page', 1),
+    8
+);
+$teacherRows = \App\Support\Pagination::slice($teacherRows, $teacherPagination);
+
+$courseGroupsPagination = \App\Support\Pagination::build(
+    $courseDetailsGroupsTotal,
+    \App\Support\Pagination::pageFromQuery($_GET, 'course_groups_page', 1),
+    6
+);
+$courseDetailsList = \App\Support\Pagination::slice($courseDetailsList, $courseGroupsPagination);
 
 $adminNavActive = 'sales';
 $adminUnreadCount = max(0, (int) ($unreadCount ?? 0));
@@ -459,6 +554,9 @@ $adminTopSearchAction = site_url('admin/sales');
 $adminTopSearchValue = $query;
 $adminTopSearchPlaceholder = 'Rechercher une transaction, un retrait...';
 $adminTopSearchHidden = ['tab' => $selectedTab];
+if ($selectedTab === 'withdrawals' && $withdrawalView !== 'all') {
+    $adminTopSearchHidden['withdrawal_view'] = $withdrawalView;
+}
 $adminPageScripts = ['admin_sales_page.js'];
 ?>
 <!doctype html>
@@ -498,68 +596,69 @@ $adminPageScripts = ['admin_sales_page.js'];
                     </div>
                 <?php endif; ?>
 
-                <section class="admin-finance-hero rounded-3xl p-6 text-white">
-                    <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                        <div>
-                            <p class="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.24em] text-white/75">
+                <section class="<?php echo e($panelClass('home')); ?>" data-finance-panel="home">
+                <section class="admin-finance-hero rounded-2xl p-4 sm:p-5 text-white">
+                    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                        <div class="max-w-3xl">
+                            <p class="inline-flex items-center gap-2 text-[0.7rem] font-black uppercase tracking-[0.24em] text-white/75">
                                 <i class="fas fa-wallet" aria-hidden="true"></i>
-                                Finances & commissions
+                                Finance
                             </p>
-                            <h2 class="mt-2 text-2xl font-black sm:text-3xl">Gestion financière</h2>
-                            <p class="mt-2 max-w-3xl text-sm font-medium text-white/82">
-                                Suivez les revenus, traitez les demandes de retrait et ajustez les paramètres de commission depuis une seule interface.
+                            <h2 class="mt-2 text-xl font-black sm:text-2xl">Gestion financière</h2>
+                            <p class="mt-2 text-sm font-medium text-white/82">
+                                Revenus, retraits et commissions au même endroit.
                             </p>
                         </div>
                         <div class="admin-finance-hero__status">
                             <i class="fas fa-bolt" aria-hidden="true"></i>
-                            <span><?php echo e((string) $pendingActions); ?> action(s) à vérifier</span>
+                            <span><?php echo e((string) $pendingActions); ?> à traiter</span>
                         </div>
                     </div>
                 </section>
 
-                <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <article class="admin-finance-kpi admin-finance-tone--emerald rounded-2xl p-5">
+                <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <article class="admin-finance-kpi admin-finance-tone--emerald rounded-2xl p-4">
                         <div class="flex items-start justify-between gap-4">
                             <div>
-                                <p class="text-sm font-bold text-slate-500 dark:text-slate-400">Chiffre d’affaires total</p>
-                                <p class="mt-2 text-2xl font-black text-slate-950 dark:text-white"><?php echo e($formatMoney($totalGross)); ?></p>
+                                <p class="text-sm font-bold text-slate-500 dark:text-slate-400">CA encaissé</p>
+                                <p class="mt-2 text-xl font-black text-slate-950 dark:text-white"><?php echo e($formatMoney($totalGross)); ?></p>
                             </div>
                             <span class="admin-finance-kpi__icon"><i class="fas fa-chart-line" aria-hidden="true"></i></span>
                         </div>
-                        <p class="mt-3 text-xs font-bold text-emerald-700 dark:text-emerald-300"><?php echo e((string) count($sales)); ?> commande(s) payée(s) · <?php echo e(number_format($totalSalesCount, 0, ',', ' ')); ?> vente(s)</p>
+                        <p class="mt-3 text-xs font-bold text-emerald-700 dark:text-emerald-300"><?php echo e((string) $saleRowsTotal); ?> paiement(s)</p>
                     </article>
 
-                    <article class="admin-finance-kpi admin-finance-tone--blue rounded-2xl p-5">
+                    <article class="admin-finance-kpi admin-finance-tone--blue rounded-2xl p-4">
                         <div class="flex items-start justify-between gap-4">
                             <div>
-                                <p class="text-sm font-bold text-slate-500 dark:text-slate-400">Commission plateforme</p>
-                                <p class="mt-2 text-2xl font-black text-slate-950 dark:text-white"><?php echo e($formatMoney($totalPlatform)); ?></p>
+                                <p class="text-sm font-bold text-slate-500 dark:text-slate-400">Commission</p>
+                                <p class="mt-2 text-xl font-black text-slate-950 dark:text-white"><?php echo e($formatMoney($totalPlatform)); ?></p>
                             </div>
                             <span class="admin-finance-kpi__icon"><i class="fas fa-percent" aria-hidden="true"></i></span>
                         </div>
-                        <p class="mt-3 text-xs font-bold text-blue-700 dark:text-blue-300">Taux actuel : <?php echo e($formatPercent($commissionPercent)); ?></p>
+                        <p class="mt-3 text-xs font-bold text-blue-700 dark:text-blue-300">Taux <?php echo e($formatPercent($commissionPercent)); ?></p>
                     </article>
 
-                    <article class="admin-finance-kpi admin-finance-tone--indigo rounded-2xl p-5">
+                    <article class="admin-finance-kpi admin-finance-tone--indigo rounded-2xl p-4">
                         <div class="flex items-start justify-between gap-4">
                             <div>
-                                <p class="text-sm font-bold text-slate-500 dark:text-slate-400">À reverser aux enseignants</p>
-                                <p class="mt-2 text-2xl font-black text-slate-950 dark:text-white"><?php echo e($formatMoney($remainingToPay)); ?></p>
+                                <p class="text-sm font-bold text-slate-500 dark:text-slate-400">À verser</p>
+                                <p class="mt-2 text-xl font-black text-slate-950 dark:text-white"><?php echo e($formatMoney($remainingToPay)); ?></p>
                             </div>
                             <span class="admin-finance-kpi__icon"><i class="fas fa-hand-holding-usd" aria-hidden="true"></i></span>
                         </div>
-                        <p class="mt-3 text-xs font-bold text-indigo-700 dark:text-indigo-300"><?php echo e($formatMoney($totalPaidToTeachers)); ?> déjà payé(s)</p>
+                        <p class="mt-3 text-xs font-bold text-indigo-700 dark:text-indigo-300"><?php echo e($formatMoney($totalPaidToTeachers)); ?> déjà versé(s)</p>
                     </article>
 
-                    <article class="admin-finance-kpi admin-finance-tone--amber rounded-2xl p-5">
+                    <article class="admin-finance-kpi admin-finance-tone--amber rounded-2xl p-4">
                         <div class="flex items-start justify-between gap-4">
                             <div>
-                                <p class="text-sm font-bold text-slate-500 dark:text-slate-400">Retraits à traiter</p>
-                                <p class="mt-2 text-2xl font-black text-slate-950 dark:text-white"><?php echo e($formatMoney($pendingWithdrawalAmount)); ?></p>
+                                <p class="text-sm font-bold text-slate-500 dark:text-slate-400">Retraits</p>
+                                <p class="mt-2 text-xl font-black text-slate-950 dark:text-white"><?php echo e($formatMoney($pendingWithdrawalAmount)); ?></p>
                             </div>
                             <span class="admin-finance-kpi__icon"><i class="fas fa-money-bill-wave" aria-hidden="true"></i></span>
                         </div>
-                        <p class="mt-3 text-xs font-bold text-amber-700 dark:text-amber-300"><?php echo e((string) $pendingWithdrawalsCount); ?> demande(s) en attente</p>
+                        <p class="mt-3 text-xs font-bold text-amber-700 dark:text-amber-300"><?php echo e((string) $pendingWithdrawalsCount); ?> en attente</p>
                     </article>
                 </section>
 
@@ -605,22 +704,92 @@ $adminPageScripts = ['admin_sales_page.js'];
                     </article>
                 </section>
 
+                <details class="admin-finance-collapse" open>
+                    <summary class="admin-finance-collapse__summary">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-300">
+                                    <i class="fas fa-receipt" aria-hidden="true"></i>
+                                    Paiements étudiants récents
+                                </div>
+                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Derniers achats validés par les étudiants.</p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="admin-dashboard-count admin-dashboard-count--success"><?php echo e((string) $saleRowsTotal); ?> paiement(s)</span>
+                                <span class="admin-finance-collapse__state">
+                                    <span class="admin-finance-collapse__state-open">Masquer</span>
+                                    <span class="admin-finance-collapse__state-closed">Afficher</span>
+                                    <i class="fas fa-chevron-up admin-finance-collapse__chevron" aria-hidden="true"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </summary>
+                    <div class="admin-finance-collapse__body">
+                        <?php if ($recentStudentPaymentRows === []): ?>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Aucun paiement étudiant récent.</p>
+                        <?php else: ?>
+                            <div class="mt-2 flex flex-wrap items-center justify-between gap-3">
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Aperçu des 5 derniers paiements validés.</p>
+                                <a href="<?php echo e(site_url('admin/sales?tab=transactions')); ?>" class="admin-shell-button admin-shell-button--secondary inline-flex items-center gap-2">
+                                    <i class="fas fa-table" aria-hidden="true"></i>
+                                    Voir les transactions
+                                </a>
+                            </div>
+                            <div class="mt-4 overflow-x-auto">
+                                <table class="admin-shell-table min-w-[900px] text-sm">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-4 py-3">Référence</th>
+                                            <th class="px-4 py-3">Date</th>
+                                            <th class="px-4 py-3">Client</th>
+                                            <th class="px-4 py-3">Cours</th>
+                                            <th class="px-4 py-3 text-right">Montant</th>
+                                            <th class="px-4 py-3">Statut</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($recentStudentPaymentRows as $sale): ?>
+                                            <tr>
+                                                <td class="px-4 py-3 font-black"><?php echo e((string) ($sale['reference'] ?? '#')); ?></td>
+                                                <td class="px-4 py-3 text-slate-500 dark:text-slate-400"><?php echo e((string) ($sale['date'] ?? '-')); ?></td>
+                                                <td class="px-4 py-3"><?php echo e((string) ($sale['buyer'] ?? 'Client')); ?></td>
+                                                <td class="px-4 py-3">
+                                                    <p class="font-bold text-slate-900 dark:text-white"><?php echo e((string) ($sale['course'] ?? 'Cours')); ?></p>
+                                                    <p class="text-xs text-slate-500 dark:text-slate-400"><?php echo e((string) ($sale['category'] ?? 'Sans catégorie')); ?></p>
+                                                </td>
+                                                <td class="px-4 py-3 text-right font-black"><?php echo e($formatMoney((int) ($sale['amount'] ?? 0))); ?></td>
+                                                <td class="px-4 py-3"><span class="app-status-pill app-status-pill--active">Payé</span></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </details>
+
+                </section>
+
                 <section class="admin-shell-card rounded-3xl p-4 sm:p-5">
                     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div>
-                            <p class="text-lg font-black inline-flex items-center gap-2">
+                            <p class="text-base font-black inline-flex items-center gap-2">
                                 <i class="fas fa-sliders-h admin-inline-accent admin-inline-accent--info" aria-hidden="true"></i>
-                                Espace financier
+                                Suivi financier
                             </p>
-                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Transactions, retraits, enseignants et paramètres financiers.</p>
+                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Transactions, retraits et réglages.</p>
                         </div>
                         <label class="admin-finance-search">
                             <i class="fas fa-search" aria-hidden="true"></i>
-                            <input type="search" value="<?php echo e($query); ?>" placeholder="Filtrer la page..." data-admin-finance-search>
+                            <input type="search" value="<?php echo e($query); ?>" placeholder="Rechercher un paiement ou retrait..." data-admin-finance-search>
                         </label>
                     </div>
 
                     <div class="admin-finance-tabs mt-5" role="tablist" aria-label="Sections financières">
+                        <button type="button" class="<?php echo e($tabClass('home')); ?>" data-finance-tab="home">
+                            <i class="fas fa-house" aria-hidden="true"></i>
+                            Accueil
+                        </button>
                         <button type="button" class="<?php echo e($tabClass('transactions')); ?>" data-finance-tab="transactions">
                             <i class="fas fa-list" aria-hidden="true"></i>
                             Transactions
@@ -642,178 +811,256 @@ $adminPageScripts = ['admin_sales_page.js'];
                 </section>
 
                 <section class="<?php echo e($panelClass('transactions')); ?>" data-finance-panel="transactions">
-                    <article class="admin-shell-card rounded-3xl p-5">
-                        <div class="flex flex-wrap items-center justify-between gap-3">
-                            <h3 class="text-lg font-black inline-flex items-center gap-2">
-                                <i class="fas fa-receipt text-primary-600 dark:text-primary-300" aria-hidden="true"></i>
-                                Transactions payées
-                            </h3>
-                            <span class="admin-dashboard-count admin-dashboard-count--info"><?php echo e((string) count($saleRows)); ?> ligne(s)</span>
-                        </div>
-                        <div class="mt-4 overflow-x-auto">
-                            <table class="admin-shell-table min-w-[1060px] text-sm">
-                                <thead>
-                                    <tr>
-                                        <th class="px-4 py-3">ID</th>
-                                        <th class="px-4 py-3">Date</th>
-                                        <th class="px-4 py-3">Client</th>
-                                        <th class="px-4 py-3">Cours</th>
-                                        <th class="px-4 py-3 text-right">Montant</th>
-                                        <th class="px-4 py-3 text-right">Commission</th>
-                                        <th class="px-4 py-3">Enseignant</th>
-                                        <th class="px-4 py-3">Statut</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php if ($saleRows === []): ?>
-                                        <tr><td colspan="8" class="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">Aucune transaction trouvée.</td></tr>
-                                    <?php else: ?>
-                                        <?php foreach ($saleRows as $sale): ?>
-                                            <tr data-finance-search-row data-finance-search="<?php echo e($normalizeSearch((string) ($sale['search'] ?? ''))); ?>">
-                                                <td class="px-4 py-3 font-black"><?php echo e((string) ($sale['reference'] ?? '#')); ?></td>
-                                                <td class="px-4 py-3 text-slate-500 dark:text-slate-400"><?php echo e((string) ($sale['date'] ?? '-')); ?></td>
-                                                <td class="px-4 py-3"><?php echo e((string) ($sale['buyer'] ?? 'Client')); ?></td>
-                                                <td class="px-4 py-3">
-                                                    <p class="font-bold text-slate-900 dark:text-white"><?php echo e((string) ($sale['course'] ?? 'Cours')); ?></p>
-                                                    <p class="text-xs text-slate-500 dark:text-slate-400"><?php echo e((string) ($sale['category'] ?? 'Sans catégorie')); ?></p>
-                                                </td>
-                                                <td class="px-4 py-3 text-right font-black"><?php echo e($formatMoney((int) ($sale['amount'] ?? 0))); ?></td>
-                                                <td class="px-4 py-3 text-right text-primary-700 dark:text-primary-300 font-bold"><?php echo e($formatMoney((int) ($sale['commission'] ?? 0))); ?></td>
-                                                <td class="px-4 py-3"><?php echo e((string) ($sale['teacher'] ?? 'Enseignant')); ?></td>
-                                                <td class="px-4 py-3"><span class="app-status-pill app-status-pill--active">Payé</span></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </article>
-
-                    <article class="admin-shell-card rounded-3xl p-5">
-                        <div class="flex flex-wrap items-center justify-between gap-3">
-                            <h3 class="text-lg font-black inline-flex items-center gap-2">
-                                <i class="fas fa-hourglass-half text-amber-600 dark:text-amber-300" aria-hidden="true"></i>
-                                Commandes en attente
-                            </h3>
-                            <span class="admin-dashboard-count admin-dashboard-count--warning"><?php echo e((string) count($pendingOrderRows)); ?> commande(s)</span>
-                        </div>
-                        <?php if ($pendingOrderRows === []): ?>
-                            <p class="mt-4 text-sm text-slate-500 dark:text-slate-400">Aucune commande en attente.</p>
-                        <?php else: ?>
-                            <div class="mt-4 grid gap-3">
-                                <?php foreach ($pendingOrderRows as $order): ?>
-                                    <article class="admin-finance-pending-order rounded-2xl p-4" data-finance-search-row data-finance-search="<?php echo e($normalizeSearch((string) ($order['search'] ?? ''))); ?>">
-                                        <div>
-                                            <p class="font-black text-slate-900 dark:text-white"><?php echo e((string) ($order['reference'] ?? '#')); ?></p>
-                                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400"><?php echo e((string) ($order['buyer'] ?? 'Client')); ?> · <?php echo e((string) ($order['created_at'] ?? '-')); ?></p>
-                                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Fournisseur : <?php echo e((string) ($order['provider'] ?: 'Non renseigné')); ?> · Paiement : <?php echo e((string) ($order['payment_ref'] ?: 'Sans référence')); ?></p>
-                                        </div>
-                                        <div class="admin-finance-pending-order__side">
-                                            <strong><?php echo e($formatMoney((int) ($order['amount'] ?? 0))); ?></strong>
-                                            <form method="post" action="<?php echo e(site_url('admin/sales')); ?>" class="inline-flex flex-wrap items-center gap-2">
-                                                <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
-                                                <input type="hidden" name="action" value="mark_order_paid">
-                                                <input type="hidden" name="order_id" value="<?php echo e((string) ($order['id'] ?? 0)); ?>">
-                                                <input type="hidden" name="payment_provider" value="<?php echo e((string) ($order['provider'] ?? 'manual')); ?>">
-                                                <input type="text" name="payment_ref" value="<?php echo e((string) ($order['payment_ref'] ?? '')); ?>" placeholder="Référence paiement" class="admin-shell-input admin-finance-ref-input">
-                                                <button type="submit" class="admin-shell-button admin-shell-button--primary inline-flex items-center gap-2">
-                                                    <i class="fas fa-check" aria-hidden="true"></i>
-                                                    Marquer payé
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </article>
-                                <?php endforeach; ?>
+                    <details class="admin-finance-collapse" open>
+                        <summary class="admin-finance-collapse__summary">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div class="min-w-0">
+                                    <div class="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-primary-600 dark:text-primary-300">
+                                        <i class="fas fa-receipt" aria-hidden="true"></i>
+                                        Transactions effectuées
+                                    </div>
+                                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Paiements finalisés et encaissés.</p>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="admin-dashboard-count admin-dashboard-count--info"><?php echo e((string) $saleRowsTotal); ?> ligne(s)</span>
+                                    <span class="admin-finance-collapse__state">
+                                        <span class="admin-finance-collapse__state-open">Masquer</span>
+                                        <span class="admin-finance-collapse__state-closed">Afficher</span>
+                                        <i class="fas fa-chevron-up admin-finance-collapse__chevron" aria-hidden="true"></i>
+                                    </span>
+                                </div>
                             </div>
-                        <?php endif; ?>
-                    </article>
+                        </summary>
+                        <div class="admin-finance-collapse__body">
+                            <div class="mt-4 overflow-x-auto">
+                                <table class="admin-shell-table min-w-[1060px] text-sm">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-4 py-3">ID</th>
+                                            <th class="px-4 py-3">Date</th>
+                                            <th class="px-4 py-3">Client</th>
+                                            <th class="px-4 py-3">Cours</th>
+                                            <th class="px-4 py-3 text-right">Montant</th>
+                                            <th class="px-4 py-3 text-right">Commission</th>
+                                            <th class="px-4 py-3">Enseignant</th>
+                                            <th class="px-4 py-3">Statut</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if ($saleRows === []): ?>
+                                            <tr><td colspan="8" class="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">Aucune transaction finalisée.</td></tr>
+                                        <?php else: ?>
+                                            <?php foreach ($saleRows as $sale): ?>
+                                                <tr data-finance-search-row data-finance-search="<?php echo e($normalizeSearch((string) ($sale['search'] ?? ''))); ?>">
+                                                    <td class="px-4 py-3 font-black"><?php echo e((string) ($sale['reference'] ?? '#')); ?></td>
+                                                    <td class="px-4 py-3 text-slate-500 dark:text-slate-400"><?php echo e((string) ($sale['date'] ?? '-')); ?></td>
+                                                    <td class="px-4 py-3"><?php echo e((string) ($sale['buyer'] ?? 'Client')); ?></td>
+                                                    <td class="px-4 py-3">
+                                                        <p class="font-bold text-slate-900 dark:text-white"><?php echo e((string) ($sale['course'] ?? 'Cours')); ?></p>
+                                                        <p class="text-xs text-slate-500 dark:text-slate-400"><?php echo e((string) ($sale['category'] ?? 'Sans catégorie')); ?></p>
+                                                    </td>
+                                                    <td class="px-4 py-3 text-right font-black"><?php echo e($formatMoney((int) ($sale['amount'] ?? 0))); ?></td>
+                                                    <td class="px-4 py-3 text-right text-primary-700 dark:text-primary-300 font-bold"><?php echo e($formatMoney((int) ($sale['commission'] ?? 0))); ?></td>
+                                                    <td class="px-4 py-3"><?php echo e((string) ($sale['teacher'] ?? 'Enseignant')); ?></td>
+                                                    <td class="px-4 py-3"><span class="app-status-pill app-status-pill--active">Payé</span></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <?php
+                            $paginationData = $salePagination;
+                            $paginationUrlBuilder = static fn (int $targetPage): string => $buildFinancePageUrl('transactions_page', $targetPage);
+                            $paginationLabel = 'transactions finalisées';
+                            $paginationAriaLabel = 'Pagination des transactions finalisées';
+                            require __DIR__ . '/_pagination.php';
+                            ?>
+                        </div>
+                    </details>
+
+                    <details class="admin-finance-collapse" open>
+                        <summary class="admin-finance-collapse__summary">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div class="min-w-0">
+                                    <div class="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-amber-600 dark:text-amber-300">
+                                        <i class="fas fa-hourglass-half" aria-hidden="true"></i>
+                                        Transactions non finalisées
+                                    </div>
+                                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Commandes en attente de validation ou de paiement.</p>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="admin-dashboard-count admin-dashboard-count--warning"><?php echo e((string) $pendingOrderRowsTotal); ?> commande(s)</span>
+                                    <span class="admin-finance-collapse__state">
+                                        <span class="admin-finance-collapse__state-open">Masquer</span>
+                                        <span class="admin-finance-collapse__state-closed">Afficher</span>
+                                        <i class="fas fa-chevron-up admin-finance-collapse__chevron" aria-hidden="true"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </summary>
+                        <div class="admin-finance-collapse__body">
+                            <?php if ($pendingOrderRows === []): ?>
+                                <p class="mt-4 text-sm text-slate-500 dark:text-slate-400">Aucune transaction non finalisée.</p>
+                            <?php else: ?>
+                                <div class="mt-4 grid gap-3">
+                                    <?php foreach ($pendingOrderRows as $order): ?>
+                                        <article class="admin-finance-pending-order rounded-2xl p-4" data-finance-search-row data-finance-search="<?php echo e($normalizeSearch((string) ($order['search'] ?? ''))); ?>">
+                                            <div>
+                                                <p class="font-black text-slate-900 dark:text-white"><?php echo e((string) ($order['reference'] ?? '#')); ?></p>
+                                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400"><?php echo e((string) ($order['buyer'] ?? 'Client')); ?> · <?php echo e((string) ($order['created_at'] ?? '-')); ?></p>
+                                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Fournisseur : <?php echo e((string) ($order['provider'] ?: 'Non renseigné')); ?> · Paiement : <?php echo e((string) ($order['payment_ref'] ?: 'Sans référence')); ?></p>
+                                            </div>
+                                            <div class="admin-finance-pending-order__side">
+                                                <strong><?php echo e($formatMoney((int) ($order['amount'] ?? 0))); ?></strong>
+                                                <span class="admin-dashboard-count admin-dashboard-count--warning">En attente</span>
+                                            </div>
+                                        </article>
+                                    <?php endforeach; ?>
+                                </div>
+
+                                <?php
+                                $paginationData = $pendingOrderPagination;
+                                $paginationUrlBuilder = static fn (int $targetPage): string => $buildFinancePageUrl('orders_page', $targetPage);
+                                $paginationLabel = 'transactions non finalisées';
+                                $paginationAriaLabel = 'Pagination des transactions non finalisées';
+                                require __DIR__ . '/_pagination.php';
+                                ?>
+                            <?php endif; ?>
+                        </div>
+                    </details>
                 </section>
 
                 <section class="<?php echo e($panelClass('withdrawals')); ?>" data-finance-panel="withdrawals">
-                    <article class="admin-shell-card rounded-3xl p-5">
-                        <div class="flex flex-wrap items-center justify-between gap-3">
-                            <h3 class="text-lg font-black inline-flex items-center gap-2">
-                                <i class="fas fa-hand-holding-usd text-primary-600 dark:text-primary-300" aria-hidden="true"></i>
-                                Demandes de retrait
-                            </h3>
-                            <div class="flex flex-wrap gap-2">
-                                <span class="admin-dashboard-count admin-dashboard-count--warning">En attente : <?php echo e((string) ($withdrawalsByStatus['requested'] ?? 0)); ?></span>
-                                <span class="admin-dashboard-count admin-dashboard-count--success">Payés : <?php echo e((string) ($withdrawalsByStatus['paid'] ?? 0)); ?></span>
+                    <details class="admin-finance-collapse" open>
+                        <summary class="admin-finance-collapse__summary">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div class="min-w-0">
+                                    <div class="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-primary-600 dark:text-primary-300">
+                                        <i class="fas fa-hand-holding-usd" aria-hidden="true"></i>
+                                        Demandes de retrait
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="admin-dashboard-count admin-dashboard-count--warning">En attente : <?php echo e((string) ($withdrawalsByStatus['requested'] ?? 0)); ?></span>
+                                    <span class="admin-dashboard-count admin-dashboard-count--success">Payés : <?php echo e((string) ($withdrawalsByStatus['paid'] ?? 0)); ?></span>
+                                    <span class="admin-finance-collapse__state">
+                                        <span class="admin-finance-collapse__state-open">Masquer</span>
+                                        <span class="admin-finance-collapse__state-closed">Afficher</span>
+                                        <i class="fas fa-chevron-up admin-finance-collapse__chevron" aria-hidden="true"></i>
+                                    </span>
+                                </div>
                             </div>
+                        </summary>
+                        <div class="admin-finance-collapse__body">
+                            <div class="mt-4 flex flex-wrap gap-2">
+                            <a href="<?php echo e($buildWithdrawalViewUrl('all')); ?>" class="<?php echo e($withdrawalViewClass('all')); ?>">
+                                <i class="fas fa-layer-group" aria-hidden="true"></i>
+                                Tous
+                            </a>
+                            <a href="<?php echo e($buildWithdrawalViewUrl('teacher')); ?>" class="<?php echo e($withdrawalViewClass('teacher')); ?>">
+                                <i class="fas fa-chalkboard-teacher" aria-hidden="true"></i>
+                                Enseignants
+                            </a>
+                            <a href="<?php echo e($buildWithdrawalViewUrl('student')); ?>" class="<?php echo e($withdrawalViewClass('student')); ?>">
+                                <i class="fas fa-user-graduate" aria-hidden="true"></i>
+                                Étudiants
+                            </a>
                         </div>
-                        <?php if ($withdrawalRows === []): ?>
-                            <p class="mt-4 text-sm text-slate-500 dark:text-slate-400">Aucune demande de retrait trouvée.</p>
-                        <?php else: ?>
-                            <div class="mt-4 grid gap-4">
-                                <?php foreach ($withdrawalRows as $withdrawal): ?>
-                                    <article class="admin-finance-withdrawal rounded-2xl p-4" data-finance-search-row data-finance-search="<?php echo e($normalizeSearch((string) ($withdrawal['search'] ?? ''))); ?>">
-                                        <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                                            <div class="min-w-0">
-                                                <div class="flex flex-wrap items-center gap-2">
-                                                    <span class="admin-finance-avatar"><?php echo e(strtoupper(substr((string) ($withdrawal['name'] ?? 'U'), 0, 1))); ?></span>
-                                                    <div>
-                                                        <p class="font-black text-slate-900 dark:text-white"><?php echo e((string) ($withdrawal['name'] ?? 'Utilisateur')); ?></p>
-                                                        <p class="text-xs text-slate-500 dark:text-slate-400"><?php echo e((string) ($withdrawal['email'] ?: 'Email non renseigné')); ?></p>
-                                                    </div>
-                                                    <span class="<?php echo e($statusClass((string) ($withdrawal['status'] ?? 'requested'))); ?>"><?php echo e($statusLabel((string) ($withdrawal['status'] ?? 'requested'))); ?></span>
-                                                </div>
-                                                <div class="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                                                    <span class="admin-finance-info-pill"><i class="fas fa-tag" aria-hidden="true"></i><?php echo e((string) ($withdrawal['type_label'] ?? 'Retrait')); ?></span>
-                                                    <span class="admin-finance-info-pill"><i class="fas fa-wallet" aria-hidden="true"></i><?php echo e($formatMoney((int) ($withdrawal['amount'] ?? 0))); ?></span>
-                                                    <span class="admin-finance-info-pill"><i class="fas fa-credit-card" aria-hidden="true"></i><?php echo e((string) ($withdrawal['method'] ?? 'Non renseigné')); ?></span>
-                                                    <span class="admin-finance-info-pill"><i class="far fa-calendar-alt" aria-hidden="true"></i><?php echo e((string) ($withdrawal['created_at'] ?? '-')); ?></span>
-                                                </div>
-                                                <?php if ((string) ($withdrawal['destination'] ?? '') !== '' || (string) ($withdrawal['reference'] ?? '') !== ''): ?>
-                                                    <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                                                        <?php if ((string) ($withdrawal['destination'] ?? '') !== ''): ?>Destination : <?php echo e((string) ($withdrawal['destination'] ?? '')); ?><?php endif; ?>
-                                                        <?php if ((string) ($withdrawal['reference'] ?? '') !== ''): ?> · Référence : <?php echo e((string) ($withdrawal['reference'] ?? '')); ?><?php endif; ?>
-                                                    </p>
-                                                <?php endif; ?>
-                                                <?php if (trim((string) ($withdrawal['reason'] ?? '')) !== ''): ?>
-                                                    <p class="mt-2 text-xs text-rose-600 dark:text-rose-300">
-                                                        Motif : <?php echo e(trim((string) ($withdrawal['reason'] ?? ''))); ?>
-                                                    </p>
-                                                <?php endif; ?>
-                                            </div>
-                                            <div class="admin-finance-withdrawal__actions">
-                                                <?php if (($withdrawal['actions'] ?? []) !== []): ?>
-                                                    <form method="post" action="<?php echo e(site_url('admin/sales')); ?>" class="grid gap-2">
-                                                        <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
-                                                        <input type="hidden" name="action" value="update_withdrawal_status">
-                                                        <input type="hidden" name="withdrawal_id" value="<?php echo e((string) ($withdrawal['id'] ?? 0)); ?>">
-                                                        <input type="text" name="payout_reference" value="" placeholder="Référence si payé" class="admin-shell-input">
-                                                        <textarea name="reason" rows="2" placeholder="Motif requis pour un rejet" class="admin-shell-input min-h-[5rem] resize-y"></textarea>
-                                                        <p class="text-[0.72rem] text-slate-500 dark:text-slate-400">Le motif de rejet sera visible dans la notification.</p>
-                                                        <div class="flex flex-wrap gap-2">
-                                                            <?php foreach ((array) ($withdrawal['actions'] ?? []) as $action): ?>
-                                                                <?php $actionMeta = $withdrawalActionLabels[(string) $action] ?? ['label' => $action, 'icon' => 'fa-play', 'class' => 'admin-finance-action']; ?>
-                                                                <button type="submit" name="target_status" value="<?php echo e((string) $action); ?>" class="<?php echo e((string) ($actionMeta['class'] ?? 'admin-finance-action')); ?>">
-                                                                    <i class="fas <?php echo e((string) ($actionMeta['icon'] ?? 'fa-play')); ?>" aria-hidden="true"></i>
-                                                                    <?php echo e((string) ($actionMeta['label'] ?? $action)); ?>
-                                                                </button>
-                                                            <?php endforeach; ?>
+                            <?php if ($withdrawalRows === []): ?>
+                                <p class="mt-4 text-sm text-slate-500 dark:text-slate-400">Aucune demande de retrait trouvée.</p>
+                            <?php else: ?>
+                                <div class="mt-4 grid gap-4">
+                                    <?php foreach ($withdrawalRows as $withdrawal): ?>
+                                        <article class="admin-finance-withdrawal rounded-2xl p-4" data-finance-search-row data-finance-search="<?php echo e($normalizeSearch((string) ($withdrawal['search'] ?? ''))); ?>">
+                                            <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                                                <div class="min-w-0">
+                                                    <div class="flex flex-wrap items-center gap-2">
+                                                        <span class="admin-finance-avatar"><?php echo e(strtoupper(substr((string) ($withdrawal['name'] ?? 'U'), 0, 1))); ?></span>
+                                                        <div>
+                                                            <p class="font-black text-slate-900 dark:text-white"><?php echo e((string) ($withdrawal['name'] ?? 'Utilisateur')); ?></p>
+                                                            <p class="text-xs text-slate-500 dark:text-slate-400"><?php echo e((string) ($withdrawal['email'] ?: 'Email non renseigné')); ?> · <?php echo e((string) ($withdrawal['type_label'] ?? 'Retrait')); ?></p>
                                                         </div>
-                                                    </form>
-                                                <?php else: ?>
-                                                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400"><i class="fas fa-lock mr-1" aria-hidden="true"></i>Aucune action disponible</span>
-                                                <?php endif; ?>
+                                                        <span class="<?php echo e($statusClass((string) ($withdrawal['status'] ?? 'requested'))); ?>"><?php echo e($statusLabel((string) ($withdrawal['status'] ?? 'requested'))); ?></span>
+                                                    </div>
+                                                    <div class="mt-4 grid gap-2 sm:grid-cols-3">
+                                                        <span class="admin-finance-info-pill"><i class="fas fa-wallet" aria-hidden="true"></i><?php echo e($formatMoney((int) ($withdrawal['amount'] ?? 0))); ?></span>
+                                                        <span class="admin-finance-info-pill"><i class="fas fa-credit-card" aria-hidden="true"></i><?php echo e((string) ($withdrawal['method'] ?? 'Non renseigné')); ?></span>
+                                                        <span class="admin-finance-info-pill"><i class="far fa-calendar-alt" aria-hidden="true"></i><?php echo e((string) ($withdrawal['created_at'] ?? '-')); ?></span>
+                                                    </div>
+                                                    <?php if ((string) ($withdrawal['destination'] ?? '') !== '' || (string) ($withdrawal['reference'] ?? '') !== ''): ?>
+                                                        <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                                                            <?php if ((string) ($withdrawal['destination'] ?? '') !== ''): ?>Destination : <?php echo e((string) ($withdrawal['destination'] ?? '')); ?><?php endif; ?>
+                                                            <?php if ((string) ($withdrawal['reference'] ?? '') !== ''): ?> · Référence : <?php echo e((string) ($withdrawal['reference'] ?? '')); ?><?php endif; ?>
+                                                        </p>
+                                                    <?php endif; ?>
+                                                    <?php if (trim((string) ($withdrawal['reason'] ?? '')) !== ''): ?>
+                                                        <p class="mt-2 text-xs text-rose-600 dark:text-rose-300">
+                                                            Motif : <?php echo e(trim((string) ($withdrawal['reason'] ?? ''))); ?>
+                                                        </p>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="admin-finance-withdrawal__actions">
+                                                    <?php if (($withdrawal['actions'] ?? []) !== []): ?>
+                                                        <form method="post" action="<?php echo e(site_url('admin/sales')); ?>" class="grid gap-2">
+                                                            <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
+                                                            <input type="hidden" name="action" value="update_withdrawal_status">
+                                                            <input type="hidden" name="withdrawal_id" value="<?php echo e((string) ($withdrawal['id'] ?? 0)); ?>">
+                                                            <input type="text" name="payout_reference" value="" placeholder="Référence si payé" class="admin-shell-input">
+                                                            <textarea name="reason" rows="2" placeholder="Motif requis pour un rejet" class="admin-shell-input min-h-[5rem] resize-y"></textarea>
+                                                            <p class="text-[0.72rem] text-slate-500 dark:text-slate-400">Le motif de rejet sera visible dans la notification.</p>
+                                                            <div class="flex flex-wrap gap-2">
+                                                                <?php foreach ((array) ($withdrawal['actions'] ?? []) as $action): ?>
+                                                                    <?php $actionMeta = $withdrawalActionLabels[(string) $action] ?? ['label' => $action, 'icon' => 'fa-play', 'class' => 'admin-finance-action']; ?>
+                                                                    <button type="submit" name="target_status" value="<?php echo e((string) $action); ?>" class="<?php echo e((string) ($actionMeta['class'] ?? 'admin-finance-action')); ?>">
+                                                                        <i class="fas <?php echo e((string) ($actionMeta['icon'] ?? 'fa-play')); ?>" aria-hidden="true"></i>
+                                                                        <?php echo e((string) ($actionMeta['label'] ?? $action)); ?>
+                                                                    </button>
+                                                                <?php endforeach; ?>
+                                                            </div>
+                                                        </form>
+                                                    <?php else: ?>
+                                                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400"><i class="fas fa-lock mr-1" aria-hidden="true"></i>Aucune action disponible</span>
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </article>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-                    </article>
+                                        </article>
+                                    <?php endforeach; ?>
+                                </div>
 
-                    <article class="admin-shell-card rounded-3xl p-5">
-                        <div class="flex flex-wrap items-center justify-between gap-3">
-                            <h3 class="text-lg font-black inline-flex items-center gap-2">
-                                <i class="fas fa-check-circle text-emerald-600 dark:text-emerald-300" aria-hidden="true"></i>
-                                Paiements enseignants récents
-                            </h3>
-                            <span class="admin-dashboard-count admin-dashboard-count--info"><?php echo e((string) count($payoutRows)); ?> paiement(s)</span>
+                                <?php
+                                $paginationData = $withdrawalPagination;
+                                $paginationUrlBuilder = static fn (int $targetPage): string => $buildFinancePageUrl('withdrawals_page', $targetPage);
+                                $paginationLabel = 'demandes de retrait';
+                                $paginationAriaLabel = 'Pagination des retraits';
+                                require __DIR__ . '/_pagination.php';
+                                ?>
+                            <?php endif; ?>
                         </div>
-                        <div class="mt-4 overflow-x-auto">
+                    </details>
+
+                    <details class="admin-finance-collapse" open>
+                        <summary class="admin-finance-collapse__summary">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div class="min-w-0">
+                                    <div class="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-300">
+                                        <i class="fas fa-check-circle" aria-hidden="true"></i>
+                                        Paiements enseignants récents
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="admin-dashboard-count admin-dashboard-count--info"><?php echo e((string) $payoutRowsTotal); ?> paiement(s)</span>
+                                    <span class="admin-finance-collapse__state">
+                                        <span class="admin-finance-collapse__state-open">Masquer</span>
+                                        <span class="admin-finance-collapse__state-closed">Afficher</span>
+                                        <i class="fas fa-chevron-up admin-finance-collapse__chevron" aria-hidden="true"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </summary>
+                        <div class="admin-finance-collapse__body">
+                            <div class="mt-4 overflow-x-auto">
                             <table class="admin-shell-table min-w-[980px] text-sm">
                                 <thead>
                                     <tr>
@@ -856,7 +1103,16 @@ $adminPageScripts = ['admin_sales_page.js'];
                                 </tbody>
                             </table>
                         </div>
-                    </article>
+
+                            <?php
+                            $paginationData = $payoutPagination;
+                            $paginationUrlBuilder = static fn (int $targetPage): string => $buildFinancePageUrl('payouts_page', $targetPage);
+                            $paginationLabel = 'paiements';
+                            $paginationAriaLabel = 'Pagination des paiements enseignants';
+                            require __DIR__ . '/_pagination.php';
+                            ?>
+                        </div>
+                    </details>
                 </section>
 
                 <section class="<?php echo e($panelClass('teachers')); ?>" data-finance-panel="teachers">
@@ -866,7 +1122,7 @@ $adminPageScripts = ['admin_sales_page.js'];
                                 <i class="fas fa-user-tie text-primary-600 dark:text-primary-300" aria-hidden="true"></i>
                                 Soldes enseignants
                             </h3>
-                            <span class="admin-dashboard-count admin-dashboard-count--info"><?php echo e((string) count($teacherRows)); ?> enseignant(s)</span>
+                            <span class="admin-dashboard-count admin-dashboard-count--info"><?php echo e((string) $teacherRowsTotal); ?> enseignant(s)</span>
                         </div>
                         <?php if ($teacherRows === []): ?>
                             <p class="mt-4 text-sm text-slate-500 dark:text-slate-400">Aucune vente enseignant disponible.</p>
@@ -882,15 +1138,14 @@ $adminPageScripts = ['admin_sales_page.js'];
                                             </div>
                                             <span class="app-status-pill <?php echo !empty($teacher['eligible']) ? 'app-status-pill--active' : 'app-status-pill--pending'; ?>"><?php echo !empty($teacher['eligible']) ? 'Éligible' : 'Sous seuil'; ?></span>
                                         </div>
-                                        <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                                        <div class="mt-4 grid gap-3 sm:grid-cols-3">
                                             <span class="admin-finance-info-pill"><i class="fas fa-receipt" aria-hidden="true"></i>Brut : <?php echo e($formatMoney((int) ($teacher['gross'] ?? 0))); ?></span>
-                                            <span class="admin-finance-info-pill"><i class="fas fa-percent" aria-hidden="true"></i>Commission : <?php echo e($formatMoney((int) ($teacher['platform_fee'] ?? 0))); ?></span>
-                                            <span class="admin-finance-info-pill"><i class="fas fa-users" aria-hidden="true"></i>Parrainage : <?php echo e($formatMoney((int) ($teacher['referral_fee'] ?? 0))); ?></span>
                                             <span class="admin-finance-info-pill"><i class="fas fa-money-bill-wave" aria-hidden="true"></i>Payé : <?php echo e($formatMoney((int) ($teacher['already_paid'] ?? 0))); ?></span>
+                                            <span class="admin-finance-info-pill"><i class="fas fa-balance-scale-right" aria-hidden="true"></i>Reste : <?php echo e($formatMoney((int) ($teacher['remaining'] ?? 0))); ?></span>
                                         </div>
                                         <div class="mt-4">
                                             <div class="flex items-center justify-between gap-3 text-sm">
-                                                <span class="font-bold text-slate-500 dark:text-slate-400">Reste à payer</span>
+                                                <span class="font-bold text-slate-500 dark:text-slate-400">Progression du solde</span>
                                                 <strong class="text-slate-950 dark:text-white"><?php echo e($formatMoney((int) ($teacher['remaining'] ?? 0))); ?></strong>
                                             </div>
                                             <div class="admin-finance-progress mt-2"><span style="width: <?php echo e((string) max(4, $remainingPercent)); ?>%;"></span></div>
@@ -898,6 +1153,14 @@ $adminPageScripts = ['admin_sales_page.js'];
                                     </article>
                                 <?php endforeach; ?>
                             </div>
+
+                            <?php
+                            $paginationData = $teacherPagination;
+                            $paginationUrlBuilder = static fn (int $targetPage): string => $buildFinancePageUrl('teachers_page', $targetPage);
+                            $paginationLabel = 'enseignants';
+                            $paginationAriaLabel = 'Pagination des soldes enseignants';
+                            require __DIR__ . '/_pagination.php';
+                            ?>
                         <?php endif; ?>
                     </article>
 
@@ -907,7 +1170,7 @@ $adminPageScripts = ['admin_sales_page.js'];
                                 <i class="fas fa-book-open text-primary-600 dark:text-primary-300" aria-hidden="true"></i>
                                 Détail par cours
                             </h3>
-                            <span class="admin-dashboard-count admin-dashboard-count--info"><?php echo e((string) count($courseDetailsList)); ?> groupe(s)</span>
+                            <span class="admin-dashboard-count admin-dashboard-count--info"><?php echo e((string) $courseDetailsGroupsTotal); ?> groupe(s)</span>
                         </div>
                         <?php if ($courseDetailsList === []): ?>
                             <p class="mt-4 text-sm text-slate-500 dark:text-slate-400">Aucun détail de cours disponible.</p>
@@ -957,15 +1220,23 @@ $adminPageScripts = ['admin_sales_page.js'];
                                     </details>
                                 <?php endforeach; ?>
                             </div>
+
+                            <?php
+                            $paginationData = $courseGroupsPagination;
+                            $paginationUrlBuilder = static fn (int $targetPage): string => $buildFinancePageUrl('course_groups_page', $targetPage);
+                            $paginationLabel = 'groupes enseignants';
+                            $paginationAriaLabel = 'Pagination du détail par cours';
+                            require __DIR__ . '/_pagination.php';
+                            ?>
                         <?php endif; ?>
                     </article>
                 </section>
 
                 <section class="<?php echo e($panelClass('settings')); ?>" data-finance-panel="settings">
-                    <div class="grid gap-5 xl:grid-cols-2 2xl:grid-cols-4">
+                        <div class="grid gap-5 xl:grid-cols-2 2xl:grid-cols-3">
                         <article class="admin-shell-card rounded-3xl p-5">
                             <h3 class="text-lg font-black inline-flex items-center gap-2"><i class="fas fa-percent text-primary-600 dark:text-primary-300" aria-hidden="true"></i>Commission plateforme</h3>
-                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Pourcentage prélevé sur chaque vente payée.</p>
+                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Taux appliqué sur chaque vente.</p>
                             <form class="mt-5 space-y-4" method="post" action="<?php echo e(site_url('admin/sales')); ?>">
                                 <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
                                 <input type="hidden" name="action" value="save_commission">
@@ -979,7 +1250,7 @@ $adminPageScripts = ['admin_sales_page.js'];
 
                         <article class="admin-shell-card rounded-3xl p-5">
                             <h3 class="text-lg font-black inline-flex items-center gap-2"><i class="fas fa-wallet text-emerald-600 dark:text-emerald-300" aria-hidden="true"></i>Seuils de retrait</h3>
-                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Montant minimal pour demander un retrait.</p>
+                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Minimum requis pour un retrait.</p>
                             <form class="mt-5 space-y-4" method="post" action="<?php echo e(site_url('admin/sales')); ?>">
                                 <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
                                 <input type="hidden" name="action" value="save_withdrawal_minimums">
@@ -994,28 +1265,9 @@ $adminPageScripts = ['admin_sales_page.js'];
                                 <button type="submit" class="admin-shell-button admin-shell-button--primary inline-flex items-center gap-2"><i class="fas fa-save" aria-hidden="true"></i>Enregistrer</button>
                             </form>
                         </article>
-
-                        <article class="admin-shell-card rounded-3xl p-5">
-                            <h3 class="text-lg font-black inline-flex items-center gap-2"><i class="fas fa-mobile-alt text-sky-600 dark:text-sky-300" aria-hidden="true"></i>Méthodes de retrait</h3>
-                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Choisissez ce que l’enseignant peut sélectionner dans sa demande de retrait.</p>
-                            <form class="mt-5 space-y-4" method="post" action="<?php echo e(site_url('admin/sales')); ?>">
-                                <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
-                                <input type="hidden" name="action" value="save_teacher_withdrawal_methods">
-                                <div class="space-y-3">
-                                    <?php foreach ($teacherWithdrawalMethodCatalog as $methodKey => $methodLabel): ?>
-                                        <label class="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 dark:border-slate-700 dark:text-slate-200">
-                                            <input type="checkbox" name="teacher_withdrawal_methods[]" value="<?php echo e($methodKey); ?>" class="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500" <?php echo in_array($methodKey, $teacherWithdrawalMethodsEnabled, true) ? 'checked' : ''; ?>>
-                                            <span><?php echo e($methodLabel); ?></span>
-                                        </label>
-                                    <?php endforeach; ?>
-                                </div>
-                                <button type="submit" class="admin-shell-button admin-shell-button--primary inline-flex items-center gap-2"><i class="fas fa-save" aria-hidden="true"></i>Enregistrer</button>
-                            </form>
-                        </article>
-
                         <article class="admin-shell-card rounded-3xl p-5">
                             <h3 class="text-lg font-black inline-flex items-center gap-2"><i class="fas fa-user-plus text-indigo-600 dark:text-indigo-300" aria-hidden="true"></i>Parrainage</h3>
-                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Taux de commission par niveau.</p>
+                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Taux appliqués aux ventes de parrainage.</p>
                             <form class="mt-5 space-y-4" method="post" action="<?php echo e(site_url('admin/sales')); ?>">
                                 <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
                                 <input type="hidden" name="action" value="save_referral_rates">

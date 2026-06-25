@@ -1,5 +1,14 @@
 <?php
+require_once __DIR__ . '/../../../includes/helpers.php';
+
+$siteIdentity = function_exists('site_public_identity') ? site_public_identity() : [];
 $siteLogoUrl = (string) ($siteLogoUrl ?? '');
+$siteName = trim((string) ($siteIdentity['siteName'] ?? (defined('APP_FROM_NAME') ? (string) APP_FROM_NAME : 'École Numérique')));
+$siteTagline = trim((string) ($siteIdentity['siteTagline'] ?? ''));
+$supportEmail = trim((string) ($siteIdentity['supportEmail'] ?? (defined('APP_FROM_EMAIL') ? (string) APP_FROM_EMAIL : '')));
+$supportPhone = trim((string) ($siteIdentity['supportPhone'] ?? ''));
+$supportWhatsapp = trim((string) ($siteIdentity['supportWhatsapp'] ?? ''));
+$siteAddress = trim((string) ($siteIdentity['siteAddress'] ?? ''));
 $lastUpdated = (string) ($lastUpdated ?? '2026-03-09');
 $backHref = (string) ($backHref ?? site_url(''));
 ?>
@@ -9,7 +18,7 @@ $backHref = (string) ($backHref ?? site_url(''));
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="app-global-assets" content="off">
-    <title>Politique de confidentialité - École Numérique</title>
+    <title>Politique de confidentialité - <?php echo e($siteName); ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="<?php echo e(site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()))); ?>"></script>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -31,7 +40,10 @@ $backHref = (string) ($backHref ?? site_url(''));
                     </div>
                     <div>
                         <p class="text-lg font-display font-semibold">Confidentialité</p>
-                        <p class="text-xs text-slate-500 dark:text-slate-300">Politique de confidentialité</p>
+                        <?php if ($siteTagline !== ''): ?>
+                            <p class="text-xs text-slate-500 dark:text-slate-300"><?php echo e($siteTagline); ?></p>
+                        <?php endif; ?>
+                        <p class="text-xs text-slate-500 dark:text-slate-300"><?php echo e($siteName); ?></p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2 text-xs font-semibold">
@@ -97,7 +109,19 @@ $backHref = (string) ($backHref ?? site_url(''));
 
                     <section class="space-y-2">
                         <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">10. Exercice des droits et contact</h2>
-                        <p>Pour toute demande relative à la confidentialité, contactez-nous à <span class="font-semibold"><?php echo e(APP_FROM_EMAIL); ?></span> en précisant l'objet de votre demande et votre compte concerné.</p>
+                        <p>
+                            Pour toute demande relative à la confidentialité, contactez-nous à
+                            <span class="font-semibold"><?php echo e($supportEmail !== '' ? $supportEmail : (defined('APP_FROM_EMAIL') ? (string) APP_FROM_EMAIL : '')); ?></span>
+                            <?php if ($supportPhone !== ''): ?>
+                                , téléphone <span class="font-semibold"><?php echo e($supportPhone); ?></span>
+                            <?php endif; ?>
+                            <?php if ($supportWhatsapp !== ''): ?>
+                                , WhatsApp <span class="font-semibold"><?php echo e($supportWhatsapp); ?></span>
+                            <?php endif; ?>
+                            <?php if ($siteAddress !== ''): ?>
+                                , adresse <span class="font-semibold"><?php echo e($siteAddress); ?></span>
+                            <?php endif; ?>.
+                        </p>
                     </section>
 
                     <section class="space-y-2">

@@ -192,9 +192,9 @@ final class SupportService extends Service
         $scope = (string) ($query['scope'] ?? 'mine');
         $status = trim((string) ($query['status'] ?? ''));
         $assigned = trim((string) ($query['assigned'] ?? ''));
-        $limit = (int) ($query['limit'] ?? 200);
-        if ($limit < 1 || $limit > 200) {
-            $limit = 200;
+        $limit = (int) ($query['limit'] ?? 500);
+        if ($limit < 1 || $limit > 500) {
+            $limit = 500;
         }
 
         try {

@@ -18,6 +18,7 @@
   const filterButtons = Array.from(document.querySelectorAll('.ticket-filter-btn'));
   const listEl = document.getElementById('support-ticket-list');
   const emptyListEl = document.getElementById('support-ticket-empty');
+  const paginationEl = document.getElementById('support-ticket-pagination');
   const openKpiEl = document.querySelector('[data-support-kpi="open"]');
   const waitingKpiEl = document.querySelector('[data-support-kpi="waiting"]');
   const resolvedKpiEl = document.querySelector('[data-support-kpi="resolved"]');
@@ -79,6 +80,9 @@
   let loadingConversations = false;
   let loadingMessages = false;
   let lastConversationRefreshAt = 0;
+  let ticketPage = 1;
+
+  const ticketPageSize = 8;
 
   function escapeHtml(value) {
     return String(value || '')
@@ -188,6 +192,89 @@
     return mime.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp)$/i.test(name);
   }
 
+  let imagePreviewModal = null;
+
+  function closeImagePreview() {
+    if (!imagePreviewModal) return;
+    imagePreviewModal.overlay.classList.add('hidden');
+    imagePreviewModal.overlay.classList.remove('flex');
+    imagePreviewModal.title.textContent = 'Aperçu de l’image';
+    imagePreviewModal.image.src = '';
+    imagePreviewModal.image.alt = '';
+    document.body.classList.remove('overflow-hidden');
+  }
+
+  function ensureImagePreviewModal() {
+    if (imagePreviewModal) {
+      return imagePreviewModal;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 p-4';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+
+    const panel = document.createElement('div');
+    panel.className = 'flex w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-slate-950 shadow-2xl ring-1 ring-white/10';
+    panel.style.maxHeight = '92vh';
+
+    const header = document.createElement('div');
+    header.className = 'flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3 text-white';
+
+    const title = document.createElement('p');
+    title.className = 'min-w-0 truncate text-sm font-semibold';
+    title.textContent = 'Aperçu de l’image';
+
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20';
+    closeButton.setAttribute('aria-label', 'Fermer l’aperçu');
+    closeButton.innerHTML = '<i class="fas fa-times" aria-hidden="true"></i>';
+    closeButton.addEventListener('click', closeImagePreview);
+
+    header.appendChild(title);
+    header.appendChild(closeButton);
+
+    const body = document.createElement('div');
+    body.className = 'flex min-h-0 flex-1 items-center justify-center bg-black/35 p-4';
+
+    const image = document.createElement('img');
+    image.className = 'max-w-full rounded-2xl object-contain shadow-2xl';
+    image.style.maxHeight = '78vh';
+    image.style.maxWidth = '100%';
+    body.appendChild(image);
+
+    panel.appendChild(header);
+    panel.appendChild(body);
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) {
+        closeImagePreview();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && imagePreviewModal && !imagePreviewModal.overlay.classList.contains('hidden')) {
+        closeImagePreview();
+      }
+    });
+
+    imagePreviewModal = { overlay, title, image };
+    return imagePreviewModal;
+  }
+
+  function openImagePreview(src, titleText) {
+    const modal = ensureImagePreviewModal();
+    modal.title.textContent = titleText || 'Aperçu de l’image';
+    modal.image.alt = titleText || 'Aperçu de l’image';
+    modal.image.src = src;
+    modal.overlay.classList.remove('hidden');
+    modal.overlay.classList.add('flex');
+    document.body.classList.add('overflow-hidden');
+  }
+
   function setInlineStatus(element, message, tone) {
     if (!(element instanceof HTMLElement)) {
       return;
@@ -277,6 +364,73 @@
     return 'open';
   }
 
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  function renderTicketPagination(totalItems, totalPages, currentPage) {
+    if (!(paginationEl instanceof HTMLElement)) {
+      return;
+    }
+
+    if (totalPages <= 1) {
+      paginationEl.innerHTML = '';
+      paginationEl.classList.add('hidden');
+      return;
+    }
+
+    const startItem = ((currentPage - 1) * ticketPageSize) + 1;
+    const endItem = Math.min(totalItems, currentPage * ticketPageSize);
+    const windowStart = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+    const windowEnd = Math.min(totalPages, Math.max(5, currentPage + 2));
+    const pageButtons = [];
+
+    for (let page = windowStart; page <= windowEnd; page += 1) {
+      const isActive = page === currentPage;
+      pageButtons.push(
+        '<button type="button" data-ticket-page="' + page + '" class="inline-flex h-10 min-w-[2.5rem] items-center justify-center rounded-xl border px-3 text-sm font-semibold transition '
+          + (isActive
+            ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm dark:border-primary-400/50 dark:bg-primary-500/15 dark:text-primary-100'
+            : 'border-gray-200 bg-white text-gray-600 hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-primary-500/60 dark:hover:text-primary-200')
+          + '"'
+          + (isActive ? ' aria-current="page"' : '')
+          + '>'
+          + page
+          + '</button>'
+      );
+    }
+
+    paginationEl.innerHTML =
+      '<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">'
+        + '<p class="text-sm text-gray-500 dark:text-gray-400">Affichage ' + startItem + ' à ' + endItem + ' sur ' + totalItems + ' ticket(s)</p>'
+        + '<div class="flex flex-wrap items-center gap-2">'
+          + '<button type="button" data-ticket-page-action="prev" class="inline-flex h-10 items-center justify-center rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-600 transition hover:border-primary-300 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-45 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-primary-500/60 dark:hover:text-primary-200"'
+          + (currentPage <= 1 ? ' disabled' : '')
+          + '>Précédent</button>'
+          + pageButtons.join('')
+          + '<button type="button" data-ticket-page-action="next" class="inline-flex h-10 items-center justify-center rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-600 transition hover:border-primary-300 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-45 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-primary-500/60 dark:hover:text-primary-200"'
+          + (currentPage >= totalPages ? ' disabled' : '')
+          + '>Suivant</button>'
+        + '</div>'
+      + '</div>';
+    paginationEl.classList.remove('hidden');
+  }
+
+  function jumpToTicketPage(conversationId) {
+    const numericId = Number.parseInt(String(conversationId || '0'), 10) || 0;
+    if (numericId <= 0) {
+      return;
+    }
+
+    const visibleConversations = getVisibleConversations();
+    const visibleIndex = visibleConversations.findIndex((conversation) => Number(conversation.id || 0) === numericId);
+    if (visibleIndex < 0) {
+      return;
+    }
+
+    ticketPage = Math.max(1, Math.ceil((visibleIndex + 1) / ticketPageSize));
+  }
+
   function subjectFromBody(bodyText) {
     const compact = compactText(bodyText);
 
@@ -315,6 +469,7 @@
 
   function setTicketFilter(nextFilter) {
     ticketFilter = nextFilter === 'closed' ? 'closed' : nextFilter === 'open' ? 'open' : 'all';
+    ticketPage = 1;
     filterButtons.forEach((button) => {
       const isActive = (button.dataset.ticketFilter || 'all') === ticketFilter;
       button.className = isActive ? activeFilterClasses : inactiveFilterClasses;
@@ -475,13 +630,23 @@
           : ticketFilter === 'open'
           ? 'Aucun ticket ouvert.'
           : 'Aucun ticket pour le moment.';
+      if (paginationEl instanceof HTMLElement) {
+        paginationEl.innerHTML = '';
+        paginationEl.classList.add('hidden');
+      }
       return;
     }
 
     emptyListEl.classList.add('hidden');
-    visibleConversations.forEach((conversation) => {
+    const totalPages = Math.max(1, Math.ceil(visibleConversations.length / ticketPageSize));
+    ticketPage = clamp(ticketPage, 1, totalPages);
+    const startIndex = (ticketPage - 1) * ticketPageSize;
+    const pageItems = visibleConversations.slice(startIndex, startIndex + ticketPageSize);
+
+    pageItems.forEach((conversation) => {
       listEl.appendChild(buildTicketCard(conversation));
     });
+    renderTicketPagination(visibleConversations.length, totalPages, ticketPage);
   }
 
   function getConversationById(conversationId) {
@@ -582,17 +747,26 @@
 
       message.attachments.forEach((attachment) => {
         const link = document.createElement('a');
-        link.href = attachmentUrl(attachment);
         if (isImageAttachment(attachment)) {
           link.className = 'support-chat-image-link';
-          link.title = String(attachment.name || 'capture');
+          const previewUrl = attachmentUrl(attachment, true);
+          link.href = previewUrl;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.title = `Aperçu: ${String(attachment.name || 'capture')}`;
+          link.style.cursor = 'zoom-in';
+          link.addEventListener('click', (event) => {
+            event.preventDefault();
+            openImagePreview(previewUrl, String(attachment.name || 'Capture jointe'));
+          });
           const image = document.createElement('img');
-          image.src = attachmentUrl(attachment, true);
+          image.src = previewUrl;
           image.alt = String(attachment.name || 'Capture jointe');
           image.loading = 'lazy';
           image.className = 'support-chat-image-thumb';
           link.appendChild(image);
         } else {
+          link.href = attachmentUrl(attachment);
           link.className =
             'rounded-full border border-gray-200 bg-white/70 px-2 py-1 text-[11px] text-gray-700 transition hover:border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200';
           link.textContent = String(attachment.name || 'fichier');
@@ -643,11 +817,14 @@
     try {
       const params = new URLSearchParams();
       params.set('scope', 'mine');
-      params.set('limit', '200');
+      params.set('limit', '500');
 
       const payload = await fetchJson(`${basePath}/api/support_conversations?${params.toString()}`);
       allConversations = Array.isArray(payload.conversations) ? payload.conversations : [];
       lastConversationRefreshAt = Date.now();
+      if (activeId) {
+        jumpToTicketPage(activeId);
+      }
       renderKpis();
       renderTickets();
 
@@ -731,6 +908,7 @@
 
     activeId = numericId;
     lastMessageId = 0;
+    jumpToTicketPage(numericId);
     syncChatState();
     renderTickets();
 
@@ -904,6 +1082,34 @@
     button.addEventListener('click', () => {
       setTicketFilter(button.dataset.ticketFilter || 'all');
     });
+  });
+
+  paginationEl?.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) {
+      return;
+    }
+
+    const pageButton = target.closest('[data-ticket-page]');
+    if (pageButton instanceof HTMLButtonElement) {
+      const nextPage = Number.parseInt(pageButton.dataset.ticketPage || '1', 10) || 1;
+      ticketPage = Math.max(1, nextPage);
+      renderTickets();
+      return;
+    }
+
+    const actionButton = target.closest('[data-ticket-page-action]');
+    if (!(actionButton instanceof HTMLButtonElement)) {
+      return;
+    }
+
+    if (actionButton.dataset.ticketPageAction === 'prev') {
+      ticketPage = Math.max(1, ticketPage - 1);
+    } else if (actionButton.dataset.ticketPageAction === 'next') {
+      ticketPage += 1;
+    }
+
+    renderTickets();
   });
 
   if (newAttachmentsInput instanceof HTMLInputElement) {

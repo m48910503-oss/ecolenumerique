@@ -37,7 +37,7 @@ final class AdminAccessService extends Service
             self::PERMISSION_TEACHER_APPLICATIONS => 'Gestion des enseignants',
             self::PERMISSION_SALES => 'Ventes',
             self::PERMISSION_CATEGORIES => 'Catégories',
-            self::PERMISSION_ANNOUNCEMENTS => 'Annonces globales',
+            self::PERMISSION_ANNOUNCEMENTS => 'Annonces',
             self::PERMISSION_SITE_SETTINGS => 'Paramètres du site',
             self::PERMISSION_ERROR_LOGS => 'Journal des erreurs',
         ];

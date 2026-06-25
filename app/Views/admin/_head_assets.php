@@ -1,5 +1,12 @@
 <?php
 $adminPageScripts = is_array($adminPageScripts ?? null) ? $adminPageScripts : [];
+$faviconUrl = '';
+if (function_exists('site_favicon_url')) {
+    $faviconUrl = trim((string) site_favicon_url());
+}
+if ($faviconUrl === '' && function_exists('site_logo_url')) {
+    $faviconUrl = trim((string) site_logo_url());
+}
 
 $adminAssetUrl = static function (string $relativePath): string {
     $relativePath = ltrim($relativePath, '/');
@@ -9,6 +16,10 @@ $adminAssetUrl = static function (string $relativePath): string {
     return site_url($relativePath . '?v=' . $version);
 };
 ?>
+<?php if ($faviconUrl !== ''): ?>
+<link rel="icon" href="<?php echo e($faviconUrl); ?>">
+<link rel="apple-touch-icon" href="<?php echo e($faviconUrl); ?>">
+<?php endif; ?>
 <meta name="app-global-assets" content="off">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="<?php echo e($adminAssetUrl('assets/js/tailwind_theme_bootstrap.js')); ?>"></script>

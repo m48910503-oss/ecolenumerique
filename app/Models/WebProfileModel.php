@@ -139,7 +139,7 @@ final class WebProfileModel extends Model
     {
         $this->ensureExtendedProfileSchema();
 
-        $setParts = 'first_name = :first, last_name = :last, email = :email, phone = :phone, phone_country_code = :pcc, phone_e164 = :e164, city = :city, country = :country, avatar_url = :avatar';
+        $setParts = 'first_name = :first, last_name = :last, email = :email, phone = :phone, country = :country, avatar_url = :avatar';
         if ($hasSignatureColumn) {
             $setParts .= ', signature_path = :signature';
         }
@@ -154,9 +154,6 @@ final class WebProfileModel extends Model
             ':last' => (string) ($payload['last_name'] ?? ''),
             ':email' => (string) ($payload['email'] ?? ''),
             ':phone' => $payload['phone'] ?? null,
-            ':pcc' => $payload['phone_country_code'] ?? null,
-            ':e164' => $payload['phone_e164'] ?? null,
-            ':city' => $payload['city'] ?? null,
             ':country' => $payload['country'] ?? null,
             ':avatar' => $payload['avatar_url'] ?? null,
             ':status' => (string) ($payload['status'] ?? 'active'),
@@ -406,9 +403,6 @@ final class WebProfileModel extends Model
         foreach ([
             'email_verified_at',
             'phone',
-            'phone_country_code',
-            'phone_e164',
-            'city',
             'country',
             'avatar_url',
             'signature_path',

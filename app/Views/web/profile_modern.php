@@ -28,7 +28,7 @@ $profileBodyDataViewAttr = match ($profileShellRole) {
     default => 'data-view="student/dashboard" data-sidebar-desktop-toggle="0"',
 };
 $profileBodyClass = match ($profileShellRole) {
-    'admin' => 'app-view app-role-admin min-h-screen bg-slate-50 text-slate-900 font-body dark:bg-slate-950 dark:text-slate-100',
+    'admin' => 'app-view app-role-admin min-h-screen overflow-hidden bg-slate-50 text-slate-900 font-body dark:bg-slate-950 dark:text-slate-100',
     'teacher' => 'app-role-teacher teacher-dashboard-page font-sans antialiased text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-900 transition-colors duration-300 overflow-hidden overflow-x-hidden min-h-screen',
     'company' => 'app-role-company student-dashboard-page font-sans antialiased text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-900 transition-colors duration-300 overflow-hidden overflow-x-hidden min-h-screen',
     default => 'app-role-student student-dashboard-page font-sans antialiased text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-900 transition-colors duration-300 overflow-hidden overflow-x-hidden min-h-screen',
@@ -106,7 +106,7 @@ $deleteAccountPanelOpen = $profilePostedAction === 'DELETE_ACCOUNT';
             <div class="admin-shell-backdrop__orb admin-shell-backdrop__orb--one"></div>
             <div class="admin-shell-backdrop__orb admin-shell-backdrop__orb--two"></div>
         </div>
-        <div class="admin-shell-root relative z-10 flex min-h-screen">
+        <div class="admin-shell-root relative z-10 flex h-screen overflow-hidden">
             <?php
             $adminRoles = is_array($roles ?? null) ? $roles : [];
             $isGeneralAdmin = !empty($isGeneralAdmin) || in_array('admin', $adminRoles, true);
@@ -124,9 +124,9 @@ $deleteAccountPanelOpen = $profilePostedAction === 'DELETE_ACCOUNT';
             require __DIR__ . '/../admin/_sidebar.php';
             ?>
             <div class="<?php echo e($profileBackdropClass); ?>"></div>
-            <div class="admin-shell-main flex min-w-0 flex-1 flex-col">
+            <div class="admin-shell-main flex min-w-0 flex-1 flex-col min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain" data-scroll-top-root="1">
                 <?php require __DIR__ . '/../admin/_topbar.php'; ?>
-                <main class="admin-shell-content admin-profile-content px-4 py-5 sm:px-6" data-scroll-top-root="1">
+                <main class="admin-shell-content admin-profile-content px-4 py-5 sm:px-6">
                     <div class="<?php echo e($profileContentClass); ?>" data-profile-initial-tab="<?php echo e($profileInitialTab); ?>">
     <?php elseif ($profileShellRole === 'student'): ?>
         <div class="student-dashboard-shell relative min-h-screen overflow-hidden">
@@ -197,47 +197,11 @@ $deleteAccountPanelOpen = $profilePostedAction === 'DELETE_ACCOUNT';
                                 </div>
                             </div>
                         </div>
-                        <aside class="profile-modern-hero__aside">
-                            <div class="profile-modern-hero__panel">
-                                <p class="profile-modern-kicker">Aperçu rapide</p>
-                                <div class="mt-3 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
-                                    <div class="profile-modern-hero__metric">
-                                        <span>Profil complété</span>
-                                        <strong><?php echo e((string) $completionPct); ?>%</strong>
-                                    </div>
-                                    <div class="profile-modern-hero__metric">
-                                        <span>Notifications</span>
-                                        <strong><?php echo e((string) $profileNotificationCount); ?></strong>
-                                    </div>
-                                    <div class="profile-modern-hero__metric">
-                                        <span>Statut</span>
-                                        <strong><?php echo e($profileVerifiedLabel); ?></strong>
-                                    </div>
-                                </div>
-                                <div class="mt-4">
-                                    <div class="flex items-center justify-between gap-3 text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                        <span>Complétion du profil</span>
-                                        <span><?php echo e((string) $completionPct); ?>%</span>
-                                    </div>
-                                    <progress class="profile-modern-progress mt-2" value="<?php echo e((string) $completionPct); ?>" max="100"></progress>
-                                </div>
-                                <div class="profile-modern-hero__actions mt-4">
-                                    <a class="profile-modern-hero__action profile-modern-hero__action--primary" href="<?php echo e($dashboardUrl); ?>">
-                                        <i class="fas fa-th-large" aria-hidden="true"></i>
-                                        <span>Tableau de bord</span>
-                                    </a>
-                                    <a class="profile-modern-hero__action profile-modern-hero__action--secondary" href="<?php echo e($notificationsUrl); ?>">
-                                        <i class="fas fa-bell" aria-hidden="true"></i>
-                                        <span>Notifications</span>
-                                    </a>
-                                </div>
-                            </div>
-                        </aside>
                     </div>
                 </section>
 
                 <div class="profile-modern-tabs flex gap-2 border-b border-gray-200 dark:border-gray-700" role="tablist" aria-label="Sections du profil">
-                    <button type="button" id="profile-tab-infos" role="tab" aria-selected="true" aria-controls="tab-infos" class="profile-tab tab-active border-b-2 border-primary-600 pb-3 text-sm font-semibold text-primary-600 transition dark:border-primary-400 dark:text-primary-400" data-tab="infos"><i class="fas fa-id-card" aria-hidden="true"></i> Informations personnelles</button>
+                    <button type="button" id="profile-tab-infos" role="tab" aria-selected="true" aria-controls="tab-infos" class="profile-tab tab-active border-b-2 border-primary-600 pb-3 text-sm font-medium text-primary-600 transition dark:border-primary-400 dark:text-primary-400" data-tab="infos"><i class="fas fa-id-card" aria-hidden="true"></i> Informations personnelles</button>
                     <button type="button" id="profile-tab-preferences" role="tab" aria-selected="false" aria-controls="tab-preferences" class="profile-tab border-b-2 border-transparent pb-3 text-sm font-medium text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" data-tab="preferences"><i class="fas fa-sliders-h" aria-hidden="true"></i> Préférences</button>
                     <button type="button" id="profile-tab-security" role="tab" aria-selected="false" aria-controls="tab-security" class="profile-tab border-b-2 border-transparent pb-3 text-sm font-medium text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" data-tab="security"><i class="fas fa-shield-alt" aria-hidden="true"></i> Sécurité</button>
                 </div>
@@ -317,11 +281,7 @@ $deleteAccountPanelOpen = $profilePostedAction === 'DELETE_ACCOUNT';
                                                 <span class="mt-1 block text-xs text-amber-600 dark:text-amber-300">V&eacute;rifiez votre bo&icirc;te mail pour confirmer le nouvel email.</span>
                                             <?php endif; ?>
                                         </label>
-                                        <label class="<?php echo e($profileLabelClass); ?>" for="phone_code">
-                                            <span class="profile-field-label"><i class="fas fa-globe-africa" aria-hidden="true"></i> Indicatif</span>
-                                            <input class="<?php echo e($profileFieldClass); ?>" type="text" id="phone_code" name="phone_code" autocomplete="tel-country-code" placeholder="+229" value="<?php echo e($phoneCode); ?>">
-                                        </label>
-                                        <label class="<?php echo e($profileLabelClass); ?>" for="phone">
+                                        <label class="<?php echo e($profileLabelClass); ?> md:col-span-2" for="phone">
                                             <span class="profile-field-label"><i class="fas fa-phone" aria-hidden="true"></i> Num&eacute;ro de t&eacute;l&eacute;phone<?php echo $isTeacher ? ' (retraits)' : ''; ?></span>
                                             <input class="<?php echo e($profileFieldClass); ?>" type="text" id="phone" name="phone" autocomplete="tel" placeholder="90 00 00 00" value="<?php echo e($phone); ?>">
                                             <span id="phone_inline_error" class="mt-1 hidden text-xs text-gray-500 dark:text-gray-400"></span>
@@ -336,12 +296,7 @@ $deleteAccountPanelOpen = $profilePostedAction === 'DELETE_ACCOUNT';
                                 <p class="text-[11px] uppercase tracking-[0.28em] text-gray-500 dark:text-gray-400">Localisation</p>
                                 <h3 class="profile-section-title mt-1 text-lg font-bold text-gray-900 dark:text-white"><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Coordonn&eacute;es g&eacute;ographiques</h3>
                                 <div class="mt-5 grid gap-5 md:grid-cols-2">
-                                    <label class="<?php echo e($profileLabelClass); ?>" for="city">
-                                        <span class="profile-field-label"><i class="fas fa-city" aria-hidden="true"></i> Ville</span>
-                                        <input class="<?php echo e($profileFieldClass); ?>" type="text" id="city" name="city" autocomplete="address-level2" value="<?php echo e($city); ?>">
-                                        <span class="mt-1 block text-xs text-gray-500 dark:text-gray-400">Indiquez votre ville de r&eacute;sidence.</span>
-                                    </label>
-                                    <label class="<?php echo e($profileLabelClass); ?>" for="country">
+                                    <label class="<?php echo e($profileLabelClass); ?> md:col-span-2" for="country">
                                         <span class="profile-field-label"><i class="fas fa-flag" aria-hidden="true"></i> Pays</span>
                                         <input class="<?php echo e($profileFieldClass); ?>" type="text" id="country" name="country" autocomplete="country-name" value="<?php echo e($country); ?>">
                                         <span class="mt-1 block text-xs text-gray-500 dark:text-gray-400">Indiquez le pays associ&eacute; &agrave; votre profil.</span>

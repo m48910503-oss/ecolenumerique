@@ -26,8 +26,6 @@ $firstName = trim((string) ($user['first_name'] ?? ''));
 $lastName = trim((string) ($user['last_name'] ?? ''));
 $email = trim((string) ($user['email'] ?? '')); 
 $phone = trim((string) ($user['phone'] ?? ''));
-$phoneCode = trim((string) ($user['phone_country_code'] ?? ''));
-$city = trim((string) ($user['city'] ?? ''));
 $country = trim((string) ($user['country'] ?? ''));
 $status = strtolower(trim((string) ($user['status'] ?? '')));
 $emailVerifiedAt = trim((string) ($user['email_verified_at'] ?? ''));
@@ -88,7 +86,7 @@ if ($isTeacher) {
     $completionTotal += 3;
     $completionDone += (trim((string) ($teacherProfile['professional_title'] ?? '')) !== '') ? 1 : 0;
     $completionDone += (trim((string) ($teacherProfile['short_bio'] ?? '')) !== '') ? 1 : 0;
-    $completionDone += ($phone !== '' && $phoneCode !== '') ? 1 : 0;
+    $completionDone += ($phone !== '') ? 1 : 0;
 }
 $completionPct = (int) round(($completionDone / max(1, $completionTotal)) * 100);
 $completionLabel = $completionPct >= 80 ? 'Profil solide' : 'Profil &agrave; compl&eacute;ter';

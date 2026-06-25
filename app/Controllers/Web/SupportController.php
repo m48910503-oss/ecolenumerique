@@ -24,7 +24,7 @@ final class SupportController extends Controller
             $user,
             (bool) ($data['isStaff'] ?? false),
             (string) ($badgeData['space'] ?? ''),
-            200
+            500
         );
 
         $studentCoursesCount = 0;

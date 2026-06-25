@@ -11,10 +11,7 @@
 
         const mobileQuery = window.matchMedia('(max-width: 980px)');
         const closeButtons = Array.from(panel.querySelectorAll('[data-public-nav-close]')).filter((node) => node instanceof HTMLButtonElement);
-        const panelCloseButton = panel.querySelector('[data-public-nav-close]:not([data-public-nav-backdrop])');
         const panelSheet = panel.querySelector('.public-mobile-panel__sheet');
-        const toggleBarsIcon = toggle.querySelector('[data-public-nav-icon-bars]');
-        const toggleCloseIcon = toggle.querySelector('[data-public-nav-icon-close]');
         const toggleLabel = toggle.querySelector('[data-public-nav-label]');
         let lastFocusedElement = null;
 
@@ -25,14 +22,6 @@
 
             if (toggleLabel instanceof HTMLElement) {
                 toggleLabel.textContent = open ? 'Fermer la navigation' : 'Ouvrir la navigation';
-            }
-
-            if (toggleBarsIcon instanceof HTMLElement) {
-                toggleBarsIcon.classList.toggle('hidden', open);
-            }
-
-            if (toggleCloseIcon instanceof HTMLElement) {
-                toggleCloseIcon.classList.toggle('hidden', !open);
             }
         };
 
@@ -67,11 +56,10 @@
                     return;
                 }
 
-                const closeButton = panelCloseButton instanceof HTMLElement ? panelCloseButton : closeButtons[0];
-                if (closeButton instanceof HTMLElement) {
-                    closeButton.focus({ preventScroll: true });
-                } else if (panelSheet instanceof HTMLElement) {
+                if (panelSheet instanceof HTMLElement) {
                     panelSheet.focus({ preventScroll: true });
+                } else {
+                    toggle.focus({ preventScroll: true });
                 }
             });
         };
@@ -176,78 +164,348 @@
         syncFileName();
     };
 
-    const initTeacherInfoDrawer = () => {
-        const drawer = document.querySelector('[data-teacher-info-drawer]');
+    const initApplyWizard = () => {
+        const form = document.querySelector('[data-apply-wizard-form]');
 
-        if (!(drawer instanceof HTMLElement)) {
+        if (!(form instanceof HTMLFormElement)) {
             return;
         }
 
-        const openButtons = Array.from(document.querySelectorAll('[data-teacher-info-open]'))
-            .filter((button) => button instanceof HTMLButtonElement);
-        const closeButtons = Array.from(document.querySelectorAll('[data-teacher-info-close]'));
-        const panels = Array.from(drawer.querySelectorAll('[data-teacher-info-panel]'))
-            .filter((panel) => panel instanceof HTMLElement);
-        let lastTrigger = null;
-
-        const showPanel = (key) => {
-            panels.forEach((panel) => {
-                const isCurrent = panel.getAttribute('data-teacher-info-panel') === key;
-                panel.classList.toggle('hidden', !isCurrent);
-            });
+        const panels = Array.from(form.querySelectorAll('[data-apply-step-panel]')).filter((panel) => panel instanceof HTMLElement);
+        const indicators = Array.from(document.querySelectorAll('[data-apply-step-indicator]')).filter((indicator) => indicator instanceof HTMLElement);
+        const nextButtons = Array.from(form.querySelectorAll('[data-apply-next]')).filter((button) => button instanceof HTMLButtonElement);
+        const prevButtons = Array.from(form.querySelectorAll('[data-apply-prev]')).filter((button) => button instanceof HTMLButtonElement);
+        const progressBars = Array.from(document.querySelectorAll('[data-apply-progress-bar]')).filter((node) => node instanceof HTMLElement);
+        const currentStepLabels = Array.from(document.querySelectorAll('[data-apply-step-current]')).filter((node) => node instanceof HTMLElement);
+        const currentStepTitles = Array.from(document.querySelectorAll('[data-apply-step-title-current]')).filter((node) => node instanceof HTMLElement);
+        const titleInput = document.getElementById('title');
+        const experienceInputs = Array.from(form.querySelectorAll('input[name="teaching_experience"]')).filter((input) => input instanceof HTMLInputElement);
+        const focusInputs = Array.from(form.querySelectorAll('[data-apply-focus-option]')).filter((input) => input instanceof HTMLInputElement);
+        const summaryTitle = document.querySelector('[data-apply-summary-title]');
+        const summaryExperience = document.querySelector('[data-apply-summary-experience]');
+        const stepTitles = {
+            1: 'Présentation du parcours',
+            2: 'Choix de la spécialité',
+            3: 'Préparation du dossier'
         };
+        let autofilledTitle = '';
+        let currentStep = Number.parseInt(form.dataset.initialStep || '1', 10);
 
-        const closeDrawer = () => {
-            drawer.classList.add('hidden');
-            drawer.setAttribute('aria-hidden', 'true');
-            document.body.style.removeProperty('overflow');
+        if (!Number.isFinite(currentStep) || currentStep < 1 || currentStep > panels.length) {
+            currentStep = 1;
+        }
 
-            if (lastTrigger instanceof HTMLElement) {
-                lastTrigger.focus();
-            }
-        };
+        const getPanel = (step) => panels.find((panel) => Number.parseInt(panel.dataset.step || '0', 10) === step) || null;
 
-        const openDrawer = (key, trigger) => {
-            showPanel(key);
-            lastTrigger = trigger;
-            drawer.classList.remove('hidden');
-            drawer.setAttribute('aria-hidden', 'false');
-            document.body.style.overflow = 'hidden';
+        const setStepError = (step, message) => {
+            const panel = getPanel(step);
 
-            const closeButton = drawer.querySelector('[data-teacher-info-close]');
-            if (closeButton instanceof HTMLElement) {
-                closeButton.focus();
-            }
-        };
-
-        openButtons.forEach((button) => {
-            button.addEventListener('click', () => {
-                const key = button.getAttribute('data-teacher-info-open') || '';
-                if (key === '') {
-                    return;
-                }
-
-                openDrawer(key, button);
-            });
-        });
-
-        closeButtons.forEach((button) => {
-            button.addEventListener('click', closeDrawer);
-        });
-
-        document.addEventListener('keydown', (event) => {
-            if (event.key !== 'Escape' || drawer.classList.contains('hidden')) {
+            if (!(panel instanceof HTMLElement)) {
                 return;
             }
 
-            closeDrawer();
+            const errorBox = panel.querySelector('[data-apply-step-error]');
+            if (!(errorBox instanceof HTMLElement)) {
+                return;
+            }
+
+            if (message.trim() === '') {
+                errorBox.textContent = '';
+                errorBox.classList.add('hidden');
+                return;
+            }
+
+            errorBox.textContent = message;
+            errorBox.classList.remove('hidden');
+        };
+
+        const updateSummary = () => {
+            const checkedExperience = experienceInputs.find((input) => input.checked);
+
+            if (summaryExperience instanceof HTMLElement) {
+                summaryExperience.textContent = checkedExperience
+                    ? (checkedExperience.closest('label')?.querySelector('.text-xl, .text-lg')?.textContent || checkedExperience.value)
+                    : 'À définir';
+            }
+
+            if (summaryTitle instanceof HTMLElement) {
+                const value = titleInput instanceof HTMLInputElement ? titleInput.value.trim() : '';
+                summaryTitle.textContent = value !== '' ? value : 'À définir';
+            }
+        };
+
+        const applyFocusSuggestion = (input) => {
+            if (!(titleInput instanceof HTMLInputElement) || !(input instanceof HTMLInputElement)) {
+                return;
+            }
+
+            const suggestion = (input.dataset.titleSuggestion || '').trim();
+            if (suggestion === '') {
+                return;
+            }
+
+            const canAutofill = titleInput.value.trim() === ''
+                || titleInput.dataset.autofilled === '1'
+                || titleInput.value.trim() === autofilledTitle;
+
+            if (!canAutofill) {
+                return;
+            }
+
+            titleInput.value = suggestion;
+            titleInput.dataset.autofilled = '1';
+            autofilledTitle = suggestion;
+            updateSummary();
+        };
+
+        const setStep = (step, options = {}) => {
+            const targetStep = Math.min(Math.max(step, 1), panels.length);
+            const focusPanel = options.focusPanel !== false;
+
+            currentStep = targetStep;
+
+            panels.forEach((panel) => {
+                const panelStep = Number.parseInt(panel.dataset.step || '0', 10);
+                panel.hidden = panelStep !== currentStep;
+            });
+
+            indicators.forEach((indicator) => {
+                const stepNumber = Number.parseInt(indicator.dataset.step || '0', 10);
+                let state = 'upcoming';
+
+                if (stepNumber < currentStep) {
+                    state = 'complete';
+                } else if (stepNumber === currentStep) {
+                    state = 'active';
+                }
+
+                indicator.dataset.state = state;
+            });
+
+            progressBars.forEach((progressBar) => {
+                progressBar.style.width = `${(currentStep / panels.length) * 100}%`;
+            });
+
+            currentStepLabels.forEach((currentStepLabel) => {
+                currentStepLabel.textContent = String(currentStep);
+            });
+
+            currentStepTitles.forEach((currentStepTitle) => {
+                currentStepTitle.textContent = stepTitles[currentStep] || '';
+            });
+
+            updateSummary();
+
+            if (!focusPanel) {
+                return;
+            }
+
+            const activePanel = getPanel(currentStep);
+            if (!(activePanel instanceof HTMLElement)) {
+                return;
+            }
+
+            window.requestAnimationFrame(() => {
+                const target = activePanel.querySelector('input, textarea, button');
+                if (target instanceof HTMLElement) {
+                    target.focus({ preventScroll: true });
+                }
+            });
+        };
+
+        const validateStep = (step) => {
+            setStepError(step, '');
+
+            if (step === 1) {
+                const hasChoice = experienceInputs.some((input) => input.checked);
+                if (!hasChoice) {
+                    setStepError(step, 'Sélectionnez votre niveau d’expérience pour continuer.');
+                    return false;
+                }
+            }
+
+            if (step === 2) {
+                if (!(titleInput instanceof HTMLInputElement) || titleInput.value.trim() === '') {
+                    setStepError(step, 'Précisez la compétence principale que vous souhaitez enseigner.');
+                    if (titleInput instanceof HTMLInputElement) {
+                        titleInput.focus({ preventScroll: true });
+                    }
+                    return false;
+                }
+            }
+
+            return true;
+        };
+
+        nextButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                if (!validateStep(currentStep)) {
+                    return;
+                }
+
+                setStep(currentStep + 1);
+            });
         });
+
+        prevButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                setStep(currentStep - 1);
+            });
+        });
+
+        focusInputs.forEach((input) => {
+            input.addEventListener('change', () => {
+                if (input.checked) {
+                    applyFocusSuggestion(input);
+                }
+            });
+        });
+
+        experienceInputs.forEach((input) => {
+            input.addEventListener('change', updateSummary);
+        });
+
+        if (titleInput instanceof HTMLInputElement) {
+            titleInput.addEventListener('input', () => {
+                if (titleInput.value.trim() !== autofilledTitle) {
+                    titleInput.dataset.autofilled = '0';
+                }
+                updateSummary();
+            });
+        }
+
+        form.addEventListener('submit', () => {
+            setStep(3, { focusPanel: false });
+        });
+
+        const preselectedFocus = focusInputs.find((input) => input.checked);
+        if (preselectedFocus instanceof HTMLInputElement) {
+            applyFocusSuggestion(preselectedFocus);
+        }
+
+        setStep(currentStep, { focusPanel: false });
+        updateSummary();
+    };
+
+    const initApplicationNoticeModal = () => {
+        const modal = document.querySelector('[data-application-notice-modal]');
+
+        if (!(modal instanceof HTMLElement)) {
+            return;
+        }
+
+        const sessionKey = 'teacherApplicationNoticeSeen';
+        const triggers = Array.from(document.querySelectorAll('[data-application-notice-trigger]')).filter((node) => node instanceof HTMLElement);
+        const form = document.querySelector('[data-apply-wizard-form]');
+        const closeButtons = Array.from(modal.querySelectorAll(
+            '[data-application-notice-close], [data-application-notice-confirm]'
+        )).filter((button) => button instanceof HTMLButtonElement);
+        const confirmButton = modal.querySelector('[data-application-notice-confirm]');
+        let previousBodyOverflow = '';
+        let previouslyFocusedElement = null;
+        let openRequested = false;
+
+        const rememberNotice = () => {
+            try {
+                window.sessionStorage.setItem(sessionKey, '1');
+            } catch (error) {
+                // The modal still works when browser storage is unavailable.
+            }
+        };
+
+        const wasNoticeSeen = () => {
+            try {
+                return window.sessionStorage.getItem(sessionKey) === '1';
+            } catch (error) {
+                return false;
+            }
+        };
+
+        const closeModal = () => {
+            if (modal.getAttribute('aria-hidden') === 'true') {
+                return;
+            }
+
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            modal.setAttribute('aria-hidden', 'true');
+            modal.setAttribute('inert', '');
+            document.body.style.overflow = previousBodyOverflow;
+            rememberNotice();
+
+            if (previouslyFocusedElement instanceof HTMLElement && document.contains(previouslyFocusedElement)) {
+                previouslyFocusedElement.focus({ preventScroll: true });
+            }
+        };
+
+        const openModal = () => {
+            if (wasNoticeSeen() || openRequested) {
+                return;
+            }
+
+            openRequested = true;
+            previouslyFocusedElement = document.activeElement instanceof HTMLElement
+                ? document.activeElement
+                : null;
+            previousBodyOverflow = document.body.style.overflow;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            modal.setAttribute('aria-hidden', 'false');
+            modal.removeAttribute('inert');
+            document.body.style.overflow = 'hidden';
+
+            window.requestAnimationFrame(() => {
+                if (confirmButton instanceof HTMLButtonElement) {
+                    confirmButton.focus({ preventScroll: true });
+                }
+            });
+        };
+
+        closeButtons.forEach((button) => {
+            button.addEventListener('click', closeModal);
+        });
+
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key !== 'Escape' || modal.getAttribute('aria-hidden') === 'true') {
+                return;
+            }
+
+            event.preventDefault();
+            closeModal();
+        });
+
+        triggers.forEach((trigger) => {
+            trigger.addEventListener('click', () => {
+                if (wasNoticeSeen()) {
+                    return;
+                }
+
+                window.setTimeout(openModal, 120);
+            });
+        });
+
+        if (form instanceof HTMLFormElement) {
+            form.addEventListener('focusin', () => {
+                if (wasNoticeSeen() || openRequested) {
+                    return;
+                }
+
+                openModal();
+            }, { once: true });
+        }
     };
 
     const onReady = () => {
         initPublicNav();
         initCvFileLabel();
-        initTeacherInfoDrawer();
+        initApplyWizard();
+        initApplicationNoticeModal();
     };
 
     if (document.readyState === 'loading') {

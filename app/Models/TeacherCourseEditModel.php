@@ -52,6 +52,15 @@ final class TeacherCourseEditModel extends Model
             if ($this->columnExists('courses', 'enterprise_discount_percent') && array_key_exists(':enterprise_discount_percent', $params)) {
                 $set[] = 'enterprise_discount_percent = :enterprise_discount_percent';
             }
+            if ($this->columnExists('courses', 'cover_alt') && array_key_exists(':cover_alt', $params)) {
+                $set[] = 'cover_alt = :cover_alt';
+            }
+            if ($this->columnExists('courses', 'seo_title') && array_key_exists(':seo_title', $params)) {
+                $set[] = 'seo_title = :seo_title';
+            }
+            if ($this->columnExists('courses', 'seo_description') && array_key_exists(':seo_description', $params)) {
+                $set[] = 'seo_description = :seo_description';
+            }
         } catch (\Throwable $e) {
             // Legacy schema: ignore enterprise pricing fields.
         }

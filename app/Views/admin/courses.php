@@ -1,22 +1,26 @@
 <?php
 $errors = is_array($errors ?? null) ? $errors : [];
 $success = (string) ($success ?? '');
-$pendingCourses = is_array($pendingCourses ?? null) ? $pendingCourses : [];
-$historyCourses = is_array($historyCourses ?? null) ? $historyCourses : [];
+$courseRows = is_array($courseRows ?? null) ? $courseRows : [];
 $statusLabels = is_array($statusLabels ?? null) ? $statusLabels : [];
 $moderationSummary = is_array($moderationSummary ?? null) ? $moderationSummary : [];
 $filters = is_array($filters ?? null) ? $filters : [];
 $pagination = is_array($pagination ?? null) ? $pagination : [];
+$currentStatusTab = in_array((string) ($currentStatusTab ?? 'submitted'), ['submitted', 'approved'], true)
+    ? (string) ($currentStatusTab ?? 'submitted')
+    : 'submitted';
+$pendingTotalCount = max(0, (int) ($pendingTotalCount ?? 0));
+$approvedTotalCount = max(0, (int) ($approvedTotalCount ?? 0));
 
 $currentPage = max(1, (int) ($pagination['page'] ?? 1));
-$totalPages = max(1, (int) ($pagination['totalPages'] ?? 1));
-$totalSubmitted = max(0, (int) ($pagination['total'] ?? count($pendingCourses)));
+$totalPages = max(1, (int) ($pagination['total_pages'] ?? $pagination['totalPages'] ?? 1));
+$totalCourses = max(0, (int) ($pagination['total'] ?? count($courseRows)));
 
 $adminNavActive = 'courses';
 $adminTopTitle = 'Validation des cours soumis';
 $adminTopSubtitle = 'Administration';
-$adminTopBadge = (string) $totalSubmitted . ' en attente';
-$adminTopBadgeTone = $totalSubmitted > 0 ? 'pending' : 'done';
+$adminTopBadge = (string) $pendingTotalCount . ' en attente';
+$adminTopBadgeTone = $pendingTotalCount > 0 ? 'pending' : 'done';
 $adminTopActions = [
     ['label' => 'Tableau de bord', 'url' => site_url('admin/dashboard'), 'tone' => 'neutral'],
 ];
@@ -54,19 +58,6 @@ $formatDate = static function (string $value): string {
     }
 };
 
-$formatDateTime = static function (string $value): string {
-    $raw = trim((string) $value);
-    if ($raw === '') {
-        return '-';
-    }
-    try {
-        $dt = new DateTimeImmutable($raw);
-        return $dt->format('d/m/Y H:i');
-    } catch (Throwable $e) {
-        return $raw;
-    }
-};
-
 $formatMoney = static function (int $amount): string {
     return number_format(max(0, $amount), 0, ',', ' ') . ' F CFA';
 };
@@ -97,28 +88,10 @@ $statusLabel = static function (string $status) use ($statusLabels): string {
     };
 };
 
-$levelLabel = static function (string $level): string {
-    return match (strtolower(trim($level))) {
-        'beginner' => 'Débutant',
-        'intermediate' => 'Intermédiaire',
-        'advanced' => 'Avancé',
-        default => trim($level) !== '' ? ucfirst($level) : 'Non renseigné',
-    };
-};
-
-$levelChipClass = static function (string $level): string {
-    return match (strtolower(trim($level))) {
-        'beginner' => 'admin-course-chip--level-beginner',
-        'intermediate' => 'admin-course-chip--level-intermediate',
-        'advanced' => 'admin-course-chip--level-advanced',
-        default => 'admin-course-chip--level',
-    };
-};
-
-$buildPageUrl = static function (int $targetPage) use ($filters): string {
+$buildPageUrl = static function (int $targetPage) use ($filters, $currentStatusTab): string {
     $page = max(1, $targetPage);
-    $query = [];
-    foreach (['search_type', 'q', 'teacher', 'category', 'date_from', 'date_to'] as $key) {
+    $query = ['tab' => $currentStatusTab];
+    foreach (['search_type', 'q', 'teacher', 'teacher_id', 'category', 'date_from', 'date_to'] as $key) {
         $value = trim((string) ($filters[$key] ?? ''));
         if ($value !== '') {
             $query[$key] = $value;
@@ -131,16 +104,32 @@ $buildPageUrl = static function (int $targetPage) use ($filters): string {
     return site_url('admin/courses' . ($query !== [] ? ('?' . http_build_query($query)) : ''));
 };
 
-$pendingTotal = (int) ($moderationSummary['pending_total'] ?? $totalSubmitted);
+$buildTabUrl = static function (string $tab) use ($filters): string {
+    $query = ['tab' => $tab];
+    foreach (['search_type', 'q', 'teacher', 'teacher_id', 'category', 'date_from', 'date_to'] as $key) {
+        $value = trim((string) ($filters[$key] ?? ''));
+        if ($value !== '') {
+            $query[$key] = $value;
+        }
+    }
+
+    return site_url('admin/courses' . ($query !== [] ? ('?' . http_build_query($query)) : ''));
+};
+
+$buildResetUrl = static function (string $tab): string {
+    return site_url('admin/courses?' . http_build_query(['tab' => $tab]));
+};
+
+$pendingTotal = (int) ($moderationSummary['pending_total'] ?? $pendingTotalCount);
 $processedToday = (int) ($moderationSummary['processed_today'] ?? 0);
-$approvedTotal = (int) ($moderationSummary['approved_total'] ?? 0);
-$rejectedTotal = (int) ($moderationSummary['rejected_total'] ?? 0);
+$approvedTotal = (int) ($moderationSummary['approved_total'] ?? $approvedTotalCount);
 
 $filterQ = trim((string) ($filters['q'] ?? ''));
 $filterTeacher = trim((string) ($filters['teacher'] ?? ''));
 $filterCategory = trim((string) ($filters['category'] ?? ''));
 $filterDateFrom = trim((string) ($filters['date_from'] ?? ''));
 $filterDateTo = trim((string) ($filters['date_to'] ?? ''));
+$filterTeacherId = max(0, (int) ($filters['teacher_id'] ?? 0));
 $filterSearchType = strtolower(trim((string) ($filters['search_type'] ?? 'name')));
 if (!in_array($filterSearchType, ['name', 'teacher', 'category', 'date'], true)) {
     $filterSearchType = 'name';
@@ -155,19 +144,6 @@ $reasonPresets = [
     'Non conforme aux règles pédagogiques',
 ];
 
-$courseRows = [];
-foreach ($pendingCourses as $course) {
-    if (is_array($course)) {
-        $course['status'] = 'submitted';
-        $courseRows[] = $course;
-    }
-}
-foreach ($historyCourses as $course) {
-    if (is_array($course)) {
-        $courseRows[] = $course;
-    }
-}
-
 $categoryOptions = [];
 foreach ($courseRows as $course) {
     $categoryName = $normalizeText((string) ($course['category_name'] ?? ''));
@@ -175,15 +151,13 @@ foreach ($courseRows as $course) {
         $categoryOptions[$categoryName] = $categoryName;
     }
 }
+if ($filterCategory !== '') {
+    $categoryOptions[$filterCategory] = $filterCategory;
+}
 ksort($categoryOptions, SORT_NATURAL | SORT_FLAG_CASE);
 
 $csrfToken = view_csrf_token();
 $adminPageScripts = ['admin_courses_search.js'];
-$encodeJsonAttribute = static function (array $value): string {
-    $json = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP);
-
-    return is_string($json) ? $json : '{}';
-};
 ?>
 <!doctype html>
 <html lang="fr">
@@ -234,7 +208,7 @@ $encodeJsonAttribute = static function (array $value): string {
                     </div>
                 </section>
 
-                <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+                <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                     <article class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border border-gray-100 dark:border-gray-700 hover-lift">
                         <p class="text-sm text-gray-500 dark:text-gray-400">En attente</p>
                         <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1"><?php echo e((string) $pendingTotal); ?></p>
@@ -247,43 +221,79 @@ $encodeJsonAttribute = static function (array $value): string {
                         <p class="text-sm text-gray-500 dark:text-gray-400">Approuvés</p>
                         <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1"><?php echo e((string) $approvedTotal); ?></p>
                     </article>
-                    <article class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border border-gray-100 dark:border-gray-700 hover-lift">
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Rejetés</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1"><?php echo e((string) $rejectedTotal); ?></p>
-                    </article>
                 </section>
 
                 <section class="border-b border-gray-200 dark:border-gray-700">
                     <div class="flex gap-4 overflow-x-auto">
-                        <button type="button" data-course-status-tab="submitted" class="tab-btn shrink-0 py-3 px-1 font-medium text-primary-600 border-b-2 border-primary-600 dark:text-primary-400 dark:border-primary-400 transition" aria-pressed="true">
+                        <a href="<?php echo e($buildTabUrl('submitted')); ?>" class="tab-btn shrink-0 border-b-2 py-3 px-1 font-medium transition <?php echo $currentStatusTab === 'submitted' ? 'border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'; ?>" aria-current="<?php echo $currentStatusTab === 'submitted' ? 'page' : 'false'; ?>">
                             <i class="fas fa-hourglass-half mr-2"></i>En attente
                             <span class="ml-1 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full text-xs"><?php echo e((string) $pendingTotal); ?></span>
-                        </button>
-                        <button type="button" data-course-status-tab="approved" class="tab-btn shrink-0 py-3 px-1 font-medium text-gray-500 dark:text-gray-400 border-b-2 border-transparent hover:text-gray-700 transition" aria-pressed="false">
+                        </a>
+                        <a href="<?php echo e($buildTabUrl('approved')); ?>" class="tab-btn shrink-0 border-b-2 py-3 px-1 font-medium transition <?php echo $currentStatusTab === 'approved' ? 'border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'; ?>" aria-current="<?php echo $currentStatusTab === 'approved' ? 'page' : 'false'; ?>">
                             <i class="fas fa-check-circle mr-2"></i>Approuvés
                             <span class="ml-1 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full text-xs"><?php echo e((string) $approvedTotal); ?></span>
-                        </button>
-                        <button type="button" data-course-status-tab="rejected" class="tab-btn shrink-0 py-3 px-1 font-medium text-gray-500 dark:text-gray-400 border-b-2 border-transparent hover:text-gray-700 transition" aria-pressed="false">
-                            <i class="fas fa-times-circle mr-2"></i>Rejetés
-                            <span class="ml-1 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full text-xs"><?php echo e((string) $rejectedTotal); ?></span>
-                        </button>
+                        </a>
                     </div>
                 </section>
 
-                <section class="flex flex-wrap justify-between items-center gap-3">
-                    <div class="flex flex-wrap gap-2">
-                        <div class="relative">
-                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                            <input type="search" id="admin-courses-inline-search" placeholder="Rechercher cours, enseignant..." value="<?php echo e($filterQ !== '' ? $filterQ : $filterTeacher); ?>" class="pl-9 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none w-72 max-w-full">
+                <section class="admin-shell-card rounded-3xl p-4 sm:p-5" data-course-current-status="<?php echo e($currentStatusTab); ?>">
+                    <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                        <div class="max-w-2xl">
+                            <p class="text-[0.68rem] font-black uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Filtres</p>
+                            <h3 class="mt-1 text-base font-black text-slate-900 dark:text-white">Filtrage des cours</h3>
                         </div>
-                        <select id="admin-courses-category-filter" class="text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 focus:ring-primary-500">
-                            <option value="all">Toutes catégories</option>
-                            <?php foreach ($categoryOptions as $categoryName): ?>
-                                <option value="<?php echo e($categoryName); ?>" <?php echo strcasecmp($categoryName, $filterCategory) === 0 ? 'selected' : ''; ?>><?php echo e($categoryName); ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                        <div class="inline-flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/90 px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300 xl:w-auto xl:min-w-[17rem]">
+                            <span class="inline-flex items-center gap-2">
+                                <i class="fas fa-sliders-h text-primary-500 dark:text-primary-300" aria-hidden="true"></i>
+                                <span id="admin-courses-filter-count"><?php echo e((string) $totalCourses); ?> cours visibles</span>
+                            </span>
+                            <span id="admin-courses-filter-status" class="rounded-full bg-white px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500 shadow-sm dark:bg-slate-800 dark:text-slate-300">
+                                <?php echo e($currentStatusTab === 'approved' ? 'Approuvés' : 'En attente'); ?>
+                            </span>
+                        </div>
                     </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400"><i class="fas fa-info-circle"></i> Cliquez sur "Détails" pour voir le résumé ou ouvrir l’aperçu complet.</p>
+
+                    <form method="get" action="<?php echo e(site_url('admin/courses')); ?>" class="admin-courses-filter-form mt-4">
+                        <input type="hidden" name="tab" value="<?php echo e($currentStatusTab); ?>">
+                        <input type="hidden" name="search_type" value="name">
+                        <?php if ($filterTeacherId > 0): ?>
+                            <input type="hidden" name="teacher_id" value="<?php echo e((string) $filterTeacherId); ?>">
+                        <?php endif; ?>
+
+                        <label class="admin-courses-filter-field">
+                            <span>Recherche</span>
+                            <span class="relative mt-2 block">
+                                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400" aria-hidden="true"></i>
+                                <input id="admin-courses-inline-search" type="search" name="q" placeholder="Titre du cours ou nom de l’enseignant" value="<?php echo e($filterQ !== '' ? $filterQ : $filterTeacher); ?>" class="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 text-sm font-medium text-slate-700 shadow-sm outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-primary-400">
+                            </span>
+                        </label>
+
+                        <label class="admin-courses-filter-field">
+                            <span>Catégorie</span>
+                            <span class="relative mt-2 block">
+                                <i class="fas fa-layer-group absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400" aria-hidden="true"></i>
+                                <select id="admin-courses-category-filter" name="category" class="h-12 w-full appearance-none rounded-2xl border border-slate-200 bg-white pl-11 pr-10 text-sm font-medium text-slate-700 shadow-sm outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-primary-400">
+                                    <option value="">Toutes catégories</option>
+                                    <?php foreach ($categoryOptions as $categoryName): ?>
+                                        <option value="<?php echo e($categoryName); ?>" <?php echo strcasecmp($categoryName, $filterCategory) === 0 ? 'selected' : ''; ?>><?php echo e($categoryName); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <i class="fas fa-chevron-down pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400" aria-hidden="true"></i>
+                            </span>
+                        </label>
+
+                        <div class="admin-courses-filter-actions">
+                            <button type="submit" class="admin-shell-button admin-shell-button--primary h-12 w-full min-w-[8.5rem] whitespace-nowrap px-4 xl:w-auto xl:shrink-0">
+                                <i class="fas fa-filter text-white" aria-hidden="true"></i>
+                                Filtrer
+                            </button>
+
+                            <a id="admin-courses-filter-reset" href="<?php echo e($buildResetUrl($currentStatusTab)); ?>" class="admin-shell-button admin-shell-button--secondary h-12 w-full min-w-[9rem] whitespace-nowrap px-4 xl:w-auto xl:shrink-0">
+                                <i class="fas fa-rotate-left" aria-hidden="true"></i>
+                                Réinitialiser
+                            </a>
+                        </div>
+                    </form>
                 </section>
 
                 <section class="space-y-5">
@@ -297,21 +307,19 @@ $encodeJsonAttribute = static function (array $value): string {
                         if ($status === 'submitted') {
                             $statusUi = [
                                 'label' => 'En attente',
-                                'class' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
                                 'icon' => 'fa-clock',
+                                'modifier' => 'pending',
+                                'date_label' => 'Soumis le',
                             ];
                         } elseif ($status === 'approved') {
                             $statusUi = [
                                 'label' => 'Approuvé',
-                                'class' => 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
                                 'icon' => 'fa-check',
+                                'modifier' => 'approved',
+                                'date_label' => 'Validé le',
                             ];
                         } else {
-                            $statusUi = [
-                                'label' => 'Rejeté',
-                                'class' => 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-                                'icon' => 'fa-times',
-                            ];
+                            continue;
                         }
                         $title = $normalizeText((string) ($course['title'] ?? 'Cours sans titre'));
                         $teacherName = $normalizeText((string) ($course['first_name'] ?? '') . ' ' . (string) ($course['last_name'] ?? ''));
@@ -320,94 +328,73 @@ $encodeJsonAttribute = static function (array $value): string {
                         }
                         $categoryName = $normalizeText((string) ($course['category_name'] ?? 'Non renseigné'));
                         $description = $plainText((string) ($course['description'] ?? ''));
-                        $shortDescription = $truncate($description !== '' ? $description : 'Aucune description renseignée.', 170);
-                        $submittedAt = (string) ($course['submitted_at'] ?? ($course['updated_at'] ?? ''));
+                        $shortDescription = $truncate($description !== '' ? $description : 'Aucune description renseignée.', 120);
+                        $submittedAt = (string) ($course['submitted_at'] ?? '');
+                        $updatedAt = (string) ($course['updated_at'] ?? '');
+                        $displayedDate = $status === 'submitted'
+                            ? ($submittedAt !== '' ? $submittedAt : $updatedAt)
+                            : ($updatedAt !== '' ? $updatedAt : $submittedAt);
                         $priceAmount = (int) ($course['price_xof'] ?? 0);
                         $priceLabel = $formatMoney($priceAmount);
                         $priceChipClass = $priceAmount > 0 ? 'admin-course-chip--price' : 'admin-course-chip--free';
                         $durationHours = trim((string) ($course['duration_hours'] ?? ''));
-                        $durationLabel = $durationHours !== '' ? rtrim(rtrim($durationHours, '0'), '.') . ' h' : 'Non renseignée';
-                        $rawLevel = (string) ($course['level'] ?? '');
-                        $level = $levelLabel($rawLevel);
-                        $levelToneClass = $levelChipClass($rawLevel);
+                        $durationLabel = $durationHours !== ''
+                            ? format_duration_hours_hm((float) $durationHours)
+                            : 'Non renseignée';
                         $coverUrl = $resolveMediaUrl($course['cover_path'] ?? '');
                         $previewUrl = site_url('admin/course_preview?id=' . $courseId);
+                        $statsUrl = site_url('admin/course_insights?id=' . $courseId);
                         $searchData = $title . ' ' . $teacherName . ' ' . $categoryName . ' ' . $shortDescription;
-                        $rejectionReason = $plainText((string) ($course['last_rejection_reason'] ?? ''));
-                        $stats = is_array($course['stats'] ?? null) ? $course['stats'] : [];
-                        $statsPayload = [
-                            'students' => max(0, (int) ($stats['students'] ?? 0)),
-                            'revenue_xof' => max(0, (int) ($stats['revenue_xof'] ?? 0)),
-                            'paid_orders' => max(0, (int) ($stats['paid_orders'] ?? 0)),
-                            'avg_rating' => max(0.0, min(5.0, (float) ($stats['avg_rating'] ?? 0))),
-                            'rating_count' => max(0, (int) ($stats['rating_count'] ?? 0)),
-                            'completion_rate' => max(0, min(100, (int) ($stats['completion_rate'] ?? 0))),
-                            'monthly_enrollments' => is_array($stats['monthly_enrollments'] ?? null) ? array_values($stats['monthly_enrollments']) : [],
-                        ];
                         ?>
                         <article
-                            class="admin-course-card bg-white dark:bg-gray-800 rounded-2xl shadow-card border border-gray-100 dark:border-gray-700 hover-lift overflow-hidden transition"
+                            class="admin-course-card admin-course-card--<?php echo e($statusUi['modifier']); ?> bg-white dark:bg-gray-800 rounded-2xl shadow-card border border-gray-100 dark:border-gray-700 hover-lift overflow-hidden transition"
                             data-course-card
                             data-status="<?php echo e($status); ?>"
                             data-category="<?php echo e($categoryName); ?>"
-                            data-category-label="<?php echo e($categoryName); ?>"
                             data-search="<?php echo e($searchData); ?>"
-                            data-title="<?php echo e($title); ?>"
-                            data-teacher="<?php echo e($teacherName); ?>"
-                            data-price="<?php echo e($priceLabel); ?>"
-                            data-duration="<?php echo e($durationLabel); ?>"
-                            data-level="<?php echo e($level); ?>"
-                            data-submitted="<?php echo e($formatDateTime($submittedAt)); ?>"
-                            data-description="<?php echo e($description); ?>"
-                            data-cover="<?php echo e($coverUrl); ?>"
-                            data-preview-url="<?php echo e($previewUrl); ?>"
-                            data-stats="<?php echo e($encodeJsonAttribute($statsPayload)); ?>"
                         >
-                            <div class="flex flex-col md:flex-row gap-4 p-5">
-                                <?php if ($coverUrl !== ''): ?>
-                                    <img src="<?php echo e($coverUrl); ?>" class="w-full md:w-36 h-28 rounded-xl object-cover bg-gray-100 dark:bg-gray-700" alt="">
-                                <?php else: ?>
-                                    <div class="w-full md:w-36 h-28 rounded-xl bg-gradient-to-br from-primary-600 to-accent-600 flex items-center justify-center text-white text-3xl">
-                                        <i class="fas fa-book-open"></i>
-                                    </div>
-                                <?php endif; ?>
-
-                                <div class="flex-1 space-y-2 min-w-0">
-                                    <div class="flex flex-wrap justify-between items-start gap-2">
-                                        <div class="min-w-0">
-                                            <h3 class="font-bold text-lg text-gray-900 dark:text-white truncate"><?php echo e($title); ?></h3>
-                                            <div class="mt-2 flex flex-wrap gap-2 text-xs">
-                                                <span class="admin-course-mini admin-course-mini--teacher"><i class="fas fa-chalkboard-teacher"></i><?php echo e($teacherName); ?></span>
-                                                <span class="admin-course-mini admin-course-mini--date"><i class="far fa-calendar-alt"></i>Soumis le <?php echo e($formatDate($submittedAt)); ?></span>
-                                                <span class="admin-course-mini admin-course-mini--category"><i class="fas fa-layer-group"></i><?php echo e($categoryName); ?></span>
-                                            </div>
+                            <div class="admin-course-card__layout p-4 md:p-5">
+                                <div class="admin-course-card__media">
+                                    <?php if ($coverUrl !== ''): ?>
+                                        <img src="<?php echo e($coverUrl); ?>" class="admin-course-card__cover" alt="">
+                                    <?php else: ?>
+                                        <div class="admin-course-card__cover admin-course-card__cover--placeholder">
+                                            <i class="fas fa-book-open"></i>
                                         </div>
-                                        <span class="admin-course-status text-xs px-3 py-1 rounded-full <?php echo e($statusUi['class']); ?>">
-                                            <i class="fas <?php echo e($statusUi['icon']); ?> mr-1"></i><?php echo e($statusUi['label']); ?>
-                                        </span>
-                                    </div>
-                                    <p class="text-sm text-gray-600 dark:text-gray-300"><?php echo e($shortDescription); ?></p>
-                                    <div class="flex flex-wrap gap-2 text-xs">
-                                        <span class="admin-course-chip <?php echo e($priceChipClass); ?>"><i class="fas fa-money-bill-wave"></i><?php echo e($priceLabel); ?></span>
-                                        <span class="admin-course-chip admin-course-chip--duration"><i class="fas fa-hourglass-half"></i><?php echo e($durationLabel); ?></span>
-                                        <span class="admin-course-chip <?php echo e($levelToneClass); ?>"><i class="fas fa-chart-bar"></i><?php echo e($level); ?></span>
-                                    </div>
-                                    <?php if ($status === 'rejected' && $rejectionReason !== ''): ?>
-                                        <p class="text-xs text-red-600 dark:text-red-300"><i class="fas fa-comment-dots"></i> Motif : <?php echo e($truncate($rejectionReason, 90)); ?></p>
                                     <?php endif; ?>
                                 </div>
 
-                                <div class="flex flex-col gap-2 justify-end items-stretch md:items-end">
-                                    <button type="button" data-course-detail class="admin-course-detail-button px-4 py-2 rounded-xl text-sm font-medium">
-                                        <i class="fas fa-eye"></i> Détails
-                                    </button>
-                                    <button type="button" data-course-stats-open class="admin-course-stats-button px-4 py-2 rounded-xl text-sm font-medium">
-                                        <i class="fas fa-chart-line"></i> Statistiques
-                                    </button>
+                                <div class="admin-course-card__body min-w-0">
+                                    <div class="admin-course-card__heading">
+                                        <h3 class="admin-course-card__title"><?php echo e($title); ?></h3>
+                                        <span class="admin-course-status admin-course-status--<?php echo e($statusUi['modifier']); ?>">
+                                            <i class="fas <?php echo e($statusUi['icon']); ?>" aria-hidden="true"></i>
+                                            <?php echo e($statusUi['label']); ?>
+                                        </span>
+                                    </div>
 
+                                    <div class="admin-course-card__meta text-xs">
+                                        <span class="admin-course-mini admin-course-mini--teacher"><i class="fas fa-chalkboard-teacher" aria-hidden="true"></i><?php echo e($teacherName); ?></span>
+                                        <span class="admin-course-mini admin-course-mini--date"><i class="far fa-calendar-alt" aria-hidden="true"></i><?php echo e($statusUi['date_label']); ?> <?php echo e($formatDate($displayedDate)); ?></span>
+                                    </div>
+
+                                    <p class="admin-course-card__description line-clamp-1 text-sm text-gray-600 dark:text-gray-300"><?php echo e($shortDescription); ?></p>
+
+                                    <div class="admin-course-card__facts text-xs">
+                                        <span class="admin-course-chip <?php echo e($priceChipClass); ?>"><i class="fas fa-money-bill-wave"></i><?php echo e($priceLabel); ?></span>
+                                        <span class="admin-course-chip admin-course-chip--duration"><i class="fas fa-hourglass-half"></i><?php echo e($durationLabel); ?></span>
+                                    </div>
+
+                                </div>
+
+                                <div class="admin-course-card__actions">
                                     <?php if ($status === 'submitted'): ?>
+                                        <a href="<?php echo e($previewUrl); ?>" target="_blank" rel="noopener noreferrer" class="admin-course-action admin-course-action--preview">
+                                            <i class="fas fa-up-right-from-square"></i> Aperçu
+                                        </a>
                                         <form method="post" action="<?php echo e(site_url('admin/courses')); ?>" data-confirm-message="<?php echo e('Approuver le cours "' . $title . '" ? Il sera publié sur la plateforme.'); ?>">
                                             <input type="hidden" name="_csrf" value="<?php echo e($csrfToken); ?>">
+                                            <input type="hidden" name="tab" value="<?php echo e($currentStatusTab); ?>">
                                             <input type="hidden" name="page" value="<?php echo e((string) $currentPage); ?>">
                                             <input type="hidden" name="q" value="<?php echo e($filterQ); ?>">
                                             <input type="hidden" name="teacher" value="<?php echo e($filterTeacher); ?>">
@@ -415,25 +402,55 @@ $encodeJsonAttribute = static function (array $value): string {
                                             <input type="hidden" name="date_from" value="<?php echo e($filterDateFrom); ?>">
                                             <input type="hidden" name="date_to" value="<?php echo e($filterDateTo); ?>">
                                             <input type="hidden" name="search_type" value="<?php echo e($filterSearchType); ?>">
+                                            <?php if ($filterTeacherId > 0): ?>
+                                                <input type="hidden" name="teacher_id" value="<?php echo e((string) $filterTeacherId); ?>">
+                                            <?php endif; ?>
                                             <input type="hidden" name="course_id" value="<?php echo e((string) $courseId); ?>">
-                                            <button type="submit" name="action" value="approve" class="w-full px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium">
+                                            <button type="submit" name="action" value="approve" class="admin-course-action admin-course-action--approve">
                                                 <i class="fas fa-check-circle"></i> Approuver
                                             </button>
                                         </form>
 
-                                        <button type="button" data-course-reject data-course-id="<?php echo e((string) $courseId); ?>" data-course-title="<?php echo e($title); ?>" class="px-4 py-2 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50 text-sm">
+                                        <button
+                                            type="button"
+                                            data-course-moderation
+                                            data-course-id="<?php echo e((string) $courseId); ?>"
+                                            data-course-title="<?php echo e($title); ?>"
+                                            data-course-action="reject"
+                                            data-course-modal-title="Motif du rejet"
+                                            data-course-modal-submit="Confirmer le rejet"
+                                            data-course-modal-note="L’enseignant sera notifié avec ce motif."
+                                            data-course-modal-placeholder="Qualité insuffisante, contenu incomplet, problème de licence..."
+                                            class="admin-course-action admin-course-action--reject"
+                                        >
                                             <i class="fas fa-times-circle"></i> Rejeter
+                                        </button>
+                                    <?php elseif ($status === 'approved'): ?>
+                                        <a href="<?php echo e($previewUrl); ?>" target="_blank" rel="noopener noreferrer" class="admin-course-action admin-course-action--preview">
+                                            <i class="fas fa-up-right-from-square"></i> Aperçu
+                                        </a>
+                                        <a href="<?php echo e($statsUrl); ?>" class="admin-course-action admin-course-action--stats">
+                                            <i class="fas fa-chart-line"></i> Statistiques
+                                        </a>
+                                        <button
+                                            type="button"
+                                            data-course-moderation
+                                            data-course-id="<?php echo e((string) $courseId); ?>"
+                                            data-course-title="<?php echo e($title); ?>"
+                                            data-course-action="remove"
+                                            data-course-modal-title="Motif du retrait"
+                                            data-course-modal-submit="Retirer le cours"
+                                            data-course-modal-note="Le cours sera retiré du catalogue et l’enseignant sera notifié avec ce motif."
+                                            data-course-modal-placeholder="Expliquez pourquoi le cours doit être retiré du catalogue..."
+                                            class="admin-course-action admin-course-action--reject"
+                                        >
+                                            <i class="fas fa-ban"></i> Retirer
                                         </button>
                                     <?php endif; ?>
                                 </div>
                             </div>
                         </article>
                     <?php endforeach; ?>
-
-                    <div id="admin-courses-empty-state" class="hidden text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-soft border border-gray-100 dark:border-gray-700">
-                        <i class="fas fa-folder-open text-5xl text-gray-300 dark:text-gray-600 mb-3"></i>
-                        <p class="text-gray-500 dark:text-gray-400">Aucun cours dans cette catégorie</p>
-                    </div>
 
                     <?php if ($courseRows === []): ?>
                         <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-soft border border-gray-100 dark:border-gray-700">
@@ -443,70 +460,21 @@ $encodeJsonAttribute = static function (array $value): string {
                     <?php endif; ?>
                 </section>
 
-                <?php if ($totalPages > 1): ?>
-                    <nav class="flex flex-wrap items-center gap-2" aria-label="Pagination des cours soumis">
-                        <a href="<?php echo e($buildPageUrl(max(1, $currentPage - 1))); ?>" class="admin-shell-button admin-shell-button--secondary <?php echo $currentPage <= 1 ? 'opacity-50 pointer-events-none' : ''; ?>">Précédent</a>
-
-                        <?php
-                        $startPage = max(1, $currentPage - 2);
-                        $endPage = min($totalPages, $currentPage + 2);
-                        for ($pageNumber = $startPage; $pageNumber <= $endPage; $pageNumber++):
-                            $isActive = $pageNumber === $currentPage;
-                            ?>
-                            <a href="<?php echo e($buildPageUrl($pageNumber)); ?>" class="admin-shell-button <?php echo $isActive ? 'admin-shell-button--primary' : 'admin-shell-button--secondary'; ?>"><?php echo e((string) $pageNumber); ?></a>
-                        <?php endfor; ?>
-
-                        <a href="<?php echo e($buildPageUrl(min($totalPages, $currentPage + 1))); ?>" class="admin-shell-button admin-shell-button--secondary <?php echo $currentPage >= $totalPages ? 'opacity-50 pointer-events-none' : ''; ?>">Suivant</a>
-                    </nav>
-                <?php endif; ?>
+                <?php
+                $paginationData = $pagination;
+                $paginationUrlBuilder = $buildPageUrl;
+                $paginationLabel = 'cours';
+                $paginationAriaLabel = 'Pagination des cours';
+                require __DIR__ . '/_pagination.php';
+                ?>
             </main>
-        </div>
-    </div>
-
-    <div id="admin-course-detail-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 max-w-3xl w-full rounded-2xl shadow-xl overflow-hidden max-h-[90vh] overflow-y-auto">
-            <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center">
-                <h3 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-info-circle text-primary-500"></i> Aperçu détaillé</h3>
-                <button type="button" data-course-detail-close class="text-gray-400 hover:text-gray-600" aria-label="Fermer"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <div class="p-6 space-y-4" id="admin-course-detail-content"></div>
-            <div class="px-6 py-4 bg-gray-50 dark:bg-gray-900/50 flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700">
-                <button type="button" data-course-detail-close class="px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600">Fermer</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="admin-course-stats-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="admin-course-stats-modal bg-white dark:bg-gray-800 max-w-5xl w-full rounded-2xl shadow-xl overflow-hidden max-h-[90vh] overflow-y-auto">
-            <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center">
-                <div>
-                    <h3 class="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white"><i class="fas fa-chart-pie text-primary-500"></i> Statistiques du cours</h3>
-                    <p id="admin-course-stats-title" class="mt-1 text-sm text-gray-500 dark:text-gray-400"></p>
-                </div>
-                <button type="button" data-course-stats-close class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Fermer"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <div class="p-6 space-y-6">
-                <div id="admin-course-stats-cards" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"></div>
-                <section class="admin-course-stats-chart-card rounded-2xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/40">
-                    <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <h4 class="font-bold text-gray-900 dark:text-white">Évolution des inscriptions</h4>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Six derniers mois</p>
-                        </div>
-                        <span class="text-xs font-semibold text-primary-600 dark:text-primary-300"><i class="fas fa-project-diagram mr-1"></i>Données réelles</span>
-                    </div>
-                    <div id="admin-course-stats-chart" class="mt-4"></div>
-                </section>
-            </div>
-            <div class="px-6 py-4 bg-gray-50 dark:bg-gray-900/50 flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700">
-                <button type="button" data-course-stats-close class="px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600">Fermer</button>
-            </div>
         </div>
     </div>
 
     <div id="admin-course-reject-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
         <form method="post" action="<?php echo e(site_url('admin/courses')); ?>" class="bg-white dark:bg-gray-800 max-w-md w-full rounded-2xl shadow-xl">
             <input type="hidden" name="_csrf" value="<?php echo e($csrfToken); ?>">
+            <input type="hidden" name="tab" value="<?php echo e($currentStatusTab); ?>">
             <input type="hidden" name="page" value="<?php echo e((string) $currentPage); ?>">
             <input type="hidden" name="q" value="<?php echo e($filterQ); ?>">
             <input type="hidden" name="teacher" value="<?php echo e($filterTeacher); ?>">
@@ -514,11 +482,16 @@ $encodeJsonAttribute = static function (array $value): string {
             <input type="hidden" name="date_from" value="<?php echo e($filterDateFrom); ?>">
             <input type="hidden" name="date_to" value="<?php echo e($filterDateTo); ?>">
             <input type="hidden" name="search_type" value="<?php echo e($filterSearchType); ?>">
+            <?php if ($filterTeacherId > 0): ?>
+                <input type="hidden" name="teacher_id" value="<?php echo e((string) $filterTeacherId); ?>">
+            <?php endif; ?>
+            <input type="hidden" id="admin-course-reject-action" name="action" value="reject">
             <input type="hidden" id="admin-course-reject-id" name="course_id" value="">
 
             <div class="p-6">
-                <h3 class="text-lg font-bold flex items-center gap-2 text-red-600"><i class="fas fa-ban"></i> Motif du rejet</h3>
+                <h3 class="text-lg font-bold flex items-center gap-2 text-red-600"><i class="fas fa-ban"></i> <span id="admin-course-reject-heading">Motif du rejet</span></h3>
                 <p class="text-sm text-gray-500 mt-1">Cours : <span id="admin-course-reject-title" class="font-semibold text-gray-700 dark:text-gray-200"></span></p>
+                <p id="admin-course-reject-note" class="mt-2 text-sm text-gray-500 dark:text-gray-400">L’enseignant sera notifié avec ce motif.</p>
 
                 <label class="mt-4 block">
                     <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Motif prédéfini</span>
@@ -536,7 +509,7 @@ $encodeJsonAttribute = static function (array $value): string {
 
                 <div class="flex justify-end gap-3 mt-6">
                     <button type="button" data-course-reject-close class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600">Annuler</button>
-                    <button type="submit" name="action" value="reject" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Confirmer le rejet</button>
+                    <button id="admin-course-reject-submit" type="submit" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Confirmer le rejet</button>
                 </div>
             </div>
         </form>

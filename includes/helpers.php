@@ -1332,6 +1332,45 @@ if (!function_exists('site_footer_text')) {
     }
 }
 
+if (!function_exists('site_public_identity')) {
+    /**
+     * @return array{
+     *   siteName:string,
+     *   siteTagline:string,
+     *   siteDescription:string,
+     *   supportEmail:string,
+     *   supportPhone:string,
+     *   supportWhatsapp:string,
+     *   siteAddress:string,
+     *   footerText:string,
+     *   siteLogoUrl:string
+     * }
+     */
+    function site_public_identity(): array
+    {
+        return shared_platform_settings_service()->publicIdentity();
+    }
+}
+
+if (!function_exists('site_maintenance_enabled')) {
+    function site_maintenance_enabled(): bool
+    {
+        return shared_platform_settings_service()->get('maintenance_enabled', '0') === '1';
+    }
+}
+
+if (!function_exists('site_maintenance_message')) {
+    function site_maintenance_message(): string
+    {
+        $message = trim(shared_platform_settings_service()->get(
+            'maintenance_message',
+            'Maintenance temporaire en cours. Merci de revenir dans quelques minutes.'
+        ));
+
+        return $message !== '' ? $message : 'Maintenance temporaire en cours. Merci de revenir dans quelques minutes.';
+    }
+}
+
 if (!function_exists('log_course_audit')) {
     function log_course_audit(?int $userId, int $courseId, string $action, array $meta = []): void
     {

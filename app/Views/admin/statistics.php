@@ -68,6 +68,9 @@ rsort($availableYears);
 $selectedChartMetric = (string) ($chartFilter['metric'] ?? 'revenue_xof');
 $selectedChartGranularity = (string) ($chartFilter['granularity'] ?? 'month');
 $selectedChartPoints = max(2, (int) ($chartFilter['points'] ?? 12));
+$periodDisplayLabel = trim((string) ($period['display_label'] ?? 'Période active'));
+$periodRangeLabel = trim((string) ($period['range_label'] ?? ''));
+$statsUpdatedLabel = $updatedAt !== '' ? ('Mise à jour : ' . $updatedAt) : 'Données temps réel';
 $chartMetricOptions = is_array($chartFilter['metric_options'] ?? null) ? $chartFilter['metric_options'] : [];
 $chartGranularityOptions = is_array($chartFilter['granularity_options'] ?? null) ? $chartFilter['granularity_options'] : [];
 $chartGranularityMap = [];
@@ -160,37 +163,45 @@ $adminPageScripts = ['admin_statistics_filters.js'];
             <?php require __DIR__ . '/_topbar.php'; ?>
 
             <main class="admin-shell-content admin-shell-dense admin-stats-v2-page px-4 py-5 sm:px-6 sm:py-6 space-y-6">
-                <section class="admin-stats-v2-hero rounded-3xl p-6 text-white">
-                    <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                        <div>
-                            <p class="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.24em] text-white/75">
-                                <i class="fas fa-chart-pie" aria-hidden="true"></i>
-                                Analyse des performances
-                            </p>
-                            <h2 class="mt-2 text-2xl font-black sm:text-3xl">Statistiques de la plateforme</h2>
-                            <p class="mt-2 max-w-3xl text-sm font-medium text-white/80">
-                                Suivez l’évolution des inscriptions, des revenus, des catégories, de la complétion et des dernières transactions.
-                            </p>
+                <section class="admin-stats-v2-hero rounded-3xl p-3.5 sm:p-4 text-white">
+                    <div class="admin-stats-v2-hero__layout">
+                        <div class="admin-stats-v2-hero__copy">
+                            
+                            <h2 class="mt-1 text-lg font-black sm:text-xl">Statistiques de la plateforme</h2>
+                            
+                            <div class="admin-stats-v2-hero__chips">
+                                <?php if ($periodDisplayLabel !== ''): ?>
+                                    <span><i class="fas fa-calendar-alt" aria-hidden="true"></i><?php echo e($periodDisplayLabel); ?></span>
+                                <?php endif; ?>
+                                <?php if ($periodRangeLabel !== ''): ?>
+                                    <span><i class="fas fa-clock" aria-hidden="true"></i><?php echo e($periodRangeLabel); ?></span>
+                                <?php endif; ?>
+                            </div>
                         </div>
                         <div class="admin-stats-v2-hero__meta">
                             <i class="fas fa-sync-alt" aria-hidden="true"></i>
-                            <span><?php echo e($updatedAt !== '' ? ('Mise à jour : ' . $updatedAt) : 'Données temps réel'); ?></span>
+                            <span><?php echo e($statsUpdatedLabel); ?></span>
                         </div>
                     </div>
                 </section>
 
-                <section class="admin-shell-card rounded-3xl p-5">
-                    <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-                        <div>
-                            <p class="text-lg font-black inline-flex items-center gap-2">
+                <section class="admin-shell-card admin-stats-v2-period rounded-3xl p-3.5 sm:p-4">
+                    <div class="admin-stats-v2-period__head">
+                        <div class="admin-stats-v2-period__copy">
+                            <p class="inline-flex items-center gap-1.5 text-sm font-black sm:text-base">
                                 <i class="fas fa-calendar-alt admin-inline-accent admin-inline-accent--info" aria-hidden="true"></i>
                                 Période d’analyse
                             </p>
-                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                <?php echo e((string) ($period['display_label'] ?? 'Période')); ?> · <?php echo e((string) ($period['range_label'] ?? '')); ?>
+                            <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
+                                <?php echo e($periodDisplayLabel !== '' ? $periodDisplayLabel : 'Période'); ?><?php echo $periodRangeLabel !== '' ? ' · ' . e($periodRangeLabel) : ''; ?>
                             </p>
                         </div>
-                        <form method="get" action="<?php echo e(site_url('admin/statistics')); ?>" class="admin-stats-v2-filter" data-form-kind="period" data-admin-period-form>
+                        <div class="admin-stats-v2-period__hint">
+                            <i class="fas fa-chart-line" aria-hidden="true"></i>
+                            <span><?php echo e((string) $selectedChartPoints); ?> point(s) affiché(s)</span>
+                        </div>
+                    </div>
+                    <form method="get" action="<?php echo e(site_url('admin/statistics')); ?>" class="admin-stats-v2-filter admin-stats-v2-filter--period mt-3" data-form-kind="period" data-admin-period-form>
                             <input type="hidden" name="chart_metric" value="<?php echo e($selectedChartMetric); ?>">
                             <input type="hidden" name="chart_granularity" value="<?php echo e($selectedChartGranularity); ?>">
                             <input type="hidden" name="chart_points" value="<?php echo e((string) $selectedChartPoints); ?>">
@@ -226,8 +237,7 @@ $adminPageScripts = ['admin_statistics_filters.js'];
                                 <i class="fas fa-undo" aria-hidden="true"></i>
                                 Réinitialiser
                             </a>
-                        </form>
-                    </div>
+                    </form>
                 </section>
 
                 <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

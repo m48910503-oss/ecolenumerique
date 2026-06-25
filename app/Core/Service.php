@@ -71,7 +71,7 @@ abstract class Service
         if (function_exists('site_logo_url')) {
             return \site_logo_url();
         }
-        return $this->siteUrl('assets/img/logo-site.png');
+        return '';
     }
 
     protected function siteFooterText(): string

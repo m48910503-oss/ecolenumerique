@@ -392,7 +392,7 @@ final class DashboardService extends Service
             $memberUserId,
             'Nouvelle formation entreprise',
             'Une place vous a été attribuée pour "' . $title . '".',
-            'student/my_courses'
+            'company/courses'
         );
 
         return [[], 'Place attribuée au collaborateur.', ''];

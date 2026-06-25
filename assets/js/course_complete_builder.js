@@ -106,12 +106,6 @@
     return type === "document" ? "drive" : (type === "appointment" ? "meeting" : "qcm");
   }
 
-  function lessonTypeIcon(type) {
-    if (type === "document") return "fa-file-lines";
-    if (type === "appointment") return "fa-calendar-check";
-    return "fa-video";
-  }
-
   function lessonTypeLabel(type) {
     if (type === "document") return "Document";
     if (type === "appointment") return "Rendez-vous";
@@ -182,7 +176,7 @@
       var fileLabel = safeFileName !== "" ? safeFileName : "Importer le document";
       return '' +
         '<label class="course-builder-field course-builder-field--file">' +
-          '<span><i class="fa-solid fa-cloud-arrow-up"></i> Document / exercice *</span>' +
+          '<span>Document / exercice *</span>' +
           '<div class="course-builder-file-drop' + (hasExistingResource ? ' has-file' : '') + '" data-lesson-file-shell>' +
             '<input type="file" name="lesson_files[' + safeKey + ']" class="lesson-file-input" data-lesson-file-input accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar,.txt,.csv,image/*,application/pdf">' +
             '<span class="course-builder-file-icon"><i class="fa-solid fa-file-arrow-up"></i></span>' +
@@ -196,7 +190,7 @@
     if (type === "appointment") {
       return '' +
         '<label class="course-builder-field course-builder-field--meeting-mode">' +
-          '<span><i class="fa-solid fa-location-dot"></i> Mode du rendez-vous *</span>' +
+          '<span>Mode du rendez-vous *</span>' +
           '<select class="lesson-meeting-mode course-builder-input">' +
             '<option value="online"' + (currentMode === "online" ? " selected" : "") + '>En ligne</option>' +
             '<option value="onsite"' + (currentMode === "onsite" ? " selected" : "") + '>Présentiel</option>' +
@@ -207,7 +201,7 @@
     }
     return '' +
       '<label class="course-builder-field">' +
-        '<span><i class="fa-brands fa-youtube"></i> Lien YouTube *</span>' +
+        '<span>Lien YouTube *</span>' +
         '<input type="url" inputmode="url" autocomplete="off" pattern="https?://((www|m)\\.)?youtube\\.com/.+|https?://youtu\\.be/.+" title="Collez uniquement un lien YouTube valide." placeholder="https://www.youtube.com/watch?v=... ou https://youtu.be/..." value="' + value + '" class="lesson-resource course-builder-input lesson-resource--youtube">' +
       '</label>';
   }
@@ -261,40 +255,41 @@
 
     return '' +
       '<div class="lesson-item course-builder-lesson" data-lesson-type="' + type + '" data-file-key="' + escapeHtml(fileKey) + '">' +
-        '<div class="course-builder-lesson-head">' +
+        '<div class="course-builder-lesson-head" data-toggle-lesson-head>' +
           '<span class="lesson-number course-builder-lesson-number">1.</span>' +
           '<div class="course-builder-lesson-summary">' +
             '<strong class="lesson-summary-title">' + summaryTitle + '</strong>' +
-            '<span class="lesson-summary-subtitle">Leçon du module</span>' +
+            '<span class="lesson-summary-subtitle">Leçon</span>' +
           '</div>' +
           '<div class="course-builder-lesson-head-meta">' +
-            '<span class="lesson-type-pill"><i class="fa-solid ' + lessonTypeIcon(type) + '"></i> ' + lessonTypeLabel(type) + '</span>' +
-            '<span class="lesson-duration-pill' + (type === "appointment" ? " hidden" : "") + '"><i class="fa-regular fa-clock"></i> ' + String(duration) + ' min</span>' +
+            '<span class="lesson-type-pill">' + lessonTypeLabel(type) + '</span>' +
+            '<span class="lesson-duration-pill' + (type === "appointment" ? " hidden" : "") + '">' + String(duration) + ' min</span>' +
             '<button type="button" data-remove-lesson class="course-builder-icon-button course-builder-icon-button--danger" aria-label="Supprimer la leçon"><i class="fa-solid fa-xmark"></i></button>' +
+            '<button type="button" data-toggle-lesson class="course-builder-lesson-toggle" aria-expanded="true" aria-label="Replier la leçon"><i class="fa-solid fa-chevron-up"></i></button>' +
           '</div>' +
         '</div>' +
         '<div class="course-builder-lesson-body">' +
           '<div class="course-builder-lesson-top">' +
             '<label class="course-builder-field course-builder-field--title">' +
-              '<span><i class="fa-solid fa-heading"></i> Titre *</span>' +
+              '<span>Titre *</span>' +
               '<input type="text" value="' + title + '" class="lesson-title course-builder-input course-builder-input--strong" placeholder="Ex: Bienvenue, Installation, Quiz de révision">' +
             '</label>' +
             '<label class="course-builder-field course-builder-field--type">' +
-              '<span><i class="fa-solid ' + lessonTypeIcon(type) + '"></i> Type</span>' +
+              '<span>Type</span>' +
               '<select class="lesson-type-select course-builder-input" data-lesson-type-select>' +
-            '<option value="video"' + (type === "video" ? " selected" : "") + '>🎬 Vidéo</option>' +
-            '<option value="document"' + (type === "document" ? " selected" : "") + '>📄 Document / exercice</option>' +
-            '<option value="appointment"' + (type === "appointment" ? " selected" : "") + '>📅 Rendez-vous</option>' +
+            '<option value="video"' + (type === "video" ? " selected" : "") + '>Vidéo</option>' +
+            '<option value="document"' + (type === "document" ? " selected" : "") + '>Document / exercice</option>' +
+            '<option value="appointment"' + (type === "appointment" ? " selected" : "") + '>Rendez-vous</option>' +
               '</select>' +
             '</label>' +
             '<label class="course-builder-field course-builder-field--duration' + (type === "appointment" ? " hidden" : "") + '">' +
-              '<span><i class="fa-regular fa-clock"></i> Durée</span>' +
+              '<span>Durée</span>' +
               '<input type="number" min="0" value="' + String(duration) + '" class="lesson-duration course-builder-input" placeholder="15">' +
             '</label>' +
           '</div>' +
           '<div class="lesson-dynamic course-builder-dynamic">' + lessonDynamicHtml(type, resource, item && item.mode, fileKey, fileName) + '</div>' +
           '<details class="course-builder-lesson-notes' + (descriptionText !== "" ? " has-content" : "") + '">' +
-            '<summary><span><i class="fa-regular fa-note-sticky"></i> Description / consignes</span><small class="lesson-description-preview">' + escapeHtml(descriptionText || "Optionnelle") + '</small><i class="fa-solid fa-chevron-down"></i></summary>' +
+            '<summary><span>Description / consignes</span><small class="lesson-description-preview">' + escapeHtml(descriptionText || "Optionnelle") + '</small><i class="fa-solid fa-chevron-down"></i></summary>' +
             '<textarea rows="2" class="lesson-description course-builder-textarea" placeholder="Objectifs, consignes ou contexte de cette leçon">' + description + '</textarea>' +
           '</details>' +
         '</div>' +
@@ -319,14 +314,46 @@
     if (summarySubtitle) summarySubtitle.textContent = "Leçon " + String((fallbackIndex || 0) + 1);
     if (lessonNumber) lessonNumber.textContent = String((fallbackIndex || 0) + 1) + ".";
     if (typePill) {
-      typePill.innerHTML = '<i class="fa-solid ' + lessonTypeIcon(type) + '"></i> ' + lessonTypeLabel(type);
+      typePill.textContent = lessonTypeLabel(type);
     }
     if (durationPill) {
       durationPill.classList.toggle("hidden", type === "appointment");
-      durationPill.innerHTML = '<i class="fa-regular fa-clock"></i> ' + String(duration) + ' min';
+      durationPill.textContent = String(duration) + ' min';
     }
     if (notes) notes.classList.toggle("has-content", description !== "");
     if (descriptionPreview) descriptionPreview.textContent = description || "Optionnelle";
+  }
+
+  function setLessonCollapsed(lesson, collapsed, markAuto) {
+    if (!lesson) return;
+    lesson.classList.toggle("is-collapsed", !!collapsed);
+    var toggle = q("[data-toggle-lesson]", lesson);
+    if (toggle) {
+      toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      toggle.setAttribute("aria-label", collapsed ? "Ouvrir la leçon" : "Replier la leçon");
+    }
+    if (markAuto) {
+      lesson.setAttribute("data-auto-collapsed", "1");
+    }
+  }
+
+  function toggleLesson(launcher) {
+    var lesson = launcher && launcher.closest(".lesson-item");
+    if (!lesson) return;
+    setLessonCollapsed(lesson, !lesson.classList.contains("is-collapsed"), false);
+  }
+
+  function syncLessonCollapseState(lesson, isComplete) {
+    if (!lesson) return;
+    lesson.classList.toggle("is-complete", !!isComplete);
+    if (!isComplete) {
+      lesson.removeAttribute("data-auto-collapsed");
+      setLessonCollapsed(lesson, false, false);
+      return;
+    }
+    if (lesson.getAttribute("data-auto-collapsed") !== "1") {
+      setLessonCollapsed(lesson, true, true);
+    }
   }
 
   function moduleHtml(module) {
@@ -340,32 +367,32 @@
             '<span class="module-number course-builder-module-number">1</span>' +
             '<div class="course-builder-module-title-wrap">' +
               '<label class="course-builder-module-title-field">' +
-                '<span><i class="fa-solid fa-layer-group"></i> Titre du module *</span>' +
+                '<span>Titre du module *</span>' +
                 '<input type="text" value="' + escapeHtml(module.title || "") + '" class="module-title course-builder-module-title" placeholder="Ex: Introduction au cours">' +
               '</label>' +
               '<div class="course-builder-module-meta">' +
                 '<span class="module-status-badge course-builder-status course-builder-status--incomplete">Incomplet</span>' +
-                '<span><i class="fa-solid fa-list-check"></i> <b class="module-lessons-count">0</b> leçon(s)</span>' +
-                '<span><i class="fa-regular fa-clock"></i> <b class="module-duration-total">0</b> min</span>' +
+                '<span><b class="module-lessons-count">0</b> <span class="module-lessons-label">leçon</span></span>' +
+                '<span><b class="module-duration-total">0</b> min</span>' +
               '</div>' +
             '</div>' +
           '</div>' +
           '<div class="course-builder-module-actions">' +
             '<button type="button" data-add-lesson class="course-builder-add-lesson"><i class="fa-solid fa-plus"></i> Leçon</button>' +
             '<button type="button" data-remove-module class="course-builder-icon-button course-builder-icon-button--danger" aria-label="Supprimer le module"><i class="fa-solid fa-trash-can"></i></button>' +
-            '<i class="fa-solid fa-chevron-down module-chevron course-builder-chevron"></i>' +
+            '<i class="fa-solid fa-chevron-up module-chevron course-builder-chevron"></i>' +
           '</div>' +
         '</div>' +
         '<div class="course-builder-module-content">' +
+          '<div class="module-lessons course-builder-lessons"></div>' +
           '<details class="course-builder-module-notes' + (moduleDescription !== "" ? " has-content" : "") + '">' +
             '<summary>' +
-              '<span><i class="fa-regular fa-note-sticky"></i> Description du module</span>' +
+              '<span>Description du module</span>' +
               '<small class="module-description-preview">' + escapeHtml(moduleDescription || "Optionnelle") + '</small>' +
               '<i class="fa-solid fa-chevron-down"></i>' +
             '</summary>' +
             '<textarea rows="2" class="module-description course-builder-textarea course-builder-textarea--module" placeholder="Résumé, objectifs ou consignes du module">' + escapeHtml(module.description || "") + '</textarea>' +
           '</details>' +
-          '<div class="module-lessons course-builder-lessons"></div>' +
         '</div>' +
       '</div>';
   }
@@ -395,24 +422,29 @@
       var fileInput = q(".lesson-file-input", lesson);
       var hasUploadedDocument = fileInput && fileInput.files && fileInput.files.length;
       var hasExistingDocument = uploadedResourceLooksValid(resource);
+      var lessonComplete = title !== "";
       totalMinutes += duration;
       syncLessonSummary(lesson, lessonIndex);
 
       if (title === "") {
-        isComplete = false;
+        lessonComplete = false;
       }
       if (type === "video" && (!youtubeUrlLooksValid(resource) || duration < 1)) {
-        isComplete = false;
+        lessonComplete = false;
       }
       if (type === "document" && !hasUploadedDocument && !hasExistingDocument) {
-        isComplete = false;
+        lessonComplete = false;
       }
+      if (!lessonComplete) isComplete = false;
+      syncLessonCollapseState(lesson, lessonComplete);
     });
 
     var lessonsCount = q(".module-lessons-count", module);
+    var lessonsLabel = q(".module-lessons-label", module);
     var durationTotal = q(".module-duration-total", module);
     var status = q(".module-status-badge", module);
     if (lessonsCount) lessonsCount.textContent = String(lessonCount);
+    if (lessonsLabel) lessonsLabel.textContent = lessonCount > 1 ? "leçons" : "leçon";
     if (durationTotal) durationTotal.textContent = String(totalMinutes);
     syncModuleDescriptionPreview(module);
     module.classList.toggle("is-ready", isComplete);
@@ -464,7 +496,7 @@
     var hasCorrect = options.some(function (option) { return !!option.correct; });
     var optionInputType = qType === "multiple" ? "checkbox" : "radio";
     var visibleIndex = Math.max(1, (questionIndex || 0) + 1);
-    var optionHtml = options.slice(0, 4).map(function (option, index) {
+    var optionHtml = options.slice(0, 6).map(function (option, index) {
       return optionRowHtml(option, index, optionInputType, group, hasCorrect);
     }).join("");
 
@@ -539,6 +571,24 @@
     });
   }
 
+  function qcmQuestionHasData(question) {
+    if (!question || typeof question !== "object") return false;
+    if (clean(question.text) !== "") return true;
+    return asArray(question.options).some(function (option) {
+      return option && typeof option === "object" && clean(option.text) !== "";
+    });
+  }
+
+  function countQcmFilledVersions(versions, versionCount) {
+    var count = 0;
+    for (var variant = 1; variant <= versionCount; variant++) {
+      if (asArray(versions[String(variant)] || versions[variant]).some(qcmQuestionHasData)) {
+        count += 1;
+      }
+    }
+    return count;
+  }
+
   function examHtml(exam) {
     examSeq += 1;
     var type = mapExamTypeToUi(clean(exam.type) || "qcm");
@@ -550,6 +600,10 @@
       }, 3);
     }
     versionCount = Math.max(1, Math.min(3, versionCount));
+    var filledVersions = countQcmFilledVersions(versions, versionCount);
+    var qcmStatus = filledVersions > 0
+      ? String(filledVersions) + "/" + String(versionCount) + " version(s) renseignée(s)"
+      : "À configurer";
 
     return '' +
       '<div class="exam-item course-builder-exam animate-fadeIn" data-exam-id="' + examSeq + '">' +
@@ -587,36 +641,69 @@
             '</label>' +
           '</div>' +
           '<div class="exam-qcm-section course-builder-exam-pane">' +
-            '<div class="course-builder-qcm-toolbar">' +
-              '<div class="course-builder-qcm-config">' +
-                '<label class="course-builder-exam-field course-builder-exam-field--compact">' +
-                  '<span>Versions QCM</span>' +
-                  '<select class="qcm-version-count course-builder-exam-input" data-qcm-version-count>' +
-                    '<option value="1"' + (versionCount === 1 ? " selected" : "") + '>1 version</option>' +
-                    '<option value="2"' + (versionCount === 2 ? " selected" : "") + '>2 versions</option>' +
-                    '<option value="3"' + (versionCount === 3 ? " selected" : "") + '>3 versions</option>' +
-                  '</select>' +
-                '</label>' +
-                '<label class="course-builder-exam-field course-builder-exam-field--compact">' +
-                  '<span>Points / question</span>' +
-                  '<input type="number" min="1" value="' + String(numberValue(exam.points_per_question, 1)) + '" class="points-per-question course-builder-exam-input">' +
-                '</label>' +
+            '<div class="course-builder-qcm-setup">' +
+              '<div class="course-builder-qcm-setup-copy">' +
+                '<span class="course-builder-qcm-setup-kicker">QCM</span>' +
+                '<h4>Questions et import Excel</h4>' +
+                '<p>Configurez les versions A/B/C sans quitter cette page.</p>' +
               '</div>' +
-              '<div class="course-builder-version-tabs" role="tablist" aria-label="Versions QCM">' +
-                versionTabHtml("A", 1) +
-                versionTabHtml("B", 2) +
-                versionTabHtml("C", 3) +
+              '<div class="course-builder-qcm-setup-side">' +
+                '<span class="course-builder-qcm-setup-status">' + escapeHtml(qcmStatus) + '</span>' +
+                '<button type="button" class="course-builder-qcm-setup-btn" data-qcm-modal-open>' +
+                  '<i class="fa-solid fa-list-check"></i> Configurer le QCM' +
+                '</button>' +
               '</div>' +
             '</div>' +
-            '<div class="qcm-versions-container course-builder-qcm-versions">' +
-              versionHtml("A", 1, versions["1"] || versions[1]) +
-              versionHtml("B", 2, versions["2"] || versions[2]) +
-              versionHtml("C", 3, versions["3"] || versions[3]) +
-            '</div>' +
-            '<div class="course-builder-version-footer">' +
-              '<button type="button" class="course-builder-version-nav" data-qcm-version-prev><i class="fa-solid fa-arrow-left"></i> Version précédente</button>' +
-              '<span class="course-builder-version-progress" data-qcm-version-progress>Version A sur ' + String(versionCount) + '</span>' +
-              '<button type="button" class="course-builder-version-nav course-builder-version-nav--primary" data-qcm-version-next>Version suivante <i class="fa-solid fa-arrow-right"></i></button>' +
+            '<div class="course-builder-qcm-modal hidden" data-qcm-modal aria-hidden="true">' +
+              '<div class="course-builder-qcm-modal-backdrop" data-qcm-modal-close></div>' +
+              '<section class="course-builder-qcm-modal-panel" role="dialog" aria-modal="true" aria-label="Configurer le QCM">' +
+                '<div class="course-builder-qcm-modal-head">' +
+                  '<div>' +
+                    '<span class="course-builder-qcm-setup-kicker">QCM</span>' +
+                    '<h4>Configurer le QCM</h4>' +
+                  '</div>' +
+                  '<button type="button" class="course-builder-qcm-modal-close" data-qcm-modal-close aria-label="Fermer le QCM"><i class="fa-solid fa-xmark"></i></button>' +
+                '</div>' +
+                '<div class="course-builder-qcm-modal-body">' +
+                  '<div class="course-builder-qcm-toolbar">' +
+                    '<div class="course-builder-qcm-config">' +
+                      '<label class="course-builder-exam-field course-builder-exam-field--compact">' +
+                        '<span>Versions QCM</span>' +
+                        '<select class="qcm-version-count course-builder-exam-input" data-qcm-version-count>' +
+                          '<option value="1"' + (versionCount === 1 ? " selected" : "") + '>1 version</option>' +
+                          '<option value="2"' + (versionCount === 2 ? " selected" : "") + '>2 versions</option>' +
+                          '<option value="3"' + (versionCount === 3 ? " selected" : "") + '>3 versions</option>' +
+                        '</select>' +
+                      '</label>' +
+                      '<label class="course-builder-exam-field course-builder-exam-field--compact">' +
+                        '<span>Points / question</span>' +
+                        '<input type="number" min="1" value="' + String(numberValue(exam.points_per_question, 1)) + '" class="points-per-question course-builder-exam-input">' +
+                      '</label>' +
+                    '</div>' +
+                    '<div class="course-builder-qcm-import">' +
+                      '<input type="file" class="course-builder-qcm-import-input" data-qcm-import-input accept=".csv,.xlsx,.xls">' +
+                      '<button type="button" class="course-builder-qcm-import-btn" data-qcm-import-button><i class="fa-solid fa-file-import"></i> Importer</button>' +
+                      '<a class="course-builder-qcm-template" href="../assets/samples/qcm_import_template.xlsx" download>Modèle Excel</a>' +
+                      '<span class="course-builder-qcm-import-status" data-qcm-import-status></span>' +
+                    '</div>' +
+                    '<div class="course-builder-version-tabs" role="tablist" aria-label="Versions QCM">' +
+                      versionTabHtml("A", 1) +
+                      versionTabHtml("B", 2) +
+                      versionTabHtml("C", 3) +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="qcm-versions-container course-builder-qcm-versions">' +
+                    versionHtml("A", 1, versions["1"] || versions[1]) +
+                    versionHtml("B", 2, versions["2"] || versions[2]) +
+                    versionHtml("C", 3, versions["3"] || versions[3]) +
+                  '</div>' +
+                  '<div class="course-builder-version-footer">' +
+                    '<button type="button" class="course-builder-version-nav" data-qcm-version-prev><i class="fa-solid fa-arrow-left"></i> Version précédente</button>' +
+                    '<span class="course-builder-version-progress" data-qcm-version-progress>Version A sur ' + String(versionCount) + '</span>' +
+                    '<button type="button" class="course-builder-version-nav course-builder-version-nav--primary" data-qcm-version-next>Version suivante <i class="fa-solid fa-arrow-right"></i></button>' +
+                  '</div>' +
+                '</div>' +
+              '</section>' +
             '</div>' +
           '</div>' +
           '<div class="exam-document-section course-builder-exam-pane hidden">' +
@@ -1060,7 +1147,7 @@
       var lessons = q(".module-lessons", module);
       var icon = q(".module-chevron", module);
       if (lessons) lessons.classList.remove("hidden");
-      if (icon) icon.classList.add("rotate-180");
+      if (icon) icon.classList.remove("rotate-180");
     }
     var exam = element && element.closest ? element.closest(".exam-item") : null;
     if (exam) {
@@ -1095,6 +1182,9 @@
       showStep(issue.step, false);
     }
     clearInvalidMarkers();
+    if (issue.element && issue.element.closest && issue.element.closest("[data-qcm-modal]")) {
+      window.openQcmModal(issue.element);
+    }
     window.setTimeout(function () {
       focusInvalid(issue.element || null);
     }, 0);
@@ -1241,6 +1331,9 @@
       }
 
       if (examType === "qcm") {
+        var qcmModal = q("[data-qcm-modal]", exam);
+        var qcmOpenButton = q("[data-qcm-modal-open]", exam);
+        var qcmMessage = "Complétez le QCM avant de publier.";
         var versionCount = Math.max(1, Math.min(3, numberValue(q(".qcm-version-count", exam) && q(".qcm-version-count", exam).value, 3)));
         var versions = qa(".qcm-version", exam);
         for (var versionIndex = 0; versionIndex < versionCount; versionIndex++) {
@@ -1248,14 +1341,14 @@
           var versionLabel = "version " + String.fromCharCode(65 + versionIndex);
           var questions = version ? qa(".question-item", version) : [];
           if (!questions.length) {
-            return { step: 3, element: version || q(".qcm-versions-container", exam), message: "Ajoutez au moins une question dans la " + versionLabel + "." };
+            return { step: 3, element: version || qcmModal || qcmOpenButton, message: qcmMessage + " Il manque une question dans la " + versionLabel + "." };
           }
           for (var questionIndex = 0; questionIndex < questions.length; questionIndex++) {
             var question = questions[questionIndex];
             var questionNumber = questionIndex + 1;
             var questionText = q(".question-text", question);
             if (!clean(questionText && questionText.value)) {
-              return { step: 3, element: questionText, message: "Renseignez la question " + questionNumber + " de la " + versionLabel + "." };
+              return { step: 3, element: questionText || qcmModal || qcmOpenButton, message: qcmMessage + " Question " + questionNumber + " : intitulé requis." };
             }
 
             var questionType = q(".question-type-select", question) ? q(".question-type-select", question).value : "single";
@@ -1265,23 +1358,23 @@
                 return clean(q(".option-text", option) && q(".option-text", option).value) !== "";
               });
               if (filledOptions.length < 2) {
-                return { step: 3, element: optionRows[0] ? q(".option-text", optionRows[0]) : question, message: "Ajoutez au moins deux propositions pour la question " + questionNumber + " de la " + versionLabel + "." };
+                return { step: 3, element: (optionRows[0] ? q(".option-text", optionRows[0]) : question) || qcmModal || qcmOpenButton, message: qcmMessage + " Question " + questionNumber + " : deux propositions minimum." };
               }
               var missingOption = optionRows.find(function (option) {
                 return clean(q(".option-text", option) && q(".option-text", option).value) === "";
               });
               if (missingOption) {
-                return { step: 3, element: q(".option-text", missingOption), message: "Complétez ou supprimez la proposition vide de la question " + questionNumber + " de la " + versionLabel + "." };
+                return { step: 3, element: q(".option-text", missingOption) || qcmModal || qcmOpenButton, message: qcmMessage + " Question " + questionNumber + " : proposition vide." };
               }
               var correctCount = optionRows.filter(function (option) {
                 var input = q('input[type="radio"], input[type="checkbox"]', option);
                 return !!(input && input.checked);
               }).length;
               if (correctCount < 1) {
-                return { step: 3, element: question, message: "Marquez une proposition correcte pour la question " + questionNumber + " de la " + versionLabel + "." };
+                return { step: 3, element: question || qcmModal || qcmOpenButton, message: qcmMessage + " Question " + questionNumber + " : bonne réponse requise." };
               }
               if (questionType === "single" && correctCount > 1) {
-                return { step: 3, element: question, message: "La question " + questionNumber + " de la " + versionLabel + " doit avoir une seule bonne réponse." };
+                return { step: 3, element: question || qcmModal || qcmOpenButton, message: qcmMessage + " Question " + questionNumber + " : une seule bonne réponse." };
               }
             }
           }
@@ -1366,8 +1459,8 @@
     if (!item) return;
     var lessons = q(".module-lessons", item);
     var icon = q(".module-chevron", item);
-    if (lessons) lessons.classList.toggle("hidden");
-    if (icon) icon.classList.toggle("rotate-180");
+    var collapsed = lessons ? lessons.classList.toggle("hidden") : false;
+    if (icon) icon.classList.toggle("rotate-180", collapsed);
   };
 
   window.addLesson = function (button) {
@@ -1400,8 +1493,6 @@
     lesson.setAttribute("data-lesson-type", select.value);
     lesson.setAttribute("data-file-key", fileKey);
     if (dynamic) dynamic.innerHTML = lessonDynamicHtml(select.value, "", "", fileKey, "");
-    var typeIcon = q(".course-builder-field--type span i", lesson);
-    if (typeIcon) typeIcon.className = "fa-solid " + lessonTypeIcon(select.value);
     if (durationField) durationField.classList.toggle("hidden", select.value === "appointment");
     if (duration && (clean(duration.value) === "" || currentDuration === previousDefault)) {
       duration.value = String(nextDefault);
@@ -1985,6 +2076,30 @@
         return;
       }
 
+      if (target.closest("[data-toggle-lesson]")) {
+        event.preventDefault();
+        toggleLesson(target.closest("[data-toggle-lesson]"));
+        return;
+      }
+
+      if (target.closest("[data-qcm-modal-open]")) {
+        event.preventDefault();
+        window.openQcmModal(target.closest("[data-qcm-modal-open]"));
+        return;
+      }
+
+      if (target.closest("[data-qcm-modal-close]")) {
+        event.preventDefault();
+        window.closeQcmModal(target.closest("[data-qcm-modal-close]"));
+        return;
+      }
+
+      if (target.closest("[data-qcm-import-button]")) {
+        event.preventDefault();
+        window.importQcmFile(target.closest("[data-qcm-import-button]"));
+        return;
+      }
+
       if (target.closest("[data-qcm-version-tab]")) {
         event.preventDefault();
         window.showQcmVersion(target.closest("[data-qcm-version-tab]"));
@@ -2031,6 +2146,13 @@
       if (moduleHeader && !isInteractiveTarget(target)) {
         event.preventDefault();
         window.toggleModule(moduleHeader);
+        return;
+      }
+
+      var lessonHeader = target.closest("[data-toggle-lesson-head]");
+      if (lessonHeader && !isInteractiveTarget(target)) {
+        event.preventDefault();
+        toggleLesson(lessonHeader);
         return;
       }
 

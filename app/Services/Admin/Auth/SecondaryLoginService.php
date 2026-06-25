@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Services\Admin\Auth;
 
 use App\Core\Service;
+use App\Models\AdminDashboardModel;
 use App\Models\AdminLoginModel;
 use App\Security\LoginThrottle;
 use App\Services\Admin\AdminAccessService;
@@ -66,6 +67,16 @@ final class SecondaryLoginService extends Service
                     } else {
                         $throttle->clear('admin_secondary', $email, $ip);
                         $this->loginUser($user, false);
+                        (new AdminDashboardModel($this->pdo()))->insertAuditLog(
+                            (int) ($user['id'] ?? 0),
+                            'secondary_admin_login',
+                            'auth',
+                            null,
+                            [
+                                'source' => 'admin_secondary_login',
+                                'redirect_to' => $redirectTo,
+                            ]
+                        );
 
                         return [
                             'redirectTo' => $redirectTo,
@@ -96,10 +107,10 @@ final class SecondaryLoginService extends Service
             AdminAccessService::PERMISSION_SUPPORT => 'admin/support',
             AdminAccessService::PERMISSION_SUPPORT_AGENTS => 'admin/support_agents',
             AdminAccessService::PERMISSION_COURSES => 'admin/courses',
+            AdminAccessService::PERMISSION_ANNOUNCEMENTS => 'admin/announcements',
             AdminAccessService::PERMISSION_TEACHER_APPLICATIONS => 'admin/teacher_applications',
             AdminAccessService::PERMISSION_SALES => 'admin/sales',
             AdminAccessService::PERMISSION_CATEGORIES => 'admin/categories',
-            AdminAccessService::PERMISSION_ANNOUNCEMENTS => 'admin/announcements',
             AdminAccessService::PERMISSION_SITE_SETTINGS => 'admin/site_settings',
             AdminAccessService::PERMISSION_ERROR_LOGS => 'admin/error_logs',
         ];

@@ -2460,7 +2460,7 @@ if ($courseCoverPath !== '') {
 
                 <div class="course-content-preview-pill"><span>Niveau</span><strong id="preview-level"><?php echo e($levelLabel); ?></strong></div>
 
-                <div class="course-content-preview-pill"><span>Dur&eacute;e</span><strong id="preview-duration"><?php echo e(((float) $durationHours) > 0 ? format_duration_hours_hm((float) $durationHours, true) : '0 h'); ?></strong></div>
+                <div class="course-content-preview-pill"><span>Dur&eacute;e</span><strong id="preview-duration"><?php echo e(((float) $durationHours) > 0 ? format_duration_hours_hm((float) $durationHours, true) : '0 min'); ?></strong></div>
 
                 <div class="course-content-preview-pill"><span>Tarif</span><strong id="preview-price"><?php echo trim((string) $priceXof) !== '' && (float) $priceXof > 0 ? e(number_format((float) $priceXof, 0, ',', ' ') . ' F CFA') : 'Gratuit'; ?></strong></div>
 

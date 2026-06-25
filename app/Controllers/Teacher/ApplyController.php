@@ -64,7 +64,7 @@ final class ApplyController extends Controller
             'profileUrl' => $this->siteUrl('profile'),
             'notificationsUrl' => $this->siteUrl('notifications'),
             'contactEmail' => (string) ($user['email'] ?? ''),
-            'contactPhone' => trim((string) (($user['phone_e164'] ?? '') ?: trim((string) (($user['phone_country_code'] ?? '') . ' ' . ($user['phone'] ?? ''))))),
+            'contactPhone' => trim((string) preg_replace('/[^\d+]+/', '', (string) ($user['phone'] ?? ''))),
         ]);
     }
 }

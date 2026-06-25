@@ -18,10 +18,12 @@ final class ErrorLogsService extends Service
      */
     public function buildViewData(array $query): array
     {
+        $page = \App\Support\Pagination::pageFromQuery($query, 'page', 1);
         $limit = (int) ($query['limit'] ?? self::DEFAULT_LIMIT);
         $limit = max(self::MIN_LIMIT, min(self::MAX_LIMIT, $limit));
         $quickFilter = $this->normalizeQuickFilter((string) ($query['filter'] ?? 'all'));
         $search = trim((string) ($query['q'] ?? ''));
+        $pageWindow = max(1, $page) * $limit;
 
         $logOptions = $this->availableLogs();
         $activeLog = (string) ($query['log'] ?? '');
@@ -72,11 +74,11 @@ final class ErrorLogsService extends Service
             }
             if (is_readable($pathToRead)) {
                 $logMeta['readable'] = true;
-                $rawLines = $this->tailFileLines($pathToRead, $this->readLimitForFilters($limit, $quickFilter, $search));
+                $rawLines = $this->tailFileLines($pathToRead, $this->readLimitForFilters($pageWindow, $quickFilter, $search));
                 $entries = $this->parseEntries($rawLines);
                 $entries = $this->filterEntries($entries, $quickFilter, $search);
-                if (count($entries) > $limit) {
-                    $entries = array_slice($entries, -$limit);
+                if (count($entries) > $pageWindow) {
+                    $entries = array_slice($entries, -$pageWindow);
                 }
                 $logEntries = $entries;
                 $logLines = array_values(array_map(
@@ -96,6 +98,7 @@ final class ErrorLogsService extends Service
         return [
             'logOptions' => $logOptions,
             'activeLog' => $activeLog,
+            'page' => $page,
             'limit' => $limit,
             'logLines' => $logLines,
             'logEntries' => $logEntries,

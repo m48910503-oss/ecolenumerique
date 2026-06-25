@@ -69,7 +69,13 @@ $adminNavSections = $hasAdminAccess ? [
             ['key' => 'sales', 'label' => 'Finances', 'icon' => 'fa-credit-card', 'url' => site_url('admin/sales'), 'permission' => 'sales', 'badge' => $pendingSalesBadge, 'badgeClass' => 'bg-cyan-500'],
             ['key' => 'support', 'label' => 'Tickets support', 'icon' => 'fa-headset', 'url' => site_url('admin/support'), 'permission' => 'support', 'badge' => $supportWaitingBadge, 'badgeClass' => 'bg-red-500'],
             ['key' => 'support_agents', 'label' => 'Équipe support', 'icon' => 'fa-headset', 'url' => site_url('admin/support_agents'), 'permission' => 'support_agents'],
+        ],
+    ],
+    [
+        'section' => 'Gouvernance',
+        'items' => [
             ['key' => 'secondary_admins', 'label' => 'Admins secondaires', 'icon' => 'fa-users-cog', 'url' => site_url('admin/secondary_admins'), 'permission' => 'dashboard', 'generalOnly' => true],
+            ['key' => 'secondary_admin_activity', 'label' => "Journal d'activité", 'icon' => 'fa-history', 'url' => site_url('admin/secondary_admins/activity'), 'permission' => 'dashboard', 'generalOnly' => true],
         ],
     ],
     [

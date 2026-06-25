@@ -3,8 +3,9 @@ $errors = is_array($errors ?? null) ? $errors : [];
 $successMessage = (string) ($success ?? '');
 $applications = is_array($applications ?? null) ? $applications : [];
 $teacherRows = is_array($teacherRows ?? null) ? $teacherRows : [];
-$teacherCoursesByTeacher = is_array($teacherCoursesByTeacher ?? null) ? $teacherCoursesByTeacher : [];
 $teacherSummary = is_array($teacherSummary ?? null) ? $teacherSummary : [];
+$selectedTeacher = is_array($selectedTeacher ?? null) ? $selectedTeacher : null;
+$selectedTeacherId = max(0, (int) ($selectedTeacherId ?? 0));
 $currentTab = in_array((string) ($currentTab ?? 'applications'), ['applications', 'teachers'], true) ? (string) $currentTab : 'applications';
 $searchQuery = trim((string) ($searchQuery ?? ''));
 
@@ -138,17 +139,42 @@ foreach ($applications as $application) {
 $pendingCount = max(0, (int) ($teacherSummary['pending_applications'] ?? count($pendingApplications)));
 $activeTeacherCount = max(0, (int) ($teacherSummary['active_teachers'] ?? 0));
 $suspendedTeacherCount = max(0, (int) ($teacherSummary['suspended_teachers'] ?? 0));
-$totalCourses = max(0, (int) ($teacherSummary['total_courses'] ?? 0));
-$approvedCourses = max(0, (int) ($teacherSummary['approved_courses'] ?? 0));
-$enrolledStudents = max(0, (int) ($teacherSummary['enrolled_students'] ?? 0));
-$revenueXof = max(0, (int) ($teacherSummary['revenue_xof'] ?? 0));
-$avgRating = max(0.0, min(5.0, (float) ($teacherSummary['avg_rating'] ?? 0)));
+$teacherDirectoryCount = count($teacherRows);
 
-$buildTabUrl = static function (string $tab) use ($searchQuery): string {
+$buildTabUrl = static function (string $tab) use ($searchQuery, $selectedTeacherId): string {
     $query = ['tab' => $tab];
     if ($searchQuery !== '') {
         $query['q'] = $searchQuery;
     }
+    if ($tab === 'teachers' && $selectedTeacherId > 0) {
+        $query['teacher_id'] = $selectedTeacherId;
+    }
+    return site_url('admin/teacher_applications?' . http_build_query($query));
+};
+
+$listPage = \App\Support\Pagination::pageFromQuery($_GET, 'page', 1);
+$listPagination = $currentTab === 'applications'
+    ? \App\Support\Pagination::build(count($pendingApplications), $listPage, 6)
+    : \App\Support\Pagination::build(count($teacherRows), $listPage, 6);
+
+if ($currentTab === 'applications') {
+    $pendingApplications = \App\Support\Pagination::slice($pendingApplications, $listPagination);
+} else {
+    $teacherRows = \App\Support\Pagination::slice($teacherRows, $listPagination);
+}
+
+$buildListPageUrl = static function (int $targetPage) use ($currentTab, $searchQuery, $selectedTeacherId): string {
+    $query = ['tab' => $currentTab];
+    if ($searchQuery !== '') {
+        $query['q'] = $searchQuery;
+    }
+    if ($currentTab === 'teachers' && $selectedTeacherId > 0) {
+        $query['teacher_id'] = $selectedTeacherId;
+    }
+    if ($targetPage > 1) {
+        $query['page'] = max(1, $targetPage);
+    }
+
     return site_url('admin/teacher_applications?' . http_build_query($query));
 };
 
@@ -163,7 +189,6 @@ $adminTopSearchValue = $searchQuery;
 $adminTopSearchHidden = ['tab' => 'teachers'];
 $adminTopActions = [
     ['label' => 'Cours', 'url' => site_url('admin/courses'), 'tone' => 'neutral'],
-    ['label' => 'Statistiques', 'url' => site_url('admin/course_insights'), 'tone' => 'neutral'],
 ];
 ?>
 <!doctype html>
@@ -203,46 +228,23 @@ $adminTopActions = [
                     </div>
                 <?php endif; ?>
 
-                <section class="admin-teachers-hero rounded-3xl p-6 text-white shadow-glow">
-                    <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                <section class="admin-teachers-hero rounded-2xl p-6 text-white shadow-glow font-body">
+                    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div class="max-w-3xl">
-                            <p class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-white/75">
+                            <p class="admin-teachers-hero__eyebrow inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-white/75">
                                 <i class="fas fa-chalkboard-teacher" aria-hidden="true"></i>
-                                Équipe pédagogique
+                                Pilotage pédagogique
                             </p>
-                            <h2 class="mt-2 text-2xl font-bold sm:text-3xl">Piloter les candidatures et les enseignants</h2>
-                            <p class="mt-2 max-w-2xl text-sm font-normal leading-6 text-white/85">
-                                Validez les demandes, suivez les cours créés, consultez les revenus, les inscriptions et les notes avant de prendre une décision.
+                            <h2 class="admin-teachers-hero__title mt-2 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">Suivi des enseignants</h2>
+                            <p class="admin-teachers-hero__summary mt-3 max-w-2xl text-sm leading-6 text-white/80">
+                                Validez les candidatures, ouvrez les dossiers et consultez les enseignants actifs.
                             </p>
                         </div>
                         <div class="admin-teachers-hero__badge">
                             <i class="fas fa-hourglass-half" aria-hidden="true"></i>
-                            <span><?php echo e($formatNumber($pendingCount)); ?> en attente</span>
+                            <span><?php echo e($formatNumber($pendingCount)); ?> candidature(s) à traiter</span>
                         </div>
                     </div>
-                </section>
-
-                <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <article class="admin-shell-card admin-shell-metric rounded-2xl p-5 hover-lift">
-                        <p class="admin-shell-section-title inline-flex items-center gap-2"><i class="fas fa-user-check admin-inline-accent admin-inline-accent--success" aria-hidden="true"></i>Enseignants actifs</p>
-                        <p class="mt-2 text-3xl font-bold"><?php echo e($formatNumber($activeTeacherCount)); ?></p>
-                        <p class="admin-shell-metric__meta text-xs">Comptes opérationnels</p>
-                    </article>
-                    <article class="admin-shell-card admin-shell-metric rounded-2xl p-5 hover-lift">
-                        <p class="admin-shell-section-title inline-flex items-center gap-2"><i class="fas fa-user-clock admin-inline-accent admin-inline-accent--warning" aria-hidden="true"></i>Candidatures</p>
-                        <p class="mt-2 text-3xl font-bold"><?php echo e($formatNumber($pendingCount)); ?></p>
-                        <p class="admin-shell-metric__meta text-xs">Dossiers à examiner</p>
-                    </article>
-                    <article class="admin-shell-card admin-shell-metric rounded-2xl p-5 hover-lift">
-                        <p class="admin-shell-section-title inline-flex items-center gap-2"><i class="fas fa-book-open admin-inline-accent admin-inline-accent--info" aria-hidden="true"></i>Cours créés</p>
-                        <p class="mt-2 text-3xl font-bold"><?php echo e($formatNumber($totalCourses)); ?></p>
-                        <p class="admin-shell-metric__meta text-xs"><?php echo e($formatNumber($approvedCourses)); ?> publiés</p>
-                    </article>
-                    <article class="admin-shell-card admin-shell-metric rounded-2xl p-5 hover-lift">
-                        <p class="admin-shell-section-title inline-flex items-center gap-2"><i class="fas fa-money-bill-wave admin-inline-accent admin-inline-accent--success" aria-hidden="true"></i>Revenus générés</p>
-                        <p class="mt-2 text-3xl font-bold"><?php echo e($formatMoney($revenueXof)); ?></p>
-                        <p class="admin-shell-metric__meta text-xs"><?php echo e($formatNumber($enrolledStudents)); ?> inscription(s), note <?php echo e(number_format($avgRating, 1, ',', ' ')); ?>/5</p>
-                    </article>
                 </section>
 
                 <section class="admin-teacher-tabs">
@@ -254,7 +256,7 @@ $adminTopActions = [
                     <a href="<?php echo e($buildTabUrl('teachers')); ?>" class="<?php echo e($currentTab === 'teachers' ? 'admin-teacher-tab admin-teacher-tab--active' : 'admin-teacher-tab'); ?>">
                         <i class="fas fa-check-circle" aria-hidden="true"></i>
                         Enseignants actifs
-                        <span><?php echo e($formatNumber(count($teacherRows))); ?></span>
+                        <span><?php echo e($formatNumber($teacherDirectoryCount)); ?></span>
                     </a>
                 </section>
 
@@ -350,6 +352,7 @@ $adminTopActions = [
                                                     <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
                                                     <input type="hidden" name="action" value="approve">
                                                     <input type="hidden" name="app_id" value="<?php echo e((string) $appId); ?>">
+                                                    <input type="hidden" name="page" value="<?php echo e((string) $listPage); ?>">
                                                     <button type="submit" class="admin-shell-button admin-shell-button--primary w-full">
                                                         <i class="fas fa-check-circle" aria-hidden="true"></i>
                                                         Approuver
@@ -359,6 +362,7 @@ $adminTopActions = [
                                                     <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
                                                     <input type="hidden" name="action" value="reject">
                                                     <input type="hidden" name="app_id" value="<?php echo e((string) $appId); ?>">
+                                                    <input type="hidden" name="page" value="<?php echo e((string) $listPage); ?>">
                                                     <textarea name="reason" class="admin-shell-input" rows="3" placeholder="Motif du rejet" required></textarea>
                                                     <button type="submit" class="admin-shell-button admin-shell-button--danger w-full">
                                                         <i class="fas fa-times-circle" aria-hidden="true"></i>
@@ -370,6 +374,14 @@ $adminTopActions = [
                                     </article>
                                 <?php endforeach; ?>
                             </div>
+
+                            <?php
+                            $paginationData = $listPagination;
+                            $paginationUrlBuilder = $buildListPageUrl;
+                            $paginationLabel = 'candidatures';
+                            $paginationAriaLabel = 'Pagination des candidatures';
+                            require __DIR__ . '/_pagination.php';
+                            ?>
                         <?php endif; ?>
 
                         <?php if ($processedApplications !== []): ?>
@@ -422,6 +434,9 @@ $adminTopActions = [
                         <div class="admin-shell-card rounded-3xl p-5">
                             <form method="get" action="<?php echo e(site_url('admin/teacher_applications')); ?>" class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-center">
                                 <input type="hidden" name="tab" value="teachers">
+                                <?php if ($selectedTeacherId > 0): ?>
+                                    <input type="hidden" name="teacher_id" value="<?php echo e((string) $selectedTeacherId); ?>">
+                                <?php endif; ?>
                                 <label class="relative block">
                                     <span class="sr-only">Rechercher un enseignant</span>
                                     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true"></i>
@@ -438,181 +453,134 @@ $adminTopActions = [
                             </form>
                         </div>
 
-                        <?php if ($teacherRows === []): ?>
-                            <div class="admin-teacher-empty rounded-3xl">
-                                <i class="fas fa-users-slash" aria-hidden="true"></i>
-                                <p>Aucun enseignant ne correspond à votre recherche.</p>
-                            </div>
-                        <?php else: ?>
+                        <div class="space-y-4">
                             <div class="space-y-4">
-                                <?php foreach ($teacherRows as $teacher): ?>
-                                    <?php
-                                    $teacherId = (int) ($teacher['id'] ?? 0);
-                                    if ($teacherId < 1) {
-                                        continue;
-                                    }
-                                    $teacherName = trim((string) ($teacher['first_name'] ?? '') . ' ' . (string) ($teacher['last_name'] ?? ''));
-                                    if ($teacherName === '') {
-                                        $teacherName = 'Enseignant #' . $teacherId;
-                                    }
-                                    $teacherStatus = strtolower(trim((string) ($teacher['status'] ?? 'active')));
-                                    $isSuspended = $teacherStatus === 'suspended';
-                                    $profileTitle = $normalizeText((string) ($teacher['professional_title'] ?? ''));
-                                    $profileBio = $truncateText((string) ($teacher['short_bio'] ?? ''), 220);
-                                    $teacherCourses = is_array($teacherCoursesByTeacher[$teacherId] ?? null) ? $teacherCoursesByTeacher[$teacherId] : [];
-                                    $teacherRevenue = max(0, (int) ($teacher['revenue_xof'] ?? 0));
-                                    $teacherStudents = max(0, (int) ($teacher['enrolled_students'] ?? 0));
-                                    $teacherRatingCount = max(0, (int) ($teacher['rating_count'] ?? 0));
-                                    $teacherRating = max(0.0, min(5.0, (float) ($teacher['avg_rating'] ?? 0)));
-                                    ?>
-                                    <article class="admin-teacher-card rounded-3xl p-5 hover-lift">
-                                        <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto]">
-                                            <div class="min-w-0">
-                                                <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
-                                                    <span class="<?php echo e($isSuspended ? 'admin-teacher-avatar admin-teacher-avatar--muted' : 'admin-teacher-avatar'); ?>"><?php echo e($initials($teacherName)); ?></span>
-                                                    <div class="min-w-0 flex-1">
-                                                        <div class="flex flex-wrap items-center gap-2">
-                                                            <h3 class="text-xl font-bold text-slate-950 dark:text-white"><?php echo e($teacherName); ?></h3>
-                                                            <span class="<?php echo e($isSuspended ? 'admin-shell-badge admin-shell-badge--danger' : 'admin-shell-badge admin-shell-badge--info'); ?>">
-                                                                <i class="fas <?php echo e($isSuspended ? 'fa-pause-circle' : 'fa-check-circle'); ?>" aria-hidden="true"></i>
-                                                                <?php echo e($isSuspended ? 'Suspendu' : 'Actif'); ?>
-                                                            </span>
+                                <div class="admin-shell-card rounded-3xl p-4">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div>
+                                            <p class="admin-shell-section-title">Liste des enseignants</p>
+                                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Parcourez les profils et ouvrez un dossier.</p>
+                                        </div>
+                                        <span class="admin-shell-badge admin-shell-badge--info">
+                                            <?php echo e($teacherDirectoryCount); ?> profil(s)
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <?php if ($teacherRows === []): ?>
+                                    <div class="admin-teacher-empty rounded-3xl">
+                                        <i class="fas fa-users-slash" aria-hidden="true"></i>
+                                        <p>Aucun enseignant ne correspond à votre recherche.</p>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="space-y-4">
+                                        <?php foreach ($teacherRows as $teacher): ?>
+                                            <?php
+                                            $teacherId = (int) ($teacher['id'] ?? 0);
+                                            if ($teacherId < 1) {
+                                                continue;
+                                            }
+                                            $teacherName = trim((string) ($teacher['first_name'] ?? '') . ' ' . (string) ($teacher['last_name'] ?? ''));
+                                            if ($teacherName === '') {
+                                                $teacherName = 'Enseignant #' . $teacherId;
+                                            }
+                                            $teacherStatus = strtolower(trim((string) ($teacher['status'] ?? 'active')));
+                                            $isSuspended = $teacherStatus === 'suspended';
+                                            $profileTitle = $normalizeText((string) ($teacher['professional_title'] ?? ''));
+                                            $teacherCoursesCount = max(0, (int) ($teacher['total_courses'] ?? 0));
+                                            $teacherRatingCount = max(0, (int) ($teacher['rating_count'] ?? 0));
+                                            $teacherRating = max(0.0, min(5.0, (float) ($teacher['avg_rating'] ?? 0)));
+                                            $isSelectedTeacher = $teacherId === $selectedTeacherId;
+                                            $dossierQuery = ['teacher_id' => $teacherId];
+                                            if ($searchQuery !== '') {
+                                                $dossierQuery['q'] = $searchQuery;
+                                            }
+                                            if ($listPage > 1) {
+                                                $dossierQuery['page'] = $listPage;
+                                            }
+                                            ?>
+                                            <article class="<?php echo e($isSelectedTeacher ? 'admin-teacher-card admin-teacher-card--selected rounded-3xl p-5 hover-lift' : 'admin-teacher-card rounded-3xl p-5 hover-lift'); ?>">
+                                                <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_17rem] xl:items-start">
+                                                    <div class="min-w-0">
+                                                        <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
+                                                            <span class="<?php echo e($isSuspended ? 'admin-teacher-avatar admin-teacher-avatar--muted' : 'admin-teacher-avatar'); ?>"><?php echo e($initials($teacherName)); ?></span>
+                                                            <div class="min-w-0 flex-1">
+                                                                <div class="flex flex-wrap items-center gap-2">
+                                                                    <h3 class="text-xl font-bold text-slate-950 dark:text-white"><?php echo e($teacherName); ?></h3>
+                                                                    <span class="<?php echo e($isSuspended ? 'admin-shell-badge admin-shell-badge--danger' : 'admin-shell-badge admin-shell-badge--info'); ?>">
+                                                                        <i class="fas <?php echo e($isSuspended ? 'fa-pause-circle' : 'fa-check-circle'); ?>" aria-hidden="true"></i>
+                                                                        <?php echo e($isSuspended ? 'Suspendu' : 'Actif'); ?>
+                                                                    </span>
+                                                                </div>
+                                                                <p class="mt-1 flex flex-wrap gap-2 text-sm text-slate-500 dark:text-slate-400">
+                                                                    <span class="inline-flex items-center gap-1.5"><i class="fas fa-envelope" aria-hidden="true"></i><?php echo e((string) ($teacher['email'] ?? '')); ?></span>
+                                                                    <span class="inline-flex items-center gap-1.5"><i class="far fa-calendar-alt" aria-hidden="true"></i>Inscrit le <?php echo e($formatDate((string) ($teacher['created_at'] ?? ''))); ?></span>
+                                                                </p>
+                                                                <div class="mt-3 flex flex-wrap gap-2">
+                                                                    <span class="admin-course-chip admin-course-chip--category"><i class="fas fa-id-badge" aria-hidden="true"></i><?php echo e($profileTitle !== '' ? $profileTitle : 'Profil enseignant'); ?></span>
+                                                                    <span class="admin-course-chip admin-course-chip--level"><i class="fas fa-book-open" aria-hidden="true"></i><?php echo e($formatNumber($teacherCoursesCount)); ?> cours</span>
+                                                                    <span class="admin-course-chip admin-course-chip--level"><i class="fas fa-star" aria-hidden="true"></i><?php echo e($teacherRatingCount > 0 ? number_format($teacherRating, 1, ',', ' ') . '/5' : '0/5'); ?></span>
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <p class="mt-1 flex flex-wrap gap-2 text-sm text-slate-500 dark:text-slate-400">
-                                                            <span class="inline-flex items-center gap-1.5"><i class="fas fa-envelope" aria-hidden="true"></i><?php echo e((string) ($teacher['email'] ?? '')); ?></span>
-                                                            <span class="inline-flex items-center gap-1.5"><i class="far fa-calendar-alt" aria-hidden="true"></i>Inscrit le <?php echo e($formatDate((string) ($teacher['created_at'] ?? ''))); ?></span>
-                                                        </p>
-                                                        <div class="mt-3 flex flex-wrap gap-2">
-                                                            <span class="admin-course-chip admin-course-chip--category"><i class="fas fa-id-badge" aria-hidden="true"></i><?php echo e($profileTitle !== '' ? $profileTitle : 'Profil enseignant'); ?></span>
+                                                    </div>
+
+                                                    <div class="admin-teacher-card__actions">
+                                                        <a href="<?php echo e(site_url('admin/teacher_dossier?' . http_build_query($dossierQuery))); ?>" class="admin-shell-button admin-shell-button--primary w-full">
+                                                            <i class="fas fa-folder-open" aria-hidden="true"></i>
+                                                            Dossier
+                                                        </a>
+                                                        <div class="grid grid-cols-2 gap-2">
+                                                            <a href="<?php echo e(site_url('admin/courses?tab=approved&teacher_id=' . $teacherId)); ?>" class="admin-shell-button admin-shell-button--secondary">
+                                                                <i class="fas fa-book-open" aria-hidden="true"></i>
+                                                                Cours
+                                                            </a>
+                                                            <a href="<?php echo e(site_url('admin/course_insights?teacher_id=' . $teacherId)); ?>" class="admin-shell-button admin-shell-button--secondary">
+                                                                <i class="fas fa-chart-line" aria-hidden="true"></i>
+                                                                Stats
+                                                            </a>
                                                         </div>
-                                                        <?php if ($profileBio !== ''): ?>
-                                                            <p class="mt-3 text-sm font-medium leading-6 text-slate-600 dark:text-slate-300"><?php echo e($profileBio); ?></p>
+                                                        <?php if ($isSuspended): ?>
+                                                            <form method="post" action="<?php echo e(site_url('admin/teacher_applications')); ?>">
+                                                                <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
+                                                                <input type="hidden" name="action" value="reactivate_teacher">
+                                                                <input type="hidden" name="teacher_id" value="<?php echo e((string) $teacherId); ?>">
+                                                                <input type="hidden" name="page" value="<?php echo e((string) $listPage); ?>">
+                                                                <input type="hidden" name="q" value="<?php echo e($searchQuery); ?>">
+                                                                <button type="submit" class="admin-shell-button admin-shell-button--primary w-full">
+                                                                    <i class="fas fa-play" aria-hidden="true"></i>
+                                                                    Réactiver
+                                                                </button>
+                                                            </form>
+                                                        <?php else: ?>
+                                                            <form method="post" action="<?php echo e(site_url('admin/teacher_applications')); ?>">
+                                                                <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
+                                                                <input type="hidden" name="action" value="suspend_teacher">
+                                                                <input type="hidden" name="teacher_id" value="<?php echo e((string) $teacherId); ?>">
+                                                                <input type="hidden" name="page" value="<?php echo e((string) $listPage); ?>">
+                                                                <input type="hidden" name="q" value="<?php echo e($searchQuery); ?>">
+                                                                <button type="submit" class="admin-shell-button admin-shell-button--danger w-full">
+                                                                    <i class="fas fa-pause" aria-hidden="true"></i>
+                                                                    Suspendre
+                                                                </button>
+                                                            </form>
                                                         <?php endif; ?>
                                                     </div>
                                                 </div>
+                                            </article>
+                                        <?php endforeach; ?>
+                                    </div>
 
-                                                <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                                                    <div class="admin-teacher-stat">
-                                                        <i class="fas fa-book-open" aria-hidden="true"></i>
-                                                        <span><?php echo e($formatNumber((int) ($teacher['total_courses'] ?? 0))); ?></span>
-                                                        <small>cours</small>
-                                                    </div>
-                                                    <div class="admin-teacher-stat">
-                                                        <i class="fas fa-users" aria-hidden="true"></i>
-                                                        <span><?php echo e($formatNumber($teacherStudents)); ?></span>
-                                                        <small>inscriptions</small>
-                                                    </div>
-                                                    <div class="admin-teacher-stat">
-                                                        <i class="fas fa-star" aria-hidden="true"></i>
-                                                        <span><?php echo e($teacherRatingCount > 0 ? number_format($teacherRating, 1, ',', ' ') : '0,0'); ?></span>
-                                                        <small><?php echo e($formatNumber($teacherRatingCount)); ?> avis</small>
-                                                    </div>
-                                                    <div class="admin-teacher-stat">
-                                                        <i class="fas fa-money-bill-wave" aria-hidden="true"></i>
-                                                        <span><?php echo e($formatMoney($teacherRevenue)); ?></span>
-                                                        <small>revenus</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="admin-teacher-action-strip">
-                                                <a href="<?php echo e(site_url('admin/course_insights?teacher_id=' . $teacherId)); ?>" class="admin-shell-button admin-shell-button--secondary w-full">
-                                                    <i class="fas fa-chart-line" aria-hidden="true"></i>
-                                                    Statistiques
-                                                </a>
-                                                <?php if ($isSuspended): ?>
-                                                    <form method="post" action="<?php echo e(site_url('admin/teacher_applications')); ?>">
-                                                        <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
-                                                        <input type="hidden" name="action" value="reactivate_teacher">
-                                                        <input type="hidden" name="teacher_id" value="<?php echo e((string) $teacherId); ?>">
-                                                        <button type="submit" class="admin-shell-button admin-shell-button--primary w-full">
-                                                            <i class="fas fa-play" aria-hidden="true"></i>
-                                                            Réactiver
-                                                        </button>
-                                                    </form>
-                                                <?php else: ?>
-                                                    <form method="post" action="<?php echo e(site_url('admin/teacher_applications')); ?>">
-                                                        <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
-                                                        <input type="hidden" name="action" value="suspend_teacher">
-                                                        <input type="hidden" name="teacher_id" value="<?php echo e((string) $teacherId); ?>">
-                                                        <button type="submit" class="admin-shell-button admin-shell-button--danger w-full">
-                                                            <i class="fas fa-pause" aria-hidden="true"></i>
-                                                            Suspendre
-                                                        </button>
-                                                    </form>
-                                                <?php endif; ?>
-                                            </div>
-                                        </div>
-
-                                        <details class="admin-teacher-course-panel mt-5 rounded-2xl">
-                                            <summary>
-                                                <span><i class="fas fa-tasks" aria-hidden="true"></i>Cours et statistiques</span>
-                                                <span><?php echo e($formatNumber(count($teacherCourses))); ?> cours</span>
-                                            </summary>
-                                            <?php if ($teacherCourses === []): ?>
-                                                <p class="p-4 text-sm font-medium text-slate-500 dark:text-slate-400">
-                                                    <i class="fas fa-folder-open mr-1 text-primary-600 dark:text-primary-300" aria-hidden="true"></i>
-                                                    Aucun cours créé pour cet enseignant.
-                                                </p>
-                                            <?php else: ?>
-                                                <div class="overflow-x-auto">
-                                                    <table class="admin-shell-table">
-                                                        <thead>
-                                                            <tr>
-                                                                <th>Cours</th>
-                                                                <th>Statut</th>
-                                                                <th>Niveau</th>
-                                                                <th>Étudiants</th>
-                                                                <th>Note</th>
-                                                                <th>Revenus</th>
-                                                                <th>Actions</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <?php foreach ($teacherCourses as $course): ?>
-                                                                <?php
-                                                                $courseId = (int) ($course['id'] ?? 0);
-                                                                $courseStatus = (string) ($course['status'] ?? '');
-                                                                $courseMeta = $statusMeta($courseStatus, $courseStatusMeta);
-                                                                $courseLevel = (string) ($course['level'] ?? '');
-                                                                $courseRatingCount = max(0, (int) ($course['rating_count'] ?? 0));
-                                                                $courseRating = max(0.0, min(5.0, (float) ($course['avg_rating'] ?? 0)));
-                                                                ?>
-                                                                <tr>
-                                                                    <td>
-                                                                        <p class="font-semibold text-slate-900 dark:text-white"><?php echo e((string) ($course['title'] ?? 'Cours sans titre')); ?></p>
-                                                                        <p class="mt-1 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
-                                                                            <span><i class="fas fa-tag mr-1" aria-hidden="true"></i><?php echo e((string) ($course['category_name'] ?? 'Sans catégorie')); ?></span>
-                                                                            <span><i class="far fa-calendar-alt mr-1" aria-hidden="true"></i><?php echo e($formatDate((string) ($course['created_at'] ?? ''))); ?></span>
-                                                                            <span><i class="fas fa-hourglass-half mr-1" aria-hidden="true"></i><?php echo e(number_format(max(0.0, (float) ($course['duration_hours'] ?? 0)), 1, ',', ' ')); ?> h</span>
-                                                                        </p>
-                                                                    </td>
-                                                                    <td><span class="<?php echo e((string) $courseMeta['class']); ?>"><i class="fas <?php echo e((string) $courseMeta['icon']); ?>" aria-hidden="true"></i><?php echo e((string) $courseMeta['label']); ?></span></td>
-                                                                    <td><span class="admin-course-chip <?php echo e($levelChipClass($courseLevel)); ?>"><i class="fas fa-signal" aria-hidden="true"></i><?php echo e($levelLabel($courseLevel)); ?></span></td>
-                                                                    <td class="font-bold"><?php echo e($formatNumber((int) ($course['enrolled_students'] ?? 0))); ?></td>
-                                                                    <td class="font-bold"><?php echo e($courseRatingCount > 0 ? number_format($courseRating, 1, ',', ' ') . '/5' : '0/5'); ?></td>
-                                                                    <td class="font-bold"><?php echo e($formatMoney((int) ($course['revenue_xof'] ?? 0))); ?></td>
-                                                                    <td>
-                                                                        <div class="flex flex-wrap gap-2">
-                                                                            <?php if ($courseId > 0): ?>
-                                                                                <a href="<?php echo e(site_url('admin/course_preview?id=' . $courseId)); ?>" class="admin-shell-button admin-shell-button--secondary" target="_blank" rel="noopener">
-                                                                                    <i class="fas fa-eye" aria-hidden="true"></i>
-                                                                                    Aperçu
-                                                                                </a>
-                                                                            <?php endif; ?>
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                            <?php endforeach; ?>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            <?php endif; ?>
-                                        </details>
-                                    </article>
-                                <?php endforeach; ?>
+                                    <?php
+                                    $paginationData = $listPagination;
+                                    $paginationUrlBuilder = $buildListPageUrl;
+                                    $paginationLabel = 'enseignants';
+                                    $paginationAriaLabel = 'Pagination des enseignants';
+                                    require __DIR__ . '/_pagination.php';
+                                    ?>
+                                <?php endif; ?>
                             </div>
-                        <?php endif; ?>
+                        </div>
                     </section>
                 <?php endif; ?>
             </main>

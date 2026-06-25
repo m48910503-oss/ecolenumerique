@@ -298,9 +298,9 @@ final class MemberDashboardService extends Service
     {
         $slug = trim($slug);
         if ($slug !== '') {
-            return $this->siteUrl('course?slug=' . rawurlencode($slug));
+            return $this->siteUrl('course/watch?slug=' . rawurlencode($slug));
         }
-        return $this->siteUrl('course?id=' . $courseId);
+        return $this->siteUrl('course/watch?id=' . $courseId);
     }
 
     private function memberRoleLabel(string $role): string

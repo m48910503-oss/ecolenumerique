@@ -59,11 +59,8 @@ final class WithdrawalsService extends Service
             $defaultWithdrawalMethod = '';
         }
         $teacherId = (int) ($user['id'] ?? 0);
-        [$withdrawalCode, $withdrawalPhone] = $this->resolveWithdrawalDestinationParts($user);
-        $withdrawalDestination = $this->resolveWithdrawalDestination($user, $withdrawalCode, $withdrawalPhone);
-        $withdrawalDestinationDisplay = ($withdrawalCode !== '' && $withdrawalPhone !== '')
-            ? ($withdrawalCode . ' ' . $withdrawalPhone)
-            : $withdrawalDestination;
+        $withdrawalDestination = $this->resolveWithdrawalDestination($user);
+        $withdrawalDestinationDisplay = $withdrawalDestination;
         $hasWithdrawalDestination = $withdrawalDestination !== '';
         $periodInput = $query;
         if (strtoupper($method) === 'POST') {
@@ -456,61 +453,13 @@ final class WithdrawalsService extends Service
     /**
      * @param array<string,mixed> $user
      */
-    private function resolveWithdrawalDestination(array $user, ?string $code = null, ?string $phone = null): string
+    private function resolveWithdrawalDestination(array $user): string
     {
-        $e164 = preg_replace('/\s+/', '', trim((string) ($user['phone_e164'] ?? '')));
-        if ($e164 !== '' && preg_match('/^\+\d{1,4}$/', $e164) !== 1) {
-            return $e164;
+        $phone = preg_replace('/[^\d+]+/', '', trim((string) ($user['phone'] ?? '')));
+        if (is_string($phone)) {
+            $phone = preg_replace('/(?!^)\+/', '', $phone);
         }
-        if ($code === null || $phone === null) {
-            [$code, $phone] = $this->resolveWithdrawalDestinationParts($user);
-        }
-
-        if ($phone === '' || $code === '') {
-            return '';
-        }
-        return $code . $phone;
-    }
-
-    /**
-     * @param array<string,mixed> $user
-     * @return array{0:string,1:string}
-     */
-    private function resolveWithdrawalDestinationParts(array $user): array
-    {
-        $rawPhone = (string) ($user['phone'] ?? '');
-        $phone = preg_replace('/\D+/', '', $rawPhone);
-        $code = trim((string) ($user['phone_country_code'] ?? ''));
-
-        if ($code === '' && preg_match('/^\s*\+(\d{1,4})(\d+)\s*$/', $rawPhone, $matches) === 1) {
-            $code = '+' . $matches[1];
-            $phone = $matches[2];
-        }
-
-        if ($code !== '' && preg_match('/^\s*(\+?\d{1,4})(.*)$/', $code, $matches) === 1) {
-            $codeCandidate = trim((string) $matches[1]);
-            $extraDigits = preg_replace('/\D+/', '', (string) $matches[2]);
-            if (!str_starts_with($codeCandidate, '+')) {
-                $codeCandidate = '+' . ltrim($codeCandidate, '+');
-            }
-            $codeDigits = ltrim($codeCandidate, '+');
-            if (strlen($codeDigits) === 4 && str_ends_with($codeDigits, '0')) {
-                if ($extraDigits !== '') {
-                    $extraDigits = substr($codeDigits, -1) . $extraDigits;
-                    $codeDigits = substr($codeDigits, 0, -1);
-                    $codeCandidate = '+' . $codeDigits;
-                } elseif ($phone !== '') {
-                    $codeDigits = substr($codeDigits, 0, -1);
-                    $codeCandidate = '+' . $codeDigits;
-                }
-            }
-            $code = $codeCandidate;
-            if ($phone === '' && $extraDigits !== '') {
-                $phone = $extraDigits;
-            }
-        }
-
-        return [$code, $phone];
+        return is_string($phone) ? $phone : '';
     }
 
     /**

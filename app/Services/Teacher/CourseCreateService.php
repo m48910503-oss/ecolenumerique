@@ -334,7 +334,11 @@ final class CourseCreateService extends Service
                 $submitAction === 'submit',
                 $errors
             );
-            $examBuilder = $this->parseExamBuilderPayload($examBuilderPayloadRaw, $errors);
+            $examBuilder = $this->parseExamBuilderPayload(
+                $examBuilderPayloadRaw,
+                $errors,
+                $submitAction === 'submit'
+            );
 
             if ($submitAction === 'submit' && $objectivesClean === []) {
                 $errors[] = 'Ajoutez au moins un objectif pédagogique avant de publier.';
@@ -763,7 +767,11 @@ final class CourseCreateService extends Service
             $prerequisitesClean = $this->normalizeListField($prerequisites);
             $equipmentClean = $this->normalizeListField($equipment);
             $contentBuilder = $this->parseContentBuilderPayload($contentBuilderPayloadRaw, $submitAction === 'submit', $errors);
-            $examBuilder = $this->parseExamBuilderPayload($examBuilderPayloadRaw, $errors);
+            $examBuilder = $this->parseExamBuilderPayload(
+                $examBuilderPayloadRaw,
+                $errors,
+                $submitAction === 'submit'
+            );
             $contentChanged = $this->builderPayloadChanged($storedContentBuilderPayloadRaw, $contentBuilderPayloadRaw);
             $examsChanged = $this->builderPayloadChanged($storedExamBuilderPayloadRaw, $examBuilderPayloadRaw);
             $hasDriveExam = array_filter(
@@ -894,6 +902,7 @@ final class CourseCreateService extends Service
                             $this->notifyCourseUpdateStarted($courseId, $course, $user);
                         }
                         $didSubmitForValidation = $submitAction === 'submit' && in_array((string) ($course['status'] ?? ''), ['draft', 'rejected'], true);
+
                         $this->flashSet('success', $didSubmitForValidation ? 'Cours soumis a la validation admin.' : 'Cours mis a jour.');
                         $this->flashSet('updated_course_id', $courseId);
                         return [
@@ -1663,7 +1672,7 @@ final class CourseCreateService extends Service
      * @param array<int,string> $errors
      * @return array{exams:array<int,array<string,mixed>>}
      */
-    private function parseExamBuilderPayload(string $raw, array &$errors): array
+    private function parseExamBuilderPayload(string $raw, array &$errors, bool $requireCompleteQcm = false): array
     {
         if ($raw === '') {
             return ['exams' => []];
@@ -1837,7 +1846,7 @@ final class CourseCreateService extends Service
                     if ($variant > $versionCount) {
                         continue;
                     }
-                    if ($versions[$variant] === []) {
+                    if ($requireCompleteQcm && $versions[$variant] === []) {
                         $errors[] = 'Version ' . chr(64 + $variant) . ' : ajoutez au moins une question.';
                     }
                 }

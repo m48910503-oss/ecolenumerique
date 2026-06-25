@@ -6,15 +6,18 @@ namespace App\Services\Web;
 use App\Core\Service;
 
 use App\Models\ApiCatalogModel;
+use App\Models\EnrollmentModel;
 use App\Models\WebHomeModel;
 
 final class HomeService extends Service
 {
     private WebHomeModel $model;
+    private EnrollmentModel $enrollments;
 
     public function __construct(WebHomeModel $model)
     {
         $this->model = $model;
+        $this->enrollments = new EnrollmentModel($this->pdo());
     }
 
     /**
@@ -103,6 +106,17 @@ final class HomeService extends Service
         );
         $activeEnrollmentCount = $this->model->countActivePublicEnrollments();
         $homeTestimonials = $this->formatHomeTestimonials($this->model->fetchPublicTestimonials(6));
+        $continueLearningItems = [];
+
+        if ($currentUserId !== null && $currentUserId > 0) {
+            try {
+                $continueLearningItems = $this->formatContinueLearningItems(
+                    $this->enrollments->findWithCourseProgressByUserId($currentUserId)
+                );
+            } catch (\Throwable $e) {
+                $continueLearningItems = [];
+            }
+        }
 
         return [
             'isLoggedIn' => $isLoggedIn,
@@ -115,6 +129,7 @@ final class HomeService extends Service
             'footerText' => $footerText,
             'publicAnnouncement' => $publicAnnouncement,
             'ssrCourses' => $ssrCourses,
+            'continueLearningItems' => $continueLearningItems,
             'activeEnrollmentCount' => $activeEnrollmentCount,
             'homeTestimonials' => $homeTestimonials,
             'seoCanonicalUrl' => $this->absUrl($canonicalPath),
@@ -156,23 +171,14 @@ final class HomeService extends Service
                 $teacherName = 'Formateur';
             }
 
-            $rawCategoryLabel = $this->normalizeLabel((string) ($row['category_name'] ?? ''), '');
-            $categoryLabel = $rawCategoryLabel !== '' ? $rawCategoryLabel : 'Formation';
-            $categoryKey = trim($this->normalizedKey($rawCategoryLabel));
-            $teacherKey = trim($this->normalizedKey($teacherName));
-            $teacherFirstKey = trim($this->normalizedKey($teacherFirstName));
-            $teacherLastKey = trim($this->normalizedKey($teacherLastName));
-            if (
-                $categoryKey !== ''
-                && (
-                    $categoryKey === $teacherKey
-                    || ($teacherFirstKey !== '' && $categoryKey === $teacherFirstKey)
-                    || ($teacherLastKey !== '' && $categoryKey === $teacherLastKey)
-                )
-            ) {
-                $categoryLabel = 'Formation';
-                $categoryKey = '';
-            }
+            [$categoryLabel, $categoryKey] = $this->resolveDisplayCategory(
+                (string) ($row['category_name'] ?? ''),
+                $teacherName,
+                $teacherFirstName,
+                $teacherLastName,
+                $title,
+                (string) ($row['description'] ?? '')
+            );
 
             $coverPath = trim((string) ($row['cover_path'] ?? ''));
             if ($coverPath !== '' && !preg_match('#^https?://#i', $coverPath)) {
@@ -232,6 +238,80 @@ final class HomeService extends Service
                 'courseLocation' => $courseLocation,
                 'createdAt' => (string) ($row['created_at'] ?? ''),
             ];
+        }
+
+        return $items;
+    }
+
+    /**
+     * @param array<int,array<string,mixed>> $rows
+     * @return array<int,array<string,mixed>>
+     */
+    private function formatContinueLearningItems(array $rows): array
+    {
+        $items = [];
+
+        foreach ($rows as $row) {
+            if (trim((string) ($row['enroll_status'] ?? '')) !== 'active') {
+                continue;
+            }
+
+            $title = $this->normalizeLabel((string) ($row['title'] ?? ''), 'Cours');
+            $teacherName = $this->normalizePersonName((string) (($row['teacher_first_name'] ?? '') . ' ' . ($row['teacher_last_name'] ?? '')));
+            if ($teacherName === '') {
+                $teacherName = 'Formateur';
+            }
+
+            $totalLessons = max(0, (int) ($row['total_lessons'] ?? 0));
+            $doneLessons = max(0, (int) ($row['done_lessons'] ?? 0));
+            $progressPct = $totalLessons > 0
+                ? (int) round(($doneLessons / max(1, $totalLessons)) * 100)
+                : 0;
+            $progressPct = max(0, min(100, $progressPct));
+            $remainingLessons = max(0, $totalLessons - $doneLessons);
+
+            $cover = trim((string) ($row['cover_path'] ?? ''));
+            if ($cover !== '' && !preg_match('#^https?://#i', $cover)) {
+                $cover = $this->siteUrl(ltrim($cover, '/'));
+            }
+
+            $levelLabel = match (strtolower(trim((string) ($row['level'] ?? '')))) {
+                'beginner' => 'Débutant',
+                'intermediate' => 'Intermédiaire',
+                'advanced' => 'Avancé',
+                default => 'Tous niveaux',
+            };
+
+            $summary = $totalLessons > 0
+                ? $doneLessons . '/' . $totalLessons . ' leçons terminées'
+                : 'Progression disponible après démarrage';
+
+            if ($progressPct >= 100) {
+                $statusLabel = 'Terminé';
+            } elseif ($progressPct > 0) {
+                $statusLabel = 'À reprendre';
+            } else {
+                $statusLabel = 'À commencer';
+            }
+
+            $items[] = [
+                'title' => $title,
+                'teacher' => $teacherName,
+                'progressPct' => $progressPct,
+                'doneLessons' => $doneLessons,
+                'totalLessons' => $totalLessons,
+                'remainingLessons' => $remainingLessons,
+                'summary' => $summary,
+                'statusLabel' => $statusLabel,
+                'levelLabel' => $levelLabel,
+                'url' => $this->resolveWatchCourseUrl($row),
+                'cover' => $cover,
+                'coverAlt' => $this->cleanDisplayText((string) ($row['cover_alt'] ?? ''), 'Cours ' . $title),
+            ];
+
+            if (count($items) >= 3) {
+                break;
+            }
         }
 
         return $items;
@@ -474,6 +554,105 @@ final class HomeService extends Service
         return $initials !== '' ? $initials : 'EN';
     }
 
+    /**
+     * @return array{0:string,1:string}
+     */
+    private function resolveDisplayCategory(
+        string $rawCategoryLabel,
+        string $teacherName,
+        string $teacherFirstName,
+        string $teacherLastName,
+        string $title,
+        string $description = ''
+    ): array {
+        $rawCategoryLabel = $this->normalizeLabel($rawCategoryLabel, '');
+        $categoryKey = trim($this->normalizedKey($rawCategoryLabel));
+
+        if (
+            $categoryKey !== ''
+            && !$this->looksLikeTeacherNameCategory($categoryKey, [$teacherName, $teacherFirstName, $teacherLastName])
+            && $this->looksLikeUsableCategory($rawCategoryLabel)
+        ) {
+            return [$rawCategoryLabel, $categoryKey];
+        }
+
+        $derivedCategory = $this->inferCategoryFromCourseText($title . ' ' . $description);
+        return [$derivedCategory, trim($this->normalizedKey($derivedCategory))];
+    }
+
+    private function looksLikeTeacherNameCategory(string $categoryKey, array $teacherNames): bool
+    {
+        foreach ($teacherNames as $teacherName) {
+            $teacherKey = trim($this->normalizedKey((string) $teacherName));
+            if ($teacherKey === '' || $categoryKey === '') {
+                continue;
+            }
+
+            if ($categoryKey === $teacherKey || str_contains($teacherKey, $categoryKey) || str_contains($categoryKey, $teacherKey)) {
+                return true;
+            }
+
+            similar_text($categoryKey, $teacherKey, $similarity);
+            if ($similarity >= 72.0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function looksLikeUsableCategory(string $label): bool
+    {
+        $key = trim($this->normalizedKey($label));
+        if ($key === '') {
+            return false;
+        }
+
+        foreach ($this->categoryKeywordGroups() as $keywords) {
+            foreach ($keywords as $keyword) {
+                if (str_contains($key, $keyword)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function inferCategoryFromCourseText(string $text): string
+    {
+        $key = trim($this->normalizedKey($text));
+        if ($key === '') {
+            return 'Formation';
+        }
+
+        foreach ($this->categoryKeywordGroups() as $label => $keywords) {
+            foreach ($keywords as $keyword) {
+                if (str_contains($key, $keyword)) {
+                    return $label;
+                }
+            }
+        }
+
+        return 'Formation';
+    }
+
+    /**
+     * @return array<string,list<string>>
+     */
+    private function categoryKeywordGroups(): array
+    {
+        return [
+            'Développement' => ['php', 'python', 'javascript', 'java', 'html', 'css', 'sql', 'code', 'programm', 'develop', 'web', 'laravel'],
+            'Bureautique' => ['excel', 'word', 'powerpoint', 'office', 'bureau', 'document', 'tableur'],
+            'Marketing' => ['marketing', 'copy', 'email', 'seo', 'vente', 'affiliation', 'publicit', 'communication', 'digital'],
+            'Comptabilité' => ['compta', 'comptabil', 'finance', 'facturation', 'gestion'],
+            'Design' => ['design', 'canva', 'graph', 'ui', 'ux', 'maquette', 'creatif'],
+            'Journalisme' => ['journal', 'redaction', 'presse', 'media'],
+            'Data' => ['data', 'analyse', 'dashboard', 'bi', 'statist', 'machine learning', 'intelligence artificielle', 'ia'],
+        ];
+    }
+
     private function normalizedKey(string $text): string
     {
         $value = $this->cleanDisplayText($text);
@@ -481,11 +660,36 @@ final class HomeService extends Service
             return '';
         }
 
+        if (\function_exists('iconv')) {
+            $asciiValue = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+            if (is_string($asciiValue) && $asciiValue !== '') {
+                $value = $asciiValue;
+            }
+        }
+
         $value = \function_exists('mb_strtolower')
             ? mb_strtolower($value, 'UTF-8')
             : strtolower($value);
 
-        return (string) preg_replace('/[^a-z0-9]+/i', ' ', $value);
+        return trim((string) preg_replace('/[^a-z0-9]+/i', ' ', $value));
+    }
+
+    /**
+     * @param array<string,mixed> $course
+     */
+    private function resolveWatchCourseUrl(array $course): string
+    {
+        $slug = trim((string) ($course['slug'] ?? ''));
+        if ($slug !== '') {
+            return $this->siteUrl('course/watch?slug=' . urlencode($slug));
+        }
+
+        $courseId = max(0, (int) ($course['id'] ?? $course['course_id'] ?? 0));
+        if ($courseId > 0) {
+            return $this->siteUrl('course/watch?id=' . $courseId);
+        }
+
+        return $this->siteUrl('student/my_courses');
     }
 
     private function isNonPublicAnnouncementUrl(string $url): bool

@@ -1,10 +1,18 @@
 <?php
 $publicNavPanelId = 'public-nav-panel';
+$platformName = trim((string) ($siteName ?? (defined('APP_FROM_NAME') ? (string) APP_FROM_NAME : 'École Numérique')));
+if ($platformName === '') {
+    $platformName = defined('APP_FROM_NAME') ? (string) APP_FROM_NAME : 'École Numérique';
+}
+$platformSubtitle = trim((string) ($siteTagline ?? ($siteDescription ?? $publicBrandSubtitle)));
+if ($platformSubtitle === '') {
+    $platformSubtitle = 'Des formations numériques claires et accessibles.';
+}
 ?>
 <header class="mk-header" data-public-header>
     <div class="mk-shell">
         <div class="mk-header__bar">
-            <a class="mk-brand" href="<?php echo e($homeUrl); ?>" aria-label="École Numérique, retour à l'accueil">
+            <a class="mk-brand" href="<?php echo e($homeUrl); ?>" aria-label="<?php echo e($platformName); ?>, retour à l'accueil">
                 <span class="mk-brand__mark" aria-hidden="true">
                     <?php if ($siteLogoUrl !== ''): ?>
                         <img src="<?php echo e($siteLogoUrl); ?>" alt="" width="52" height="52" loading="eager" decoding="async">
@@ -17,8 +25,8 @@ $publicNavPanelId = 'public-nav-panel';
                     <?php endif; ?>
                 </span>
                 <span class="mk-brand__wording">
-                    <span class="mk-brand__title">École Numérique</span>
-                    <span class="mk-brand__subtitle"><?php echo e($publicBrandSubtitle); ?></span>
+                    <span class="mk-brand__title"><?php echo e($platformName); ?></span>
+                    <span class="mk-brand__subtitle"><?php echo e($platformSubtitle); ?></span>
                 </span>
             </a>
 

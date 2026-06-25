@@ -304,10 +304,10 @@ final class View
         }
 
         $escapedUrl = htmlspecialchars($faviconUrl, ENT_QUOTES, 'UTF-8');
-        $tag = '<link rel="icon" href="' . $escapedUrl . '">' . "\n"
-            . '<link rel="apple-touch-icon" href="' . $escapedUrl . '">';
+        $tag = '<link rel="icon" href="' . $escapedUrl . '" data-app-favicon="1">' . "\n"
+            . '<link rel="apple-touch-icon" href="' . $escapedUrl . '" data-app-favicon="1">';
 
-        return self::injectHeadAsset($html, $escapedUrl, $tag);
+        return self::injectHeadAsset($html, 'data-app-favicon="1"', $tag);
     }
 
     private static function injectBodyPayload(string $html, string $payloadTag, ?string $idNeedle = null): string

@@ -138,18 +138,52 @@ final class AdminCoursePreviewModel extends Model
         ]);
     }
 
-    public function insertAudit(int $userId, string $action, int $courseId): void
+    /**
+     * @param array<string,mixed> $meta
+     */
+    public function insertAudit(int $userId, string $action, int $courseId, array $meta = []): void
     {
+        if (!$this->tableExistsSafe('audit_logs')) {
+            return;
+        }
+
+        if (!array_key_exists('actor_role', $meta) && $userId > 0) {
+            try {
+                $stmt = $this->pdo->prepare('SELECT roles_json FROM users WHERE id = :id LIMIT 1');
+                $stmt->execute([':id' => $userId]);
+                $row = $stmt->fetch();
+                if (is_array($row)) {
+                    $roles = json_decode((string) ($row['roles_json'] ?? '[]'), true);
+                    if (is_array($roles)) {
+                        if (in_array('admin_secondary', $roles, true)) {
+                            $meta['actor_role'] = 'admin_secondary';
+                        } elseif (in_array('admin', $roles, true)) {
+                            $meta['actor_role'] = 'admin';
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+            }
+        }
+
+        $metaJson = null;
+        if ($meta !== []) {
+            $encoded = json_encode($meta, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            if (is_string($encoded) && $encoded !== '') {
+                $metaJson = $encoded;
+            }
+        }
+
         $stmt = $this->pdo->prepare(
-            'INSERT INTO audit_logs (user_id, action, target_type, target_id, created_at)
-             VALUES (:uid, :action, :type, :tid, NOW())'
+            'INSERT INTO audit_logs (user_id, action, target_type, target_id, meta_json, created_at)
+             VALUES (:uid, :action, :type, :tid, :meta, NOW())'
         );
         $stmt->execute([
             ':uid' => $userId,
             ':action' => $action,
             ':type' => 'course',
             ':tid' => $courseId,
+            ':meta' => $metaJson,
         ]);
     }
 }
-

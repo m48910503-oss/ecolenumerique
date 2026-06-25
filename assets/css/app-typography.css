@@ -1435,9 +1435,7 @@ body.app-role-admin[data-view^="admin/"] :is(
   .admin-stats-v2-hero,
   .admin-finance-hero,
   .admin-settings-hero,
-  .admin-notifications-hero,
   .admin-error-logs-hero,
-  .admin-announcement-hero,
   .admin-secondary-template-hero
 ) {
   scroll-margin-top: 6.5rem;
@@ -1450,9 +1448,7 @@ body.app-role-admin[data-view^="admin/"] :is(
   .admin-stats-v2-hero,
   .admin-finance-hero,
   .admin-settings-hero,
-  .admin-notifications-hero,
   .admin-error-logs-hero,
-  .admin-announcement-hero,
   .admin-secondary-template-hero
 ) :is(p, span, small) {
   font-family: var(--app-font-body) !important;
@@ -1469,9 +1465,7 @@ body.app-role-admin[data-view^="admin/"] :is(
   .admin-stats-v2-hero,
   .admin-finance-hero,
   .admin-settings-hero,
-  .admin-notifications-hero,
   .admin-error-logs-hero,
-  .admin-announcement-hero,
   .admin-secondary-template-hero
 ) :is(h1, h2) {
   font-weight: 700 !important;

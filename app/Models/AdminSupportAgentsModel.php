@@ -37,7 +37,7 @@ final class AdminSupportAgentsModel extends Model
         return $row ?: null;
     }
 
-    public function createSupportUser(string $firstName, string $lastName, string $email, string $passwordHash, string $rolesJson): void
+    public function createSupportUser(string $firstName, string $lastName, string $email, string $passwordHash, string $rolesJson): int
     {
         $stmt = $this->pdo->prepare(
             'INSERT INTO users (first_name, last_name, email, password_hash, status, email_verified_at, roles_json, created_at)
@@ -51,6 +51,14 @@ final class AdminSupportAgentsModel extends Model
             ':status' => 'active',
             ':roles' => $rolesJson,
         ]);
+
+        $userId = (int) $this->pdo->lastInsertId();
+        if ($userId > 0) {
+            return $userId;
+        }
+
+        $row = $this->findUserByEmail($email);
+        return (int) ($row['id'] ?? 0);
     }
 
     public function updateRolesByUserId(int $userId, string $rolesJson): void
@@ -76,4 +84,3 @@ final class AdminSupportAgentsModel extends Model
         return $stmt->fetchAll() ?: [];
     }
 }
-

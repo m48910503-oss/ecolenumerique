@@ -5,6 +5,7 @@ namespace App\Controllers\Admin;
 
 use App\Core\Controller;
 use App\Models\AdminCategoriesModel;
+use App\Models\AdminDashboardModel;
 use App\Services\Admin\AdminAccessService;
 use App\Services\Admin\CategoriesService;
 
@@ -28,8 +29,8 @@ final class CategoriesController extends Controller
             $this->requireCsrf();
         }
 
-        $service = new CategoriesService($pdo, new AdminCategoriesModel($pdo));
-        $result = $service->handle((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'), $_POST);
+        $service = new CategoriesService($pdo, new AdminCategoriesModel($pdo), new AdminDashboardModel($pdo));
+        $result = $service->handle((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'), $_POST, $user);
 
         if (!empty($result['redirectTo'])) {
             header('Location: ' . (string) $result['redirectTo']);

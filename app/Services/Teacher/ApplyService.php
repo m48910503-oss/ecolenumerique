@@ -296,7 +296,6 @@ final class ApplyService extends Service
             'first_name' => 'prénom',
             'last_name' => 'nom',
             'country' => 'pays',
-            'city' => 'ville',
         ];
 
         $missing = [];

@@ -53,6 +53,10 @@ $embed = $service->buildYoutubePreviewEmbedUrl('https://www.youtube.com/watch?v=
 assert_true(is_string($embed) && str_contains((string) $embed, 'youtube-nocookie.com/embed/dQw4w9WgXcQ'), 'Embed URL should use youtube-nocookie.', $errors);
 assert_true(is_string($embed) && str_contains((string) $embed, 'controls=0'), 'Embed URL should hide controls.', $errors);
 assert_true(is_string($embed) && str_contains((string) $embed, 'autoplay=1'), 'Embed URL should autoplay from secure opener.', $errors);
+assert_true(is_string($embed) && str_contains((string) $embed, 'enablejsapi=1'), 'Embed URL should enable the JS API for player controls.', $errors);
+
+$embedWithOrigin = $service->buildYoutubePreviewEmbedUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'http://localhost/ecolenumerique');
+assert_true(is_string($embedWithOrigin) && str_contains((string) $embedWithOrigin, 'origin=http%3A%2F%2Flocalhost%2Fecolenumerique'), 'Embed URL should carry the application origin.', $errors);
 
 $routes = require $rootDir . '/app/routes.php';
 assert_true(isset($routes['course_preview_open']), 'Route course_preview_open must exist.', $errors);
@@ -72,4 +76,3 @@ if ($errors !== []) {
 
 echo "Course preview security functional OK\n";
 exit(0);
-

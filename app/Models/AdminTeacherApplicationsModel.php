@@ -105,6 +105,79 @@ final class AdminTeacherApplicationsModel extends Model
         return $row ?: null;
     }
 
+    public function findTeacherDirectoryById(int $teacherId): ?array
+    {
+        $teacherId = max(0, $teacherId);
+        if ($teacherId < 1) {
+            return null;
+        }
+
+        [$teacherJoin, $teacherSelect] = $this->teacherProfileJoinAndSelect('u.id');
+        [$applicationJoin, $applicationSelect] = $this->teacherApplicationJoinAndSelect('u.id');
+        $courseJoin = '';
+        $courseSelect = $this->zeroTeacherStatsSelect();
+        if ($this->coursesSchemaReady()) {
+            $courseJoin = '
+                LEFT JOIN (
+                    SELECT
+                        c.teacher_id,
+                        COUNT(*) AS total_courses,
+                        COALESCE(SUM(CASE WHEN c.status = "approved" THEN 1 ELSE 0 END), 0) AS approved_courses,
+                        COALESCE(SUM(CASE WHEN c.status = "submitted" THEN 1 ELSE 0 END), 0) AS submitted_courses,
+                        COALESCE(SUM(CASE WHEN c.status = "draft" THEN 1 ELSE 0 END), 0) AS draft_courses,
+                        COALESCE(SUM(CASE WHEN c.status = "rejected" THEN 1 ELSE 0 END), 0) AS rejected_courses,
+                        COALESCE(SUM(c.price_xof), 0) AS catalog_value_xof,
+                        COALESCE(AVG(c.duration_hours), 0) AS avg_duration_hours
+                    FROM courses c
+                    WHERE c.deleted_at IS NULL
+                    GROUP BY c.teacher_id
+                ) course_stats ON course_stats.teacher_id = u.id
+            ';
+            $courseSelect = '
+                COALESCE(course_stats.total_courses, 0) AS total_courses,
+                COALESCE(course_stats.approved_courses, 0) AS approved_courses,
+                COALESCE(course_stats.submitted_courses, 0) AS submitted_courses,
+                COALESCE(course_stats.draft_courses, 0) AS draft_courses,
+                COALESCE(course_stats.rejected_courses, 0) AS rejected_courses,
+                COALESCE(course_stats.catalog_value_xof, 0) AS catalog_value_xof,
+                COALESCE(course_stats.avg_duration_hours, 0) AS avg_duration_hours,
+                ' . $this->teacherEnrollmentSelect() . ',
+                ' . $this->teacherRevenueSelect() . ',
+                ' . $this->teacherRatingSelect() . '
+            ';
+            $courseJoin .= $this->teacherEnrollmentJoin();
+            $courseJoin .= $this->teacherRevenueJoin();
+            $courseJoin .= $this->teacherRatingJoin();
+        }
+
+        $sql = 'SELECT
+                    u.id,
+                    u.first_name,
+                    u.last_name,
+                    u.email,
+                    u.status,
+                    u.created_at,
+                    u.updated_at'
+                    . $teacherSelect
+                    . $applicationSelect
+                    . ', ' . $courseSelect . '
+                FROM users u
+                ' . $teacherJoin . '
+                ' . $applicationJoin . '
+                ' . $courseJoin . '
+                WHERE u.id = :teacher_id
+                  AND u.roles_json LIKE :teacher_role
+                  AND u.status IN ("active", "suspended")
+                LIMIT 1';
+
+        $rows = $this->rowsQuery($sql, [
+            ':teacher_id' => $teacherId,
+            ':teacher_role' => '%"teacher"%',
+        ]);
+
+        return $rows[0] ?? null;
+    }
+
     public function updateUserStatus(int $userId, string $status): void
     {
         if (!in_array($status, ['active', 'suspended'], true)) {
@@ -131,6 +204,25 @@ final class AdminTeacherApplicationsModel extends Model
     {
         if (!$this->tableExistsSafe('audit_logs')) {
             return;
+        }
+
+        if (!array_key_exists('actor_role', $meta) && $adminUserId > 0) {
+            try {
+                $stmt = $this->pdo->prepare('SELECT roles_json FROM users WHERE id = :id LIMIT 1');
+                $stmt->execute([':id' => $adminUserId]);
+                $row = $stmt->fetch();
+                if (is_array($row)) {
+                    $roles = json_decode((string) ($row['roles_json'] ?? '[]'), true);
+                    if (is_array($roles)) {
+                        if (in_array('admin_secondary', $roles, true)) {
+                            $meta['actor_role'] = 'admin_secondary';
+                        } elseif (in_array('admin', $roles, true)) {
+                            $meta['actor_role'] = 'admin';
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+            }
         }
 
         $metaJson = null;
@@ -160,6 +252,7 @@ final class AdminTeacherApplicationsModel extends Model
     public function fetchTeacherDirectory(string $search = '', int $limit = 80): array
     {
         [$teacherJoin, $teacherSelect] = $this->teacherProfileJoinAndSelect('u.id');
+        [$applicationJoin, $applicationSelect] = $this->teacherApplicationJoinAndSelect('u.id');
         $courseJoin = '';
         $courseSelect = $this->zeroTeacherStatsSelect();
         if ($this->coursesSchemaReady()) {
@@ -224,11 +317,13 @@ final class AdminTeacherApplicationsModel extends Model
                     u.email,
                     u.status,
                     u.created_at,
-                    u.updated_at
-                    ' . $teacherSelect . ',
-                    ' . $courseSelect . '
+                    u.updated_at'
+                    . $teacherSelect
+                    . $applicationSelect
+                    . ', ' . $courseSelect . '
                 FROM users u
                 ' . $teacherJoin . '
+                ' . $applicationJoin . '
                 ' . $courseJoin . '
                 WHERE ' . implode(' AND ', $where) . '
                 ORDER BY
@@ -341,6 +436,62 @@ final class AdminTeacherApplicationsModel extends Model
                   NULL AS portfolio_url,
                   NULL AS linkedin_url,
                   NULL AS profile_cv_path';
+    }
+
+    /**
+     * @return array{0:string,1:string}
+     */
+    private function teacherApplicationJoinAndSelect(string $userIdExpression): array
+    {
+        if (!$this->tableExistsSafe('teacher_applications')) {
+            return ['', $this->teacherApplicationNullSelect()];
+        }
+
+        $select = ', ' . implode(', ', [
+            'app_latest.id AS application_id',
+            $this->applicationColumnExpr('title', 'app_latest') . ' AS application_title',
+            $this->applicationColumnExpr('bio', 'app_latest') . ' AS application_bio',
+            $this->applicationColumnExpr('teaching_experience', 'app_latest') . ' AS application_teaching_experience',
+            $this->applicationColumnExpr('cv_path', 'app_latest') . ' AS application_cv_path',
+            $this->applicationColumnExpr('status', 'app_latest') . ' AS application_status',
+            $this->applicationColumnExpr('reason', 'app_latest') . ' AS application_reason',
+            $this->applicationColumnExpr('created_at', 'app_latest') . ' AS application_created_at',
+            $this->applicationColumnExpr('decided_at', 'app_latest') . ' AS application_decided_at',
+        ]);
+
+        $join = ' LEFT JOIN (
+                    SELECT app.*
+                    FROM teacher_applications app
+                    INNER JOIN (
+                        SELECT user_id, MAX(id) AS latest_id
+                        FROM teacher_applications
+                        GROUP BY user_id
+                    ) latest ON latest.latest_id = app.id
+                ) app_latest ON app_latest.user_id = ' . $userIdExpression;
+
+        return [$join, $select];
+    }
+
+    private function applicationColumnExpr(string $column, string $alias): string
+    {
+        if (!$this->columnExistsSafe('teacher_applications', $column)) {
+            return 'NULL';
+        }
+
+        return $alias . '.' . $column;
+    }
+
+    private function teacherApplicationNullSelect(): string
+    {
+        return ', NULL AS application_id,
+                  NULL AS application_title,
+                  NULL AS application_bio,
+                  NULL AS application_teaching_experience,
+                  NULL AS application_cv_path,
+                  NULL AS application_status,
+                  NULL AS application_reason,
+                  NULL AS application_created_at,
+                  NULL AS application_decided_at';
     }
 
     private function zeroTeacherStatsSelect(): string

@@ -64,7 +64,10 @@ final class CoursePreviewOpenService extends Service
             return $this->abort(403, 'Lien d\'apercu invalide', "Le jeton d'acces de cet apercu n'est plus valide.");
         }
 
-        $embedUrl = $this->tokens->buildYoutubePreviewEmbedUrl((string) ($firstVideo['youtube_url'] ?? ''));
+        $embedUrl = $this->tokens->buildYoutubePreviewEmbedUrl(
+            (string) ($firstVideo['youtube_url'] ?? ''),
+            $this->absUrl('')
+        );
         if (!$embedUrl) {
             return $this->abort(404, 'Apercu indisponible', "La video d'apercu ne peut pas etre ouverte pour le moment.");
         }

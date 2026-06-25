@@ -62,7 +62,9 @@ final class TeacherApplicationsService extends Service
 
         $success = (string) $this->flashGet('success', '');
         $currentTab = $this->normalizeTab((string) ($query['tab'] ?? 'applications'));
-        $searchQuery = $this->normalizeSearch((string) ($query['q'] ?? ''));
+        $searchQuery = $this->normalizeSearch((string) ($query['q'] ?? $post['q'] ?? ''));
+        $currentPage = max(1, (int) ($query['page'] ?? $post['page'] ?? 1));
+        $selectedTeacherId = max(0, (int) ($query['teacher_id'] ?? $post['teacher_id'] ?? 0));
 
 
 
@@ -241,6 +243,8 @@ final class TeacherApplicationsService extends Service
                             $success = $teacherName . ' a été réactivé.';
                         }
 
+                        $selectedTeacherId = $teacherId;
+
                         $this->model->insertAuditLog(
                             (int) ($adminUser['id'] ?? 0),
                             $targetStatus === 'suspended' ? 'teacher_suspend' : 'teacher_reactivate',
@@ -269,9 +273,20 @@ final class TeacherApplicationsService extends Service
 
             $this->flashSet('success', $success);
 
+            $redirectQuery = ['tab' => $redirectTab];
+            if ($redirectTab === 'teachers' && $searchQuery !== '') {
+                $redirectQuery['q'] = $searchQuery;
+            }
+            if ($redirectTab === 'teachers' && $selectedTeacherId > 0) {
+                $redirectQuery['teacher_id'] = $selectedTeacherId;
+            }
+            if ($currentPage > 1) {
+                $redirectQuery['page'] = $currentPage;
+            }
+
             return [
 
-                'redirectTo' => $this->siteUrl('admin/teacher_applications?tab=' . $redirectTab),
+                'redirectTo' => $this->siteUrl('admin/teacher_applications?' . http_build_query($redirectQuery)),
 
                 'view' => [],
 
@@ -281,17 +296,29 @@ final class TeacherApplicationsService extends Service
 
         $applications = $this->model->fetchRecentApplications(80);
         $teachers = $this->model->fetchTeacherDirectory($searchQuery, 120);
-        $teacherIds = [];
-        foreach ($teachers as $teacher) {
-            $teacherId = (int) ($teacher['id'] ?? 0);
-            if ($teacherId > 0) {
-                $teacherIds[] = $teacherId;
+        $summary = $this->buildTeacherSummary($teachers, $applications);
+        $teacherPageRows = array_slice($teachers, max(0, ($currentPage - 1) * 6), 6);
+
+        $selectedTeacher = null;
+        if ($currentTab === 'teachers') {
+            if ($selectedTeacherId > 0) {
+                foreach ($teachers as $teacher) {
+                    if ((int) ($teacher['id'] ?? 0) === $selectedTeacherId) {
+                        $selectedTeacher = $teacher;
+                        break;
+                    }
+                }
+            }
+
+            if ($selectedTeacher === null && $teacherPageRows !== []) {
+                $selectedTeacher = $teacherPageRows[0];
+                $selectedTeacherId = (int) ($selectedTeacher['id'] ?? 0);
+            }
+
+            if ($selectedTeacher === null) {
+                $selectedTeacherId = 0;
             }
         }
-        $teacherCoursesByTeacher = $this->groupCoursesByTeacher($this->model->fetchCoursesForTeacherIds($teacherIds));
-        $summary = $this->buildTeacherSummary($teachers, $applications);
-
-
 
         return [
 
@@ -307,13 +334,15 @@ final class TeacherApplicationsService extends Service
 
                 'teacherRows' => $teachers,
 
-                'teacherCoursesByTeacher' => $teacherCoursesByTeacher,
-
                 'teacherSummary' => $summary,
 
                 'currentTab' => $currentTab,
 
                 'searchQuery' => $searchQuery,
+
+                'selectedTeacherId' => $selectedTeacherId,
+
+                'selectedTeacher' => $selectedTeacher,
 
             ],
 
@@ -336,23 +365,6 @@ final class TeacherApplicationsService extends Service
         }
 
         return function_exists('mb_substr') ? mb_substr($search, 0, 120) : substr($search, 0, 120);
-    }
-
-    /**
-     * @param array<int,array<string,mixed>> $courses
-     * @return array<int,array<int,array<string,mixed>>>
-     */
-    private function groupCoursesByTeacher(array $courses): array
-    {
-        $grouped = [];
-        foreach ($courses as $course) {
-            $teacherId = (int) ($course['teacher_id'] ?? 0);
-            if ($teacherId <= 0) {
-                continue;
-            }
-            $grouped[$teacherId][] = $course;
-        }
-        return $grouped;
     }
 
     /**

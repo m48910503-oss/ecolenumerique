@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Services\Teacher;
 
 use App\Core\Service;
-
+use App\Models\TeacherCourseEditModel;
 use App\Models\TeacherCourseContentModel;
 use App\Services\Drive\DriveGateway;
 
@@ -34,6 +34,7 @@ final class CourseContentService extends Service
     public function handle(array $user, bool $isAdmin, string $method, array $get, array $post, array $files): array
     {
         $drive = new DriveGateway();
+        $courseEditModel = new TeacherCourseEditModel($this->pdo);
         $courseId = (int) ($get['id'] ?? 0);
         $fallbackUrl = $isAdmin ? $this->siteUrl('admin/courses') : $this->siteUrl('teacher/courses');
         if ($courseId < 1) {
@@ -104,9 +105,191 @@ final class CourseContentService extends Service
                             $success = "Pédagogie enregistrée.";
                             $didUpdate = true;
                             $updateLabel = "Pédagogie modifiée";
-                            $redirectStep = 'pedagogy';
+                            $redirectStep = 'audience';
                         } catch (\Throwable $e) {
                             $errors[] = 'Erreur lors de la sauvegarde de la pédagogie.';
+                        }
+                    }
+                }
+
+                if ($action === 'update_course_landing') {
+                    $title = trim((string) ($post['course_title'] ?? ''));
+                    $description = trim((string) ($post['course_description'] ?? ''));
+                    $level = trim((string) ($post['course_level'] ?? 'beginner'));
+                    $categoryId = (int) ($post['course_category_id'] ?? 0);
+                    $coverAlt = trim((string) ($post['course_cover_alt'] ?? ''));
+                    $seoTitle = trim((string) ($post['course_seo_title'] ?? ''));
+                    $seoDescription = trim((string) ($post['course_seo_description'] ?? ''));
+                    $existingCoverPath = $this->normalizeCoverPath((string) ($course['cover_path'] ?? ''));
+                    $coverPath = $existingCoverPath !== '' ? $existingCoverPath : null;
+                    $previousCoverPath = $coverPath;
+
+                    $course['title'] = $title;
+                    $course['description'] = $description;
+                    $course['level'] = $level;
+                    $course['category_id'] = $categoryId;
+                    $course['cover_alt'] = $coverAlt;
+                    $course['seo_title'] = $seoTitle;
+                    $course['seo_description'] = $seoDescription;
+
+                    if ($title === '') {
+                        $errors[] = 'Le titre du cours est obligatoire.';
+                    } elseif ((function_exists('mb_strlen') ? mb_strlen($title, 'UTF-8') : strlen($title)) < 4) {
+                        $errors[] = 'Le titre doit contenir au moins 4 caracteres.';
+                    }
+
+                    if ($description === '') {
+                        $errors[] = 'La description du cours est obligatoire.';
+                    } else {
+                        $descriptionLength = function_exists('mb_strlen') ? mb_strlen($description, 'UTF-8') : strlen($description);
+                        if ($descriptionLength < 40) {
+                            $errors[] = 'La description doit contenir au moins 40 caracteres.';
+                        }
+                    }
+
+                    if (!in_array($level, ['beginner', 'intermediate', 'advanced'], true)) {
+                        $errors[] = 'Le niveau selectionne est invalide.';
+                    }
+
+                    if ($categoryId < 1 || !$courseEditModel->categoryExists($categoryId)) {
+                        $errors[] = 'Selectionnez une categorie valide.';
+                    }
+
+                    if ($coverAlt !== '') {
+                        $coverAltLength = function_exists('mb_strlen') ? mb_strlen($coverAlt, 'UTF-8') : strlen($coverAlt);
+                        if ($coverAltLength > 180) {
+                            $errors[] = 'Le texte alternatif de la miniature ne doit pas depasser 180 caracteres.';
+                        }
+                    }
+
+                    if ($seoTitle !== '') {
+                        $seoTitleLength = function_exists('mb_strlen') ? mb_strlen($seoTitle, 'UTF-8') : strlen($seoTitle);
+                        if ($seoTitleLength > 160) {
+                            $errors[] = 'Le titre SEO ne doit pas depasser 160 caracteres.';
+                        }
+                    }
+
+                    if ($seoDescription !== '') {
+                        $seoDescriptionLength = function_exists('mb_strlen') ? mb_strlen($seoDescription, 'UTF-8') : strlen($seoDescription);
+                        if ($seoDescriptionLength > 255) {
+                            $errors[] = 'La meta description ne doit pas depasser 255 caracteres.';
+                        }
+                    }
+
+                    $coverFile = $files['course_cover_file'] ?? null;
+                    if (is_array($coverFile) && (int) ($coverFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+                        if ((int) ($coverFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+                            $errors[] = 'Erreur lors du televersement de la miniature.';
+                        } else {
+                            $maxSize = 5 * 1024 * 1024;
+                            if ((int) ($coverFile['size'] ?? 0) > $maxSize) {
+                                $errors[] = 'La miniature depasse 5 Mo.';
+                            } else {
+                                $ext = strtolower(pathinfo((string) ($coverFile['name'] ?? ''), PATHINFO_EXTENSION));
+                                if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true)) {
+                                    $errors[] = 'Le format de miniature doit etre JPG, PNG ou WebP.';
+                                } else {
+                                    $uploadDir = $this->projectRoot() . '/storage/uploads/covers';
+                                    if (!is_dir($uploadDir)) {
+                                        mkdir($uploadDir, 0755, true);
+                                    }
+
+                                    $filename = bin2hex(random_bytes(8)) . '.' . $ext;
+                                    $destination = $uploadDir . '/' . $filename;
+                                    if (!move_uploaded_file((string) ($coverFile['tmp_name'] ?? ''), $destination)) {
+                                        $errors[] = 'Impossible d enregistrer la nouvelle miniature.';
+                                    } else {
+                                        $coverPath = 'storage/uploads/covers/' . $filename;
+                                        $course['cover_path'] = $coverPath;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if ($errors === []) {
+                        try {
+                            $course['cover_path'] = $coverPath;
+                            $courseEditModel->updateCourse($courseId, $this->buildCourseUpdatePayload($course));
+
+                            if ($previousCoverPath && $previousCoverPath !== $coverPath) {
+                                $this->safeUnlink($previousCoverPath);
+                            }
+
+                            $course['cover_path'] = $coverPath;
+                            $success = 'Page d accueil mise a jour.';
+                            $didUpdate = true;
+                            $updateLabel = 'Page d accueil mise a jour';
+                            $redirectStep = 'landing';
+                        } catch (\Throwable $e) {
+                            if ($coverPath && $coverPath !== $previousCoverPath) {
+                                $this->safeUnlink($coverPath);
+                            }
+                            $course['cover_path'] = $previousCoverPath;
+                            $errors[] = 'Erreur lors de la mise a jour de la page d accueil.';
+                        }
+                    } elseif ($coverPath && $coverPath !== $previousCoverPath) {
+                        $this->safeUnlink($coverPath);
+                        $course['cover_path'] = $previousCoverPath;
+                    }
+                }
+
+                if ($action === 'update_course_pricing') {
+                    $publicPriceRaw = trim((string) ($post['price_xof'] ?? '0'));
+                    $enterpriseMode = trim((string) ($post['enterprise_pricing_mode'] ?? 'none'));
+                    $enterprisePriceRaw = trim((string) ($post['enterprise_price_xof'] ?? ''));
+                    $enterpriseDiscountRaw = str_replace(',', '.', trim((string) ($post['enterprise_discount_percent'] ?? '')));
+
+                    $priceValue = 0;
+                    if ($publicPriceRaw !== '') {
+                        if (preg_match('/^\d+$/', $publicPriceRaw) !== 1) {
+                            $errors[] = 'Le prix public doit etre un entier positif ou nul.';
+                        } else {
+                            $priceValue = (int) $publicPriceRaw;
+                        }
+                    }
+
+                    if (!in_array($enterpriseMode, ['none', 'price', 'discount'], true)) {
+                        $enterpriseMode = 'none';
+                    }
+
+                    $enterprisePriceValue = null;
+                    $enterpriseDiscountValue = null;
+
+                    if ($enterpriseMode === 'price') {
+                        if ($enterprisePriceRaw === '' || preg_match('/^\d+$/', $enterprisePriceRaw) !== 1) {
+                            $errors[] = 'Le prix entreprise doit etre un entier positif.';
+                        } else {
+                            $enterprisePriceValue = (int) $enterprisePriceRaw;
+                            if ($enterprisePriceValue < 1) {
+                                $errors[] = 'Le prix entreprise doit etre superieur a 0.';
+                            }
+                        }
+                    } elseif ($enterpriseMode === 'discount') {
+                        if ($enterpriseDiscountRaw === '' || !is_numeric($enterpriseDiscountRaw)) {
+                            $errors[] = 'La reduction entreprise doit etre numerique.';
+                        } else {
+                            $enterpriseDiscountValue = round((float) $enterpriseDiscountRaw, 2);
+                            if ($enterpriseDiscountValue <= 0 || $enterpriseDiscountValue > 100) {
+                                $errors[] = 'La reduction entreprise doit etre comprise entre 0 et 100.';
+                            }
+                        }
+                    }
+
+                    $course['price_xof'] = $priceValue;
+                    $course['enterprise_price_xof'] = $enterprisePriceValue;
+                    $course['enterprise_discount_percent'] = $enterpriseDiscountValue;
+
+                    if ($errors === []) {
+                        try {
+                            $courseEditModel->updateCourse($courseId, $this->buildCourseUpdatePayload($course));
+
+                            $success = 'Tarification mise a jour.';
+                            $didUpdate = true;
+                            $updateLabel = 'Tarification mise a jour';
+                            $redirectStep = 'pricing';
+                        } catch (\Throwable $e) {
+                            $errors[] = 'Erreur lors de la mise a jour de la tarification.';
                         }
                     }
                 }
@@ -752,6 +935,9 @@ final class CourseContentService extends Service
                         if (count($this->decodeListField($course['objectives'] ?? null)) < 1) {
                             $errors[] = 'Ajoutez au moins un objectif pédagogique avant de soumettre.';
                         }
+                        if (trim((string) ($course['description'] ?? '')) === '' || trim((string) ($course['cover_path'] ?? '')) === '') {
+                            $errors[] = 'Completez la page d accueil du cours avec une description et une miniature avant de soumettre.';
+                        }
                         $counts = $this->model->fetchSubmissionCounts($courseId);
                         if (((int) ($counts['chapters_cnt'] ?? 0)) < 1 || ((int) ($counts['lessons_cnt'] ?? 0)) < 1) {
                             $errors[] = "Ajoutez au moins un chapitre et une le\u{00e7}on avant de soumettre.";
@@ -791,6 +977,33 @@ final class CourseContentService extends Service
             if ($didUpdate) {
                 if ($updateLabel === '') {
                     $updateLabel = $success !== '' ? $success : "Mise \u{00e0} jour du cours";
+                }
+                if ($redirectStep === '') {
+                    $redirectStep = match ($action) {
+                        'update_pedagogy' => 'audience',
+                        'add_chapter',
+                        'edit_chapter',
+                        'delete_chapter',
+                        'duplicate_chapter',
+                        'reorder_chapters',
+                        'add_lesson',
+                        'edit_lesson',
+                        'delete_lesson',
+                        'duplicate_lesson',
+                        'reorder_lessons' => 'curriculum',
+                        'add_doc',
+                        'edit_doc',
+                        'delete_doc',
+                        'duplicate_doc',
+                        'add_meeting',
+                        'edit_meeting',
+                        'delete_meeting',
+                        'duplicate_meeting' => 'production',
+                        'save_draft',
+                        'submit_course',
+                        'clear_update_notice' => 'submit',
+                        default => $redirectStep,
+                    };
                 }
                 log_course_audit((int) ($user['id'] ?? 0), $courseId, 'course_update', [
                     'label' => $updateLabel,
@@ -870,6 +1083,7 @@ final class CourseContentService extends Service
         $lessonsList = $this->model->fetchLessonsListForCourse($courseId);
         $contentStats = $this->model->fetchContentStats($courseId);
         $submissionSummary = $this->buildSubmissionSummary($contentStats, $course);
+        $categories = $courseEditModel->findCategories();
         $auditTimeline = $this->model->fetchAuditLogsForCourse($courseId, 24);
         $auditTimeline = array_map(function (array $row): array {
             $meta = [];
@@ -920,6 +1134,7 @@ final class CourseContentService extends Service
                 'lessonsList' => $lessonsList,
                 'contentStats' => $contentStats,
                 'submissionSummary' => $submissionSummary,
+                'categories' => $categories,
                 'auditTimeline' => $auditTimeline,
                 'docLabel' => static function (?string $type, ?string $mime): string {
                     return self::docLabel($type, $mime);
@@ -992,7 +1207,32 @@ final class CourseContentService extends Service
     private function resolveCourseStepDefault(string $step): string
     {
         $step = trim($step);
-        return in_array($step, ['pedagogy', 'content', 'settings', 'publish'], true) ? $step : 'content';
+        $aliases = [
+            'pedagogy' => 'audience',
+            'content' => 'curriculum',
+            'settings' => 'production',
+            'publish' => 'submit',
+        ];
+        if (isset($aliases[$step])) {
+            $step = $aliases[$step];
+        }
+
+        $validSteps = [
+            'audience',
+            'config',
+            'production',
+            'curriculum',
+            'quizzes',
+            'subtitles',
+            'dubbing',
+            'landing',
+            'pricing',
+            'promotions',
+            'messages',
+            'submit',
+        ];
+
+        return in_array($step, $validSteps, true) ? $step : 'audience';
     }
 
     /**
@@ -1057,9 +1297,12 @@ final class CourseContentService extends Service
         $advExamsCnt = (int) ($stats['adv_exams_cnt'] ?? 0);
         $examsTotal = $examDocsCnt + $advExamsCnt;
         $objectivesCnt = count($this->decodeListField($course['objectives'] ?? null));
+        $hasCover = trim((string) ($course['cover_path'] ?? '')) !== '';
+        $hasDescription = trim((string) ($course['description'] ?? '')) !== '';
 
         $checklist = [
             ['key' => 'pedagogy', 'label' => 'Au moins 1 objectif pédagogique', 'done' => $objectivesCnt > 0, 'required' => true, 'count' => $objectivesCnt],
+            ['key' => 'landing', 'label' => 'Titre, description et miniature', 'done' => $hasCover && $hasDescription, 'required' => true, 'count' => ($hasCover ? 1 : 0) + ($hasDescription ? 1 : 0)],
             ['key' => 'chapters', 'label' => 'Au moins 1 chapitre', 'done' => $chaptersCnt > 0, 'required' => true, 'count' => $chaptersCnt],
             ['key' => 'lessons', 'label' => "Au moins 1 le\u{00e7}on", 'done' => $lessonsCnt > 0, 'required' => true, 'count' => $lessonsCnt],
             ['key' => 'meetings', 'label' => 'Au moins 1 rendez-vous', 'done' => $meetingsCnt > 0, 'required' => true, 'count' => $meetingsCnt],
@@ -1091,6 +1334,41 @@ final class CourseContentService extends Service
         ];
     }
 
+    /**
+     * @param array<string,mixed> $course
+     * @param array<string,mixed> $overrides
+     * @return array<string,mixed>
+     */
+    private function buildCourseUpdatePayload(array $course, array $overrides = []): array
+    {
+        $payload = [
+            ':category_id' => (int) ($course['category_id'] ?? 0),
+            ':title' => (string) ($course['title'] ?? ''),
+            ':level' => (string) ($course['level'] ?? 'beginner'),
+            ':description' => (string) ($course['description'] ?? ''),
+            ':objectives' => (string) ($course['objectives'] ?? '[]'),
+            ':prerequisites' => (string) ($course['prerequisites'] ?? '[]'),
+            ':equipment' => (string) ($course['equipment'] ?? '[]'),
+            ':duration_hours' => ($course['duration_hours'] ?? null) !== null ? (float) $course['duration_hours'] : null,
+            ':price_xof' => (int) ($course['price_xof'] ?? 0),
+            ':enterprise_price_xof' => isset($course['enterprise_price_xof']) && $course['enterprise_price_xof'] !== null ? (int) $course['enterprise_price_xof'] : null,
+            ':enterprise_discount_percent' => isset($course['enterprise_discount_percent']) && $course['enterprise_discount_percent'] !== null ? (float) $course['enterprise_discount_percent'] : null,
+            ':referral_override' => (int) ($course['referral_override'] ?? 0),
+            ':referral_l1_rate' => isset($course['referral_l1_rate']) && $course['referral_l1_rate'] !== null ? (float) $course['referral_l1_rate'] : null,
+            ':referral_l2_rate' => isset($course['referral_l2_rate']) && $course['referral_l2_rate'] !== null ? (float) $course['referral_l2_rate'] : null,
+            ':referral_l2_enabled' => (int) ($course['referral_l2_enabled'] ?? 0),
+            ':general_file_path' => ($course['general_file_path'] ?? null) !== null ? (string) $course['general_file_path'] : null,
+            ':general_file_mime' => ($course['general_file_mime'] ?? null) !== null ? (string) $course['general_file_mime'] : null,
+            ':general_file_size' => ($course['general_file_size'] ?? null) !== null ? (int) $course['general_file_size'] : null,
+            ':cover_path' => ($course['cover_path'] ?? null) !== null ? (string) $course['cover_path'] : null,
+            ':cover_alt' => trim((string) ($course['cover_alt'] ?? '')) !== '' ? trim((string) $course['cover_alt']) : null,
+            ':seo_title' => trim((string) ($course['seo_title'] ?? '')) !== '' ? trim((string) $course['seo_title']) : null,
+            ':seo_description' => trim((string) ($course['seo_description'] ?? '')) !== '' ? trim((string) $course['seo_description']) : null,
+        ];
+
+        return array_replace($payload, $overrides);
+    }
+
     private function detectMimeType(string $tmpName, string $fallbackMime): string
     {
         if (function_exists('finfo_open')) {
@@ -1107,6 +1385,33 @@ final class CourseContentService extends Service
             return $fallbackMime;
         }
         return 'application/octet-stream';
+    }
+
+    private function normalizeCoverPath(string $path): string
+    {
+        $path = trim($path);
+        if ($path === '' || strpos($path, '..') !== false) {
+            return '';
+        }
+        if (strpos($path, 'storage/uploads/covers/') !== 0) {
+            return '';
+        }
+
+        $full = $this->projectRoot() . '/' . $path;
+        return is_file($full) ? $path : '';
+    }
+
+    private function projectRoot(): string
+    {
+        return dirname(__DIR__, 3);
+    }
+
+    private function safeUnlink(string $relativePath): void
+    {
+        $full = $this->projectRoot() . '/' . ltrim($relativePath, '/');
+        if (is_file($full)) {
+            @unlink($full);
+        }
     }
 
     private function resolveDefaultContentChapterId(int $courseId): int

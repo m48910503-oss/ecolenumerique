@@ -27,6 +27,7 @@ final class ReceiptPdfDocumentBuilder
         $htmlPath = $tmpDir . DIRECTORY_SEPARATOR . 'receipt-' . $suffix . '.html';
         $pdfPath = $tmpDir . DIRECTORY_SEPARATOR . 'receipt-' . $suffix . '.pdf';
         $profileDir = $tmpDir . DIRECTORY_SEPARATOR . 'chrome-profile-' . $suffix;
+        $orientation = $this->detectOrientation($html);
 
         if (@file_put_contents($htmlPath, $html) === false) {
             $this->deleteFile($htmlPath);
@@ -35,7 +36,7 @@ final class ReceiptPdfDocumentBuilder
 
         $ok = $this->buildWithChrome($htmlPath, $pdfPath, $profileDir);
         if (!$ok) {
-            $ok = $this->buildWithWkhtmltopdf($htmlPath, $pdfPath);
+            $ok = $this->buildWithWkhtmltopdf($htmlPath, $pdfPath, $orientation);
         }
 
         $bytes = null;
@@ -211,7 +212,7 @@ final class ReceiptPdfDocumentBuilder
         return $exitCode === 0 && $this->waitForGeneratedFile($pdfPath);
     }
 
-    private function buildWithWkhtmltopdf(string $htmlPath, string $pdfPath): bool
+    private function buildWithWkhtmltopdf(string $htmlPath, string $pdfPath, string $orientation): bool
     {
         if (!is_callable('exec')) {
             return false;
@@ -227,7 +228,7 @@ final class ReceiptPdfDocumentBuilder
             '--quiet',
             '--enable-local-file-access',
             '--page-size A4',
-            '--orientation Portrait',
+            '--orientation ' . ($orientation === 'landscape' ? 'Landscape' : 'Portrait'),
             '--margin-top 10mm',
             '--margin-right 10mm',
             '--margin-bottom 10mm',
@@ -243,6 +244,19 @@ final class ReceiptPdfDocumentBuilder
         @exec($cmd, $output, $exitCode);
 
         return $exitCode === 0 && $this->waitForGeneratedFile($pdfPath);
+    }
+
+    private function detectOrientation(string $html): string
+    {
+        if (preg_match('/@page\s*\{[^}]*\bA4\s+landscape\b/i', $html) === 1) {
+            return 'landscape';
+        }
+
+        if (stripos($html, 'size:A4 landscape') !== false || stripos($html, 'A4 landscape') !== false) {
+            return 'landscape';
+        }
+
+        return 'portrait';
     }
 
     private function findChromeBinary(): string

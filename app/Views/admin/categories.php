@@ -42,6 +42,18 @@ $formatDate = static function (?string $date): string {
 };
 $entryLabel = $categoryCount === 1 ? 'entrée' : 'entrées';
 
+$categoryPage = \App\Support\Pagination::pageFromQuery($_GET, 'page', 1);
+$categoryPagination = \App\Support\Pagination::build(count($categories), $categoryPage, 12);
+$categories = \App\Support\Pagination::slice($categories, $categoryPagination);
+$buildCategoryPageUrl = static function (int $targetPage): string {
+    $query = [];
+    if ($targetPage > 1) {
+        $query['page'] = max(1, $targetPage);
+    }
+
+    return site_url('admin/categories' . ($query !== [] ? ('?' . http_build_query($query)) : ''));
+};
+
 $modalToAutoOpen = '';
 $editModalPayload = [
     'id' => '',
@@ -120,21 +132,10 @@ $adminPageScripts = ['admin_categories.js'];
                 <?php endif; ?>
 
                 <section class="admin-categories-hero rounded-3xl p-5 sm:p-6">
-                    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-                        <div class="max-w-3xl">
-                            <p class="admin-categories-eyebrow inline-flex items-center gap-2"><i class="fas fa-sitemap" aria-hidden="true"></i>Structure du catalogue</p>
-                            <h1 class="mt-2 inline-flex items-center gap-3 text-2xl font-display font-semibold text-white sm:text-3xl"><i class="fas fa-tags" aria-hidden="true"></i>Organisation des catégories</h1>
-                            <p class="mt-2 max-w-2xl text-sm font-medium text-blue-50/90">Classez les cours et gérez leur visibilité.</p>
-                            <div class="mt-4 flex flex-wrap gap-2">
-                                <span class="admin-categories-hero-pill">
-                                    <i class="fas fa-check-circle" aria-hidden="true"></i>
-                                    <?php echo e((string) $activeCategoryCount); ?> actives
-                                </span>
-                                <span class="admin-categories-hero-pill">
-                                    <i class="fas fa-folder-open" aria-hidden="true"></i>
-                                    <?php echo e((string) $linkedCourseCount); ?> cours liés
-                                </span>
-                            </div>
+                    <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+                        <div class="admin-categories-hero__copy max-w-2xl">
+                            <h1 class="inline-flex items-center gap-3 text-2xl font-display font-semibold text-white sm:text-3xl"><i class="fas fa-tags" aria-hidden="true"></i>Organisation des catégories</h1>
+                            <p class="max-w-xl text-sm font-medium text-blue-50/90">Classez les cours du catalogue.</p>
                         </div>
                         <button class="admin-categories-new-button js-modal-open" type="button" data-modal-target="category-create-modal">
                             <i class="fas fa-plus-circle" aria-hidden="true"></i>
@@ -243,6 +244,18 @@ $adminPageScripts = ['admin_categories.js'];
                         <i class="fas fa-folder-open" aria-hidden="true"></i>
                         <span>Aucune catégorie trouvée.</span>
                     </div>
+
+                    <?php if ($categoryCount > 0): ?>
+                        <div class="mt-4">
+                            <?php
+                            $paginationData = $categoryPagination;
+                            $paginationUrlBuilder = $buildCategoryPageUrl;
+                            $paginationLabel = 'catégories';
+                            $paginationAriaLabel = 'Pagination des catégories';
+                            require __DIR__ . '/_pagination.php';
+                            ?>
+                        </div>
+                    <?php endif; ?>
                 </section>
 
             </main>
@@ -252,12 +265,12 @@ $adminPageScripts = ['admin_categories.js'];
     <div id="category-create-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm js-admin-modal" role="dialog" aria-modal="true" aria-labelledby="category-create-modal-title">
         <div class="admin-shell-modal w-full max-w-xl rounded-3xl p-6">
             <div class="flex items-start justify-between gap-4">
-                <div>
-                    <p class="admin-shell-section-title inline-flex items-center gap-2"><i class="fas fa-plus-circle" aria-hidden="true"></i>Nouvelle catégorie</p>
-                    <h3 id="category-create-modal-title" class="mt-2 text-lg font-semibold text-slate-950 dark:text-white inline-flex items-center gap-2">
+                <div class="admin-category-modal-head">
+                    <h3 id="category-create-modal-title" class="text-lg font-semibold text-slate-950 dark:text-white inline-flex items-center gap-2">
                         <i class="fas fa-folder-plus admin-inline-accent admin-inline-accent--info" aria-hidden="true"></i>
-                        Ajouter une catégorie
+                        Nouvelle catégorie
                     </h3>
+                    <p class="admin-category-modal-note">Nom, slug et statut.</p>
                 </div>
                 <button type="button" class="admin-shell-button admin-shell-button--ghost js-modal-close inline-flex items-center gap-1.5" data-modal-target="category-create-modal">
                     <i class="fas fa-times" aria-hidden="true"></i>
@@ -268,24 +281,27 @@ $adminPageScripts = ['admin_categories.js'];
             <form class="mt-5 admin-shell-form-grid" method="post" action="<?php echo e(site_url('admin/categories')); ?>">
                 <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
                 <input type="hidden" name="action" value="create">
+                <input type="hidden" name="page" value="<?php echo e((string) $categoryPage); ?>">
                 <input type="hidden" name="active" value="0">
 
-                <div class="admin-shell-field">
-                    <label class="admin-shell-label inline-flex items-center gap-2" for="category-create-name"><i class="fas fa-tag" aria-hidden="true"></i>Nom</label>
-                    <input id="category-create-name" name="name" type="text" placeholder="Ex : Développement web" required class="admin-shell-input" value="<?php echo e($createModalPayload['name']); ?>">
-                </div>
+                <div class="admin-category-modal-grid">
+                    <div class="admin-shell-field">
+                        <label class="admin-shell-label inline-flex items-center gap-2" for="category-create-name"><i class="fas fa-tag" aria-hidden="true"></i>Nom</label>
+                        <input id="category-create-name" name="name" type="text" placeholder="Développement web" required class="admin-shell-input" value="<?php echo e($createModalPayload['name']); ?>">
+                    </div>
 
-                <div class="admin-shell-field">
-                    <label class="admin-shell-label inline-flex items-center gap-2" for="category-create-slug"><i class="fas fa-link" aria-hidden="true"></i>Slug</label>
-                    <input id="category-create-slug" name="slug" type="text" placeholder="Auto si laissé vide" class="admin-shell-input" value="<?php echo e($createModalPayload['slug']); ?>">
-                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Le slug est généré automatiquement si le champ reste vide.</p>
+                    <div class="admin-shell-field">
+                        <label class="admin-shell-label inline-flex items-center gap-2" for="category-create-slug"><i class="fas fa-link" aria-hidden="true"></i>Slug</label>
+                        <input id="category-create-slug" name="slug" type="text" placeholder="Auto si vide" class="admin-shell-input" value="<?php echo e($createModalPayload['slug']); ?>">
+                        <p class="admin-category-field-hint">Généré si vide.</p>
+                    </div>
                 </div>
 
                 <label class="admin-category-toggle">
                     <input id="category-create-active" name="active" type="checkbox" value="1" <?php echo $createModalPayload['active'] === '1' ? 'checked' : ''; ?>>
                     <span>
-                        <strong>Catégorie active</strong>
-                        <small>Visible dans le catalogue public.</small>
+                        <strong>Active</strong>
+                        <small>Visible en public.</small>
                     </span>
                 </label>
 
@@ -293,7 +309,7 @@ $adminPageScripts = ['admin_categories.js'];
                     <button type="button" class="admin-shell-button admin-shell-button--secondary js-modal-close inline-flex items-center gap-2" data-modal-target="category-create-modal"><i class="fas fa-times" aria-hidden="true"></i>Annuler</button>
                     <button type="submit" class="admin-shell-button admin-shell-button--primary inline-flex items-center gap-2">
                         <i class="fas fa-plus-circle" aria-hidden="true"></i>
-                        Créer la catégorie
+                        Créer
                     </button>
                 </div>
             </form>
@@ -303,12 +319,12 @@ $adminPageScripts = ['admin_categories.js'];
     <div id="category-edit-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm js-admin-modal" role="dialog" aria-modal="true" aria-labelledby="category-edit-modal-title">
         <div class="admin-shell-modal w-full max-w-xl rounded-3xl p-6">
             <div class="flex items-start justify-between gap-4">
-                <div>
-                    <p class="admin-shell-section-title inline-flex items-center gap-2"><i class="fas fa-edit" aria-hidden="true"></i>Modification</p>
-                    <h3 id="category-edit-modal-title" class="mt-2 text-lg font-semibold text-slate-950 dark:text-white inline-flex items-center gap-2">
+                <div class="admin-category-modal-head">
+                    <h3 id="category-edit-modal-title" class="text-lg font-semibold text-slate-950 dark:text-white inline-flex items-center gap-2">
                         <i class="fas fa-pen admin-inline-accent admin-inline-accent--info" aria-hidden="true"></i>
                         Modifier la catégorie
                     </h3>
+                    <p class="admin-category-modal-note">Mettez à jour les infos utiles.</p>
                 </div>
                 <button type="button" class="admin-shell-button admin-shell-button--ghost js-modal-close inline-flex items-center gap-1.5" data-modal-target="category-edit-modal">
                     <i class="fas fa-times" aria-hidden="true"></i>
@@ -319,25 +335,28 @@ $adminPageScripts = ['admin_categories.js'];
             <form class="mt-5 admin-shell-form-grid" method="post" action="<?php echo e(site_url('admin/categories')); ?>">
                 <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
                 <input type="hidden" name="action" value="update">
+                <input type="hidden" name="page" value="<?php echo e((string) $categoryPage); ?>">
                 <input type="hidden" name="id" id="category-edit-id" value="<?php echo e($editModalPayload['id']); ?>">
                 <input type="hidden" name="active" value="0">
 
-                <div class="admin-shell-field">
-                    <label class="admin-shell-label inline-flex items-center gap-2" for="category-edit-name"><i class="fas fa-tag" aria-hidden="true"></i>Nom</label>
-                    <input id="category-edit-name" name="name" type="text" required class="admin-shell-input" value="<?php echo e($editModalPayload['name']); ?>">
-                </div>
+                <div class="admin-category-modal-grid">
+                    <div class="admin-shell-field">
+                        <label class="admin-shell-label inline-flex items-center gap-2" for="category-edit-name"><i class="fas fa-tag" aria-hidden="true"></i>Nom</label>
+                        <input id="category-edit-name" name="name" type="text" required class="admin-shell-input" value="<?php echo e($editModalPayload['name']); ?>">
+                    </div>
 
-                <div class="admin-shell-field">
-                    <label class="admin-shell-label inline-flex items-center gap-2" for="category-edit-slug"><i class="fas fa-link" aria-hidden="true"></i>Slug</label>
-                    <input id="category-edit-slug" name="slug" type="text" required class="admin-shell-input" value="<?php echo e($editModalPayload['slug']); ?>">
-                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Le slug doit rester unique.</p>
+                    <div class="admin-shell-field">
+                        <label class="admin-shell-label inline-flex items-center gap-2" for="category-edit-slug"><i class="fas fa-link" aria-hidden="true"></i>Slug</label>
+                        <input id="category-edit-slug" name="slug" type="text" required class="admin-shell-input" value="<?php echo e($editModalPayload['slug']); ?>">
+                        <p class="admin-category-field-hint">Doit rester unique.</p>
+                    </div>
                 </div>
 
                 <label class="admin-category-toggle">
                     <input id="category-edit-active" name="active" type="checkbox" value="1" <?php echo $editModalPayload['active'] === '1' ? 'checked' : ''; ?>>
                     <span>
-                        <strong>Catégorie active</strong>
-                        <small>Décochez pour masquer la catégorie sans perdre l’historique.</small>
+                        <strong>Active</strong>
+                        <small>Masquée si décochée.</small>
                     </span>
                 </label>
 
@@ -363,6 +382,7 @@ $adminPageScripts = ['admin_categories.js'];
             <form id="delete-form" method="post" action="<?php echo e(site_url('admin/categories')); ?>" class="mt-5 flex justify-end gap-3">
                 <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
                 <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="page" value="<?php echo e((string) $categoryPage); ?>">
                 <input type="hidden" name="id" id="delete-id" value="">
                 <button type="button" class="admin-shell-button admin-shell-button--secondary inline-flex items-center gap-2 js-modal-close" data-modal-target="delete-modal">
                     <i class="fas fa-times" aria-hidden="true"></i>

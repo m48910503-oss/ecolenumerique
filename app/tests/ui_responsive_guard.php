@@ -363,19 +363,21 @@ require_snippet(
 );
 
 $adminViews = [
-    'announcements' => $rootDir . '/app/Views/admin/announcements.php',
     'categories' => $rootDir . '/app/Views/admin/categories.php',
     'course_insights' => $rootDir . '/app/Views/admin/course_insights.php',
     'course_preview' => $rootDir . '/app/Views/admin/course_preview.php',
     'courses' => $rootDir . '/app/Views/admin/courses.php',
     'error_logs' => $rootDir . '/app/Views/admin/error_logs.php',
+    'announcements' => $rootDir . '/app/Views/admin/announcements.php',
     'notifications' => $rootDir . '/app/Views/admin/notifications.php',
     'sales' => $rootDir . '/app/Views/admin/sales.php',
     'secondary_admins' => $rootDir . '/app/Views/admin/secondary_admins.php',
+    'secondary_admins_form' => $rootDir . '/app/Views/admin/secondary_admins_form.php',
     'site_settings' => $rootDir . '/app/Views/admin/site_settings.php',
     'statistics' => $rootDir . '/app/Views/admin/statistics.php',
     'support_agents' => $rootDir . '/app/Views/admin/support_agents.php',
     'support' => $rootDir . '/app/Views/admin/support.php',
+    'teacher_dossier' => $rootDir . '/app/Views/admin/teacher_dossier.php',
     'teacher_applications' => $rootDir . '/app/Views/admin/teacher_applications.php',
 ];
 

@@ -192,8 +192,16 @@
     const storageKey = courseId ? `course_content_step_${courseId}` : '';
 
     function setButtonActiveState(button, isActive) {
+      const lightTheme = button.hasAttribute('data-course-step-button-light');
       button.classList.toggle('opacity-75', !isActive);
       button.classList.toggle('opacity-100', isActive);
+      if (lightTheme) {
+        button.classList.toggle('border-blue-200', isActive);
+        button.classList.toggle('bg-blue-50', isActive);
+        button.classList.toggle('shadow-sm', isActive);
+        button.classList.toggle('border-slate-200', !isActive);
+        button.classList.toggle('bg-white', !isActive);
+      }
       const spans = button.querySelectorAll('span');
       const badge = spans[0] instanceof HTMLElement ? spans[0] : null;
       const label = spans[1] instanceof HTMLElement ? spans[1] : null;
@@ -203,15 +211,25 @@
         badge.classList.toggle('text-white', isActive);
         badge.classList.toggle('shadow-lg', isActive);
         badge.classList.toggle('shadow-blue-900/30', isActive);
-        badge.classList.toggle('bg-slate-700', !isActive);
-        badge.classList.toggle('text-slate-300', !isActive);
+        if (lightTheme) {
+          badge.classList.toggle('bg-slate-100', !isActive);
+          badge.classList.toggle('text-slate-600', !isActive);
+        } else {
+          badge.classList.toggle('bg-slate-700', !isActive);
+          badge.classList.toggle('text-slate-300', !isActive);
+        }
       }
 
       if (label) {
         label.classList.toggle('font-semibold', isActive);
-        label.classList.toggle('text-blue-300', isActive);
         label.classList.toggle('font-medium', !isActive);
-        label.classList.toggle('text-slate-400', !isActive);
+        if (lightTheme) {
+          label.classList.toggle('text-blue-700', isActive);
+          label.classList.toggle('text-slate-600', !isActive);
+        } else {
+          label.classList.toggle('text-blue-300', isActive);
+          label.classList.toggle('text-slate-400', !isActive);
+        }
       }
     }
 

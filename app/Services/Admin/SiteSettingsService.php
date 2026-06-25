@@ -8,6 +8,8 @@ use App\Models\AdminSiteSettingsModel;
 
 final class SiteSettingsService extends Service
 {
+    private const DEFAULT_MAINTENANCE_MESSAGE = 'Maintenance temporaire en cours. Merci de revenir dans quelques minutes.';
+
     private AdminSiteSettingsModel $model;
 
     public function __construct(AdminSiteSettingsModel $model)
@@ -36,11 +38,9 @@ final class SiteSettingsService extends Service
         $seoTitle = $this->model->getSetting('seo_title', $siteName);
         $seoDescription = $this->model->getSetting('seo_description', $siteDescription);
         $seoKeywords = $this->model->getSetting('seo_keywords', '');
-        $socialImagePath = $this->model->getSetting('seo_social_image_path', '');
-        $socialImageUrl = $this->pathToUrl($socialImagePath);
 
         $maintenanceEnabled = $this->model->getSetting('maintenance_enabled', '0') === '1';
-        $maintenanceMessage = $this->model->getSetting('maintenance_message', 'Maintenance temporaire en cours. Merci de revenir dans quelques minutes.');
+        $maintenanceMessage = $this->model->getSetting('maintenance_message', self::DEFAULT_MAINTENANCE_MESSAGE);
         $registrationsEnabled = $this->model->getSetting('registrations_enabled', '1') !== '0';
         $teacherApplicationsEnabled = $this->model->getSetting('teacher_applications_enabled', '1') !== '0';
         $fedapayEnabled = $this->model->getSetting('payment_fedapay_enabled', '1') !== '0';
@@ -63,17 +63,21 @@ final class SiteSettingsService extends Service
 
         $siteLogoPath = $this->model->getSetting('site_logo_path', '');
         $siteLogoUrl = $this->siteLogoUrl();
-        $siteFaviconPath = $this->model->getSetting('site_favicon_path', '');
-        $siteFaviconUrl = $this->pathToUrl($siteFaviconPath);
+        $legacySocialImagePath = $this->model->findSetting('seo_social_image_path');
+        if ($legacySocialImagePath !== null) {
+            $legacySocialImagePath = trim($legacySocialImagePath);
+        }
+        $legacyFaviconPath = $this->model->findSetting('site_favicon_path');
+        if ($legacyFaviconPath !== null) {
+            $legacyFaviconPath = trim($legacyFaviconPath);
+        }
         $footerText = $this->model->getSetting('site_footer_text', '');
         $dgName = $this->model->getSetting('platform_dg_name', 'Directeur général');
         $dgSignaturePath = $this->model->getSetting('platform_dg_signature_path', '');
         $dgSignatureUrl = $this->pathToUrl($dgSignaturePath);
 
         $logoMaxMb = 5;
-        $faviconMaxMb = 2;
         $dgSignatureMaxMb = 2;
-        $socialImageMaxMb = 3;
         $submittedTab = '';
 
         if ($method === 'POST') {
@@ -136,12 +140,19 @@ final class SiteSettingsService extends Service
 
                 $maintenanceEnabled = !empty($post['maintenance_enabled']);
                 $maintenanceMessage = trim((string) ($post['maintenance_message'] ?? ''));
+                if ($maintenanceMessage === '') {
+                    $maintenanceMessage = self::DEFAULT_MAINTENANCE_MESSAGE;
+                }
                 if (mb_strlen($maintenanceMessage) > 500) {
                     $errors[] = 'Message de maintenance trop long.';
                 }
 
-                $registrationsEnabled = !empty($post['registrations_enabled']);
-                $teacherApplicationsEnabled = !empty($post['teacher_applications_enabled']);
+                if (array_key_exists('registrations_enabled', $post)) {
+                    $registrationsEnabled = !empty($post['registrations_enabled']);
+                }
+                if (array_key_exists('teacher_applications_enabled', $post)) {
+                    $teacherApplicationsEnabled = !empty($post['teacher_applications_enabled']);
+                }
                 $fedapayEnabled = !empty($post['fedapay_enabled']);
                 $storedFedapaySecretKey = $fedapaySecretKey;
                 $storedFedapayWebhookSecret = $fedapayWebhookSecret;
@@ -186,13 +197,11 @@ final class SiteSettingsService extends Service
                     $siteLogoPath = '';
                     $siteLogoUrl = '';
                     $this->model->setSetting('site_logo_path', '');
-                }
-
-                if (!empty($post['remove_favicon']) && $siteFaviconPath !== '') {
-                    $this->removeManagedLocalFile($siteFaviconPath);
-                    $siteFaviconPath = '';
-                    $siteFaviconUrl = '';
-                    $this->model->setSetting('site_favicon_path', '');
+                    if ($legacyFaviconPath !== null && $legacyFaviconPath !== '') {
+                        $this->removeManagedLocalFile($legacyFaviconPath);
+                    }
+                    $this->model->deleteSetting('site_favicon_path');
+                    $legacyFaviconPath = null;
                 }
 
                 if (!empty($post['remove_dg_signature']) && $dgSignaturePath !== '') {
@@ -200,13 +209,6 @@ final class SiteSettingsService extends Service
                     $dgSignaturePath = '';
                     $dgSignatureUrl = '';
                     $this->model->setSetting('platform_dg_signature_path', '');
-                }
-
-                if (!empty($post['remove_social_image']) && $socialImagePath !== '') {
-                    $this->removeManagedLocalFile($socialImagePath);
-                    $socialImagePath = '';
-                    $socialImageUrl = '';
-                    $this->model->setSetting('seo_social_image_path', '');
                 }
 
                 if ($errors === []) {
@@ -222,18 +224,6 @@ final class SiteSettingsService extends Service
                 }
 
                 if ($errors === []) {
-                    $uploadedFaviconPath = $this->handleImageUpload($files['site_favicon'] ?? null, 'site_favicon', $faviconMaxMb, $errors);
-                    if ($uploadedFaviconPath !== null) {
-                        if ($siteFaviconPath !== '') {
-                            $this->removeManagedLocalFile($siteFaviconPath);
-                        }
-                        $siteFaviconPath = $uploadedFaviconPath;
-                        $siteFaviconUrl = $this->siteUrl($siteFaviconPath);
-                        $this->model->setSetting('site_favicon_path', $siteFaviconPath);
-                    }
-                }
-
-                if ($errors === []) {
                     $uploadedSignaturePath = $this->handleImageUpload($files['dg_signature'] ?? null, 'dg_signature', $dgSignatureMaxMb, $errors);
                     if ($uploadedSignaturePath !== null) {
                         if ($dgSignaturePath !== '') {
@@ -245,16 +235,20 @@ final class SiteSettingsService extends Service
                     }
                 }
 
-                if ($errors === []) {
-                    $uploadedSocialImagePath = $this->handleImageUpload($files['seo_social_image'] ?? null, 'seo_social_image', $socialImageMaxMb, $errors);
-                    if ($uploadedSocialImagePath !== null) {
-                        if ($socialImagePath !== '') {
-                            $this->removeManagedLocalFile($socialImagePath);
-                        }
-                        $socialImagePath = $uploadedSocialImagePath;
-                        $socialImageUrl = $this->siteUrl($socialImagePath);
-                        $this->model->setSetting('seo_social_image_path', $socialImagePath);
+                if ($errors === [] && $legacySocialImagePath !== null) {
+                    if (trim($legacySocialImagePath) !== '') {
+                        $this->removeManagedLocalFile($legacySocialImagePath);
                     }
+                    $this->model->deleteSetting('seo_social_image_path');
+                    $legacySocialImagePath = null;
+                }
+
+                if ($errors === [] && $legacyFaviconPath !== null) {
+                    if ($legacyFaviconPath !== '') {
+                        $this->removeManagedLocalFile($legacyFaviconPath);
+                    }
+                    $this->model->deleteSetting('site_favicon_path');
+                    $legacyFaviconPath = null;
                 }
 
                 if ($errors === []) {
@@ -307,13 +301,9 @@ final class SiteSettingsService extends Service
                 'siteAddress' => $siteAddress,
                 'siteLogoPath' => $siteLogoPath,
                 'siteLogoUrl' => $siteLogoUrl,
-                'siteFaviconPath' => $siteFaviconPath,
-                'siteFaviconUrl' => $siteFaviconUrl,
                 'seoTitle' => $seoTitle,
                 'seoDescription' => $seoDescription,
                 'seoKeywords' => $seoKeywords,
-                'socialImagePath' => $socialImagePath,
-                'socialImageUrl' => $socialImageUrl,
                 'maintenanceEnabled' => $maintenanceEnabled,
                 'maintenanceMessage' => $maintenanceMessage,
                 'registrationsEnabled' => $registrationsEnabled,
@@ -328,9 +318,7 @@ final class SiteSettingsService extends Service
                 'dgSignaturePath' => $dgSignaturePath,
                 'dgSignatureUrl' => $dgSignatureUrl,
                 'logoMaxMb' => $logoMaxMb,
-                'faviconMaxMb' => $faviconMaxMb,
                 'dgSignatureMaxMb' => $dgSignatureMaxMb,
-                'socialImageMaxMb' => $socialImageMaxMb,
             ],
         ];
     }
@@ -379,6 +367,12 @@ final class SiteSettingsService extends Service
         if (preg_match('/^https?:\/\//i', $path) === 1) {
             return $path;
         }
+
+        $localPath = __DIR__ . '/../../../' . ltrim($path, '/');
+        if (!is_file($localPath)) {
+            return '';
+        }
+
         return $this->siteUrl(ltrim($path, '/'));
     }
 
@@ -473,14 +467,8 @@ final class SiteSettingsService extends Service
         if ($prefix === 'site_logo') {
             return 'logo';
         }
-        if ($prefix === 'site_favicon') {
-            return 'favicon';
-        }
         if ($prefix === 'dg_signature') {
             return 'signature DG';
-        }
-        if ($prefix === 'seo_social_image') {
-            return 'image sociale';
         }
         return 'fichier';
     }

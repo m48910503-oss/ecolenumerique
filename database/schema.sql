@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
     email_verified_at DATETIME NULL,
     auth_provider ENUM('local','google') NOT NULL DEFAULT 'local',
     phone VARCHAR(30) NULL,
-    city VARCHAR(120) NULL,
+    country VARCHAR(120) NULL,
     roles_json JSON NOT NULL, -- Exemple: ["student","teacher"]
     remember_selector CHAR(24) NULL UNIQUE,
     remember_validator_hash CHAR(64) NULL,

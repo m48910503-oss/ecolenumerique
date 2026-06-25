@@ -88,6 +88,29 @@ final class AdminCoursesModel extends Model
      */
     public function insertAudit(int $userId, string $action, int $courseId, array $meta = []): void
     {
+        if (!$this->tableExistsSafe('audit_logs')) {
+            return;
+        }
+
+        if (!array_key_exists('actor_role', $meta) && $userId > 0) {
+            try {
+                $stmt = $this->pdo->prepare('SELECT roles_json FROM users WHERE id = :id LIMIT 1');
+                $stmt->execute([':id' => $userId]);
+                $row = $stmt->fetch();
+                if (is_array($row)) {
+                    $roles = json_decode((string) ($row['roles_json'] ?? '[]'), true);
+                    if (is_array($roles)) {
+                        if (in_array('admin_secondary', $roles, true)) {
+                            $meta['actor_role'] = 'admin_secondary';
+                        } elseif (in_array('admin', $roles, true)) {
+                            $meta['actor_role'] = 'admin';
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+            }
+        }
+
         $metaJson = null;
         if ($meta !== []) {
             $encoded = json_encode($meta, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -115,24 +138,7 @@ final class AdminCoursesModel extends Model
      */
     public function fetchPendingCourses(int $limit = 0, int $offset = 0, array $filters = []): array
     {
-        [$whereSql, $params] = $this->buildPendingWhere($filters);
-
-        $sql = 'SELECT c.*, u.first_name, u.last_name, cat.name AS category_name
-                FROM courses c
-                JOIN users u ON u.id = c.teacher_id
-                LEFT JOIN categories cat ON cat.id = c.category_id
-                WHERE ' . $whereSql . '
-                ORDER BY c.submitted_at ASC, c.id ASC';
-
-        $limit = max(0, $limit);
-        $offset = max(0, $offset);
-        if ($limit > 0) {
-            $sql .= ' LIMIT ' . (int) $limit . ' OFFSET ' . (int) $offset;
-        }
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll() ?: [];
+        return $this->fetchCoursesByStatus('submitted', $limit, $offset, $filters);
     }
 
     /**
@@ -140,17 +146,7 @@ final class AdminCoursesModel extends Model
      */
     public function fetchPendingCoursesTotal(array $filters = []): int
     {
-        [$whereSql, $params] = $this->buildPendingWhere($filters);
-        $stmt = $this->pdo->prepare(
-            'SELECT COUNT(*) AS total
-             FROM courses c
-             JOIN users u ON u.id = c.teacher_id
-             LEFT JOIN categories cat ON cat.id = c.category_id
-             WHERE ' . $whereSql
-        );
-        $stmt->execute($params);
-        $row = $stmt->fetch() ?: [];
-        return (int) ($row['total'] ?? 0);
+        return $this->fetchCoursesTotalByStatus('submitted', $filters);
     }
 
     public function fetchPendingCourseById(int $courseId): ?array
@@ -173,19 +169,24 @@ final class AdminCoursesModel extends Model
      */
     public function fetchHistoryCourses(int $limit = 20, array $filters = []): array
     {
-        $limit = max(1, $limit);
-        [$whereSql, $params] = $this->buildHistoryWhere($filters);
-        $stmt = $this->pdo->prepare(
-            'SELECT c.*, u.first_name, u.last_name, cat.name AS category_name
-             FROM courses c
-             JOIN users u ON u.id = c.teacher_id
-             LEFT JOIN categories cat ON cat.id = c.category_id
-             WHERE ' . $whereSql . '
-             ORDER BY c.updated_at DESC
-             LIMIT ' . $limit
-        );
-        $stmt->execute($params);
-        return $stmt->fetchAll() ?: [];
+        return $this->fetchApprovedCourses($limit, 0, $filters);
+    }
+
+    /**
+     * @param array<string,mixed> $filters
+     * @return array<int,array<string,mixed>>
+     */
+    public function fetchApprovedCourses(int $limit = 0, int $offset = 0, array $filters = []): array
+    {
+        return $this->fetchCoursesByStatus('approved', $limit, $offset, $filters);
+    }
+
+    /**
+     * @param array<string,mixed> $filters
+     */
+    public function fetchHistoryCoursesTotal(array $filters = []): int
+    {
+        return $this->fetchCoursesTotalByStatus('approved', $filters);
     }
 
     /**
@@ -261,6 +262,7 @@ final class AdminCoursesModel extends Model
      *   avg_rating:float,
      *   rating_count:int,
      *   completion_rate:int,
+     *   enrollment_channels:array{total:int,direct:int,promo:int,enterprise:int},
      *   monthly_enrollments:array<int,array{label:string,count:int}>
      * }>
      */
@@ -288,6 +290,12 @@ final class AdminCoursesModel extends Model
                 'avg_rating' => 0.0,
                 'rating_count' => 0,
                 'completion_rate' => 0,
+                'enrollment_channels' => [
+                    'total' => 0,
+                    'direct' => 0,
+                    'promo' => 0,
+                    'enterprise' => 0,
+                ],
                 'monthly_enrollments' => array_values($months),
             ];
         }
@@ -307,6 +315,7 @@ final class AdminCoursesModel extends Model
                 $courseId = (int) ($row['course_id'] ?? 0);
                 if (isset($stats[$courseId])) {
                     $stats[$courseId]['students'] = (int) ($row['students'] ?? 0);
+                    $stats[$courseId]['enrollment_channels']['total'] = (int) ($row['students'] ?? 0);
                 }
             }
 
@@ -348,11 +357,35 @@ final class AdminCoursesModel extends Model
         }
 
         if ($this->courseSalesSchemaReady()) {
+            $scopeExpr = $this->hasPromoScopeColumn()
+                ? 'LOWER(COALESCE(oi.promo_scope, "none"))'
+                : '"none"';
+
+            $isEnterprise = match (true) {
+                $this->hasCompanyIdColumn() && $this->hasPromoScopeColumn() => '(COALESCE(oi.company_id, 0) > 0 OR ' . $scopeExpr . ' = "enterprise")',
+                $this->hasCompanyIdColumn() => '(COALESCE(oi.company_id, 0) > 0)',
+                $this->hasPromoScopeColumn() => '(' . $scopeExpr . ' = "enterprise")',
+                default => '0',
+            };
+
+            $isPromo = $this->hasPromoScopeColumn()
+                ? '(' . $scopeExpr . ' IN ("coupon", "promotion", "targeted", "company"))'
+                : '0';
+
+            $isDirect = $this->hasPromoScopeColumn()
+                ? '(' . $scopeExpr . ' = "none" OR ' . $scopeExpr . ' = "" OR ' . $scopeExpr . ' NOT IN ("coupon", "promotion", "targeted", "company", "enterprise"))'
+                : '1';
+
+            $isNonEnterprise = 'NOT (' . $isEnterprise . ')';
+
             $stmt = $this->pdo->prepare(
                 'SELECT
                     oi.course_id,
                     COUNT(DISTINCT o.id) AS paid_orders,
-                    COALESCE(SUM(oi.quantity * oi.unit_price_xof), 0) AS revenue_xof
+                    COALESCE(SUM(oi.quantity * oi.unit_price_xof), 0) AS revenue_xof,
+                    COALESCE(SUM(CASE WHEN ' . $isNonEnterprise . ' AND ' . $isDirect . ' THEN oi.quantity ELSE 0 END), 0) AS direct_units,
+                    COALESCE(SUM(CASE WHEN ' . $isNonEnterprise . ' AND ' . $isPromo . ' THEN oi.quantity ELSE 0 END), 0) AS promo_units,
+                    COALESCE(SUM(CASE WHEN ' . $isEnterprise . ' THEN oi.quantity ELSE 0 END), 0) AS enterprise_units
                  FROM order_items oi
                  JOIN orders o ON o.id = oi.order_id
                  WHERE oi.course_id IN (' . $placeholders . ')
@@ -365,6 +398,15 @@ final class AdminCoursesModel extends Model
                 if (isset($stats[$courseId])) {
                     $stats[$courseId]['paid_orders'] = (int) ($row['paid_orders'] ?? 0);
                     $stats[$courseId]['revenue_xof'] = (int) ($row['revenue_xof'] ?? 0);
+                    $directUnits = max(0, (int) ($row['direct_units'] ?? 0));
+                    $promoUnits = max(0, (int) ($row['promo_units'] ?? 0));
+                    $enterpriseUnits = max(0, (int) ($row['enterprise_units'] ?? 0));
+                    $stats[$courseId]['enrollment_channels'] = [
+                        'total' => $directUnits + $promoUnits + $enterpriseUnits,
+                        'direct' => $directUnits,
+                        'promo' => $promoUnits,
+                        'enterprise' => $enterpriseUnits,
+                    ];
                 }
             }
         }
@@ -441,6 +483,29 @@ final class AdminCoursesModel extends Model
             }
         }
 
+        foreach ($stats as $courseId => $courseStats) {
+            $students = max(0, (int) ($courseStats['students'] ?? 0));
+            $channels = is_array($courseStats['enrollment_channels'] ?? null)
+                ? $courseStats['enrollment_channels']
+                : [];
+            $direct = max(0, (int) ($channels['direct'] ?? 0));
+            $promo = max(0, (int) ($channels['promo'] ?? 0));
+            $enterprise = max(0, (int) ($channels['enterprise'] ?? 0));
+            $channelTotal = $direct + $promo + $enterprise;
+            $total = max($students, $channelTotal);
+
+            if ($channelTotal < $total) {
+                $direct += $total - $channelTotal;
+            }
+
+            $stats[$courseId]['enrollment_channels'] = [
+                'total' => $total,
+                'direct' => $direct,
+                'promo' => $promo,
+                'enterprise' => $enterprise,
+            ];
+        }
+
         return $stats;
     }
 
@@ -450,40 +515,7 @@ final class AdminCoursesModel extends Model
      */
     private function buildPendingWhere(array $filters): array
     {
-        $clauses = ['c.status = "submitted"'];
-        $params = [];
-
-        $q = trim((string) ($filters['q'] ?? ''));
-        if ($q !== '') {
-            $clauses[] = '(c.title LIKE :q OR CONCAT_WS(" ", u.first_name, u.last_name) LIKE :q OR COALESCE(cat.name, "") LIKE :q)';
-            $params[':q'] = '%' . $q . '%';
-        }
-
-        $teacher = trim((string) ($filters['teacher'] ?? ''));
-        if ($teacher !== '') {
-            $clauses[] = 'CONCAT_WS(" ", u.first_name, u.last_name) LIKE :teacher';
-            $params[':teacher'] = '%' . $teacher . '%';
-        }
-
-        $category = trim((string) ($filters['category'] ?? ''));
-        if ($category !== '') {
-            $clauses[] = 'COALESCE(cat.name, "") LIKE :category';
-            $params[':category'] = '%' . $category . '%';
-        }
-
-        $dateFrom = trim((string) ($filters['date_from'] ?? ''));
-        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) === 1) {
-            $clauses[] = 'DATE(c.submitted_at) >= :date_from';
-            $params[':date_from'] = $dateFrom;
-        }
-
-        $dateTo = trim((string) ($filters['date_to'] ?? ''));
-        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo) === 1) {
-            $clauses[] = 'DATE(c.submitted_at) <= :date_to';
-            $params[':date_to'] = $dateTo;
-        }
-
-        return [implode(' AND ', $clauses), $params];
+        return $this->buildCoursesWhere('submitted', $filters, 'submitted_at');
     }
 
     /**
@@ -492,8 +524,18 @@ final class AdminCoursesModel extends Model
      */
     private function buildHistoryWhere(array $filters): array
     {
-        $clauses = ['c.status IN ("approved","rejected")'];
+        return $this->buildCoursesWhere('approved', $filters, 'updated_at');
+    }
+
+    /**
+     * @param array<string,mixed> $filters
+     * @return array{0:string,1:array<string,mixed>}
+     */
+    private function buildCoursesWhere(string $status, array $filters, string $dateColumn): array
+    {
+        $clauses = ['c.status = :status'];
         $params = [];
+        $params[':status'] = $status;
 
         $q = trim((string) ($filters['q'] ?? ''));
         if ($q !== '') {
@@ -507,6 +549,12 @@ final class AdminCoursesModel extends Model
             $params[':teacher'] = '%' . $teacher . '%';
         }
 
+        $teacherId = max(0, (int) ($filters['teacher_id'] ?? 0));
+        if ($teacherId > 0) {
+            $clauses[] = 'c.teacher_id = :teacher_id';
+            $params[':teacher_id'] = $teacherId;
+        }
+
         $category = trim((string) ($filters['category'] ?? ''));
         if ($category !== '') {
             $clauses[] = 'COALESCE(cat.name, "") LIKE :category';
@@ -515,17 +563,72 @@ final class AdminCoursesModel extends Model
 
         $dateFrom = trim((string) ($filters['date_from'] ?? ''));
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) === 1) {
-            $clauses[] = 'DATE(c.updated_at) >= :date_from';
+            $clauses[] = 'DATE(c.' . $dateColumn . ') >= :date_from';
             $params[':date_from'] = $dateFrom;
         }
 
         $dateTo = trim((string) ($filters['date_to'] ?? ''));
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo) === 1) {
-            $clauses[] = 'DATE(c.updated_at) <= :date_to';
+            $clauses[] = 'DATE(c.' . $dateColumn . ') <= :date_to';
             $params[':date_to'] = $dateTo;
         }
 
         return [implode(' AND ', $clauses), $params];
+    }
+
+    /**
+     * @param array<string,mixed> $filters
+     * @return array<int,array<string,mixed>>
+     */
+    private function fetchCoursesByStatus(string $status, int $limit, int $offset, array $filters): array
+    {
+        [$whereSql, $params] = $status === 'approved'
+            ? $this->buildHistoryWhere($filters)
+            : $this->buildPendingWhere($filters);
+
+        $orderBy = $status === 'approved'
+            ? 'c.updated_at DESC, c.id DESC'
+            : 'c.submitted_at ASC, c.id ASC';
+
+        $sql = 'SELECT c.*, u.first_name, u.last_name, cat.name AS category_name
+                FROM courses c
+                JOIN users u ON u.id = c.teacher_id
+                LEFT JOIN categories cat ON cat.id = c.category_id
+                WHERE ' . $whereSql . '
+                ORDER BY ' . $orderBy;
+
+        $limit = max(0, $limit);
+        $offset = max(0, $offset);
+        if ($limit > 0) {
+            $sql .= ' LIMIT ' . (int) $limit . ' OFFSET ' . (int) $offset;
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll() ?: [];
+    }
+
+    /**
+     * @param array<string,mixed> $filters
+     */
+    private function fetchCoursesTotalByStatus(string $status, array $filters): int
+    {
+        [$whereSql, $params] = $status === 'approved'
+            ? $this->buildHistoryWhere($filters)
+            : $this->buildPendingWhere($filters);
+
+        $stmt = $this->pdo->prepare(
+            'SELECT COUNT(*) AS total
+             FROM courses c
+             JOIN users u ON u.id = c.teacher_id
+             LEFT JOIN categories cat ON cat.id = c.category_id
+             WHERE ' . $whereSql
+        );
+        $stmt->execute($params);
+        $row = $stmt->fetch() ?: [];
+
+        return (int) ($row['total'] ?? 0);
     }
 
     /**
@@ -663,6 +766,16 @@ final class AdminCoursesModel extends Model
             && $this->columnExistsSafe('enrollments', 'course_id')
             && $this->columnExistsSafe('enrollments', 'user_id')
             && $this->columnExistsSafe('enrollments', 'status');
+    }
+
+    private function hasPromoScopeColumn(): bool
+    {
+        return $this->courseSalesSchemaReady() && $this->columnExistsSafe('order_items', 'promo_scope');
+    }
+
+    private function hasCompanyIdColumn(): bool
+    {
+        return $this->courseSalesSchemaReady() && $this->columnExistsSafe('order_items', 'company_id');
     }
 
     private function tableExistsSafe(string $table): bool

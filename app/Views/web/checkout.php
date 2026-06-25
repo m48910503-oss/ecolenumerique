@@ -30,7 +30,7 @@ if ($platformName === '') {
 $homeUrl = site_url('');
 $catalogueUrl = site_url('catalogue');
 $profileUrl = site_url('profile');
-$teacherApplyUrl = site_url('teacher/apply');
+$teacherApplyUrl = site_url('become-teacher');
 $supportUrl = site_url('support');
 $supportWhatsappRaw = trim((string) platform_setting_get('support_whatsapp', ''));
 $supportWhatsappDigits = (string) preg_replace('/\D+/', '', $supportWhatsappRaw);

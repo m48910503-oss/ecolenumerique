@@ -1,13 +1,11 @@
 (function () {
-  const container = document.getElementById("certificate-container");
-  const orientationButtons = Array.from(
-    document.querySelectorAll("[data-certificate-orientation]")
+  const downloadMenu = document.querySelector("[data-certificate-download-menu]");
+  const downloadLinks = Array.from(
+    document.querySelectorAll("[data-certificate-download-link]")
   );
-  const printButtons = Array.from(
-    document.querySelectorAll("[data-certificate-print]")
-  );
+  const printButtons = Array.from(document.querySelectorAll("[data-certificate-print]"));
   const qrTargets = Array.from(document.querySelectorAll("[data-certificate-qr]"));
-  let currentOrientation = "portrait";
+  let menuToggleBound = false;
 
   function renderQrCodes() {
     if (typeof qrcode !== "function") return;
@@ -41,44 +39,90 @@
       document.head.appendChild(style);
     }
 
-    const size = currentOrientation === "landscape" ? "A4 landscape" : "A4 portrait";
-    style.textContent = "@page { size: " + size + "; margin: 0; }";
+    style.textContent = "@page { size: A4 landscape; margin: 0; }";
   }
 
-  function setOrientation(orientation) {
-    if (!container) return;
-    const next = orientation === "landscape" ? "landscape" : "portrait";
-    currentOrientation = next;
-    container.classList.toggle("admin-certificate-card--portrait", next === "portrait");
-    container.classList.toggle("admin-certificate-card--landscape", next === "landscape");
+  function buildDownloadUrl(mode) {
+    if (!downloadMenu) {
+      return "";
+    }
 
-    orientationButtons.forEach((button) => {
-      const isActive = button.getAttribute("data-certificate-orientation") === next;
-      button.classList.toggle("is-active", isActive);
-      button.setAttribute("aria-pressed", isActive ? "true" : "false");
-    });
+    const baseUrl = downloadMenu.getAttribute("data-certificate-download-base") || "";
+    if (!baseUrl) {
+      return "";
+    }
 
-    applyPrintPageStyle();
+    const url = new URL(baseUrl, window.location.href);
+    url.searchParams.set("export", mode);
+    return url.toString();
   }
 
-  orientationButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      setOrientation(button.getAttribute("data-certificate-orientation") || "portrait");
+  function syncDownloadLinks() {
+    downloadLinks.forEach((link) => {
+      const mode = link.getAttribute("data-certificate-download-link") || "";
+      const nextUrl = buildDownloadUrl(mode);
+      if (nextUrl) {
+        link.setAttribute("href", nextUrl);
+      }
     });
-  });
+  }
+
+  function closeDownloadMenu() {
+    if (downloadMenu && downloadMenu.open) {
+      downloadMenu.open = false;
+    }
+  }
 
   printButtons.forEach((button) => {
     button.addEventListener("click", () => {
+      closeDownloadMenu();
       renderQrCodes();
       applyPrintPageStyle();
       window.print();
     });
   });
 
+  downloadLinks.forEach((link) => {
+    link.addEventListener("click", () => {
+      closeDownloadMenu();
+    });
+  });
+
+  if (downloadMenu && !menuToggleBound) {
+    menuToggleBound = true;
+    downloadMenu.addEventListener("toggle", () => {
+      const summary = downloadMenu.querySelector("summary");
+      if (summary) {
+        summary.setAttribute("aria-expanded", downloadMenu.open ? "true" : "false");
+      }
+    });
+    const summary = downloadMenu.querySelector("summary");
+    if (summary) {
+      summary.setAttribute("aria-expanded", downloadMenu.open ? "true" : "false");
+    }
+  }
+
+  document.addEventListener("click", (event) => {
+    if (!downloadMenu || !downloadMenu.open) {
+      return;
+    }
+    if (!downloadMenu.contains(event.target)) {
+      closeDownloadMenu();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeDownloadMenu();
+    }
+  });
+
   window.addEventListener("beforeprint", () => {
     renderQrCodes();
     applyPrintPageStyle();
   });
-  setOrientation("portrait");
+
+  syncDownloadLinks();
+  applyPrintPageStyle();
   renderQrCodes();
 })();

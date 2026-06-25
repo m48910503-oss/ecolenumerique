@@ -422,6 +422,7 @@ $supportContentShellClass = $useTeacherShell
                         <div id="support-ticket-empty" class="<?php echo $supportTickets !== [] ? 'hidden ' : ''; ?>rounded-xl border border-dashed border-gray-200 px-4 py-8 text-center text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
                             Aucun ticket pour le moment.
                         </div>
+                        <div id="support-ticket-pagination" class="mt-4 hidden"></div>
                     </section>
                 </div>
             </div>

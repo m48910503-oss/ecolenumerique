@@ -28,11 +28,12 @@ $appTypographyCssUrl = site_url('assets/css/app-typography.css?v=' . (@filemtime
 
 $companyNav = $companySimpleMemberMode ? [
     ['key' => 'dashboard', 'label' => 'Tableau de bord', 'url' => site_url('company/dashboard'), 'icon' => 'home', 'badge' => 0],
-    ['key' => 'courses', 'label' => 'Mes cours', 'url' => site_url('student/my_courses'), 'icon' => 'book-open', 'badge' => 0],
+    ['key' => 'courses', 'label' => 'Mes cours', 'url' => site_url('company/courses'), 'icon' => 'book-open', 'badge' => 0],
     ['key' => 'catalogue', 'label' => 'Catalogue', 'url' => site_url('catalogue'), 'icon' => 'search', 'badge' => 0],
     ['key' => 'support', 'label' => 'Assistance', 'url' => site_url('support?space=company'), 'icon' => 'life-ring', 'badge' => 0],
 ] : [
     ['key' => 'dashboard', 'label' => 'Tableau de bord', 'url' => site_url('company/dashboard'), 'icon' => 'home', 'badge' => 0],
+    ['key' => 'courses', 'label' => 'Mes cours', 'url' => site_url('company/courses'), 'icon' => 'book-open', 'badge' => 0],
     ['key' => 'invites', 'label' => 'Invitations', 'url' => site_url('company/invites'), 'icon' => 'envelope', 'badge' => max(0, (int) ($inviteSummary['pending'] ?? 0))],
     ['key' => 'members', 'label' => 'Collaborateurs', 'url' => site_url('company/members'), 'icon' => 'users', 'badge' => max(0, (int) ($memberSummary['active'] ?? 0))],
     ['key' => 'seats', 'label' => 'Formations / Places', 'url' => site_url('company/seats'), 'icon' => 'book-open', 'badge' => max(0, (int) ($seatSummary['seats_available'] ?? 0))],

@@ -57,9 +57,7 @@ final class ProfileController extends Controller
         $this->render('web/profile', array_merge(
             $data,
             [
-                'unreadCount' => (int) ($badgeData['unreadCount'] ?? 0),
                 'supportUnreadCount' => (int) ($badgeData['supportUnreadCount'] ?? 0),
-                'pendingMeetingsCount' => (int) ($badgeData['pendingMeetingsCount'] ?? 0),
                 'dashboardSpace' => $badgeData['space'] ?? null,
                 'adminPermissions' => $adminAccess->allowedPermissions($user),
                 'isGeneralAdmin' => $adminAccess->isGeneralAdmin($user),

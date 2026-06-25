@@ -86,6 +86,89 @@
     return mime.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp)$/i.test(name);
   }
 
+  let imagePreviewModal = null;
+
+  function closeImagePreview() {
+    if (!imagePreviewModal) return;
+    imagePreviewModal.overlay.classList.add('hidden');
+    imagePreviewModal.overlay.classList.remove('flex');
+    imagePreviewModal.title.textContent = 'Aperçu de l’image';
+    imagePreviewModal.image.src = '';
+    imagePreviewModal.image.alt = '';
+    document.body.classList.remove('overflow-hidden');
+  }
+
+  function ensureImagePreviewModal() {
+    if (imagePreviewModal) {
+      return imagePreviewModal;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 p-4';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+
+    const panel = document.createElement('div');
+    panel.className = 'flex w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-slate-950 shadow-2xl ring-1 ring-white/10';
+    panel.style.maxHeight = '92vh';
+
+    const header = document.createElement('div');
+    header.className = 'flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3 text-white';
+
+    const title = document.createElement('p');
+    title.className = 'min-w-0 truncate text-sm font-semibold';
+    title.textContent = 'Aperçu de l’image';
+
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20';
+    closeButton.setAttribute('aria-label', 'Fermer l’aperçu');
+    closeButton.innerHTML = '<i class="fas fa-times" aria-hidden="true"></i>';
+    closeButton.addEventListener('click', closeImagePreview);
+
+    header.appendChild(title);
+    header.appendChild(closeButton);
+
+    const body = document.createElement('div');
+    body.className = 'flex min-h-0 flex-1 items-center justify-center bg-black/35 p-4';
+
+    const image = document.createElement('img');
+    image.className = 'max-w-full rounded-2xl object-contain shadow-2xl';
+    image.style.maxHeight = '78vh';
+    image.style.maxWidth = '100%';
+    body.appendChild(image);
+
+    panel.appendChild(header);
+    panel.appendChild(body);
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) {
+        closeImagePreview();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && imagePreviewModal && !imagePreviewModal.overlay.classList.contains('hidden')) {
+        closeImagePreview();
+      }
+    });
+
+    imagePreviewModal = { overlay, title, image };
+    return imagePreviewModal;
+  }
+
+  function openImagePreview(src, titleText) {
+    const modal = ensureImagePreviewModal();
+    modal.title.textContent = titleText || 'Aperçu de l’image';
+    modal.image.alt = titleText || 'Aperçu de l’image';
+    modal.image.src = src;
+    modal.overlay.classList.remove('hidden');
+    modal.overlay.classList.add('flex');
+    document.body.classList.add('overflow-hidden');
+  }
+
   function parseDateValue(raw) {
     const value = String(raw || '').trim();
     if (!value) return null;
@@ -622,17 +705,26 @@
       list.className = 'mt-2 flex flex-wrap gap-2';
       msg.attachments.forEach((att) => {
         const link = document.createElement('a');
-        link.href = attachmentUrl(att);
         if (isImageAttachment(att)) {
           link.className = 'support-chat-image-link';
-          link.title = att.name || 'capture';
+          const previewUrl = attachmentUrl(att, true);
+          link.href = previewUrl;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.title = `Aperçu: ${att.name || 'capture'}`;
+          link.style.cursor = 'zoom-in';
+          link.addEventListener('click', (event) => {
+            event.preventDefault();
+            openImagePreview(previewUrl, att.name || 'Capture jointe');
+          });
           const image = document.createElement('img');
-          image.src = attachmentUrl(att, true);
+          image.src = previewUrl;
           image.alt = att.name || 'Capture jointe';
           image.loading = 'lazy';
           image.className = 'support-chat-image-thumb';
           link.appendChild(image);
         } else {
+          link.href = attachmentUrl(att);
           link.className =
             'support-attachment-link text-xs px-2 py-1 rounded-full border border-slate-200 bg-slate-50 hover:border-slate-300';
           link.textContent = `${att.name || 'fichier'} - ${formatSize(

@@ -10,6 +10,13 @@ $catalogueUrl = (string) ($catalogueUrl ?? site_url('catalogue'));
 $teacherDashboardUrl = site_url('teacher/dashboard');
 $siteLogoUrl = trim((string) ($siteLogoUrl ?? ''));
 $teacherUser = is_array($user ?? null) ? $user : [];
+$teacherDisplayName = trim((string) ($teacherDisplayName ?? dashboard_user_display_name($teacherUser, 'Enseignant')));
+if ($teacherDisplayName === '') {
+    $teacherDisplayName = 'Enseignant';
+}
+$teacherEmail = trim((string) ($teacherEmail ?? ($teacherUser['email'] ?? '')));
+$teacherAvatarUrl = trim((string) ($teacherAvatarUrl ?? dashboard_user_avatar_url($teacherUser)));
+$teacherInitials = trim((string) ($teacherInitials ?? dashboard_user_initials($teacherUser, 'EN')));
 $topUnreadCount = max(0, (int) ($unreadCount ?? 0)); 
 $topSupportUnreadCount = max(0, (int) ($supportUnreadCount ?? 0));
 $notificationsUrl = site_url('notifications?space=teacher');
@@ -41,7 +48,7 @@ if ($teacherDashboardShell !== false) {
                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
                 <input type="text" placeholder="Rechercher..." class="pl-9 pr-4 py-2 bg-gray-100 dark:bg-gray-700 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none w-64">
             </div>
-            <button
+                <button
                 type="button"
                 data-theme-toggle
                 id="theme-toggle"
@@ -67,7 +74,16 @@ if ($teacherDashboardShell !== false) {
             <details class="student-user-menu relative shrink-0" data-dashboard-user-menu>
                 <summary class="student-dashboard-user-trigger inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-2 border-blue-200 bg-white shadow-sm transition hover:border-blue-300 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-blue-400 sm:h-11 sm:w-11" aria-label="Ouvrir le menu utilisateur" aria-haspopup="menu">
                     <?php if ($teacherAvatarUrl !== ''): ?>
-                        <img src="<?php echo e($teacherAvatarUrl); ?>" alt="" class="h-9 w-9 rounded-full object-cover sm:h-10 sm:w-10">
+                        <img
+                            src="<?php echo e($teacherAvatarUrl); ?>"
+                            alt=""
+                            class="hidden h-9 w-9 rounded-full object-cover sm:h-10 sm:w-10"
+                            onload="this.classList.remove('hidden');this.nextElementSibling.classList.add('hidden');"
+                            onerror="this.classList.add('hidden');this.nextElementSibling.classList.remove('hidden');"
+                        >
+                        <span class="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 text-sm font-bold text-white shadow-md sm:h-10 sm:w-10">
+                            <?php echo e($teacherInitials); ?>
+                        </span>
                     <?php else: ?>
                         <span class="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 text-sm font-bold text-white shadow-md sm:h-10 sm:w-10">
                             <?php echo e($teacherInitials); ?>

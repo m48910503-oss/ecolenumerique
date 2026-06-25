@@ -1,4 +1,6 @@
 (function () {
+  'use strict';
+
   if (window.__ADMIN_ANNOUNCEMENTS_UI_BOUND__) {
     return;
   }
@@ -9,83 +11,92 @@
     return;
   }
 
-  const searchForm = document.querySelector('[data-search-form]');
-  const showSearchButtons = document.querySelectorAll('[data-search-toggle="show"]');
-  const hideSearchButtons = document.querySelectorAll('[data-search-toggle="hide"]');
-
   const MODAL_SELECTOR = '.js-admin-modal';
-  const DELETE_MODAL_ID = 'announcement-delete-modal';
+  const detailModal = document.getElementById('announcement-detail-modal');
+  const detailModalBody = document.getElementById('announcement-detail-modal-body');
+  const detailModalTitle = document.getElementById('announcement-detail-modal-title');
+  const deleteModal = document.getElementById('announcement-delete-modal');
   const deleteIdInput = document.getElementById('announcement-delete-id');
   const deleteMessage = document.getElementById('announcement-delete-message');
+  const initialOpenId = String(pageRoot.getAttribute('data-announcement-open-id') || '').trim();
 
-  function showSearch() {
-    if (!searchForm) return;
-    searchForm.classList.remove('hidden');
+  function getModal(modalId) {
+    if (!modalId) {
+      return null;
+    }
+    return document.getElementById(String(modalId));
   }
 
-  function hideSearch() {
-    if (!searchForm) return;
-    searchForm.classList.add('hidden');
-  }
-
-  function getModal(id) {
-    if (!id) return null;
-    return document.getElementById(String(id));
-  }
-
-  function openModal(id) {
-    const modal = getModal(id);
-    if (!modal) return;
+  function openModal(modal) {
+    if (!(modal instanceof HTMLElement)) {
+      return;
+    }
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     modal.setAttribute('aria-hidden', 'false');
   }
 
-  function closeModal(id) {
-    const modal = getModal(id);
-    if (!modal) return;
+  function closeModal(modal) {
+    if (!(modal instanceof HTMLElement)) {
+      return;
+    }
     modal.classList.add('hidden');
     modal.classList.remove('flex');
     modal.setAttribute('aria-hidden', 'true');
   }
 
   function closeAllModals() {
-    const modals = document.querySelectorAll(MODAL_SELECTOR);
-    modals.forEach((modal) => {
-      if (!(modal instanceof HTMLElement)) return;
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-      modal.setAttribute('aria-hidden', 'true');
+    document.querySelectorAll(MODAL_SELECTOR).forEach((modal) => {
+      if (modal instanceof HTMLElement) {
+        closeModal(modal);
+      }
     });
   }
 
   function setDeleteContext(id, title) {
-    if (deleteIdInput) {
+    if (deleteIdInput instanceof HTMLInputElement) {
       deleteIdInput.value = String(id || '');
     }
-    if (deleteMessage) {
+    if (deleteMessage instanceof HTMLElement) {
       const safeTitle = String(title || '').trim();
       deleteMessage.textContent = safeTitle
         ? `Supprimer l'annonce "${safeTitle}" ?`
-        : "Supprimer cette annonce ?";
+        : 'Supprimer cette annonce ?';
     }
   }
 
-  showSearchButtons.forEach((button) => {
-    button.addEventListener('click', showSearch);
-  });
+  function openDetailAnnouncement(id, title) {
+    const content = document.getElementById('announcement-detail-content-' + String(id || ''));
+    if (!(detailModalBody instanceof HTMLElement) || !(detailModal instanceof HTMLElement)) {
+      return;
+    }
 
-  hideSearchButtons.forEach((button) => {
-    button.addEventListener('click', hideSearch);
-  });
+    detailModalBody.innerHTML = content instanceof HTMLElement
+      ? content.innerHTML
+      : '<p class="text-sm text-slate-500 dark:text-slate-400">Détails indisponibles.</p>';
 
-  if (searchForm && searchForm.dataset.searchOpen === '1') {
-    showSearch();
+    if (detailModalTitle instanceof HTMLElement) {
+      detailModalTitle.textContent = String(title || '').trim() || 'Détails de l’annonce';
+    }
+
+    openModal(detailModal);
   }
 
   document.addEventListener('click', (event) => {
     const target = event.target;
-    if (!(target instanceof Element)) return;
+    if (!(target instanceof Element)) {
+      return;
+    }
+
+    const detailButton = target.closest('[data-announcement-detail-open]');
+    if (detailButton) {
+      event.preventDefault();
+      openDetailAnnouncement(
+        detailButton.getAttribute('data-announcement-detail-open'),
+        detailButton.getAttribute('data-announcement-detail-title')
+      );
+      return;
+    }
 
     const deleteButton = target.closest('[data-announcement-delete-id]');
     if (deleteButton) {
@@ -94,7 +105,7 @@
         deleteButton.getAttribute('data-announcement-delete-id'),
         deleteButton.getAttribute('data-announcement-delete-title')
       );
-      openModal(DELETE_MODAL_ID);
+      openModal(deleteModal);
       return;
     }
 
@@ -103,24 +114,31 @@
       event.preventDefault();
       const modalId = closeButton.getAttribute('data-modal-target');
       if (modalId) {
-        closeModal(modalId);
+        closeModal(getModal(modalId));
       } else {
-        const parentModal = closeButton.closest(MODAL_SELECTOR);
-        if (parentModal && parentModal.id) {
-          closeModal(parentModal.id);
-        }
+        closeModal(closeButton.closest(MODAL_SELECTOR));
       }
       return;
     }
 
     const modalBackdrop = target.closest(MODAL_SELECTOR);
-    if (modalBackdrop && target === modalBackdrop && modalBackdrop.id) {
-      closeModal(modalBackdrop.id);
+    if (modalBackdrop && target === modalBackdrop) {
+      closeModal(modalBackdrop);
     }
   });
 
   document.addEventListener('keydown', (event) => {
-    if (event.key !== 'Escape') return;
-    closeAllModals();
+    if (event.key === 'Escape') {
+      closeAllModals();
+    }
   });
+
+  if (initialOpenId !== '') {
+    window.setTimeout(() => {
+      const button = pageRoot.querySelector('[data-announcement-detail-open="' + initialOpenId + '"]');
+      if (button instanceof HTMLElement) {
+        button.click();
+      }
+    }, 0);
+  }
 })();

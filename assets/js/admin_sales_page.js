@@ -19,6 +19,10 @@
       panel.classList.toggle('hidden', !active);
     });
 
+    Array.prototype.slice.call(page.querySelectorAll('input[name="tab"]')).forEach(function (input) {
+      input.value = tabName;
+    });
+
     if (window.history && window.history.replaceState) {
       var url = new URL(window.location.href);
       url.searchParams.set('tab', tabName);
@@ -29,11 +33,11 @@
   tabs.forEach(function (tab) {
     tab.setAttribute('role', 'tab');
     tab.addEventListener('click', function () {
-      activateTab(tab.getAttribute('data-finance-tab') || 'transactions');
+      activateTab(tab.getAttribute('data-finance-tab') || 'home');
     });
   });
 
-  var defaultTab = page.getAttribute('data-default-tab') || 'transactions';
+  var defaultTab = page.getAttribute('data-default-tab') || 'home';
   activateTab(defaultTab);
 
   var searchInput = page.querySelector('[data-admin-finance-search]');

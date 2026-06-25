@@ -24,6 +24,7 @@ $errors = [];
 
 $requiredRoutes = [
     '',
+    'become-teacher',
     'course',
     'course_preview_open',
     'checkout',
@@ -45,6 +46,7 @@ $requiredRoutes = [
     'teacher/withdrawals/retraits',
     'company/dashboard',
     'company/analytics',
+    'company/courses',
     'company/billing',
     'company/invites',
     'company/members',
@@ -57,8 +59,14 @@ $requiredRoutes = [
     'company/teams',
     'admin/dashboard',
     'admin/statistics',
-    'admin/announcements',
     'admin/secondary_login',
+    'admin/secondary_admins',
+    'admin/secondary_admins/create',
+    'admin/secondary_admins/grant',
+    'admin/secondary_admins/edit',
+    'admin/secondary_admins/activity',
+    'admin/announcements',
+    'admin/announcements/create',
 ];
 
 foreach ($requiredRoutes as $path) {

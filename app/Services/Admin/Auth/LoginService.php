@@ -4,8 +4,10 @@ declare(strict_types=1);
 namespace App\Services\Admin\Auth;
 
 use App\Core\Service;
+use App\Models\AdminDashboardModel;
 use App\Models\AdminLoginModel;
 use App\Security\LoginThrottle;
+use App\Services\Admin\AdminAccessService;
 
 final class LoginService extends Service
 {
@@ -58,6 +60,18 @@ final class LoginService extends Service
                 } else {
                     $throttle->clear('admin', $email, $ip);
                     $this->loginUser($user, false);
+                    if (in_array(AdminAccessService::ROLE_SECONDARY, $roles, true)) {
+                        (new AdminDashboardModel($this->pdo()))->insertAuditLog(
+                            (int) ($user['id'] ?? 0),
+                            'secondary_admin_login',
+                            'auth',
+                            null,
+                            [
+                                'source' => 'admin_login',
+                                'redirect_to' => $this->siteUrl('admin/dashboard'),
+                            ]
+                        );
+                    }
 
                     return [
                         'redirectTo' => $this->siteUrl('admin/dashboard'),

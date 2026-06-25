@@ -856,23 +856,14 @@ final class AdminStatisticsModel extends Model
         $hasPublishedAt = $this->columnExistsSafe('admin_announcements', 'published_at');
         $hasImportance = $this->columnExistsSafe('admin_announcements', 'importance');
         $hasSentCount = $this->columnExistsSafe('admin_announcements', 'sent_count');
-        $hasSentCountB = $this->columnExistsSafe('admin_announcements', 'sent_count_b');
         $hasReadCount = $this->columnExistsSafe('admin_announcements', 'read_count');
-        $hasReadCountB = $this->columnExistsSafe('admin_announcements', 'read_count_b');
 
         $recentColumn = $hasPublishedAt ? 'published_at' : 'created_at';
         $publishedCondition = $hasStatus ? '(status = "published")' : '1=1';
         $urgentCondition = $hasImportance ? '(importance = "urgent")' : '0=1';
 
         $sentExpr = $hasSentCount ? 'COALESCE(sent_count, 0)' : '0';
-        if ($hasSentCountB) {
-            $sentExpr = '(' . $sentExpr . ' + COALESCE(sent_count_b, 0))';
-        }
-
         $readExpr = $hasReadCount ? 'COALESCE(read_count, 0)' : '0';
-        if ($hasReadCountB) {
-            $readExpr = '(' . $readExpr . ' + COALESCE(read_count_b, 0))';
-        }
 
         $recentCondition = $recentColumn . ' >= DATE_SUB(NOW(), INTERVAL ' . $safeDays . ' DAY)';
 

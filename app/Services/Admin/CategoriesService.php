@@ -5,46 +5,55 @@ namespace App\Services\Admin;
 
 use App\Core\Service;
 use App\Models\AdminCategoriesModel;
+use App\Models\AdminDashboardModel;
 
 final class CategoriesService extends Service
 {
     private \PDO $pdo;
     private AdminCategoriesModel $model;
+    private AdminDashboardModel $auditModel;
 
-    public function __construct(\PDO $pdo, AdminCategoriesModel $model)
+    public function __construct(\PDO $pdo, AdminCategoriesModel $model, AdminDashboardModel $auditModel)
     {
         $this->pdo = $pdo;
         $this->model = $model;
+        $this->auditModel = $auditModel;
     }
 
     /**
      * @param array<string,mixed> $post
+     * @param array<string,mixed> $currentUser
      * @return array{
      *   redirectTo:?string,
      *   view:array<string,mixed>
      * }
      */
-    public function handle(string $method, array $post): array
+    public function handle(string $method, array $post, array $currentUser): array
     {
         $errors = [];
         $success = (string) $this->flashGet('success', '');
+        $currentPage = max(1, (int) ($post['page'] ?? 1));
 
         if ($method === 'POST') {
             $action = (string) ($post['action'] ?? '');
 
             if ($action === 'create') {
-                $this->handleCreate($post, $errors, $success);
+                $this->handleCreate($post, $currentUser, $errors, $success);
             } elseif ($action === 'update') {
-                $this->handleUpdate($post, $errors, $success);
+                $this->handleUpdate($post, $currentUser, $errors, $success);
             } elseif ($action === 'delete') {
-                $this->handleDelete($post, $errors, $success);
+                $this->handleDelete($post, $currentUser, $errors, $success);
             }
         }
 
         if ($method === 'POST' && $errors === [] && $success !== '') {
             $this->flashSet('success', $success);
+            $query = [];
+            if ($currentPage > 1) {
+                $query['page'] = $currentPage;
+            }
             return [
-                'redirectTo' => $this->siteUrl('admin/categories'),
+                'redirectTo' => $this->siteUrl('admin/categories' . ($query !== [] ? ('?' . http_build_query($query)) : '')),
                 'view' => [],
             ];
         }
@@ -61,9 +70,10 @@ final class CategoriesService extends Service
 
     /**
      * @param array<string,mixed> $post
+     * @param array<string,mixed> $currentUser
      * @param array<int,string> $errors
      */
-    private function handleCreate(array $post, array &$errors, string &$success): void
+    private function handleCreate(array $post, array $currentUser, array &$errors, string &$success): void
     {
         $name = trim((string) ($post['name'] ?? ''));
         $slug = trim((string) ($post['slug'] ?? ''));
@@ -86,6 +96,11 @@ final class CategoriesService extends Service
             if (!$active) {
                 $this->model->setCategoryActive($categoryId, false);
             }
+            $this->recordAudit((int) ($currentUser['id'] ?? 0), 'category_create', $categoryId, [
+                'name' => $name,
+                'slug' => $slug,
+                'active' => $active ? '1' : '0',
+            ]);
             $this->pdo->commit();
             $success = 'Catégorie créée.';
         } catch (\Throwable $e) {
@@ -98,9 +113,10 @@ final class CategoriesService extends Service
 
     /**
      * @param array<string,mixed> $post
+     * @param array<string,mixed> $currentUser
      * @param array<int,string> $errors
      */
-    private function handleUpdate(array $post, array &$errors, string &$success): void
+    private function handleUpdate(array $post, array $currentUser, array &$errors, string &$success): void
     {
         $id = (int) ($post['id'] ?? 0);
         $name = trim((string) ($post['name'] ?? ''));
@@ -124,6 +140,11 @@ final class CategoriesService extends Service
         try {
             $this->pdo->beginTransaction();
             $this->model->updateCategory($id, $name, $slug, $active);
+            $this->recordAudit((int) ($currentUser['id'] ?? 0), 'category_update', $id, [
+                'name' => $name,
+                'slug' => $slug,
+                'active' => $active ? '1' : '0',
+            ]);
             $this->pdo->commit();
             $success = 'Catégorie mise à jour.';
         } catch (\Throwable $e) {
@@ -136,9 +157,10 @@ final class CategoriesService extends Service
 
     /**
      * @param array<string,mixed> $post
+     * @param array<string,mixed> $currentUser
      * @param array<int,string> $errors
      */
-    private function handleDelete(array $post, array &$errors, string &$success): void
+    private function handleDelete(array $post, array $currentUser, array &$errors, string &$success): void
     {
         $id = (int) ($post['id'] ?? 0);
         if ($id <= 0) {
@@ -153,7 +175,13 @@ final class CategoriesService extends Service
         }
 
         try {
+            $category = $this->model->findCategoryById($id);
             $this->model->deleteCategory($id);
+            $this->recordAudit((int) ($currentUser['id'] ?? 0), 'category_delete', $id, [
+                'name' => (string) ($category['name'] ?? ''),
+                'slug' => (string) ($category['slug'] ?? ''),
+                'active' => (int) ($category['is_deleted'] ?? 0) === 0 ? '1' : '0',
+            ]);
             $success = 'Catégorie supprimée.';
         } catch (\Throwable $e) {
             $errors[] = 'Impossible de supprimer cette catégorie pour le moment.';
@@ -188,5 +216,13 @@ final class CategoriesService extends Service
         }
 
         return in_array((string) $post['active'], ['1', 'on', 'yes', 'true'], true);
+    }
+
+    /**
+     * @param array<string,mixed> $meta
+     */
+    private function recordAudit(int $actorId, string $action, int $categoryId, array $meta = []): void
+    {
+        $this->auditModel->insertAuditLog($actorId > 0 ? $actorId : null, $action, 'category', $categoryId, $meta);
     }
 }

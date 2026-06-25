@@ -5,6 +5,7 @@ namespace App\Controllers\Admin;
 
 use App\Core\Controller;
 use App\Models\AdminSupportAgentsModel;
+use App\Models\AdminDashboardModel;
 use App\Services\Admin\AdminAccessService;
 use App\Services\Admin\SupportAgentsService;
 
@@ -26,8 +27,8 @@ final class SupportAgentsController extends Controller
             $this->requireCsrf();
         }
 
-        $service = new SupportAgentsService(new AdminSupportAgentsModel($pdo));
-        $result = $service->handle((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'), $_POST);
+        $service = new SupportAgentsService(new AdminSupportAgentsModel($pdo), new AdminDashboardModel($pdo));
+        $result = $service->handle((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'), $_POST, $user);
 
         if (!empty($result['redirectTo'])) {
             header('Location: ' . (string) $result['redirectTo']);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Core\Controller;
+use App\Models\AdminDashboardModel;
 use App\Models\AdminSalesModel;
 use App\Models\SharedCompanySchemaModel;
 use App\Models\SharedPaymentModel;
@@ -46,6 +47,7 @@ final class SalesController extends Controller
         );
         $service = new SalesService(
             new AdminSalesModel($pdo),
+            new AdminDashboardModel($pdo),
             new PaymentOpsService(new SharedPaymentModel($pdo), $referrals, $promotions, new ReferralWalletModel($pdo)),
             new PlatformSettingsService(new SharedPlatformSettingsModel($pdo)),
             $referrals

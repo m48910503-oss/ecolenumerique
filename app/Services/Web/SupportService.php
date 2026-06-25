@@ -59,7 +59,7 @@ final class SupportService extends Service
      */
     public function buildTicketFeed(array $user, bool $isStaff, ?string $dashboardSpace = null, int $limit = 200): array
     {
-        $limit = max(1, min(200, $limit));
+        $limit = max(1, min(500, $limit));
         $tickets = [];
         $userId = max(0, (int) ($user['id'] ?? 0));
         unset($dashboardSpace);

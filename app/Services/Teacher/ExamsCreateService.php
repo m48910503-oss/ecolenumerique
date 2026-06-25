@@ -62,9 +62,13 @@ final class ExamsCreateService extends Service
         }
 
         $return = (string) ($get['return'] ?? 'content');
+        $backStep = trim((string) ($get['back_step'] ?? ''));
+        if ($backStep !== '' && preg_match('/^[a-z0-9_-]+$/i', $backStep) !== 1) {
+            $backStep = '';
+        }
         $returnUrl = $return === 'edit'
             ? $this->siteUrl('teacher/course_edit?id=' . $courseId)
-            : $this->siteUrl('teacher/course_content?id=' . $courseId);
+            : $this->siteUrl('teacher/course_content?id=' . $courseId . ($backStep !== '' ? '&step=' . rawurlencode($backStep) : ''));
 
         $isLocked = in_array((string) ($course['status'] ?? ''), ['submitted'], true);
         $existingExam = $this->model->findLatestExamByCourse($courseId);
@@ -173,6 +177,9 @@ final class ExamsCreateService extends Service
         if ($method === 'POST' && $errors === [] && $success !== '') {
             $this->flashSet('success', $success);
             $returnParam = $return !== '' ? '&return=' . urlencode($return) : '';
+            if ($backStep !== '') {
+                $returnParam .= '&back_step=' . urlencode($backStep);
+            }
             return [
                 'redirectTo' => $this->siteUrl('teacher/exams_create?course_id=' . $courseId . $returnParam),
                 'httpStatus' => null,

@@ -130,6 +130,33 @@ body.app-auth-page :is(.font-mono, .font-numeric, code, kbd, samp, pre, [class*=
   color: #2563eb;
 }
 
+.public-mobile-toggle__box {
+  display: inline-grid;
+  gap: 0.22rem;
+}
+
+.public-mobile-toggle__box span {
+  display: block;
+  width: 1rem;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  transition: transform 0.2s ease, opacity 0.2s ease, width 0.2s ease;
+}
+
+.public-mobile-toggle.is-open .public-mobile-toggle__box span:nth-child(1) {
+  transform: translateY(5px) rotate(45deg);
+}
+
+.public-mobile-toggle.is-open .public-mobile-toggle__box span:nth-child(2) {
+  opacity: 0;
+  width: 0;
+}
+
+.public-mobile-toggle.is-open .public-mobile-toggle__box span:nth-child(3) {
+  transform: translateY(-5px) rotate(-45deg);
+}
+
 body.public-nav-open,
 html.public-nav-open {
   overflow: hidden;
@@ -140,7 +167,7 @@ html.public-nav-open {
   inset: 0;
   z-index: 70;
   display: flex;
-  align-items: stretch;
+  align-items: flex-start;
   justify-content: flex-end;
   padding: 0.75rem;
   pointer-events: none;
@@ -212,6 +239,31 @@ html.public-nav-open {
   color: #64748b;
 }
 
+.public-mobile-panel__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.public-mobile-panel__brand-logo {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.65rem;
+  object-fit: cover;
+  box-shadow: 0 8px 18px -10px rgba(15, 23, 42, 0.45);
+}
+
+.public-mobile-panel__brand-logo--fallback {
+  background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  color: #ffffff;
+  font-size: 0.82rem;
+}
+
 .public-mobile-panel__title {
   margin: 0;
   font-size: 1.05rem;
@@ -244,7 +296,9 @@ html.public-nav-open {
 .public-mobile-panel__link:focus-visible,
 .public-mobile-panel__action:focus-visible,
 .public-mobile-panel__backdrop:focus-visible,
-.public-mobile-toggle:focus-visible {
+.public-mobile-toggle:focus-visible,
+[data-web-theme-toggle]:focus-visible,
+.public-mobile-header-notification:focus-visible {
   outline: 2px solid rgba(59, 130, 246, 0.7);
   outline-offset: 2px;
 }
@@ -586,29 +640,84 @@ html[data-theme="dark"] .public-mobile-panel__badge--danger {
   body[data-view="web/checkout"] header .container > div:first-child a > img,
   body[data-view="teacher/apply"] header .container > div:first-child a > img,
   body[data-view="web/course_details"] header .container > div:first-child a > img,
-  body[data-view="web/home"] header .container > div:first-child a > span.flex,
-  body[data-view="web/catalogue"] header .container > div:first-child a > span.flex,
-  body[data-view="web/checkout"] header .container > div:first-child a > span.flex,
-  body[data-view="teacher/apply"] header .container > div:first-child a > span.flex,
-  body[data-view="web/course_details"] header .container > div:first-child a > span.flex {
+  body[data-view="web/home"] header .container > div:first-child a > span.flex:not(.min-w-0),
+  body[data-view="web/catalogue"] header .container > div:first-child a > span.flex:not(.min-w-0),
+  body[data-view="web/checkout"] header .container > div:first-child a > span.flex:not(.min-w-0),
+  body[data-view="teacher/apply"] header .container > div:first-child a > span.flex:not(.min-w-0),
+  body[data-view="web/course_details"] header .container > div:first-child a > span.flex:not(.min-w-0) {
     width: 2.25rem;
     height: 2.25rem;
   }
 
+  body[data-view^="web/"] header .container > div:first-child a > span.flex.min-w-0.flex-col > span:last-child,
+  body[data-view="teacher/apply"] header .container > div:first-child a > span.flex.min-w-0.flex-col > span:last-child {
+    display: none;
+  }
+
   .public-mobile-panel {
-    padding: 0.5rem;
+    padding: 0.4rem;
   }
 
   .public-mobile-panel__sheet {
-    width: 100%;
-    border-radius: 1.25rem;
-    padding: 0.9rem;
+    width: min(100%, 20rem);
+    max-height: calc(100dvh - 0.8rem);
+    border-radius: 1rem;
+    padding: 0.7rem;
+    gap: 0.7rem;
+  }
+
+  .public-mobile-panel__head {
+    padding-bottom: 0;
+  }
+
+  .public-mobile-panel__brand {
+    gap: 0.5rem;
+  }
+
+  .public-mobile-panel__brand-logo {
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 0.6rem;
+  }
+
+  .public-mobile-panel__title {
+    font-size: 0.98rem;
+  }
+
+  .public-mobile-panel__section {
+    gap: 0.5rem;
+  }
+
+  .public-mobile-panel__nav,
+  .public-mobile-panel__actions {
+    gap: 0.4rem;
+  }
+
+  .public-mobile-panel__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .public-mobile-panel__link,
   .public-mobile-panel__action {
-    min-height: 3.2rem;
-    padding: 0.85rem 0.95rem;
+    min-height: 2.7rem;
+    padding: 0.68rem 0.75rem;
+  }
+
+  .public-mobile-panel__link-icon,
+  .public-mobile-panel__action-icon {
+    width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 0.65rem;
+  }
+
+  .public-mobile-panel__action-text {
+    font-size: 0.78rem;
+    line-height: 1.15;
+  }
+
+  .public-mobile-panel__action--primary {
+    min-width: 0;
   }
 }
 
@@ -1114,5 +1223,311 @@ body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main 
   body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-title {
     max-width: 38vw;
     font-size: 1rem !important;
+  }
+}
+
+/* Compact admin density layer, aligned with the student sizing rhythm. */
+body.app-role-admin:not([data-view="admin/certificate_preview"]) {
+  font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.44;
+  letter-spacing: 0;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .text-4xl,
+  .text-3xl,
+  .text-2xl,
+  .text-xl,
+  .text-lg,
+  .sm\:text-4xl,
+  .sm\:text-3xl,
+  .sm\:text-2xl,
+  .sm\:text-xl,
+  .sm\:text-lg
+) {
+  font-family: var(--app-font-title, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(h1, .text-4xl, .sm\:text-4xl) {
+  font-size: clamp(1.45rem, 2.4vw, 1.95rem) !important;
+  line-height: 1.12 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(h2, .text-3xl, .sm\:text-3xl) {
+  font-size: clamp(1.28rem, 2.05vw, 1.7rem) !important;
+  line-height: 1.14 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(h3, .text-2xl, .sm\:text-2xl) {
+  font-size: clamp(1.08rem, 1.7vw, 1.35rem) !important;
+  line-height: 1.18 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.text-xl, .sm\:text-xl) {
+  font-size: 1rem !important;
+  line-height: 1.2 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.text-lg, .sm\:text-lg) {
+  font-size: 0.92rem !important;
+  line-height: 1.24 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.font-semibold, .font-bold, .font-extrabold, .font-black, strong, b) {
+  font-weight: 650 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(input, select, textarea, button) {
+  font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+  font-size: 0.84rem !important;
+  line-height: 1.35 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) {
+  min-height: 2.35rem;
+  border-radius: 0.78rem;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(button, .btn, a[class*="btn"], [class*="btn"], .app-btn, .app-btn-primary, .app-btn-soft, .app-shell-button) {
+  min-height: 2.35rem;
+  padding: 0.48rem 0.78rem;
+  border-radius: 0.78rem;
+  font-size: 0.84rem;
+  letter-spacing: 0;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.badge, [class*="badge"], [class*="pill"], .app-status-pill, .app-kpi-badge) {
+  min-height: 1.6rem;
+  padding: 0.18rem 0.46rem;
+  border-radius: 999px;
+  font-size: 0.64rem;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.rounded-2xl, .sm\:rounded-2xl) {
+  border-radius: 1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.rounded-3xl, .sm\:rounded-3xl) {
+  border-radius: 1.15rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.p-6, .sm\:p-6) {
+  padding: 1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.p-5, .sm\:p-5) {
+  padding: 0.9rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.p-4, .sm\:p-4) {
+  padding: 0.8rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.p-8, .sm\:p-8) {
+  padding: 1.05rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.px-6, .sm\:px-6) {
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.py-6, .sm\:py-6) {
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.px-5, .sm\:px-5) {
+  padding-left: 0.9rem !important;
+  padding-right: 0.9rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.py-5, .sm\:py-5) {
+  padding-top: 0.9rem !important;
+  padding-bottom: 0.9rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.px-4, .sm\:px-4) {
+  padding-left: 0.8rem !important;
+  padding-right: 0.8rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.py-4, .sm\:py-4) {
+  padding-top: 0.8rem !important;
+  padding-bottom: 0.8rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.px-8, .sm\:px-8) {
+  padding-left: 1.05rem !important;
+  padding-right: 1.05rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.py-8, .sm\:py-8) {
+  padding-top: 1.05rem !important;
+  padding-bottom: 1.05rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.gap-6, .sm\:gap-6) {
+  gap: 1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.gap-5, .sm\:gap-5) {
+  gap: 0.85rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.gap-4, .sm\:gap-4) {
+  gap: 0.7rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.gap-8, .sm\:gap-8) {
+  gap: 1.1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .space-y-5 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.85rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.7rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .space-y-8 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1.1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.h-12, .sm\:h-12) {
+  height: 2.65rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.w-12, .sm\:w-12) {
+  width: 2.65rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.h-11, .sm\:h-11) {
+  height: 2.45rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.w-11, .sm\:w-11) {
+  width: 2.45rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.h-10, .sm\:h-10) {
+  height: 2.25rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.w-10, .sm\:w-10) {
+  width: 2.25rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) table :is(th, td) {
+  padding-top: 0.7rem !important;
+  padding-bottom: 0.7rem !important;
+  font-size: 0.82rem !important;
+  line-height: 1.38 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) table th {
+  font-size: 0.74rem !important;
+  letter-spacing: 0.06em !important;
+  text-transform: none !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-shell-content,
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-shell-dense {
+  gap: 1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-shell-content :is(.text-2xl, .sm\:text-2xl, .text-3xl, .sm\:text-3xl) {
+  letter-spacing: 0 !important;
+}
+
+/* Admin courses filter: restore readable widths and contrast. */
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr) auto;
+  gap: 0.8rem;
+  align-items: end;
+}
+
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-field {
+  display: grid;
+  min-width: 0;
+  gap: 0.35rem;
+}
+
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-field > span:first-child {
+  color: var(--app-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-field .relative {
+  min-width: 0;
+}
+
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-field .relative > input,
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-field .relative > select {
+  width: 100%;
+  min-height: 2.8rem;
+  border: 1px solid color-mix(in srgb, var(--app-border) 82%, var(--admin-shell-accent) 18%);
+  border-radius: 0.95rem;
+  background: color-mix(in srgb, var(--app-surface) 94%, var(--admin-shell-accent) 6%);
+  color: var(--app-text) !important;
+  font-size: 0.88rem !important;
+  box-shadow: none;
+}
+
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-field .relative > input::placeholder {
+  color: var(--app-muted) !important;
+  opacity: 1;
+}
+
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-field .relative > i {
+  color: color-mix(in srgb, var(--app-muted) 76%, var(--admin-shell-accent) 24%);
+}
+
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  justify-self: end;
+}
+
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-actions .admin-shell-button {
+  min-width: 9rem;
+}
+
+@media (max-width: 1279px) {
+  body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-form {
+    grid-template-columns: 1fr;
+  }
+
+  body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-actions {
+    justify-content: stretch;
+    justify-self: stretch;
+  }
+
+  body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-actions .admin-shell-button {
+    min-width: 0;
+    width: 100%;
   }
 }

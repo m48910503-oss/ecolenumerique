@@ -88,15 +88,30 @@ final class PreviewTokenService
         ];
     }
 
-    public function buildYoutubePreviewEmbedUrl(?string $youtubeUrl): ?string
+    public function buildYoutubePreviewEmbedUrl(?string $youtubeUrl, ?string $origin = null): ?string
     {
         $videoId = $this->youtubeVideoId($youtubeUrl);
         if ($videoId === null) {
             return null;
         }
         $safeVideoId = htmlspecialchars($videoId, ENT_QUOTES, 'UTF-8');
-        return 'https://www.youtube-nocookie.com/embed/' . $safeVideoId
-            . '?autoplay=1&controls=0&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3&disablekb=0&fs=1';
+        $query = [
+            'autoplay' => '1',
+            'controls' => '0',
+            'enablejsapi' => '1',
+            'modestbranding' => '1',
+            'rel' => '0',
+            'playsinline' => '1',
+            'iv_load_policy' => '3',
+            'disablekb' => '0',
+            'fs' => '1',
+        ];
+        $origin = trim((string) $origin);
+        if ($origin !== '') {
+            $query['origin'] = $origin;
+        }
+
+        return 'https://www.youtube-nocookie.com/embed/' . $safeVideoId . '?' . http_build_query($query);
     }
 
     private function secret(): string

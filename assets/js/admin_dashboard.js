@@ -192,8 +192,10 @@
   }
 
   function bindUserMenus() {
+    var openUserMenuSelector = ".app-user-menu[open], [data-dashboard-user-menu][open]";
+
     document.addEventListener("click", function (event) {
-      document.querySelectorAll(".app-user-menu[open]").forEach(function (menu) {
+      document.querySelectorAll(openUserMenuSelector).forEach(function (menu) {
         if (!menu.contains(event.target)) {
           menu.removeAttribute("open");
         }
@@ -204,7 +206,7 @@
       if (event.key !== "Escape") {
         return;
       }
-      document.querySelectorAll(".app-user-menu[open]").forEach(function (menu) {
+      document.querySelectorAll(openUserMenuSelector).forEach(function (menu) {
         menu.removeAttribute("open");
       });
     });

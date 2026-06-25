@@ -52,6 +52,13 @@ $teacherDashboardIconClass = static function (string $name): string {
 
 $teacherDashboardShell = $teacherDashboardShell ?? true;
 if ($teacherDashboardShell !== false) {
+    $teacherDisplayName = trim((string) ($teacherDisplayName ?? dashboard_user_display_name($teacherUser, 'Enseignant')));
+    if ($teacherDisplayName === '') {
+        $teacherDisplayName = 'Enseignant';
+    }
+    $teacherEmail = trim((string) ($teacherEmail ?? ($teacherUser['email'] ?? '')));
+    $teacherAvatarUrl = trim((string) ($teacherAvatarUrl ?? dashboard_user_avatar_url($teacherUser)));
+    $teacherInitials = trim((string) ($teacherInitials ?? dashboard_user_initials($teacherUser, 'EN')));
     $teacherDashboardPrimaryItems = [];
     $teacherDashboardMenuGroups = [];
     foreach ($teacherMenuSections as $section) {
@@ -79,20 +86,33 @@ if ($teacherDashboardShell !== false) {
     }
     ?>
     <aside id="teacher-dashboard-sidebar" class="teacher-dashboard-sidebar js-sidebar fixed inset-y-0 -left-full z-40 flex h-screen w-72 flex-col overflow-y-auto border-r border-gray-200 bg-white shadow-soft transition-[left] duration-200 dark:border-gray-700 dark:bg-gray-800 md:left-0">
-        <div class="p-6 flex items-center gap-3 border-b border-gray-100 dark:border-gray-700">
-            <span class="w-9 h-9 bg-gradient-to-br from-primary-600 to-accent-500 rounded-xl flex items-center justify-center text-white shadow-md">
+    <div class="p-6 flex items-center gap-3 border-b border-gray-100 dark:border-gray-700">
+        <?php if (!empty($siteLogoUrl)): ?>
+            <img src="<?php echo e((string) $siteLogoUrl); ?>" alt="Logo École Numérique" class="h-9 w-9 shrink-0 rounded-xl object-cover shadow-md">
+        <?php else: ?>
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-600 to-accent-500 text-white shadow-md">
                 <i class="fas fa-chalkboard-teacher"></i>
             </span>
-            <span class="text-xl font-bold text-gray-900 dark:text-white">École <span class="text-primary-600 dark:text-primary-400">Numérique</span></span>
-            <button type="button" class="md:hidden ml-auto rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" data-close-sidebar aria-label="Fermer le menu">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
+        <?php endif; ?>
+        <span class="whitespace-nowrap text-xl font-bold text-gray-900 dark:text-white">École <span class="text-primary-600 dark:text-primary-400">Numérique</span></span>
+        <button type="button" class="md:hidden ml-auto rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" data-close-sidebar aria-label="Fermer le menu">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
 
         <div class="p-5 border-b border-gray-100 dark:border-gray-700">
             <div class="flex items-center gap-3">
                 <?php if ($teacherAvatarUrl !== ''): ?>
-                    <img src="<?php echo e($teacherAvatarUrl); ?>" alt="Avatar" class="w-12 h-12 rounded-full object-cover border-2 border-primary-200 dark:border-primary-800">
+                    <img
+                        src="<?php echo e($teacherAvatarUrl); ?>"
+                        alt=""
+                        class="hidden w-12 h-12 rounded-full object-cover border-2 border-primary-200 dark:border-primary-800"
+                        onload="this.classList.remove('hidden');this.nextElementSibling.classList.add('hidden');"
+                        onerror="this.classList.add('hidden');this.nextElementSibling.classList.remove('hidden');"
+                    >
+                    <span class="w-12 h-12 rounded-full bg-gradient-to-br from-primary-600 to-accent-500 flex items-center justify-center text-white font-bold shadow-md">
+                        <?php echo e($teacherInitials); ?>
+                    </span>
                 <?php else: ?>
                     <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary-600 to-accent-500 flex items-center justify-center text-white font-bold shadow-md">
                         <?php echo e($teacherInitials); ?>

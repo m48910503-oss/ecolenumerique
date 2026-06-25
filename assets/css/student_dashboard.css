@@ -3314,6 +3314,11 @@ body.app-role-company.student-dashboard-page :is(.student-dashboard-content, .st
   -webkit-overflow-scrolling: touch;
 }
 
+body.app-role-company.student-dashboard-page {
+  --student-panel-border: var(--role-border);
+  --student-shell-sidebar-bg: color-mix(in srgb, var(--role-surface) 94%, transparent);
+}
+
 body.app-role-company.student-dashboard-page #company-sidebar {
   border-color: var(--student-panel-border) !important;
   background: var(--student-shell-sidebar-bg) !important;

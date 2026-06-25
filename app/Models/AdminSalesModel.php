@@ -19,7 +19,7 @@ final class AdminSalesModel extends Model
         int $teacherAmountXof,
         float $commissionPercent,
         int $createdBy
-    ): void {
+    ): int {
         $stmt = $this->pdo->prepare(
             'INSERT INTO teacher_payouts
             (teacher_id, total_sales_xof, platform_fee_xof, teacher_amount_xof, commission_percent, status, created_by)
@@ -34,6 +34,13 @@ final class AdminSalesModel extends Model
             ':st' => 'simulated',
             ':cb' => $createdBy,
         ]);
+
+        $payoutId = (int) $this->pdo->lastInsertId();
+        if ($payoutId > 0) {
+            return $payoutId;
+        }
+
+        return 0;
     }
 
     public function markTeacherPayoutPaid(int $payoutId): void

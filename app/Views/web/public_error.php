@@ -22,7 +22,7 @@ $standaloneCssUrl = site_url('assets/css/standalone-dashboard.css?v=' . (@filemt
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo e($errorTitle); ?> | École Numérique</title>
+    <title><?php echo e($errorTitle); ?> | <?php echo e($siteName); ?></title>
     <meta name="app-global-assets" content="off">
     <meta name="robots" content="noindex,follow">
     <meta name="description" content="<?php echo e($errorMessage); ?>">

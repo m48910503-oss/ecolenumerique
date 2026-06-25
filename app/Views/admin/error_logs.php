@@ -19,6 +19,9 @@ $sizeLabel = (string) ($logMeta['size_label'] ?? '');
 $updatedAt = (string) ($logMeta['updated_at'] ?? '');
 $sourceLabel = (string) ($logOptions[$activeLog]['label'] ?? 'Journal');
 $displayedCount = max(0, $filteredLineCount);
+$logPage = \App\Support\Pagination::pageFromQuery($_GET, 'page', (int) ($page ?? 1));
+$logPagination = \App\Support\Pagination::build($displayedCount, $logPage, $limit);
+$logEntries = \App\Support\Pagination::slice($logEntries, $logPagination);
 $criticalCount = (int) ($severitySummary['critical'] ?? 0);
 $errorCount = (int) ($severitySummary['error'] ?? 0);
 $warningCount = (int) ($severitySummary['warning'] ?? 0);
@@ -101,6 +104,10 @@ $adminTopActions = [
     ['label' => 'Tableau de bord', 'url' => site_url('admin/dashboard'), 'tone' => 'neutral'],
     ['label' => 'Support', 'url' => site_url('admin/support'), 'tone' => 'neutral'],
 ];
+
+$buildLogPageUrl = static function (int $targetPage) use ($buildUrl): string {
+    return $buildUrl(['page' => $targetPage > 1 ? max(1, $targetPage) : null]);
+};
 ?>
 <!doctype html>
 <html lang="fr">
@@ -321,6 +328,16 @@ $adminTopActions = [
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
+                        </div>
+
+                        <div class="mt-4">
+                            <?php
+                            $paginationData = $logPagination;
+                            $paginationUrlBuilder = $buildLogPageUrl;
+                            $paginationLabel = 'lignes';
+                            $paginationAriaLabel = 'Pagination des logs';
+                            require __DIR__ . '/_pagination.php';
+                            ?>
                         </div>
                     <?php elseif ($logReadable): ?>
                         <div class="admin-error-logs-empty">

@@ -5,6 +5,7 @@ namespace App\Services\Admin;
 
 use App\Core\Service;
 use App\Models\AdminCoursesModel;
+use App\Support\Pagination;
 
 final class CoursesService extends Service
 {
@@ -31,6 +32,7 @@ final class CoursesService extends Service
         $category = trim((string) ($get['category'] ?? $post['category'] ?? ''));
         $dateFrom = trim((string) ($get['date_from'] ?? $post['date_from'] ?? ''));
         $dateTo = trim((string) ($get['date_to'] ?? $post['date_to'] ?? ''));
+        $teacherId = max(0, (int) ($get['teacher_id'] ?? $post['teacher_id'] ?? 0));
 
         $allowedSearchTypes = ['name', 'teacher', 'category', 'date'];
         $searchTypeRaw = strtolower(trim((string) ($get['search_type'] ?? $post['search_type'] ?? '')));
@@ -53,6 +55,7 @@ final class CoursesService extends Service
             'category' => $category,
             'date_from' => $dateFrom,
             'date_to' => $dateTo,
+            'teacher_id' => $teacherId,
             'search_type' => $searchType,
         ];
 
@@ -77,13 +80,18 @@ final class CoursesService extends Service
             $filters['category'] = '';
         }
 
+        $currentStatusTab = strtolower(trim((string) ($get['tab'] ?? $post['tab'] ?? 'submitted')));
+        if (!in_array($currentStatusTab, ['submitted', 'approved'], true)) {
+            $currentStatusTab = 'submitted';
+        }
+
         $requestedPage = (int) ($get['page'] ?? $post['page'] ?? 1);
         $page = max(1, $requestedPage);
         $perPage = 10;
 
         if ($method === 'POST') {
             $action = strtolower(trim((string) ($post['action'] ?? '')));
-            if (in_array($action, ['approve', 'reject', 'correction'], true)) {
+            if (in_array($action, ['approve', 'reject', 'correction', 'remove'], true)) {
                 $errors = $this->handleSingleAction($user, $post, $action, $success);
             } elseif (in_array($action, ['bulk_approve', 'bulk_reject', 'bulk_correction'], true)) {
                 $errors = $this->handleBulkAction($user, $post, $action, $success);
@@ -100,6 +108,7 @@ final class CoursesService extends Service
                     $query[$key] = $value;
                 }
             }
+            $query['tab'] = $currentStatusTab;
             if ($page > 1) {
                 $query['page'] = $page;
             }
@@ -111,18 +120,19 @@ final class CoursesService extends Service
         }
 
         $pendingTotalCount = $this->model->fetchPendingCoursesTotal($filters);
-        $totalPages = max(1, (int) ceil($pendingTotalCount / $perPage));
-        if ($page > $totalPages) {
-            $page = $totalPages;
-        }
+        $approvedTotalCount = $this->model->fetchHistoryCoursesTotal($filters);
 
-        $offset = ($page - 1) * $perPage;
+        $activeTotalCount = $currentStatusTab === 'approved' ? $approvedTotalCount : $pendingTotalCount;
+        $pagination = Pagination::build($activeTotalCount, $page, $perPage);
+        $page = (int) $pagination['page'];
+        $offset = (int) $pagination['offset'];
 
-        $pendingCourses = $this->model->fetchPendingCourses($perPage, $offset, $filters);
-        $historyCourses = $this->model->fetchHistoryCourses(20, $filters);
-        $courseStats = $this->model->fetchCourseStatsForIds($this->extractCourseIds($pendingCourses, $historyCourses));
-        $pendingCourses = $this->attachCourseStats($pendingCourses, $courseStats);
-        $historyCourses = $this->attachCourseStats($historyCourses, $courseStats);
+        $courseRows = $currentStatusTab === 'approved'
+            ? $this->model->fetchApprovedCourses($perPage, $offset, $filters)
+            : $this->model->fetchPendingCourses($perPage, $offset, $filters);
+
+        $courseStats = $this->model->fetchCourseStatsForIds($this->extractCourseIds($courseRows, []));
+        $courseRows = $this->attachCourseStats($courseRows, $courseStats);
         $moderationSummary = $this->model->fetchModerationSummary();
 
         $statusLabels = [
@@ -140,19 +150,27 @@ final class CoursesService extends Service
                 'success' => $success,
                 'focusCourse' => null,
                 'focusCourseId' => 0,
-                'pendingCourses' => $pendingCourses,
+                'courseRows' => $courseRows,
+                'currentStatusTab' => $currentStatusTab,
                 'pendingDetails' => [],
-                'historyCourses' => $historyCourses,
                 'statusLabels' => $statusLabels,
                 'moderationSummary' => $moderationSummary,
                 'filters' => $filters,
+                'pendingTotalCount' => $pendingTotalCount,
+                'approvedTotalCount' => $approvedTotalCount,
                 'pagination' => [
                     'page' => $page,
                     'perPage' => $perPage,
-                    'total' => $pendingTotalCount,
-                    'totalPages' => $totalPages,
-                    'hasPrev' => $page > 1,
-                    'hasNext' => $page < $totalPages,
+                    'total' => $activeTotalCount,
+                    'totalPages' => (int) $pagination['total_pages'],
+                    'hasPrev' => (bool) $pagination['has_prev'],
+                    'hasNext' => (bool) $pagination['has_next'],
+                    'start' => (int) $pagination['start'],
+                    'end' => (int) $pagination['end'],
+                    'total_pages' => (int) $pagination['total_pages'],
+                    'per_page' => (int) $pagination['per_page'],
+                    'has_prev' => (bool) $pagination['has_prev'],
+                    'has_next' => (bool) $pagination['has_next'],
                 ],
             ],
         ];
@@ -218,12 +236,17 @@ final class CoursesService extends Service
         if (!$course) {
             return ['Cours introuvable.'];
         }
-        if ((string) ($course['status'] ?? '') !== 'submitted') {
+        $currentStatus = (string) ($course['status'] ?? '');
+        if ($action === 'remove') {
+            if ($currentStatus !== 'approved') {
+                return ["Seuls les cours approuvés peuvent être retirés depuis cette vue."];
+            }
+        } elseif ($currentStatus !== 'submitted') {
             return ["Ce cours n'est plus en attente de validation."];
         }
 
         $reason = $this->resolveReason($post);
-        if (in_array($action, ['reject', 'correction'], true) && $reason === '') {
+        if (in_array($action, ['reject', 'correction', 'remove'], true) && $reason === '') {
             return ['Le motif est obligatoire pour cette action.'];
         }
 
@@ -241,6 +264,7 @@ final class CoursesService extends Service
         $success = match ($action) {
             'approve' => 'Cours approuvé et notification envoyée.',
             'correction' => 'Demande de correction envoyée.',
+            'remove' => 'Cours retiré et enseignant notifié.',
             default => 'Cours rejeté et notification envoyée.',
         };
 
@@ -329,6 +353,23 @@ final class CoursesService extends Service
                 $this->siteUrl('teacher/courses')
             );
             $this->model->insertAudit((int) ($user['id'] ?? 0), 'course_approve', $courseId, ['moderation_type' => 'approve']);
+            return;
+        }
+
+        if ($action === 'remove') {
+            $this->model->markCourseRejected($courseId, $reason);
+            $this->model->insertNotification(
+                $teacherId,
+                'Cours retiré du catalogue',
+                $courseTitle . " a été retiré du catalogue par l'administration. Motif : " . $reason,
+                $this->siteUrl('teacher/courses?status=rejected')
+            );
+            $this->model->insertAudit((int) ($user['id'] ?? 0), 'course_remove', $courseId, [
+                'moderation_type' => 'remove',
+                'reason' => $reason,
+                'previous_status' => 'approved',
+                'new_status' => 'rejected',
+            ]);
             return;
         }
 

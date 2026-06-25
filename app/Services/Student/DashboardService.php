@@ -705,11 +705,6 @@ final class DashboardService extends Service
 
     private function formatHoursLabel(float $hours): string
     {
-        $label = rtrim(rtrim(number_format(max(0.0, $hours), 1, '.', ''), '0'), '.');
-        if ($label === '') {
-            $label = '0';
-        }
-
-        return $label . 'h';
+        return \format_duration_hours_hm(max(0.0, $hours));
     }
 }

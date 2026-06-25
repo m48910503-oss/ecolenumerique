@@ -121,15 +121,10 @@ $pdo->exec("INSERT INTO notifications (id, user_id, title, body, summary, import
     (21, 5, 'Demande entreprise refusee', 'Aucune action supplementaire requise.', 'Entreprise', 'info', 'notifications?scope=business', NULL, NULL, 0, NULL, NULL, '2026-04-05 12:00:00', NULL)
 ");
 
-$announcementsModel = new \App\Models\AdminAnnouncementsModel($pdo);
-$allAudience = $announcementsModel->fetchUserIdsForAudience('all');
-$teacherAudience = $announcementsModel->fetchUserIdsForAudience('teacher');
-
-sort($allAudience);
-sort($teacherAudience);
-
-assert_true($allAudience === [4, 5], 'Audience "all" must exclude admin, admin_secondary, support and hybrid admin users.', $errors);
-assert_true($teacherAudience === [4], 'Audience "teacher" must exclude users carrying admin roles.', $errors);
+assert_true(\App\Core\NotificationRouting::shouldExcludeAnnouncements(['admin']) === true, 'Admin-like roles must exclude announcement rows from notifications feeds.', $errors);
+assert_true(\App\Core\NotificationRouting::shouldExcludeAnnouncements(['teacher']) === false, 'Teacher role must not exclude operational notifications.', $errors);
+assert_true(\App\Core\NotificationRouting::shouldHideNotification(['announcement_id' => 7], ['admin']) === true, 'Admin-like roles must hide announcement notifications.', $errors);
+assert_true(\App\Core\NotificationRouting::shouldHideNotification(['announcement_id' => 0], ['admin']) === false, 'Non-announcement notifications must remain visible.', $errors);
 
 $_SESSION['user_id'] = 1;
 $_SESSION['user_roles'] = ['admin'];
