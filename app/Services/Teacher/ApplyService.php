@@ -266,7 +266,7 @@ final class ApplyService extends Service
                     }
 
                     $state['cvPath'] = $cvPath !== null ? $cvPath : '';
-                    $state['successMessage'] = "Demande envoy\u{00e9}e. Notre équipe va examiner votre dossier et vous répondre par email ou téléphone.";
+                    $state['successMessage'] = "Demande envoy\u{00e9}e. Elle sera analysée dans les heures ou les jours à suivre. Vous recevrez ensuite une notification pour la suite.";
                 }
             }
 

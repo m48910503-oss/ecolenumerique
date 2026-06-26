@@ -56,13 +56,6 @@ final class FavoritesService extends Service
         }
 
         $purgedCount = 0;
-        if ($schemaReady) {
-            try {
-                $purgedCount = $this->catalog->removeOwnedCourseFavorites($userId);
-            } catch (\Throwable $e) {
-                $purgedCount = 0;
-            }
-        }
 
         $favorites = [];
         $favoritesTotal = 0;

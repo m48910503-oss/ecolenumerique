@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
 :root {
   --standalone-bg: #f8fafc;
@@ -13,8 +13,8 @@
   --standalone-warning: #d97706;
   --standalone-danger: #dc2626;
   --standalone-shadow: 0 24px 70px -44px rgba(15, 23, 42, 0.42);
-  --app-font-body: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --app-font-title: "Inter", "Segoe UI", system-ui, sans-serif;
+  --app-font-body: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --app-font-title: "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, sans-serif;
   --app-font-display: var(--app-font-title);
   --app-font-section: var(--app-font-title);
   --app-font-accent: Georgia, "Times New Roman", serif;
@@ -70,6 +70,7 @@ html[data-theme="dark"] {
 
 body {
   margin: 0;
+  line-height: 1.5;
 }
 
 .font-body,

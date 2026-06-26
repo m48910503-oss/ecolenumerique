@@ -85,10 +85,6 @@ final class BrowserScreenshotService
 
     private function captureWithChromeUrl(string $url, string $pngPath, string $profileDir, int $width, int $height): bool
     {
-        if (!is_callable('exec')) {
-            return false;
-        }
-
         $binary = $this->findBrowserBinary();
         if ($binary === '') {
             return false;
@@ -112,14 +108,11 @@ final class BrowserScreenshotService
             '--window-size=' . (int) $width . ',' . (int) $height,
             '--screenshot=' . escapeshellarg($pngPath),
             escapeshellarg($url),
-            '2>&1',
         ]);
 
-        $output = [];
-        $exitCode = 1;
-        @exec($cmd, $output, $exitCode);
+        $result = (new ProcessRunner())->run($cmd);
 
-        return $exitCode === 0 && $this->waitForGeneratedFile($pngPath);
+        return $result['exitCode'] === 0 && $this->waitForGeneratedFile($pngPath);
     }
 
     private function findBrowserBinary(): string

@@ -10,128 +10,155 @@ $supportEmail = trim((string) ($supportEmail ?? ''));
 $supportPhone = trim((string) ($supportPhone ?? ''));
 $supportWhatsapp = trim((string) ($supportWhatsapp ?? ''));
 $siteAddress = trim((string) ($siteAddress ?? ''));
+$footerText = trim((string) ($footerText ?? ''));
 $supportPhoneDigits = preg_replace('/\D+/', '', $supportPhone) ?: '';
 $supportWhatsappDigits = preg_replace('/\D+/', '', $supportWhatsapp) ?: '';
+$supportUrl = trim((string) ($supportUrl ?? site_url('support')));
+$supportPhoneUrl = $supportPhoneDigits !== '' ? 'tel:' . $supportPhoneDigits : '#';
+$supportWhatsappUrl = $supportWhatsappDigits !== '' ? 'https://wa.me/' . $supportWhatsappDigits : $supportUrl;
+$supportWhatsappTarget = $supportWhatsappDigits !== '' ? '_blank' : '_self';
+$supportWhatsappRel = $supportWhatsappDigits !== '' ? 'noopener noreferrer' : '';
+
+$footerCopyIsMeaningful = static function (string $text, bool $allowShort = false): bool {
+    $text = trim($text);
+    if ($text === '') {
+        return false;
+    }
+
+    $compact = preg_replace('/\s+/u', '', $text) ?? $text;
+    if ($compact === '') {
+        return false;
+    }
+
+    if (preg_match('/^(.)\1{6,}$/u', $compact) === 1) {
+        return false;
+    }
+
+    if (preg_match('/^[\p{P}\p{S}]+$/u', $compact) === 1) {
+        return false;
+    }
+
+    if (!$allowShort && !preg_match('/\s/u', $text)) {
+        return false;
+    }
+
+    return true;
+};
+
+$footerTagline = $footerCopyIsMeaningful($siteTagline, true)
+    ? $siteTagline
+    : 'Formations tech par des experts.';
+$footerDescription = $footerCopyIsMeaningful($siteDescription)
+    ? $siteDescription
+    : 'Des parcours concrets, des supports simples et un accompagnement rapide pour progresser à votre rythme.';
+$footerCopyright = $footerCopyIsMeaningful($footerText)
+    ? $footerText
+    : ('© ' . date('Y') . ' ' . $platformName . '. Tous droits réservés.');
 
 $platformLogoUrl = trim((string) ($platformLogoUrl ?? ($siteLogoUrl ?? '')));
 $platformLogoAlt = trim((string) ($platformLogoAlt ?? ('Logo ' . $platformName)));
 $homeUrl = trim((string) ($homeUrl ?? site_url('')));
 $catalogueUrl = trim((string) ($catalogueUrl ?? site_url('catalogue')));
 $teacherApplyUrl = trim((string) ($teacherApplyUrl ?? site_url('become-teacher')));
-$supportUrl = trim((string) ($supportUrl ?? site_url('support')));
 $privacyUrl = trim((string) ($privacyUrl ?? site_url('privacy')));
 $cguUrl = trim((string) ($cguUrl ?? site_url('cgu')));
 $registerUrl = trim((string) ($registerUrl ?? site_url('register')));
 
-$footerPlatformLinks = [
-    ['label' => 'Formations', 'href' => $catalogueUrl],
-    ['label' => 'Catégories', 'href' => $homeUrl . '#categories'],
-    ['label' => 'Pourquoi nous choisir', 'href' => $homeUrl . '#why-choose'],
-    ['label' => 'FAQ', 'href' => $homeUrl . '#faq'],
+$footerExploreLinks = [
+    ['label' => 'Accueil', 'href' => $homeUrl, 'icon' => 'home'],
+    ['label' => 'Catalogue', 'href' => $catalogueUrl, 'icon' => 'book-open'],
+    ['label' => 'Catégories', 'href' => $homeUrl . '#categories', 'icon' => 'layers'],
+    ['label' => 'Pourquoi nous choisir', 'href' => $homeUrl . '#why-choose', 'icon' => 'star'],
+    ['label' => 'FAQ', 'href' => $homeUrl . '#faq', 'icon' => 'help-circle'],
 ];
-$footerSupportLinks = [
-    ['label' => 'Centre d’aide', 'href' => $supportUrl],
-    ['label' => 'Contact WhatsApp', 'href' => $supportUrl],
-    ['label' => 'Politique de confidentialité', 'href' => $privacyUrl],
-    ['label' => "Conditions d'utilisation", 'href' => $cguUrl],
-    ['label' => 'Moyens de paiement', 'href' => site_url('checkout')],
+
+$footerAccountLinks = [
+    ['label' => 'Se connecter', 'href' => site_url('login'), 'icon' => 'key'],
+    ['label' => 'Créer un compte', 'href' => $registerUrl, 'icon' => 'user-plus'],
+    ['label' => 'Mes cours', 'href' => site_url('student/my_courses'), 'icon' => 'graduation-cap'],
+    ['label' => 'Devenir enseignant', 'href' => $teacherApplyUrl, 'icon' => 'chalkboard-user'],
+    ['label' => 'Support', 'href' => $supportUrl, 'icon' => 'headset'],
 ];
 ?>
-<footer class="border-t border-white/10 bg-gray-900 py-16 text-slate-300">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="grid gap-10 lg:grid-cols-[1.2fr_0.8fr_0.8fr_1fr]">
-      <div>
-        <a href="<?php echo e($homeUrl); ?>" class="flex items-center gap-3 text-xl font-bold text-white sm:text-2xl">
+<footer class="border-t border-white/5 text-white" style="background-color: #10172b;">
+  <div class="mx-auto max-w-[1440px] px-4 py-16 sm:px-6 lg:px-8">
+    <div class="grid gap-12 lg:grid-cols-[1.35fr_0.72fr_0.78fr] lg:gap-16">
+      <section class="max-w-2xl space-y-6">
+        <a href="<?php echo e($homeUrl); ?>" class="inline-flex max-w-full items-center gap-3 text-white">
           <?php if ($platformLogoUrl !== ''): ?>
-            <img src="<?php echo e($platformLogoUrl); ?>" alt="<?php echo e($platformLogoAlt); ?>" class="h-10 w-10 rounded-xl object-cover shadow-sm">
+            <img src="<?php echo e($platformLogoUrl); ?>" alt="<?php echo e($platformLogoAlt); ?>" class="h-11 w-11 rounded-2xl object-cover">
           <?php else: ?>
-            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500">
-              <i class="fas fa-graduation-cap" aria-hidden="true"></i>
+            <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-white">
+              <?php echo dashboard_icon_svg('graduation-cap', 'class="h-5 w-5"'); ?>
             </span>
           <?php endif; ?>
           <span class="min-w-0">
-            <span class="block"><?php echo e($platformName); ?></span>
-            <?php if ($siteTagline !== ''): ?>
-              <span class="mt-1 block text-xs font-medium text-slate-400"><?php echo e($siteTagline); ?></span>
-            <?php endif; ?>
+            <span class="block text-[1.8rem] font-semibold tracking-tight sm:text-[2.15rem]"><?php echo e($platformName); ?></span>
+            <span class="mt-1 block text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-white/65"><?php echo e($footerTagline); ?></span>
           </span>
         </a>
-        <p class="mt-4 max-w-md text-sm leading-7 text-slate-400">
-          <?php echo e($siteDescription !== '' ? $siteDescription : 'Formation claire, mobile et adaptée à l’Afrique francophone.'); ?>
+
+        <p class="max-w-xl text-[1rem] leading-8 text-white/80 sm:text-[1.03rem]">
+          <?php echo e($footerDescription); ?>
         </p>
-        <div class="mt-6 flex flex-wrap gap-3">
-          <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-slate-200"><i class="fas fa-wallet text-blue-300" aria-hidden="true"></i> Mobile Money</span>
-          <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-slate-200"><i class="fas fa-comments text-emerald-300" aria-hidden="true"></i> WhatsApp</span>
-          <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-slate-200"><i class="fas fa-certificate text-orange-300" aria-hidden="true"></i> Certificat</span>
-        </div>
-        <div class="mt-6 flex items-center gap-3">
-          <a href="<?php echo e($catalogueUrl); ?>" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-200 transition hover:bg-white/[0.08]" aria-label="Catalogue"><i class="fas fa-book-open" aria-hidden="true"></i></a>
-          <a href="<?php echo e($supportUrl); ?>" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-200 transition hover:bg-white/[0.08]" aria-label="Support"><i class="fas fa-life-ring" aria-hidden="true"></i></a>
-          <a href="<?php echo e($teacherApplyUrl); ?>" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-200 transition hover:bg-white/[0.08]" aria-label="Devenir enseignant"><i class="fas fa-chalkboard-user" aria-hidden="true"></i></a>
-        </div>
-      </div>
+      </section>
 
-      <div>
-        <h3 class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Plateforme</h3>
-        <ul class="mt-5 space-y-3 text-sm">
-          <?php foreach ($footerPlatformLinks as $footerPlatformLink): ?>
-            <li><a href="<?php echo e((string) ($footerPlatformLink['href'] ?? '#')); ?>" class="transition hover:text-white"><?php echo e((string) ($footerPlatformLink['label'] ?? 'Lien')); ?></a></li>
+      <nav class="space-y-7" aria-label="Explorer">
+        <h3 class="text-[1.15rem] font-semibold text-white">Explorer</h3>
+        <div class="space-y-5 text-[1rem] leading-7 text-white/82">
+          <?php foreach ($footerExploreLinks as $footerExploreLink): ?>
+            <a href="<?php echo e((string) ($footerExploreLink['href'] ?? '#')); ?>" class="group flex items-center gap-3 transition hover:text-white">
+              <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/90 transition group-hover:bg-white/15">
+                <?php echo dashboard_icon_svg((string) ($footerExploreLink['icon'] ?? 'help-circle'), 'class="h-4 w-4"'); ?>
+              </span>
+              <?php echo e((string) ($footerExploreLink['label'] ?? 'Lien')); ?>
+            </a>
           <?php endforeach; ?>
-        </ul>
-      </div>
+        </div>
+      </nav>
 
-      <div>
-        <h3 class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Aide</h3>
-        <ul class="mt-5 space-y-3 text-sm">
-          <?php foreach ($footerSupportLinks as $footerSupportLink): ?>
-            <li><a href="<?php echo e((string) ($footerSupportLink['href'] ?? '#')); ?>" class="transition hover:text-white"><?php echo e((string) ($footerSupportLink['label'] ?? 'Lien')); ?></a></li>
+      <nav class="space-y-7" aria-label="Mon espace">
+        <h3 class="text-[1.15rem] font-semibold text-white">Mon espace</h3>
+        <div class="space-y-5 text-[1rem] leading-7 text-white/82">
+          <?php foreach ($footerAccountLinks as $footerAccountLink): ?>
+            <a href="<?php echo e((string) ($footerAccountLink['href'] ?? '#')); ?>" class="group flex items-center gap-3 transition hover:text-white">
+              <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/90 transition group-hover:bg-white/15">
+                <?php echo dashboard_icon_svg((string) ($footerAccountLink['icon'] ?? 'help-circle'), 'class="h-4 w-4"'); ?>
+              </span>
+              <?php echo e((string) ($footerAccountLink['label'] ?? 'Lien')); ?>
+            </a>
           <?php endforeach; ?>
-        </ul>
-      </div>
-
-      <div>
-        <h3 class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Contact</h3>
-        <ul class="mt-5 space-y-3 text-sm">
-          <?php if ($supportEmail !== ''): ?>
-            <li>
-              <a href="<?php echo e('mailto:' . $supportEmail); ?>" class="inline-flex items-center gap-2 transition hover:text-white">
-                <i class="fas fa-envelope text-cyan-300" aria-hidden="true"></i>
-                <span><?php echo e($supportEmail); ?></span>
-              </a>
-            </li>
-          <?php endif; ?>
-          <?php if ($supportPhone !== ''): ?>
-            <li>
-              <a href="<?php echo e($supportPhoneDigits !== '' ? 'tel:' . $supportPhoneDigits : '#'); ?>" class="inline-flex items-center gap-2 transition hover:text-white">
-                <i class="fas fa-phone text-emerald-300" aria-hidden="true"></i>
-                <span><?php echo e($supportPhone); ?></span>
-              </a>
-            </li>
-          <?php endif; ?>
-          <?php if ($supportWhatsapp !== ''): ?>
-            <li>
-              <a href="<?php echo e($supportWhatsappDigits !== '' ? 'https://wa.me/' . $supportWhatsappDigits : $supportUrl); ?>" class="inline-flex items-center gap-2 transition hover:text-white" target="<?php echo e($supportWhatsappDigits !== '' ? '_blank' : '_self'); ?>" rel="<?php echo e($supportWhatsappDigits !== '' ? 'noopener noreferrer' : ''); ?>">
-                <i class="fab fa-whatsapp text-green-300" aria-hidden="true"></i>
-                <span><?php echo e($supportWhatsapp); ?></span>
-              </a>
-            </li>
-          <?php endif; ?>
-          <?php if ($siteAddress !== ''): ?>
-            <li class="inline-flex items-start gap-2 text-slate-400">
-              <i class="fas fa-location-dot mt-0.5 text-orange-300" aria-hidden="true"></i>
-              <span><?php echo e($siteAddress); ?></span>
-            </li>
-          <?php endif; ?>
-        </ul>
-      </div>
+        </div>
+      </nav>
     </div>
 
-    <div class="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-sm text-slate-500 md:flex-row md:items-center md:justify-between">
-      <p><?php echo e($footerText !== '' ? $footerText : ('© ' . date('Y') . ' ' . $platformName . '. Tous droits réservés.')); ?></p>
-      <div class="flex flex-wrap gap-4">
-        <a href="<?php echo e($privacyUrl); ?>" class="transition hover:text-slate-300">Politique de confidentialité</a>
-        <a href="<?php echo e($cguUrl); ?>" class="transition hover:text-slate-300">Conditions d'utilisation</a>
-        <a href="<?php echo e(site_url('checkout')); ?>" class="transition hover:text-slate-300">Moyens de paiement</a>
+    <div class="mt-14 border-t border-white/10 pt-6">
+      <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <p class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-white/65">
+          <span><?php echo e($footerCopyright); ?></span>
+          <span class="hidden text-white/30 sm:inline">|</span>
+          <a href="<?php echo e($cguUrl); ?>" class="transition hover:text-white">Conditions et politiques</a>
+          <span class="hidden text-white/30 sm:inline">|</span>
+          <a href="<?php echo e($privacyUrl); ?>" class="transition hover:text-white">Confidentialité</a>
+        </p>
+
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-white/85">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white">
+              <?php echo dashboard_icon_svg('globe', 'class="h-5 w-5"'); ?>
+            </span>
+            FR
+          </span>
+          <a href="<?php echo e($supportUrl); ?>" class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/12 text-white shadow-[0_10px_24px_-14px_rgba(255,255,255,0.25)] transition hover:bg-white/18" aria-label="Support">
+            <?php echo dashboard_icon_svg('headset', 'class="h-5 w-5"'); ?>
+          </a>
+          <a href="<?php echo e($catalogueUrl); ?>" class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/12 text-white shadow-[0_10px_24px_-14px_rgba(255,255,255,0.25)] transition hover:bg-white/18" aria-label="Catalogue">
+            <?php echo dashboard_icon_svg('book-open', 'class="h-5 w-5"'); ?>
+          </a>
+          <a href="<?php echo e($registerUrl); ?>" class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/12 text-white shadow-[0_10px_24px_-14px_rgba(255,255,255,0.25)] transition hover:bg-white/18" aria-label="Créer un compte">
+            <?php echo dashboard_icon_svg('user-plus', 'class="h-5 w-5"'); ?>
+          </a>
+        </div>
       </div>
     </div>
   </div>

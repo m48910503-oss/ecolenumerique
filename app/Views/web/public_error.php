@@ -11,11 +11,21 @@ $publicFooterNote = "Si un lien ne fonctionne plus, revenez au catalogue ou a l'
 $errorTitle = trim((string) ($errorTitle ?? 'Contenu indisponible'));
 $errorMessage = trim((string) ($errorMessage ?? "Le contenu demande n'est pas accessible pour le moment."));
 $errorActions = is_array($errorActions ?? null) ? $errorActions : [];
+$primaryErrorActions = array_slice($errorActions, 0, 2);
+$secondaryErrorActions = array_slice($errorActions, 2);
+
+$errorActionClass = static function (string $variant): string {
+    return match ($variant) {
+        'primary' => 'mk-btn mk-btn--primary',
+        'danger' => 'mk-btn mk-btn--secondary',
+        default => 'mk-btn mk-btn--secondary',
+    };
+};
 
 require __DIR__ . '/_public_bootstrap.php';
 
 $marketingCssUrl = site_url('assets/css/web-marketing.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/web-marketing.css') ?: time()));
-$standaloneCssUrl = site_url('assets/css/standalone-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/standalone-dashboard.css') ?: time()));
+$publicScaleCssUrl = site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()));
 ?>
 <!doctype html>
 <html lang="fr">
@@ -27,25 +37,70 @@ $standaloneCssUrl = site_url('assets/css/standalone-dashboard.css?v=' . (@filemt
     <meta name="robots" content="noindex,follow">
     <meta name="description" content="<?php echo e($errorMessage); ?>">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<?php echo e($standaloneCssUrl); ?>">
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="<?php echo e($marketingCssUrl); ?>">
-<link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
+    <link rel="stylesheet" href="<?php echo e($publicScaleCssUrl); ?>">
 </head>
-<body class="mk-body" data-view="web/public_error">
+<body class="mk-body mk-body--public-error" data-view="web/public_error">
     <?php require __DIR__ . '/_public_header.php'; ?>
 
     <main class="mk-public-main">
-        <section class="mk-shell" style="padding-top:clamp(3rem,7vw,6rem);padding-bottom:clamp(3rem,7vw,6rem);">
-            <div class="mk-reveal" style="--mk-delay:0.03s">
-                <?php
-                $emptyStateTone = 'urgent';
-                $emptyStateTitle = $errorTitle;
-                $emptyStateMessage = $errorMessage;
-                $emptyStateIcon = 'alert-circle';
-                $emptyStateActions = $errorActions;
-                require __DIR__ . '/../shared/_empty_state.php';
-                ?>
-            </div>
+        <section class="mk-shell mk-public-error">
+            <article class="mk-public-error__card mk-reveal" style="--mk-delay:0.03s" aria-labelledby="public-error-title">
+                <div class="mk-public-error__icon" aria-hidden="true">
+                    <?php echo dashboard_icon_svg('alert-triangle'); ?>
+                </div>
+
+                <div class="mk-public-error__copy">
+                    <h1 id="public-error-title" class="mk-public-error__title"><?php echo e($errorTitle); ?></h1>
+                    <?php if ($errorMessage !== ''): ?>
+                        <p class="mk-public-error__message"><?php echo e($errorMessage); ?></p>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($primaryErrorActions !== []): ?>
+                    <div class="mk-public-error__actions">
+                        <?php foreach ($primaryErrorActions as $action): ?>
+                            <?php
+                            $label = trim((string) ($action['label'] ?? ''));
+                            $url = (string) ($action['url'] ?? '#');
+                            $actionIcon = trim((string) ($action['icon'] ?? ''));
+                            $variant = trim((string) ($action['variant'] ?? 'secondary'));
+                            if ($label === '') {
+                                continue;
+                            }
+                            ?>
+                            <a href="<?php echo e($url); ?>" class="<?php echo e($errorActionClass($variant)); ?>">
+                                <?php if ($actionIcon !== ''): ?>
+                                    <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg($actionIcon); ?></span>
+                                <?php endif; ?>
+                                <span><?php echo e($label); ?></span>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($secondaryErrorActions !== []): ?>
+                    <div class="mk-public-error__links" aria-label="Actions secondaires">
+                        <?php foreach ($secondaryErrorActions as $action): ?>
+                            <?php
+                            $label = trim((string) ($action['label'] ?? ''));
+                            $url = (string) ($action['url'] ?? '#');
+                            $actionIcon = trim((string) ($action['icon'] ?? ''));
+                            if ($label === '') {
+                                continue;
+                            }
+                            ?>
+                            <a href="<?php echo e($url); ?>" class="mk-public-error__link">
+                                <?php if ($actionIcon !== ''): ?>
+                                    <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg($actionIcon); ?></span>
+                                <?php endif; ?>
+                                <span><?php echo e($label); ?></span>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </article>
         </section>
     </main>
 

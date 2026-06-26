@@ -182,7 +182,7 @@ return;
     <script src="<?php echo e(site_url('assets/js/course_player_guard.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/course_player_guard.js') ?: time()))); ?>" defer></script>
     <script src="<?php echo e(site_url('assets/js/course_public_preview.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/course_public_preview.js') ?: time()))); ?>" defer></script>
     <script src="<?php echo e(site_url('assets/js/course_rating.js')); ?>" defer></script>
-    <script src="<?php echo e(site_url('assets/js/course_share.js')); ?>" defer></script>
+    <script src="<?php echo e(site_url('assets/js/course_share.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/course_share.js') ?: time()))); ?>" defer></script>
 <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
 </head>
 <body

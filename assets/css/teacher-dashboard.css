@@ -119,7 +119,7 @@ html[data-view^="teacher/"] {
 }
 
 html[data-view^="teacher/"][data-default-theme] {
-    font-size: 14px !important;
+    font-size: 14.5px !important;
 }
 
 body[data-view^="teacher/"] {

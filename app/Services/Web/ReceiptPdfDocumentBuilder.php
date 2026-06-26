@@ -175,10 +175,6 @@ final class ReceiptPdfDocumentBuilder
 
     private function buildWithChrome(string $htmlPath, string $pdfPath, string $profileDir): bool
     {
-        if (!is_callable('exec')) {
-            return false;
-        }
-
         $binary = $this->findChromeBinary();
         if ($binary === '') {
             return false;
@@ -202,22 +198,15 @@ final class ReceiptPdfDocumentBuilder
             '--print-to-pdf=' . escapeshellarg($pdfPath),
             '--print-to-pdf-no-header',
             escapeshellarg($this->fileUrlFromPath($htmlPath)),
-            '2>&1',
         ]);
 
-        $output = [];
-        $exitCode = 1;
-        @exec($cmd, $output, $exitCode);
+        $result = (new ProcessRunner())->run($cmd);
 
-        return $exitCode === 0 && $this->waitForGeneratedFile($pdfPath);
+        return $result['exitCode'] === 0 && $this->waitForGeneratedFile($pdfPath);
     }
 
     private function buildWithWkhtmltopdf(string $htmlPath, string $pdfPath, string $orientation): bool
     {
-        if (!is_callable('exec')) {
-            return false;
-        }
-
         $binary = $this->findWkhtmltopdfBinary();
         if ($binary === '') {
             return false;
@@ -236,14 +225,11 @@ final class ReceiptPdfDocumentBuilder
             '--encoding UTF-8',
             escapeshellarg($htmlPath),
             escapeshellarg($pdfPath),
-            '2>&1',
         ]);
 
-        $output = [];
-        $exitCode = 1;
-        @exec($cmd, $output, $exitCode);
+        $result = (new ProcessRunner())->run($cmd);
 
-        return $exitCode === 0 && $this->waitForGeneratedFile($pdfPath);
+        return $result['exitCode'] === 0 && $this->waitForGeneratedFile($pdfPath);
     }
 
     private function detectOrientation(string $html): string

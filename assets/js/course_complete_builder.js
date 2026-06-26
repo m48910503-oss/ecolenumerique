@@ -2,13 +2,24 @@
   "use strict";
 
   var currentStep = 1;
-  var totalSteps = 3;
+  var totalSteps = 8;
+  var totalPhases = 4;
   var moduleSeq = 0;
   var examSeq = 0;
   var questionSeq = 0;
   var lessonFileSeq = 0;
   var autosaveReady = false;
   var autosaveTimer = null;
+  var stepRouteMap = {
+    1: "presentation",
+    2: "presentation-form",
+    3: "offre",
+    4: "offre-form",
+    5: "contenu",
+    6: "contenu-form",
+    7: "evaluation",
+    8: "evaluation-form"
+  };
 
   function ready(fn) {
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fn);
@@ -53,6 +64,62 @@
   function numberValue(value, fallback) {
     var parsed = parseInt(String(value || ""), 10);
     return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  function stepSlug(step) {
+    return stepRouteMap[step] || stepRouteMap[1];
+  }
+
+  function phaseFromStep(step) {
+    return Math.max(1, Math.min(totalPhases, Math.ceil(step / 2)));
+  }
+
+  function isIntroStep(step) {
+    return step % 2 === 1;
+  }
+
+  function stepNumberFromValue(value) {
+    var normalized = clean(value).toLowerCase();
+    if (normalized === "") return null;
+    var directNumber = numberValue(normalized, 0);
+    if (directNumber >= 1 && directNumber <= totalSteps) {
+      return directNumber;
+    }
+    return Object.keys(stepRouteMap).reduce(function (matched, key) {
+      if (matched) return matched;
+      return stepRouteMap[key] === normalized ? numberValue(key, 1) : null;
+    }, null);
+  }
+
+  function requestedStepFromUrl() {
+    try {
+      var url = new URL(window.location.href);
+      return stepNumberFromValue(url.searchParams.get("step"));
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function syncStepInUrl(step, historyMode) {
+    if (!window.history || !window.history.replaceState) return;
+    try {
+      var url = new URL(window.location.href);
+      var nextSlug = stepSlug(step);
+      if (url.searchParams.get("step") === nextSlug && historyMode !== "push") {
+        return;
+      }
+      url.searchParams.set("step", nextSlug);
+      var state = Object.assign({}, window.history.state || {}, {
+        courseCreateStep: step
+      });
+      if (historyMode === "push" && typeof window.history.pushState === "function") {
+        window.history.pushState(state, "", url.toString());
+        return;
+      }
+      window.history.replaceState(state, "", url.toString());
+    } catch (_error) {
+      // Ignore URL/history issues; wizard still works without deep-linking.
+    }
   }
 
   function makeLessonFileKey() {
@@ -602,8 +669,8 @@
     versionCount = Math.max(1, Math.min(3, versionCount));
     var filledVersions = countQcmFilledVersions(versions, versionCount);
     var qcmStatus = filledVersions > 0
-      ? String(filledVersions) + "/" + String(versionCount) + " version(s) renseignée(s)"
-      : "À configurer";
+      ? String(filledVersions) + "/" + String(versionCount) + " version(s) prêtes"
+      : "Aucune version prête";
 
     return '' +
       '<div class="exam-item course-builder-exam animate-fadeIn" data-exam-id="' + examSeq + '">' +
@@ -644,66 +711,49 @@
             '<div class="course-builder-qcm-setup">' +
               '<div class="course-builder-qcm-setup-copy">' +
                 '<span class="course-builder-qcm-setup-kicker">QCM</span>' +
-                '<h4>Questions et import Excel</h4>' +
-                '<p>Configurez les versions A/B/C sans quitter cette page.</p>' +
+                '<h4>Questions, versions et import</h4>' +
+                '<p>Tout se remplit directement ici.</p>' +
               '</div>' +
               '<div class="course-builder-qcm-setup-side">' +
                 '<span class="course-builder-qcm-setup-status">' + escapeHtml(qcmStatus) + '</span>' +
-                '<button type="button" class="course-builder-qcm-setup-btn" data-qcm-modal-open>' +
-                  '<i class="fa-solid fa-list-check"></i> Configurer le QCM' +
-                '</button>' +
               '</div>' +
             '</div>' +
-            '<div class="course-builder-qcm-modal hidden" data-qcm-modal aria-hidden="true">' +
-              '<div class="course-builder-qcm-modal-backdrop" data-qcm-modal-close></div>' +
-              '<section class="course-builder-qcm-modal-panel" role="dialog" aria-modal="true" aria-label="Configurer le QCM">' +
-                '<div class="course-builder-qcm-modal-head">' +
-                  '<div>' +
-                    '<span class="course-builder-qcm-setup-kicker">QCM</span>' +
-                    '<h4>Configurer le QCM</h4>' +
-                  '</div>' +
-                  '<button type="button" class="course-builder-qcm-modal-close" data-qcm-modal-close aria-label="Fermer le QCM"><i class="fa-solid fa-xmark"></i></button>' +
-                '</div>' +
-                '<div class="course-builder-qcm-modal-body">' +
-                  '<div class="course-builder-qcm-toolbar">' +
-                    '<div class="course-builder-qcm-config">' +
-                      '<label class="course-builder-exam-field course-builder-exam-field--compact">' +
-                        '<span>Versions QCM</span>' +
-                        '<select class="qcm-version-count course-builder-exam-input" data-qcm-version-count>' +
-                          '<option value="1"' + (versionCount === 1 ? " selected" : "") + '>1 version</option>' +
-                          '<option value="2"' + (versionCount === 2 ? " selected" : "") + '>2 versions</option>' +
-                          '<option value="3"' + (versionCount === 3 ? " selected" : "") + '>3 versions</option>' +
-                        '</select>' +
-                      '</label>' +
-                      '<label class="course-builder-exam-field course-builder-exam-field--compact">' +
-                        '<span>Points / question</span>' +
-                        '<input type="number" min="1" value="' + String(numberValue(exam.points_per_question, 1)) + '" class="points-per-question course-builder-exam-input">' +
-                      '</label>' +
-                    '</div>' +
-                    '<div class="course-builder-qcm-import">' +
-                      '<input type="file" class="course-builder-qcm-import-input" data-qcm-import-input accept=".csv,.xlsx,.xls">' +
-                      '<button type="button" class="course-builder-qcm-import-btn" data-qcm-import-button><i class="fa-solid fa-file-import"></i> Importer</button>' +
-                      '<a class="course-builder-qcm-template" href="../assets/samples/qcm_import_template.xlsx" download>Modèle Excel</a>' +
-                      '<span class="course-builder-qcm-import-status" data-qcm-import-status></span>' +
-                    '</div>' +
-                    '<div class="course-builder-version-tabs" role="tablist" aria-label="Versions QCM">' +
-                      versionTabHtml("A", 1) +
-                      versionTabHtml("B", 2) +
-                      versionTabHtml("C", 3) +
-                    '</div>' +
-                  '</div>' +
-                  '<div class="qcm-versions-container course-builder-qcm-versions">' +
-                    versionHtml("A", 1, versions["1"] || versions[1]) +
-                    versionHtml("B", 2, versions["2"] || versions[2]) +
-                    versionHtml("C", 3, versions["3"] || versions[3]) +
-                  '</div>' +
-                  '<div class="course-builder-version-footer">' +
-                    '<button type="button" class="course-builder-version-nav" data-qcm-version-prev><i class="fa-solid fa-arrow-left"></i> Version précédente</button>' +
-                    '<span class="course-builder-version-progress" data-qcm-version-progress>Version A sur ' + String(versionCount) + '</span>' +
-                    '<button type="button" class="course-builder-version-nav course-builder-version-nav--primary" data-qcm-version-next>Version suivante <i class="fa-solid fa-arrow-right"></i></button>' +
-                  '</div>' +
-                '</div>' +
-              '</section>' +
+            '<div class="course-builder-qcm-toolbar">' +
+              '<div class="course-builder-qcm-config">' +
+                '<label class="course-builder-exam-field course-builder-exam-field--compact">' +
+                  '<span>Versions QCM</span>' +
+                  '<select class="qcm-version-count course-builder-exam-input" data-qcm-version-count>' +
+                    '<option value="1"' + (versionCount === 1 ? " selected" : "") + '>1 version</option>' +
+                    '<option value="2"' + (versionCount === 2 ? " selected" : "") + '>2 versions</option>' +
+                    '<option value="3"' + (versionCount === 3 ? " selected" : "") + '>3 versions</option>' +
+                  '</select>' +
+                '</label>' +
+                '<label class="course-builder-exam-field course-builder-exam-field--compact">' +
+                  '<span>Points / question</span>' +
+                  '<input type="number" min="1" value="' + String(numberValue(exam.points_per_question, 1)) + '" class="points-per-question course-builder-exam-input">' +
+                '</label>' +
+              '</div>' +
+              '<div class="course-builder-qcm-import">' +
+                '<input type="file" class="course-builder-qcm-import-input" data-qcm-import-input accept=".csv,.xlsx,.xls">' +
+                '<button type="button" class="course-builder-qcm-import-btn" data-qcm-import-button><i class="fa-solid fa-file-import"></i> Importer</button>' +
+                '<a class="course-builder-qcm-template" href="../assets/samples/qcm_import_template.xlsx" download>Modèle Excel</a>' +
+                '<span class="course-builder-qcm-import-status" data-qcm-import-status></span>' +
+              '</div>' +
+              '<div class="course-builder-version-tabs" role="tablist" aria-label="Versions QCM">' +
+                versionTabHtml("A", 1) +
+                versionTabHtml("B", 2) +
+                versionTabHtml("C", 3) +
+              '</div>' +
+            '</div>' +
+            '<div class="qcm-versions-container course-builder-qcm-versions">' +
+              versionHtml("A", 1, versions["1"] || versions[1]) +
+              versionHtml("B", 2, versions["2"] || versions[2]) +
+              versionHtml("C", 3, versions["3"] || versions[3]) +
+            '</div>' +
+            '<div class="course-builder-version-footer">' +
+              '<button type="button" class="course-builder-version-nav" data-qcm-version-prev><i class="fa-solid fa-arrow-left"></i> Version précédente</button>' +
+              '<span class="course-builder-version-progress" data-qcm-version-progress>Version A sur ' + String(versionCount) + '</span>' +
+              '<button type="button" class="course-builder-version-nav course-builder-version-nav--primary" data-qcm-version-next>Version suivante <i class="fa-solid fa-arrow-right"></i></button>' +
             '</div>' +
           '</div>' +
           '<div class="exam-document-section course-builder-exam-pane hidden">' +
@@ -1085,11 +1135,12 @@
   }
 
   function updateStepButtons() {
-    [1, 2, 3].forEach(function (step) {
-      var button = q("#stepBtn" + step);
+    var activePhase = phaseFromStep(currentStep);
+    [1, 2, 3, 4].forEach(function (phase) {
+      var button = q("#stepBtn" + phase);
       if (!button) return;
       var bubble = q("span:first-child", button);
-      var active = step === currentStep;
+      var active = phase === activePhase;
       button.classList.toggle("bg-primary-600", active);
       button.classList.toggle("text-white", active);
       button.classList.toggle("shadow-lg", active);
@@ -1105,25 +1156,39 @@
         bubble.classList.toggle("text-slate-500", !active);
       }
     });
+
+    qa(".course-side-roadmap__item[data-step-target]").forEach(function (button) {
+      var step = numberValue(button.getAttribute("data-step-target"), 1);
+      var active = phaseFromStep(step) === activePhase;
+      button.classList.toggle("is-active", active);
+      if (active) button.setAttribute("aria-current", "step");
+      else button.removeAttribute("aria-current");
+    });
   }
 
   function updateProgressBar() {
     var bar1 = q("#progressBar");
     var bar2 = q("#progressBar2");
-    if (bar1) bar1.classList.toggle("is-complete", currentStep >= 2);
-    if (bar2) bar2.classList.toggle("is-complete", currentStep >= 3);
+    var bar3 = q("#progressBar3");
+    var activePhase = phaseFromStep(currentStep);
+    if (bar1) bar1.classList.toggle("is-complete", activePhase >= 2);
+    if (bar2) bar2.classList.toggle("is-complete", activePhase >= 3);
+    if (bar3) bar3.classList.toggle("is-complete", activePhase >= 4);
   }
 
-  function showStep(step, scrollTop) {
+  function showStep(step, scrollTop, historyMode) {
     currentStep = step;
-    var step1 = q("#step1Content");
-    var step2 = q("#step2Content");
-    var step3 = q("#step3Content");
-    if (step1) step1.classList.toggle("hidden", step !== 1);
-    if (step2) step2.classList.toggle("hidden", step !== 2);
-    if (step3) step3.classList.toggle("hidden", step !== 3);
+    [1, 2, 3, 4].forEach(function (phase) {
+      var intro = q("#step" + phase + "Intro");
+      var content = q("#step" + phase + "Content");
+      var introStep = (phase - 1) * 2 + 1;
+      var contentStep = phase * 2;
+      if (intro) intro.classList.toggle("hidden", step !== introStep);
+      if (content) content.classList.toggle("hidden", step !== contentStep);
+    });
     updateStepButtons();
     updateProgressBar();
+    syncStepInUrl(step, historyMode || "replace");
     if (autosaveReady) {
       scheduleLocalDraftSave();
     }
@@ -1182,9 +1247,6 @@
       showStep(issue.step, false);
     }
     clearInvalidMarkers();
-    if (issue.element && issue.element.closest && issue.element.closest("[data-qcm-modal]")) {
-      window.openQcmModal(issue.element);
-    }
     window.setTimeout(function () {
       focusInvalid(issue.element || null);
     }, 0);
@@ -1217,55 +1279,64 @@
   }
 
   function blockingIssueForStep(step) {
-    if (step === 1) {
+    if (isIntroStep(step)) {
+      return null;
+    }
+
+    var phase = phaseFromStep(step);
+
+    if (phase === 1) {
       if (!clean(q("#title") && q("#title").value)) {
-        return { step: 1, element: q("#title"), message: "Le titre du cours est obligatoire." };
+        return { step: 2, element: q("#title"), message: "Le titre du cours est obligatoire." };
       }
       if (!clean(q("#description") && q("#description").value)) {
-        return { step: 1, element: q("#description"), message: "La description du cours est obligatoire." };
+        return { step: 2, element: q("#description"), message: "La description du cours est obligatoire." };
       }
+    }
+
+    if (phase === 2) {
       if (!clean(q("#price_xof") && q("#price_xof").value)) {
-        return { step: 1, element: q("#price_xof"), message: "Le prix public est obligatoire." };
+        return { step: 4, element: q("#price_xof"), message: "Le prix public est obligatoire." };
       }
       var enterpriseMode = q("#enterprise_pricing_mode");
       var enterprisePrice = q("#enterprise_price_xof");
       var enterpriseDiscount = q("#enterprise_discount_percent");
       if (enterpriseMode && enterpriseMode.value === "price" && !clean(enterprisePrice && enterprisePrice.value)) {
-        return { step: 1, element: enterprisePrice, message: "Renseignez le prix fixe entreprise ou choisissez un autre mode." };
+        return { step: 4, element: enterprisePrice, message: "Renseignez le prix fixe entreprise ou choisissez un autre mode." };
       }
       if (enterpriseMode && enterpriseMode.value === "discount" && !clean(enterpriseDiscount && enterpriseDiscount.value)) {
-        return { step: 1, element: enterpriseDiscount, message: "Renseignez la réduction entreprise ou choisissez un autre mode." };
+        return { step: 4, element: enterpriseDiscount, message: "Renseignez la réduction entreprise ou choisissez un autre mode." };
       }
       if (enterprisePricingConflict()) {
-        return { step: 1, element: enterprisePrice || enterpriseDiscount, message: "Choisissez soit un prix entreprise, soit une réduction." };
+        return { step: 4, element: enterprisePrice || enterpriseDiscount, message: "Choisissez soit un prix entreprise, soit une réduction." };
       }
       if (!clean(q("#category_id") && q("#category_id").value)) {
-        return { step: 1, element: q("#category_id"), message: "Sélectionnez une catégorie avant de continuer." };
+        return { step: 4, element: q("#category_id"), message: "Sélectionnez une catégorie avant de continuer." };
       }
       if (!clean(q("#cover_path_existing") && q("#cover_path_existing").value)) {
         var cover = q("#cover_file");
         if (!cover || !cover.files || !cover.files.length) {
-          return { step: 1, element: q("#thumbnail-zone"), message: "Ajoutez une miniature de cours." };
+          return { step: 4, element: q("#thumbnail-zone"), message: "Ajoutez une miniature de cours." };
         }
       }
     }
 
-    if (step === 2) {
+    if (phase === 3) {
       var modules = qa("#modules-container .module-item");
       if (!modules.length) {
-        return { step: 2, element: q("[data-add-module]"), message: "Ajoutez au moins un module." };
+        return { step: 6, element: q("[data-add-module]"), message: "Ajoutez au moins un module." };
       }
 
       for (var moduleIndex = 0; moduleIndex < modules.length; moduleIndex++) {
         var module = modules[moduleIndex];
         var moduleTitle = q(".module-title", module);
         if (!clean(moduleTitle && moduleTitle.value)) {
-          return { step: 2, element: moduleTitle, message: "Renseignez le titre du module " + String(moduleIndex + 1) + "." };
+          return { step: 6, element: moduleTitle, message: "Renseignez le titre du module " + String(moduleIndex + 1) + "." };
         }
 
         var lessons = qa(".lesson-item", module);
         if (!lessons.length) {
-          return { step: 2, element: q("[data-add-lesson]", module), message: "Ajoutez au moins une leçon dans le module " + String(moduleIndex + 1) + "." };
+          return { step: 6, element: q("[data-add-lesson]", module), message: "Ajoutez au moins une leçon dans le module " + String(moduleIndex + 1) + "." };
         }
 
         for (var lessonIndex = 0; lessonIndex < lessons.length; lessonIndex++) {
@@ -1279,22 +1350,22 @@
           var label = "module " + String(moduleIndex + 1) + ", leçon " + String(lessonIndex + 1);
 
           if (!clean(lessonTitle && lessonTitle.value)) {
-            return { step: 2, element: lessonTitle, message: "Renseignez le titre de la " + label + "." };
+            return { step: 6, element: lessonTitle, message: "Renseignez le titre de la " + label + "." };
           }
           if (type === "video") {
             if (!clean(resource && resource.value)) {
-              return { step: 2, element: resource, message: "Ajoutez le lien YouTube de la " + label + "." };
+              return { step: 6, element: resource, message: "Ajoutez le lien YouTube de la " + label + "." };
             }
             if (!youtubeUrlLooksValid(resource.value)) {
-              return { step: 2, element: resource, message: "Le lien YouTube de la " + label + " est invalide." };
+              return { step: 6, element: resource, message: "Le lien YouTube de la " + label + " est invalide." };
             }
             if (numberValue(duration && duration.value, 0) < 1) {
-              return { step: 2, element: duration, message: "Renseignez une durée valide pour la " + label + "." };
+              return { step: 6, element: duration, message: "Renseignez une durée valide pour la " + label + "." };
             }
           }
           if (type === "document" && !(fileInput && fileInput.files && fileInput.files.length) && !uploadedResourceLooksValid(resource && resource.value)) {
             return {
-              step: 2,
+              step: 6,
               element: q(".course-builder-file-drop", lesson) || fileInput,
               message: "Ajoutez le fichier document/exercice de la " + label + "."
             };
@@ -1303,21 +1374,21 @@
       }
     }
 
-    if (step === 3) {
+    if (phase === 4) {
       var exam = q("#exams-container .exam-item");
       if (!exam) {
-        return { step: 3, element: q("#exams-container"), message: "Configurez l’évaluation finale." };
+        return { step: 8, element: q("#exams-container"), message: "Configurez l’évaluation finale." };
       }
 
       var examTitle = q(".exam-title", exam);
       if (!clean(examTitle && examTitle.value)) {
-        return { step: 3, element: examTitle, message: "Renseignez le titre de l’évaluation finale." };
+        return { step: 8, element: examTitle, message: "Renseignez le titre de l’évaluation finale." };
       }
 
       var examType = q(".exam-type-select", exam) ? q(".exam-type-select", exam).value : "qcm";
       var examDuration = q(".exam-duration", exam);
       if (numberValue(examDuration && examDuration.value, 0) < 1) {
-        return { step: 3, element: examDuration, message: "Renseignez une durée valide pour l’évaluation finale." };
+        return { step: 8, element: examDuration, message: "Renseignez une durée valide pour l’évaluation finale." };
       }
 
       if (examType === "document") {
@@ -1326,13 +1397,12 @@
         var hasSelectedSubject = !!(subjectFile && subjectFile.files && subjectFile.files.length);
         var hasExistingSubject = uploadedResourceLooksValid(subject && subject.value);
         if (!hasSelectedSubject && !hasExistingSubject) {
-          return { step: 3, element: q("[data-exam-subject-file-shell]", exam) || subjectFile || subject, message: "Ajoutez le document sujet à uploader pour cette évaluation." };
+          return { step: 8, element: q("[data-exam-subject-file-shell]", exam) || subjectFile || subject, message: "Ajoutez le document sujet à uploader pour cette évaluation." };
         }
       }
 
       if (examType === "qcm") {
-        var qcmModal = q("[data-qcm-modal]", exam);
-        var qcmOpenButton = q("[data-qcm-modal-open]", exam);
+        var qcmSection = q(".exam-qcm-section", exam);
         var qcmMessage = "Complétez le QCM avant de publier.";
         var versionCount = Math.max(1, Math.min(3, numberValue(q(".qcm-version-count", exam) && q(".qcm-version-count", exam).value, 3)));
         var versions = qa(".qcm-version", exam);
@@ -1341,14 +1411,14 @@
           var versionLabel = "version " + String.fromCharCode(65 + versionIndex);
           var questions = version ? qa(".question-item", version) : [];
           if (!questions.length) {
-            return { step: 3, element: version || qcmModal || qcmOpenButton, message: qcmMessage + " Il manque une question dans la " + versionLabel + "." };
+            return { step: 8, element: version || qcmSection, message: qcmMessage + " Il manque une question dans la " + versionLabel + "." };
           }
           for (var questionIndex = 0; questionIndex < questions.length; questionIndex++) {
             var question = questions[questionIndex];
             var questionNumber = questionIndex + 1;
             var questionText = q(".question-text", question);
             if (!clean(questionText && questionText.value)) {
-              return { step: 3, element: questionText || qcmModal || qcmOpenButton, message: qcmMessage + " Question " + questionNumber + " : intitulé requis." };
+              return { step: 8, element: questionText || qcmSection, message: qcmMessage + " Question " + questionNumber + " : intitulé requis." };
             }
 
             var questionType = q(".question-type-select", question) ? q(".question-type-select", question).value : "single";
@@ -1358,23 +1428,23 @@
                 return clean(q(".option-text", option) && q(".option-text", option).value) !== "";
               });
               if (filledOptions.length < 2) {
-                return { step: 3, element: (optionRows[0] ? q(".option-text", optionRows[0]) : question) || qcmModal || qcmOpenButton, message: qcmMessage + " Question " + questionNumber + " : deux propositions minimum." };
+                return { step: 8, element: (optionRows[0] ? q(".option-text", optionRows[0]) : question) || qcmSection, message: qcmMessage + " Question " + questionNumber + " : deux propositions minimum." };
               }
               var missingOption = optionRows.find(function (option) {
                 return clean(q(".option-text", option) && q(".option-text", option).value) === "";
               });
               if (missingOption) {
-                return { step: 3, element: q(".option-text", missingOption) || qcmModal || qcmOpenButton, message: qcmMessage + " Question " + questionNumber + " : proposition vide." };
+                return { step: 8, element: q(".option-text", missingOption) || qcmSection, message: qcmMessage + " Question " + questionNumber + " : proposition vide." };
               }
               var correctCount = optionRows.filter(function (option) {
                 var input = q('input[type="radio"], input[type="checkbox"]', option);
                 return !!(input && input.checked);
               }).length;
               if (correctCount < 1) {
-                return { step: 3, element: question || qcmModal || qcmOpenButton, message: qcmMessage + " Question " + questionNumber + " : bonne réponse requise." };
+                return { step: 8, element: question || qcmSection, message: qcmMessage + " Question " + questionNumber + " : bonne réponse requise." };
               }
               if (questionType === "single" && correctCount > 1) {
-                return { step: 3, element: question || qcmModal || qcmOpenButton, message: qcmMessage + " Question " + questionNumber + " : une seule bonne réponse." };
+                return { step: 8, element: question || qcmSection, message: qcmMessage + " Question " + questionNumber + " : une seule bonne réponse." };
               }
             }
           }
@@ -1386,17 +1456,18 @@
   }
 
   window.goToStep = function (step) {
+    step = numberValue(step, currentStep);
     if (step < 1 || step > totalSteps) return;
     serializeBuilders();
     if (step > currentStep + 1) {
       step = currentStep + 1;
     }
-    if (step > currentStep) {
+    if (step > currentStep && !isIntroStep(currentStep)) {
       var issue = blockingIssueForStep(currentStep);
       if (showBlockingIssue(issue)) return;
     }
     clearInvalidMarkers();
-    showStep(step, true);
+    showStep(step, true, "push");
   };
 
   window.addObjective = function () {
@@ -1824,15 +1895,17 @@
   }
 
   function firstBlockingIssue() {
-    var step1Issue = blockingIssueForStep(1);
+    var step1Issue = blockingIssueForStep(2);
     if (step1Issue) return step1Issue;
     if (!hasSimpleValue("objectives-container")) {
-      return { step: 1, element: q("#objectives-container input"), message: "Ajoutez au moins un objectif pédagogique." };
+      return { step: 2, element: q("#objectives-container input"), message: "Ajoutez au moins un objectif pédagogique." };
     }
-    var step2Issue = blockingIssueForStep(2);
+    var step2Issue = blockingIssueForStep(4);
     if (step2Issue) return step2Issue;
-    var step3Issue = blockingIssueForStep(3);
+    var step3Issue = blockingIssueForStep(6);
     if (step3Issue) return step3Issue;
+    var step4Issue = blockingIssueForStep(8);
+    if (step4Issue) return step4Issue;
     return null;
   }
 
@@ -2082,18 +2155,6 @@
         return;
       }
 
-      if (target.closest("[data-qcm-modal-open]")) {
-        event.preventDefault();
-        window.openQcmModal(target.closest("[data-qcm-modal-open]"));
-        return;
-      }
-
-      if (target.closest("[data-qcm-modal-close]")) {
-        event.preventDefault();
-        window.closeQcmModal(target.closest("[data-qcm-modal-close]"));
-        return;
-      }
-
       if (target.closest("[data-qcm-import-button]")) {
         event.preventDefault();
         window.importQcmFile(target.closest("[data-qcm-import-button]"));
@@ -2208,6 +2269,7 @@
     if (!form) return;
 
     var localDraft = restoreLocalDraft(form);
+    var requestedStep = requestedStepFromUrl();
     bindCourseCreateEvents(form);
 
     var contentPayload = parsePayload(q("#content_payload", form), { modules: [] });
@@ -2220,10 +2282,17 @@
     syncReferralToggleUi();
     updatePedagogyCount(localDraft.restored);
     autosaveReady = true;
-    showStep(localDraft.step || 1, false);
+    showStep(requestedStep || localDraft.step || 1, false, "replace");
     if (localDraft.restored) {
       showToast("Brouillon local restauré. Les fichiers doivent être re-sélectionnés avant publication.", "info");
     }
+
+    window.addEventListener("popstate", function () {
+      var stepFromUrl = requestedStepFromUrl();
+      if (!stepFromUrl) return;
+      clearInvalidMarkers();
+      showStep(stepFromUrl, false, "replace");
+    });
 
     form.addEventListener("input", function (event) {
       if (event.target && event.target.classList) {
@@ -2282,8 +2351,8 @@
       }
       if (enterprisePricingConflict()) {
         event.preventDefault();
-        currentStep = 1;
-        window.goToStep(1);
+        currentStep = 4;
+        window.goToStep(4);
         showToast("Choisissez soit un prix entreprise, soit une réduction.", "error");
       }
     });

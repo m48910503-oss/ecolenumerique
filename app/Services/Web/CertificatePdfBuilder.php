@@ -43,10 +43,6 @@ final class CertificatePdfBuilder
 
     private function buildWithChrome(string $url, string $pdfPath, string $profileDir): bool
     {
-        if (!is_callable('exec')) {
-            return false;
-        }
-
         $binary = $this->findChromeBinary();
         if ($binary === '') {
             return false;
@@ -68,22 +64,15 @@ final class CertificatePdfBuilder
             '--print-to-pdf=' . escapeshellarg($pdfPath),
             '--print-to-pdf-no-header',
             escapeshellarg($url),
-            '2>&1',
         ]);
 
-        $output = [];
-        $exitCode = 1;
-        @exec($cmd, $output, $exitCode);
+        $result = (new ProcessRunner())->run($cmd);
 
-        return $exitCode === 0 && $this->waitForGeneratedFile($pdfPath);
+        return $result['exitCode'] === 0 && $this->waitForGeneratedFile($pdfPath);
     }
 
     private function buildWithWkhtmltopdf(string $url, string $pdfPath): bool
     {
-        if (!is_callable('exec')) {
-            return false;
-        }
-
         $binary = $this->findWkhtmltopdfBinary();
         if ($binary === '') {
             return false;
@@ -101,14 +90,11 @@ final class CertificatePdfBuilder
             '--encoding UTF-8',
             escapeshellarg($url),
             escapeshellarg($pdfPath),
-            '2>&1',
         ]);
 
-        $output = [];
-        $exitCode = 1;
-        @exec($cmd, $output, $exitCode);
+        $result = (new ProcessRunner())->run($cmd);
 
-        return $exitCode === 0 && $this->waitForGeneratedFile($pdfPath);
+        return $result['exitCode'] === 0 && $this->waitForGeneratedFile($pdfPath);
     }
 
     private function findChromeBinary(): string

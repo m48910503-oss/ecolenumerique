@@ -90,10 +90,6 @@ $adminPageScripts = ['assets/vendor/qrcode-generator/qrcode.js', 'admin_certific
                                         <i class="fas fa-file-pdf" aria-hidden="true"></i>
                                         <span>PDF</span>
                                     </a>
-                                    <a href="<?php echo e(site_url('admin/certificate_preview?export=word')); ?>" class="admin-certificate-download-menu__item" data-certificate-download-link="word" data-certificate-download-action>
-                                        <i class="fas fa-file-word" aria-hidden="true"></i>
-                                        <span>Word</span>
-                                    </a>
                                     <button type="button" class="admin-certificate-download-menu__item" data-certificate-download-action data-certificate-print>
                                         <i class="fas fa-print" aria-hidden="true"></i>
                                         <span>Imprimer</span>

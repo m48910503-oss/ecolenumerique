@@ -245,6 +245,27 @@ $stepGroups = [
         ],
     ],
 ];
+
+$workflowSteps = [];
+foreach ($stepGroups as $group) {
+    foreach ((array) ($group['steps'] ?? []) as $step) {
+        $workflowSteps[] = $step;
+    }
+}
+$workflowTotalSteps = count($workflowSteps);
+$workflowCompletedSteps = 0;
+$nextRecommendedLabel = 'Pret pour soumission';
+$nextRecommendedIndex = $workflowTotalSteps;
+foreach ($workflowSteps as $workflowStep) {
+    $workflowKey = (string) ($workflowStep['key'] ?? '');
+    if ($workflowKey !== '' && !empty($stepDone[$workflowKey])) {
+        $workflowCompletedSteps++;
+        continue;
+    }
+    $nextRecommendedLabel = (string) ($workflowStep['label'] ?? $nextRecommendedLabel);
+    $nextRecommendedIndex = (int) ($workflowStep['index'] ?? $nextRecommendedIndex);
+    break;
+}
 ?>
 <!doctype html>
 <html lang="fr" class="light" data-default-theme="light" data-view="teacher/course_content" translate="no">
@@ -278,37 +299,72 @@ $stepGroups = [
             <?php require __DIR__ . '/_topbar.php'; ?>
 
             <main class="mx-auto flex w-full max-w-[104rem] flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
-                <?php $teacherWelcomeTitle = $courseTitle !== '' ? $courseTitle : 'Parcours du cours'; ?>
-                <?php $teacherWelcomeSummary = 'Retrouvez les memes grandes etapes de creation, adaptees aux champs de votre projet.'; ?>
-                <?php $teacherWelcomeActionUrl = $courseEditUrl; ?>
-                <?php $teacherWelcomeActionLabel = 'Modifier la fiche'; ?>
-                <?php $teacherWelcomeActionIcon = 'settings'; ?>
-                <?php require __DIR__ . '/_welcome_hero.php'; ?>
-
-                <section class="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
-                    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                        <div class="min-w-0 flex-1">
+                <section class="course-builder-hero overflow-hidden rounded-[2rem] border border-slate-200 shadow-sm">
+                    <div class="course-builder-hero__grid">
+                        <div class="course-builder-hero__primary">
                             <div class="flex flex-wrap items-center gap-3">
-                                <h1 class="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl"><?php echo e($courseTitle !== '' ? $courseTitle : 'Cours sans titre'); ?></h1>
+                                <span class="course-builder-hero__eyebrow">Studio de creation</span>
                                 <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold <?php echo e($courseStatusBadgeClass); ?>">
                                     <?php echo e($courseStatusLabel); ?>
                                 </span>
                             </div>
-                            <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-                                Avancez etape par etape : participants cibles, configuration, contenu, quiz, page d'accueil, tarification et soumission.
+                            <h1 class="mt-4 text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl"><?php echo e($courseTitle !== '' ? $courseTitle : 'Cours sans titre'); ?></h1>
+                            <p class="mt-4 max-w-3xl text-sm leading-7 text-slate-600">
+                                Ce parcours reprend la logique de creation que vous vouliez, mais il reste centre sur les donnees et les formulaires de votre projet.
                             </p>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-3">
-                            <?php if ($previewUrl !== ''): ?>
-                                <a href="<?php echo e($previewUrl); ?>" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-100">
+                            <div class="mt-6 space-y-3">
+                                <div class="flex items-center justify-between gap-3 text-sm">
+                                    <span class="font-semibold text-slate-700">Progression editoriale</span>
+                                    <span class="text-slate-500"><?php echo e((string) $workflowCompletedSteps); ?>/<?php echo e((string) $workflowTotalSteps); ?> etapes completees</span>
+                                </div>
+                                <div class="h-3 overflow-hidden rounded-full bg-white/70">
+                                    <div class="h-full rounded-full bg-blue-600 transition-all" style="width: <?php echo e((string) $summaryPercent); ?>%"></div>
+                                </div>
+                                <div class="flex flex-wrap gap-3 text-xs font-semibold text-slate-600">
+                                    <span class="rounded-full bg-white/80 px-3 py-2">Prochaine priorite: Etape <?php echo e((string) $nextRecommendedIndex); ?> · <?php echo e($nextRecommendedLabel); ?></span>
+                                    <span class="rounded-full bg-white/80 px-3 py-2">Chapitres: <?php echo e((string) $stats['chapters']); ?></span>
+                                    <span class="rounded-full bg-white/80 px-3 py-2">Lecons: <?php echo e((string) $stats['lessons']); ?></span>
+                                    <span class="rounded-full bg-white/80 px-3 py-2">Quiz/Examens: <?php echo e((string) $totalExamCount); ?></span>
+                                </div>
+                            </div>
+                            <div class="mt-6 flex flex-wrap items-center gap-3">
+                                <a href="<?php echo e($teacherPreviewUrl); ?>" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-100">
                                     <i class="fas fa-eye"></i>
-                                    Voir la fiche
+                                    Previsualiser
                                 </a>
-                            <?php endif; ?>
-                            <a href="<?php echo e($courseEditUrl); ?>" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
-                                <i class="fas fa-pen"></i>
-                                Ouvrir l edition complete
-                            </a>
+                                <?php if ($previewUrl !== ''): ?>
+                                    <a href="<?php echo e($previewUrl); ?>" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100">
+                                        <i class="fas fa-external-link-alt"></i>
+                                        Fiche publique
+                                    </a>
+                                <?php endif; ?>
+                                <a href="<?php echo e($courseEditUrl); ?>" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
+                                    <i class="fas fa-pen"></i>
+                                    Edition complete
+                                </a>
+                            </div>
+                        </div>
+                        <div class="course-builder-hero__secondary">
+                            <article class="course-builder-kpi-card">
+                                <p class="course-builder-kpi-card__label">Audience et cadre</p>
+                                <p class="course-builder-kpi-card__value"><?php echo e((string) count($objectives)); ?> objectifs</p>
+                                <p class="course-builder-kpi-card__hint"><?php echo e((string) count($prerequisites)); ?> prerequis · <?php echo e((string) count($equipment)); ?> materiels</p>
+                            </article>
+                            <article class="course-builder-kpi-card">
+                                <p class="course-builder-kpi-card__label">Production</p>
+                                <p class="course-builder-kpi-card__value"><?php echo e((string) $stats['resources']); ?> ressources</p>
+                                <p class="course-builder-kpi-card__hint"><?php echo e((string) $stats['meetings']); ?> rendez-vous relies au cours</p>
+                            </article>
+                            <article class="course-builder-kpi-card">
+                                <p class="course-builder-kpi-card__label">Publication</p>
+                                <p class="course-builder-kpi-card__value"><?php echo e($coursePriceLabel); ?></p>
+                                <p class="course-builder-kpi-card__hint"><?php echo e($courseLevelLabel); ?> · <?php echo e($coverUrl !== '' ? 'miniature OK' : 'miniature manquante'); ?></p>
+                            </article>
+                            <article class="course-builder-kpi-card">
+                                <p class="course-builder-kpi-card__label">Soumission</p>
+                                <p class="course-builder-kpi-card__value"><?php echo e((string) $summaryPercent); ?>%</p>
+                                <p class="course-builder-kpi-card__hint"><?php echo e($summaryRequiredOk ? 'Prerequis de soumission atteints' : 'Elements requis encore manquants'); ?></p>
+                            </article>
                         </div>
                     </div>
                 </section>
@@ -357,10 +413,27 @@ $stepGroups = [
                     </section>
                 <?php endif; ?>
 
-                <section data-course-content-root data-course-id="<?php echo e((string) $courseId); ?>" data-course-step-default="<?php echo e($courseStepDefault); ?>" class="grid gap-6 xl:grid-cols-[19rem_minmax(0,1fr)]">
-                    <aside class="space-y-5 xl:sticky xl:top-24 xl:self-start">
+                <section data-course-content-root data-course-id="<?php echo e((string) $courseId); ?>" data-course-step-default="<?php echo e($courseStepDefault); ?>" class="grid gap-6 xl:grid-cols-[20rem_minmax(0,1fr)]">
+                    <aside class="course-builder-rail space-y-5 xl:sticky xl:top-24 xl:self-start">
+                        <section class="course-builder-rail-intro rounded-[1.75rem] border border-slate-200 p-5 shadow-sm">
+                            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Feuille de route</p>
+                            <h2 class="mt-3 text-xl font-bold text-slate-950">Un cockpit plus proche de votre produit</h2>
+                            <p class="mt-3 text-sm leading-7 text-slate-600">
+                                Le fond reste le meme: vos champs, vos validations et vos ecrans existants. L'enveloppe devient plus editoriale et plus orientee pilotage.
+                            </p>
+                            <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                                <div class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3">
+                                    <p class="text-xs uppercase tracking-[0.16em] text-slate-500">Etapes bouclees</p>
+                                    <p class="mt-1 text-2xl font-bold text-slate-950"><?php echo e((string) $workflowCompletedSteps); ?>/<?php echo e((string) $workflowTotalSteps); ?></p>
+                                </div>
+                                <div class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3">
+                                    <p class="text-xs uppercase tracking-[0.16em] text-slate-500">Prochain focus</p>
+                                    <p class="mt-1 text-sm font-semibold text-slate-950"><?php echo e($nextRecommendedLabel); ?></p>
+                                </div>
+                            </div>
+                        </section>
                         <?php foreach ($stepGroups as $group): ?>
-                            <section class="rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-sm">
+                            <section class="course-builder-rail-group rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-sm">
                                 <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500"><?php echo e((string) ($group['title'] ?? 'Etapes')); ?></p>
                                 <div class="mt-4 space-y-2">
                                     <?php foreach ((array) ($group['steps'] ?? []) as $step): ?>
@@ -375,9 +448,9 @@ $stepGroups = [
                                             type="button"
                                             data-course-step-button="<?php echo e($stepKey); ?>"
                                             data-course-step-button-light
-                                            class="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left transition hover:border-blue-200 hover:bg-blue-50/60"
+                                            class="course-builder-step-trigger flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left transition hover:border-blue-200 hover:bg-blue-50/60"
                                         >
-                                            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
+                                            <span class="course-builder-step-index flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
                                                 <?php if ($stepIsDone): ?>
                                                     <i class="fas fa-check"></i>
                                                 <?php else: ?>
@@ -397,7 +470,7 @@ $stepGroups = [
                         <?php endforeach; ?>
                     </aside>
 
-                    <div class="space-y-6">
+                    <div class="course-builder-workspace space-y-6">
                         <div data-course-step-panel="audience" class="space-y-6">
                             <section class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
                                 <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">

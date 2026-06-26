@@ -394,18 +394,25 @@
             return;
         }
 
-        const sessionKey = 'teacherApplicationNoticeSeen';
+        const noticeState = modal.dataset.applicationNoticeState || 'preflight';
+        const autoOpen = modal.dataset.applicationNoticeAutoOpen === '1';
+        const sessionKey = `teacherApplicationNoticeSeen:${noticeState}`;
         const triggers = Array.from(document.querySelectorAll('[data-application-notice-trigger]')).filter((node) => node instanceof HTMLElement);
         const form = document.querySelector('[data-apply-wizard-form]');
         const closeButtons = Array.from(modal.querySelectorAll(
             '[data-application-notice-close], [data-application-notice-confirm]'
-        )).filter((button) => button instanceof HTMLButtonElement);
+        )).filter((button) => button instanceof HTMLElement);
         const confirmButton = modal.querySelector('[data-application-notice-confirm]');
         let previousBodyOverflow = '';
         let previouslyFocusedElement = null;
         let openRequested = false;
+        const shouldPersistNoticeSeen = noticeState !== 'success';
 
         const rememberNotice = () => {
+            if (!shouldPersistNoticeSeen) {
+                return;
+            }
+
             try {
                 window.sessionStorage.setItem(sessionKey, '1');
             } catch (error) {
@@ -438,8 +445,10 @@
             }
         };
 
-        const openModal = () => {
-            if (wasNoticeSeen() || openRequested) {
+        const openModal = (options = {}) => {
+            const force = options.force === true;
+
+            if (!force && (wasNoticeSeen() || openRequested)) {
                 return;
             }
 
@@ -455,7 +464,7 @@
             document.body.style.overflow = 'hidden';
 
             window.requestAnimationFrame(() => {
-                if (confirmButton instanceof HTMLButtonElement) {
+                if (confirmButton instanceof HTMLElement) {
                     confirmButton.focus({ preventScroll: true });
                 }
             });
@@ -498,6 +507,10 @@
 
                 openModal();
             }, { once: true });
+        }
+
+        if (autoOpen) {
+            window.setTimeout(() => openModal({ force: noticeState === 'success' }), 120);
         }
     };
 

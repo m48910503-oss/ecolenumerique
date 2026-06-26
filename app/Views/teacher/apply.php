@@ -103,6 +103,20 @@ foreach ($focusCards as $focusCard) {
     }
 }
 
+if ($successMessage !== '') {
+    $applicationNoticeState = 'success';
+} elseif ($pendingApplication) {
+    $applicationNoticeState = 'pending';
+} elseif (!$alreadyTeacher && !$isCompanyAccount && $profileIncomplete) {
+    $applicationNoticeState = 'profile';
+} elseif (!$formLocked && $errors === []) {
+    $applicationNoticeState = 'preflight';
+} else {
+    $applicationNoticeState = '';
+}
+
+$applicationNoticeAutoOpen = in_array($applicationNoticeState, ['success', 'pending', 'profile'], true);
+
 if ($formLocked || $successMessage !== '') {
     $defaultWizardStep = 3;
 } elseif ($errors !== []) {
@@ -565,10 +579,12 @@ $teacherApplyJsUrl = site_url('assets/js/teacher_apply.js?v=' . (@filemtime(__DI
         </section>
     </main>
 
-    <?php if (!$formLocked && $errors === [] && $successMessage === ''): ?>
+    <?php if ($applicationNoticeState !== ''): ?>
         <div
             class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-950/65 p-4 backdrop-blur-sm"
             data-application-notice-modal
+            data-application-notice-state="<?php echo e($applicationNoticeState); ?>"
+            data-application-notice-auto-open="<?php echo $applicationNoticeAutoOpen ? '1' : '0'; ?>"
             aria-hidden="true"
             inert
         >
@@ -583,7 +599,7 @@ $teacherApplyJsUrl = site_url('assets/js/teacher_apply.js?v=' . (@filemtime(__DI
                 <div class="p-5 sm:p-6">
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300">
-                            <i class="fas fa-hourglass-half" aria-hidden="true"></i>
+                            <i class="fas <?php echo $applicationNoticeState === 'success' ? 'fa-circle-check' : ($applicationNoticeState === 'profile' ? 'fa-user-edit' : 'fa-hourglass-half'); ?>" aria-hidden="true"></i>
                         </div>
                         <button
                             type="button"
@@ -595,29 +611,91 @@ $teacherApplyJsUrl = site_url('assets/js/teacher_apply.js?v=' . (@filemtime(__DI
                         </button>
                     </div>
 
-                    <p class="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">À savoir avant l’envoi</p>
-                    <h2 id="application-notice-title" class="mt-2 text-xl font-black tracking-tight text-slate-950 dark:text-white sm:text-2xl">
-                        On relira votre dossier
-                    </h2>
-                    <p id="application-notice-description" class="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                        On relira votre dossier dans les heures ou les jours qui suivent. Vous recevrez ensuite une notification pour la suite.
-                    </p>
-
-                    <div class="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 dark:border-blue-500/20 dark:bg-blue-500/10">
-                        <p class="flex items-start gap-3 text-sm font-semibold leading-5 text-blue-800 dark:text-blue-200">
-                            <i class="fas fa-bell mt-0.5 text-blue-600 dark:text-blue-300" aria-hidden="true"></i>
-                            <span>La suite vous arrivera par notification.</span>
+                    <?php if ($applicationNoticeState === 'success'): ?>
+                        <p class="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">Demande envoyée</p>
+                        <h2 id="application-notice-title" class="mt-2 text-xl font-black tracking-tight text-slate-950 dark:text-white sm:text-2xl">
+                            Votre demande a bien été envoyée
+                        </h2>
+                        <p id="application-notice-description" class="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                            Elle sera analysée dans les heures ou les jours à suivre. Vous recevrez ensuite une notification pour la suite.
                         </p>
-                    </div>
 
-                    <button
-                        type="button"
-                        class="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-slate-900 sm:text-base"
-                        data-application-notice-confirm
-                    >
-                        <i class="fas fa-check" aria-hidden="true"></i>
-                        J’ai compris
-                    </button>
+                        <div class="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 dark:border-blue-500/20 dark:bg-blue-500/10">
+                            <p class="flex items-start gap-3 text-sm font-semibold leading-5 text-blue-800 dark:text-blue-200">
+                                <i class="fas fa-bell mt-0.5 text-blue-600 dark:text-blue-300" aria-hidden="true"></i>
+                                <span>Vous serez notifié dès qu’une suite sera donnée.</span>
+                            </p>
+                        </div>
+                    <?php elseif ($applicationNoticeState === 'pending'): ?>
+                        <p class="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">Demande déjà envoyée</p>
+                        <h2 id="application-notice-title" class="mt-2 text-xl font-black tracking-tight text-slate-950 dark:text-white sm:text-2xl">
+                            Votre demande est déjà en cours d’examen
+                        </h2>
+                        <p id="application-notice-description" class="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                            Vous n’avez rien à renvoyer pour le moment. Une notification vous sera envoyée dès qu’une suite sera donnée.
+                        </p>
+
+                        <div class="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 dark:border-blue-500/20 dark:bg-blue-500/10">
+                            <p class="flex items-start gap-3 text-sm font-semibold leading-5 text-blue-800 dark:text-blue-200">
+                                <i class="fas fa-bell mt-0.5 text-blue-600 dark:text-blue-300" aria-hidden="true"></i>
+                                <span>La suite arrivera par notification.</span>
+                            </p>
+                        </div>
+                    <?php elseif ($applicationNoticeState === 'profile'): ?>
+                        <p class="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">Profil incomplet</p>
+                        <h2 id="application-notice-title" class="mt-2 text-xl font-black tracking-tight text-slate-950 dark:text-white sm:text-2xl">
+                            Complétez votre profil avant de continuer
+                        </h2>
+                        <p id="application-notice-description" class="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                            <?php if ($profileMissingFields !== []): ?>
+                                Champs manquants : <?php echo e(implode(', ', $profileMissingFields)); ?>.
+                            <?php else: ?>
+                                Certains champs essentiels sont encore manquants.
+                            <?php endif; ?>
+                        </p>
+
+                        <div class="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 dark:border-blue-500/20 dark:bg-blue-500/10">
+                            <p class="flex items-start gap-3 text-sm font-semibold leading-5 text-blue-800 dark:text-blue-200">
+                                <i class="fas fa-user-edit mt-0.5 text-blue-600 dark:text-blue-300" aria-hidden="true"></i>
+                                <span>Une fois le profil complété, vous pourrez déposer votre candidature.</span>
+                            </p>
+                        </div>
+                    <?php else: ?>
+                        <p class="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">À savoir avant l’envoi</p>
+                        <h2 id="application-notice-title" class="mt-2 text-xl font-black tracking-tight text-slate-950 dark:text-white sm:text-2xl">
+                            On relira votre dossier
+                        </h2>
+                        <p id="application-notice-description" class="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                            On relira votre dossier dans les heures ou les jours qui suivent. Vous recevrez ensuite une notification pour la suite.
+                        </p>
+
+                        <div class="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 dark:border-blue-500/20 dark:bg-blue-500/10">
+                            <p class="flex items-start gap-3 text-sm font-semibold leading-5 text-blue-800 dark:text-blue-200">
+                                <i class="fas fa-bell mt-0.5 text-blue-600 dark:text-blue-300" aria-hidden="true"></i>
+                                <span>La suite vous arrivera par notification.</span>
+                            </p>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if ($applicationNoticeState === 'profile'): ?>
+                        <a
+                            href="<?php echo e($profileUrl); ?>"
+                            class="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-slate-900 sm:text-base"
+                            data-application-notice-confirm
+                        >
+                            <i class="fas fa-user-edit" aria-hidden="true"></i>
+                            Compléter mon profil
+                        </a>
+                    <?php else: ?>
+                        <button
+                            type="button"
+                            class="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-slate-900 sm:text-base"
+                            data-application-notice-confirm
+                        >
+                            <i class="fas fa-check" aria-hidden="true"></i>
+                            <?php echo $applicationNoticeState === 'success' ? 'Fermer' : 'J’ai compris'; ?>
+                        </button>
+                    <?php endif; ?>
                 </div>
             </section>
         </div>

@@ -1556,3 +1556,323 @@ html:not(.dark):not([data-theme="dark"]) body.app-role-admin[data-view="admin/ca
     min-width: 0;
   }
 }
+
+/* Final dashboard size parity layer. Keep this last so admin and teacher match the student/company shell. */
+body.app-role-admin:not([data-view="admin/certificate_preview"]),
+body.app-role-teacher[data-view^="teacher/"] {
+  --dashboard-parity-sidebar-width: 18rem;
+  --dashboard-parity-topbar-height: 4rem;
+  --dashboard-parity-content-pad-x: 1rem;
+  --dashboard-parity-content-pad-y: 1rem;
+  --dashboard-parity-content-pad-bottom: 5rem;
+  --dashboard-parity-content-gap: 1rem;
+  --dashboard-parity-control-height: 2.5rem;
+  --dashboard-parity-control-radius: 0.75rem;
+  --dashboard-parity-nav-height: 2.35rem;
+  --dashboard-parity-nav-radius: 0.75rem;
+  --dashboard-parity-title-size: 1.125rem;
+  --dashboard-parity-title-size-sm: 1rem;
+  --dashboard-parity-title-size-lg: 1.25rem;
+  --dashboard-parity-brand-size: 1.05rem;
+  --dashboard-parity-label-size: 0.62rem;
+  --dashboard-parity-nav-size: 0.92rem;
+  --dashboard-parity-card-radius: 1rem;
+  --dashboard-parity-panel-radius: 1.15rem;
+  --dashboard-parity-card-padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  body.app-role-admin:not([data-view="admin/certificate_preview"]),
+  body.app-role-teacher[data-view^="teacher/"] {
+    --dashboard-parity-topbar-height: 4.5rem;
+    --dashboard-parity-content-pad-x: 1.25rem;
+    --dashboard-parity-content-pad-y: 1.25rem;
+    --dashboard-parity-content-pad-bottom: 5.5rem;
+    --dashboard-parity-content-gap: 1.25rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  body.app-role-admin:not([data-view="admin/certificate_preview"]),
+  body.app-role-teacher[data-view^="teacher/"] {
+    --dashboard-parity-content-pad-x: 1.5rem;
+    --dashboard-parity-content-pad-y: 1.5rem;
+    --dashboard-parity-content-gap: 1.35rem;
+  }
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) {
+  --admin-sidebar-width: var(--dashboard-parity-sidebar-width);
+  --app-toolbar-height: var(--dashboard-parity-topbar-height);
+  --admin-control-height: var(--dashboard-parity-control-height);
+}
+
+body.app-role-teacher[data-view^="teacher/"] {
+  --teacher-sidebar-width: var(--dashboard-parity-sidebar-width);
+  --teacher-sidebar-width-current: var(--teacher-sidebar-width);
+  --teacher-topbar-height: var(--dashboard-parity-topbar-height);
+  --teacher-type-page-title: var(--dashboard-parity-title-size);
+  --teacher-type-section-title: clamp(1rem, 0.94rem + 0.22vw, 1.125rem);
+  --teacher-type-card-title: 1rem;
+  --teacher-type-value: clamp(1.2rem, 1rem + 0.72vw, 1.65rem);
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-dashboard-topbar,
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-topbar {
+  min-height: var(--dashboard-parity-topbar-height) !important;
+  height: var(--dashboard-parity-topbar-height) !important;
+  padding: 0.75rem 0.75rem !important;
+  overflow: visible;
+  isolation: isolate;
+}
+
+@media (min-width: 640px) {
+  body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-dashboard-topbar,
+  body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-topbar {
+    padding-right: 1rem !important;
+    padding-left: 1rem !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-dashboard-topbar,
+  body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-topbar {
+    padding-right: 1.5rem !important;
+    padding-left: 1.5rem !important;
+  }
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-dashboard-topbar > :first-child,
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-topbar > :first-child {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-dashboard-topbar > :last-child,
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-topbar > :last-child,
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-topbar__actions {
+  min-width: 0;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-dashboard-topbar :is(h1, .text-xl),
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-title {
+  max-width: min(48vw, 36rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--dashboard-parity-title-size) !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+}
+
+@media (min-width: 640px) {
+  body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-dashboard-topbar :is(h1, .text-xl),
+  body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-title {
+    max-width: min(58vw, 42rem);
+    font-size: var(--dashboard-parity-title-size-lg) !important;
+  }
+}
+
+@media (max-width: 380px) {
+  body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-dashboard-topbar :is(h1, .text-xl),
+  body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-title {
+    max-width: 38vw;
+    font-size: var(--dashboard-parity-title-size-sm) !important;
+  }
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-dashboard-topbar .js-sidebar-toggle,
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-topbar-icon-button,
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-topbar-account-trigger,
+body.app-role-teacher[data-view^="teacher/"] :is(.teacher-dashboard-theme-toggle, .teacher-dashboard-notification, .student-dashboard-user-trigger, .js-sidebar-toggle) {
+  width: var(--dashboard-parity-control-height) !important;
+  min-width: var(--dashboard-parity-control-height) !important;
+  height: var(--dashboard-parity-control-height) !important;
+  min-height: var(--dashboard-parity-control-height) !important;
+  padding: 0 !important;
+  border-radius: var(--dashboard-parity-control-radius) !important;
+}
+
+@media (min-width: 640px) {
+  body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-dashboard-topbar .js-sidebar-toggle,
+  body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-topbar-icon-button,
+  body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-topbar-account-trigger,
+  body.app-role-teacher[data-view^="teacher/"] :is(.teacher-dashboard-theme-toggle, .teacher-dashboard-notification, .student-dashboard-user-trigger) {
+    width: 2.75rem !important;
+    min-width: 2.75rem !important;
+    height: 2.75rem !important;
+    min-height: 2.75rem !important;
+  }
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-topbar-account-trigger :is(img, span:first-child),
+body.app-role-teacher[data-view^="teacher/"] .student-dashboard-user-trigger :is(img, span:first-child) {
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+}
+
+@media (min-width: 640px) {
+  body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-topbar-account-trigger :is(img, span:first-child),
+  body.app-role-teacher[data-view^="teacher/"] .student-dashboard-user-trigger :is(img, span:first-child) {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+  }
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-dashboard-topbar form input,
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-topbar input[type="text"] {
+  min-height: var(--dashboard-parity-control-height) !important;
+  border-radius: var(--dashboard-parity-control-radius) !important;
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+  padding-left: 2.35rem !important;
+  padding-right: 0.9rem !important;
+  font-size: var(--dashboard-parity-nav-size) !important;
+}
+
+@media (min-width: 768px) {
+  body.app-role-admin:not([data-view="admin/certificate_preview"]) #admin-sidebar,
+  body.app-role-teacher[data-view^="teacher/"] #teacher-dashboard-sidebar,
+  body.app-role-teacher[data-view^="teacher/"] #teacher-sidebar {
+    width: var(--dashboard-parity-sidebar-width) !important;
+    min-width: var(--dashboard-parity-sidebar-width) !important;
+    max-width: var(--dashboard-parity-sidebar-width) !important;
+  }
+}
+
+@media (max-width: 767px) {
+  body.app-role-admin:not([data-view="admin/certificate_preview"]) #admin-sidebar,
+  body.app-role-teacher[data-view^="teacher/"] #teacher-dashboard-sidebar,
+  body.app-role-teacher[data-view^="teacher/"] #teacher-sidebar {
+    width: min(18rem, calc(100vw - 0.75rem)) !important;
+    min-width: min(18rem, calc(100vw - 0.75rem)) !important;
+    max-width: calc(100vw - 0.75rem) !important;
+  }
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) #admin-sidebar,
+body.app-role-teacher[data-view^="teacher/"] #teacher-dashboard-sidebar,
+body.app-role-teacher[data-view^="teacher/"] #teacher-sidebar {
+  overflow: hidden;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .app-shell-sidebar__brand,
+body.app-role-teacher[data-view^="teacher/"] #teacher-dashboard-sidebar > div:first-child,
+body.app-role-teacher[data-view^="teacher/"] #teacher-sidebar .app-shell-sidebar__brand {
+  min-height: auto !important;
+  padding: 1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .app-shell-sidebar__logo,
+body.app-role-teacher[data-view^="teacher/"] :is(#teacher-dashboard-sidebar > div:first-child img, #teacher-dashboard-sidebar > div:first-child span:first-child, #teacher-sidebar .app-shell-sidebar__logo) {
+  width: 2.05rem !important;
+  height: 2.05rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .app-shell-brand-title,
+body.app-role-teacher[data-view^="teacher/"] :is(#teacher-dashboard-sidebar > div:first-child > span:last-of-type, #teacher-sidebar .app-shell-brand-title) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--dashboard-parity-brand-size) !important;
+  line-height: 1.25rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.admin-sidebar-profile, .app-shell-sidebar__profile),
+body.app-role-teacher[data-view^="teacher/"] :is(#teacher-dashboard-sidebar > div:nth-child(2), #teacher-sidebar .app-shell-sidebar__profile) {
+  margin: 0 !important;
+  padding: 0.85rem 1rem !important;
+  gap: 0.65rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.admin-sidebar-profile__avatar, .app-shell-sidebar__profile-avatar),
+body.app-role-teacher[data-view^="teacher/"] :is(#teacher-dashboard-sidebar > div:nth-child(2) :is(img, .w-12, div[class*="rounded-full"]), #teacher-sidebar .app-shell-sidebar__profile-avatar) {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.app-shell-sidebar__nav, #admin-sidebar nav),
+body.app-role-teacher[data-view^="teacher/"] :is(#teacher-dashboard-sidebar nav, #teacher-sidebar .app-shell-sidebar__nav) {
+  padding: 0.85rem 1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.admin-sidebar-section + .admin-sidebar-section, #admin-sidebar nav > * + *),
+body.app-role-teacher[data-view^="teacher/"] :is(#teacher-dashboard-sidebar nav > * + *, #teacher-sidebar .app-shell-sidebar__section + .app-shell-sidebar__section) {
+  margin-top: 0.7rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.admin-sidebar-section__title, .app-shell-sidebar__summary-label),
+body.app-role-teacher[data-view^="teacher/"] :is(#teacher-dashboard-sidebar nav p, #teacher-sidebar .app-shell-sidebar__summary-label) {
+  padding-left: 0.65rem !important;
+  font-size: var(--dashboard-parity-label-size) !important;
+  letter-spacing: 0.17em !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.admin-shell-nav-link, .admin-sidebar-theme, #admin-sidebar .app-shell-sidebar__summary),
+body.app-role-teacher[data-view^="teacher/"] :is(#teacher-dashboard-sidebar nav a, #teacher-dashboard-sidebar > div:last-child :is(button, a), #teacher-sidebar .app-nav-link, #teacher-sidebar .app-shell-sidebar__summary) {
+  min-height: var(--dashboard-parity-nav-height) !important;
+  padding: 0.52rem 0.72rem !important;
+  border-radius: var(--dashboard-parity-nav-radius) !important;
+  font-size: var(--dashboard-parity-nav-size) !important;
+  line-height: 1.25 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-shell-nav-link__badge,
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .app-nav-link__badge,
+body.app-role-teacher[data-view^="teacher/"] :is(#teacher-dashboard-sidebar nav a [class*="rounded-full"], #teacher-sidebar .app-nav-link__badge) {
+  min-height: 1.25rem !important;
+  font-size: 0.62rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-sidebar-footer,
+body.app-role-teacher[data-view^="teacher/"] :is(#teacher-dashboard-sidebar > div:last-child, #teacher-sidebar .app-shell-sidebar__footer) {
+  padding: 0.75rem 1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-shell-content,
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main > :is(div, section):not(.teacher-dashboard-topbar):not(.app-shell-toolbar) {
+  padding: var(--dashboard-parity-content-pad-y) var(--dashboard-parity-content-pad-x) var(--dashboard-parity-content-pad-bottom) !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-shell-content {
+  gap: var(--dashboard-parity-content-gap) !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.admin-shell-card, .admin-shell-panel, .admin-shell-soft-card, .admin-shell-empty, .admin-shell-list-item, .app-page-list-item, .app-empty-state, .support-conv-panel, .support-thread-panel, .app-kpi-card, .admin-course-card),
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-shell-content :is(.grid, section.grid, div.grid) > :is(article, section, div)[class*="bg-white"][class*="rounded"],
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main :is(.teacher-dashboard-card, .teacher-kpi-card, .teacher-courses-summary-card, .teacher-courses-filter-shell, .teacher-course-card, .teacher-chart-empty, .teacher-chart-frame, .teacher-courses-hero, .teacher-courses-hero-stat, .exam-summary-pill) {
+  border-radius: var(--dashboard-parity-card-radius) !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.admin-shell-card, .admin-shell-panel, .admin-shell-soft-card, .admin-shell-empty, .admin-shell-list-item, .app-page-list-item, .app-empty-state, .support-conv-panel, .support-thread-panel, .app-kpi-card, .admin-course-card),
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-shell-content :is(.grid, section.grid, div.grid) > :is(article, section, div)[class*="bg-white"][class*="rounded"],
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main :is(.teacher-dashboard-card, .teacher-kpi-card, .teacher-courses-summary-card, .teacher-courses-filter-shell, .teacher-chart-empty) {
+  padding: var(--dashboard-parity-card-padding) !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.admin-shell-hero, .admin-shell-content > :first-child:is(section, div)[class*="bg-gradient"]),
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main :is(.teacher-dashboard-hero, .teacher-dashboard-welcome, .teacher-courses-hero) {
+  padding: 1.15rem 1.25rem !important;
+  border-radius: var(--dashboard-parity-panel-radius) !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-shell-content :is(input, select, textarea, button, .admin-shell-button, .tab-btn, a[class*="px-4"]),
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main :is(input, select, textarea, button, .teacher-courses-btn, .teacher-courses-create-button, .teacher-primary-action, .course-action-btn, .course-action-link, .teacher-courses-filter-control, .exam-action-btn, .exam-open-btn, .exam-filter-tab) {
+  min-height: var(--dashboard-parity-control-height) !important;
+  border-radius: var(--dashboard-parity-control-radius) !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-shell-content :is(button, .admin-shell-button, .tab-btn, a[class*="px-4"]),
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main :is(button, .teacher-courses-btn, .teacher-courses-create-button, .teacher-primary-action, .course-action-btn, .course-action-link, .exam-action-btn, .exam-open-btn, .exam-filter-tab) {
+  padding: 0.5rem 0.72rem !important;
+  font-size: var(--dashboard-parity-nav-size) !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-shell-content :is(input, select, textarea),
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main :is(input, select, textarea, .teacher-courses-filter-control) {
+  font-size: var(--dashboard-parity-nav-size) !important;
+}

@@ -517,11 +517,31 @@ $faqItems = [
       color: var(--home-ink);
       font-family: "Plus Jakarta Sans", "Inter", sans-serif;
     }
+    html.dark body[data-view="web/home"] {
+      background: #020617;
+      color: #e2e8f0;
+    }
     .home-page-shell {
       background:
         radial-gradient(circle at top right, rgba(45, 99, 234, 0.08), transparent 28%),
         radial-gradient(circle at top left, rgba(255, 122, 26, 0.05), transparent 24%),
         #f7f8fc;
+    }
+    html.dark body[data-view="web/home"] .home-page-shell {
+      background:
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 28%),
+        radial-gradient(circle at top left, rgba(34, 211, 238, 0.08), transparent 22%),
+        #020617;
+    }
+    body[data-view="web/home"] .home-page-shell > main {
+      padding-top: clamp(5.75rem, 6vw, 6.75rem);
+    }
+    body[data-view="web/home"] .mk-header {
+      position: fixed;
+      inset-inline: 0;
+      top: 0;
+      z-index: 60;
+      box-shadow: 0 12px 34px -28px rgba(15, 23, 42, 0.36);
     }
     .home-blue-text {
       color: var(--home-primary);
@@ -590,6 +610,32 @@ $faqItems = [
     .home-scrollbar::-webkit-scrollbar-track {
       background: rgba(226, 232, 240, 0.55);
       border-radius: 999px;
+    }
+    html.dark body[data-view="web/home"] main > section:first-child {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(8, 15, 27, 0.96)) !important;
+      border-bottom-color: rgba(148, 163, 184, 0.16) !important;
+    }
+    html.dark body[data-view="web/home"] :is(.home-section-panel, .home-course-shadow, .home-panel-shadow, .home-soft-shadow, .home-card-shadow) {
+      box-shadow: 0 30px 70px -42px rgba(0, 0, 0, 0.78) !important;
+    }
+    html.dark body[data-view="web/home"] :is(.home-section-panel, .home-course-shadow, .home-soft-shadow, .home-panel-shadow) {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.86)) !important;
+      border-color: rgba(148, 163, 184, 0.16) !important;
+    }
+    html.dark body[data-view="web/home"] :is([class*="bg-white"], [class*="bg-slate-50"], [class*="bg-slate-100"], [class*="bg-gray-50"]) {
+      background-color: rgba(15, 23, 42, 0.82) !important;
+    }
+    html.dark body[data-view="web/home"] :is([class*="border-slate-200"], [class*="border-slate-100"], [class*="border-slate-300"], [class*="border-gray-200"]) {
+      border-color: rgba(148, 163, 184, 0.16) !important;
+    }
+    html.dark body[data-view="web/home"] :is(.text-slate-950, .text-slate-900, .text-slate-800) {
+      color: #f8fafc !important;
+    }
+    html.dark body[data-view="web/home"] :is(.text-slate-700, .text-slate-600, .text-gray-700) {
+      color: #dbe4f0 !important;
+    }
+    html.dark body[data-view="web/home"] :is(.text-slate-500, .text-slate-400, .text-gray-500, .text-gray-400) {
+      color: #94a3b8 !important;
     }
   </style>
 </head>

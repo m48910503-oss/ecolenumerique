@@ -248,15 +248,15 @@ if ($categorySpotlights === []) {
                     </div>
 
                     <div class="relative z-[1]">
-                        <div class="relative overflow-hidden rounded-[38px] border border-slate-200/80 bg-white p-6 shadow-[0_40px_120px_-65px_rgba(15,23,42,0.62)] dark:border-white/10 dark:bg-slate-900/85 sm:p-7">
+                        <div class="relative overflow-hidden rounded-[38px] border border-slate-200/80 bg-white p-5 shadow-[0_40px_120px_-65px_rgba(15,23,42,0.62)] dark:border-white/10 dark:bg-slate-900/85 sm:p-6">
                             <div class="absolute -right-10 top-10 h-40 w-40 rounded-full bg-blue-100 blur-3xl dark:bg-blue-500/20"></div>
                             <div class="absolute bottom-0 left-0 h-40 w-40 rounded-tr-[56px] bg-orange-400/90"></div>
                             <div class="absolute right-6 top-6 h-16 w-16 rounded-[24px] border border-slate-200 bg-slate-50/90 dark:border-white/10 dark:bg-white/[0.04]"></div>
-                            <figure class="relative overflow-hidden rounded-[28px] border border-slate-200/80 bg-slate-100 shadow-[0_24px_80px_-55px_rgba(15,23,42,0.5)] dark:border-white/10 dark:bg-slate-950">
+                            <figure class="relative aspect-[4/5] overflow-hidden rounded-[30px] border border-slate-200/80 bg-slate-100 shadow-[0_24px_80px_-55px_rgba(15,23,42,0.5)] dark:border-white/10 dark:bg-slate-950">
                                 <img
                                     src="<?php echo e($teacherHeroImageUrl); ?>"
                                     alt="Formateur devant un tableau dans une salle de cours"
-                                    class="aspect-square h-full w-full object-cover object-center"
+                                    class="absolute inset-0 h-full w-full object-cover object-center"
                                 >
                                 <figcaption class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/70 via-slate-950/30 to-transparent px-5 pb-5 pt-16 text-white">
                                     <p class="text-xs font-bold uppercase tracking-[0.18em] text-blue-200">Espace enseignant</p>
@@ -264,14 +264,14 @@ if ($categorySpotlights === []) {
                                 </figcaption>
                             </figure>
 
-                            <div class="relative mt-6 grid gap-4 sm:grid-cols-2">
+                            <div class="relative mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                                 <?php foreach ($landingMetrics as $metric): ?>
-                                    <article class="rounded-[24px] border border-slate-200/80 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-                                        <span class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300">
+                                    <article class="rounded-[24px] border border-slate-200/80 bg-slate-50/90 p-3.5 dark:border-white/10 dark:bg-white/[0.04]">
+                                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300">
                                             <i class="fas <?php echo e((string) $metric['icon']); ?>" aria-hidden="true"></i>
                                         </span>
-                                        <p class="mt-4 text-2xl font-black text-slate-950 dark:text-white"><?php echo e((string) $metric['value']); ?><?php echo e((string) $metric['suffix']); ?></p>
-                                        <p class="mt-1 text-sm text-slate-600 dark:text-slate-300"><?php echo e((string) $metric['label']); ?></p>
+                                        <p class="mt-3 text-xl font-black text-slate-950 dark:text-white"><?php echo e((string) $metric['value']); ?><?php echo e((string) $metric['suffix']); ?></p>
+                                        <p class="mt-1 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-600 dark:text-slate-300"><?php echo e((string) $metric['label']); ?></p>
                                     </article>
                                 <?php endforeach; ?>
                             </div>
@@ -284,8 +284,7 @@ if ($categorySpotlights === []) {
         <section class="py-10 sm:py-14">
             <div class="mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-8">
                 <div class="grid gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
-                    <div class="relative overflow-hidden rounded-[36px] border border-[#cfe0ff] bg-[linear-gradient(135deg,#edf4ff_0%,#e2ecff_56%,#d7e6ff_100%)] p-7 text-slate-950 shadow-[0_30px_90px_-45px_rgba(59,130,246,0.22)] dark:border-[#496191] dark:bg-[linear-gradient(135deg,#24375f_0%,#2d4475_58%,#36548c_100%)] dark:text-white">
-                        <div class="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.28),transparent_64%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.12),transparent_64%)]"></div>
+                    <div class="relative overflow-hidden rounded-[36px] border border-blue-200 bg-blue-100 p-7 text-slate-950 shadow-[0_30px_90px_-45px_rgba(59,130,246,0.18)] dark:border-[#496191] dark:bg-[linear-gradient(135deg,#24375f_0%,#2d4475_58%,#36548c_100%)] dark:text-white">
                         <div class="relative">
                             <span class="inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-white/90 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700 shadow-sm dark:border-white/20 dark:bg-white/10 dark:text-blue-50">
                                 <i class="fas fa-compass" aria-hidden="true"></i>
@@ -298,7 +297,7 @@ if ($categorySpotlights === []) {
 
                             <div class="mt-8 grid gap-4 sm:grid-cols-2">
                                 <?php foreach ($categorySpotlights as $spotlight): ?>
-                                    <div class="rounded-[24px] border border-white/65 bg-white/82 p-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.14)] backdrop-blur-md dark:border-white/15 dark:bg-white/10 dark:shadow-[0_18px_40px_-30px_rgba(15,23,42,0.28)]">
+                                    <div class="rounded-[24px] border border-blue-100 bg-white p-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.14)] dark:border-white/15 dark:bg-white/10 dark:shadow-[0_18px_40px_-30px_rgba(15,23,42,0.28)]">
                                         <p class="text-sm font-bold text-slate-950 dark:text-white"><?php echo e((string) $spotlight['title']); ?></p>
                                         <p class="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-blue-700 dark:text-blue-100/85"><?php echo e((string) $spotlight['countLabel']); ?></p>
                                     </div>
@@ -447,8 +446,7 @@ if ($categorySpotlights === []) {
 
         <section class="pb-14 pt-6 sm:pb-20">
             <div class="mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-8">
-                <div class="relative overflow-hidden rounded-[36px] border border-[#cfe0ff] bg-[linear-gradient(135deg,#edf4ff_0%,#e2ecff_54%,#d7e6ff_100%)] px-6 py-8 text-slate-950 shadow-[0_34px_90px_-45px_rgba(59,130,246,0.22)] dark:border-[#496191] dark:bg-[linear-gradient(135deg,#24375f_0%,#2d4475_58%,#36548c_100%)] dark:text-white sm:px-8 sm:py-10">
-                    <div class="pointer-events-none absolute inset-y-0 right-0 w-[38%] bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.26),transparent_64%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.10),transparent_64%)]"></div>
+                <div class="relative overflow-hidden rounded-[36px] border border-blue-200 bg-blue-100 px-6 py-8 text-slate-950 shadow-[0_34px_90px_-45px_rgba(59,130,246,0.18)] dark:border-[#496191] dark:bg-[linear-gradient(135deg,#24375f_0%,#2d4475_58%,#36548c_100%)] dark:text-white sm:px-8 sm:py-10">
                     <div class="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                         <div class="max-w-2xl">
                             <p class="text-xs font-bold uppercase tracking-[0.18em] text-blue-700 dark:text-blue-100">Prêt à commencer ?</p>
@@ -458,7 +456,7 @@ if ($categorySpotlights === []) {
                             </p>
                         </div>
                         <div class="flex flex-col gap-3 sm:flex-row">
-                            <a href="<?php echo e($teacherLandingPrimaryUrl); ?>" class="inline-flex items-center justify-center gap-3 rounded-full border border-blue-500 bg-blue-600 px-6 py-3.5 text-base font-bold text-white shadow-[0_20px_45px_-24px_rgba(37,99,235,0.32)] transition hover:-translate-y-0.5 hover:bg-blue-500 dark:border-white/35 dark:bg-white dark:text-blue-700 dark:hover:bg-blue-50">
+                            <a href="<?php echo e($teacherLandingPrimaryUrl); ?>" class="inline-flex items-center justify-center gap-3 rounded-full border border-blue-300 bg-white px-6 py-3.5 text-base font-bold text-blue-700 shadow-[0_20px_45px_-24px_rgba(59,130,246,0.22)] transition hover:-translate-y-0.5 hover:bg-blue-50 dark:border-white/35 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500">
                                 <?php echo e($teacherLandingPrimaryLabel); ?>
                                 <i class="fas fa-arrow-right" aria-hidden="true"></i>
                             </a>

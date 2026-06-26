@@ -732,7 +732,7 @@ $formatRating = static function (float $value): string {
                                 };
                                 $primaryUrl = match ($workflow) {
                                     'submitted', 'archived' => site_url('teacher/course_actions?id=' . $courseId . ($listQuery !== '' ? ('&list=' . rawurlencode($listQuery)) : '')),
-                                    'draft', 'rejected' => site_url('teacher/course_content?id=' . $courseId . '&step=audience'),
+                                    'draft', 'rejected' => site_url('teacher/course_edit?id=' . $courseId),
                                     default => site_url('teacher/course_edit?id=' . $courseId),
                                 };
                                 $secondaryLabel = match ($workflow) {
@@ -969,7 +969,7 @@ $draftStatusLabel = $workflowLabels[$draftStatus] ?? 'Brouillon';
                                             <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg($draftReadyIcon); ?></span>
                                             <span>Soumission : <?php echo e($draftReadyLabel); ?></span>
                                         </span>
-                                        <a href="<?php echo e(site_url('teacher/course_content?id=' . $draftId . '&step=audience')); ?>" class="teacher-courses-btn teacher-courses-btn--secondary teacher-courses-btn--compact teacher-courses-action-strong">
+                                        <a href="<?php echo e(site_url('teacher/course_edit?id=' . $draftId)); ?>" class="teacher-courses-btn teacher-courses-btn--secondary teacher-courses-btn--compact teacher-courses-action-strong">
                                             <span>Continuer</span>
                                             <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg('chevron-right'); ?></span>
                                         </a>

@@ -158,6 +158,14 @@ ensure_contains(
     'Admin topbar should expose the shared account dropdown trigger'
 );
 
+$adminHeadAssets = $rootDir . '/app/Views/admin/_head_assets.php';
+ensure_contains(
+    $adminHeadAssets,
+    'assets/css/app-typography.css',
+    $errors,
+    'Admin shared head should load the shared typography layer'
+);
+
 ensure_not_contains(
     $rootDir . '/app/Views/admin/secondary_admins.php',
     'secondary-create-modal',

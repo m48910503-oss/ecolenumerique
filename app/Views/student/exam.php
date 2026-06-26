@@ -46,7 +46,6 @@ $user = is_array($user ?? null) ? $user : [];
 $csrfToken = view_csrf_token();
 $certificateViewUrl = $certificateCode !== '' ? site_url('certificate?code=' . urlencode($certificateCode)) : '';
 $certificatePdfUrl = $certificateCode !== '' ? site_url('certificate?code=' . urlencode($certificateCode) . '&format=pdf') : '';
-$certificateDocxUrl = $certificateCode !== '' ? site_url('certificate?code=' . urlencode($certificateCode) . '&format=docx') : '';
 
 $surfaceClass = 'rounded-3xl border border-slate-300 bg-white/95 shadow-[0_22px_48px_-34px_rgba(15,23,42,0.26)] dark:border-slate-800 dark:bg-slate-950/50 dark:shadow-none';
 $softCardClass = 'rounded-2xl border border-slate-300 bg-slate-50 shadow-sm dark:border-slate-800 dark:bg-slate-900/55 dark:shadow-none';
@@ -1150,10 +1149,6 @@ if (!$onsiteDisclaimerRequired) {
                                             <a href="<?php echo e($certificatePdfUrl); ?>" class="app-btn-soft inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition">
                                                 <span class="app-icon" aria-hidden="true"><i class="<?php echo e(dashboard_icon_fa_class('download')); ?>"></i></span>
                                                 <span>Télécharger le PDF</span>
-                                            </a>
-                                            <a href="<?php echo e($certificateDocxUrl); ?>" class="app-btn-soft inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition">
-                                                <span class="app-icon" aria-hidden="true"><i class="<?php echo e(dashboard_icon_fa_class('file-text')); ?>"></i></span>
-                                                <span>Télécharger le document Word</span>
                                             </a>
                                         </div>
                                     </div>

@@ -49,7 +49,7 @@ $publicHeaderMobileTeacherClass = $isTeacherPublicPage
     ? 'font-semibold text-blue-600 dark:text-blue-300'
     : 'text-gray-600 transition hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-300';
 ?>
-<header class="sticky top-0 z-50 border-b border-gray-200/60 bg-white/80 backdrop-blur-xl dark:border-gray-800 dark:bg-gray-950/80">
+<header class="mk-header sticky top-0 z-50 border-b border-gray-200/60 bg-white/80 backdrop-blur-xl dark:border-gray-800 dark:bg-gray-950/80">
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex min-h-[4.5rem] items-center justify-between gap-4 py-3 md:min-h-[5rem]">
       <a href="<?php echo e($homeUrl); ?>" class="flex min-w-0 items-center gap-3">

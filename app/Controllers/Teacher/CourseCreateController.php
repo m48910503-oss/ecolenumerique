@@ -5,9 +5,15 @@ namespace App\Controllers\Teacher;
 
 use App\Core\Controller;
 use App\Models\CourseCreateModel;
+use App\Models\SharedCompanySchemaModel;
 use App\Models\SharedCertificateModel;
+use App\Models\SharedPromotionModel;
+use App\Models\SharedReferralModel;
+use App\Services\Shared\CompanySchemaService;
 use App\Services\Shared\CertificateOpsService;
-use App\Services\Teacher\CourseOnboardingService;
+use App\Services\Shared\PromotionsService;
+use App\Services\Shared\ReferralService;
+use App\Services\Teacher\CourseCreateService;
 
 final class CourseCreateController extends Controller
 {
@@ -41,15 +47,28 @@ final class CourseCreateController extends Controller
             $this->requireCsrf();
         }
 
-        $service = new CourseOnboardingService($pdo, new CourseCreateModel($pdo));
-        $result = $service->handle($user, (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'), $_POST);
+        $referrals = new ReferralService(new SharedReferralModel($pdo));
+        $promotions = new PromotionsService(
+            new SharedPromotionModel($pdo),
+            new CompanySchemaService(new SharedCompanySchemaModel($pdo))
+        );
+        $promotions->ensureCoursesReferralSettingsColumns();
+
+        $service = new CourseCreateService($pdo, new CourseCreateModel($pdo), $referrals);
+        $result = $service->handle(
+            $user,
+            $_POST,
+            $_FILES,
+            (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'),
+            $_SESSION
+        );
 
         if (!empty($result['redirectTo'])) {
             header('Location: ' . (string) $result['redirectTo']);
             exit;
         }
 
-        $this->render('teacher/course_onboarding', array_merge(
+        $this->render('teacher/course_create', array_merge(
             [
                 'siteLogoUrl' => $siteLogoUrl,
                 'injectGlobalAssets' => false,

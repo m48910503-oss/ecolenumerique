@@ -99,7 +99,7 @@ final class CertificateService extends Service
 
         $verifyUrl = $this->absUrl('certificate?code=' . urlencode((string) ($cert['code'] ?? '')));
         $qrVerifyUrl = $verifyUrl;
-        if (!in_array($format, ['html', 'pdf', 'word'], true)) {
+        if (!in_array($format, ['html', 'pdf'], true)) {
             $format = 'html';
         }
 
@@ -127,7 +127,6 @@ final class CertificateService extends Service
                 'verifyUrl' => $verifyUrl,
                 'qrVerifyUrl' => $qrVerifyUrl,
                 'exportFormat' => $format,
-                'isWordExport' => $format === 'word',
                 'isPdfExport' => $format === 'pdf',
             ],
         ];

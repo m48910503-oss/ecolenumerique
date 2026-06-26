@@ -1,12 +1,12 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
 :root {
-    --app-font-title: "Inter", "Segoe UI", system-ui, sans-serif;
+    --app-font-title: "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, sans-serif;
     --app-font-display: var(--app-font-title);
-    --app-font-section: "Inter", "Segoe UI", system-ui, sans-serif;
-    --app-font-ui: "Inter", "Segoe UI", system-ui, sans-serif;
-    --app-font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
-    --app-font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+    --app-font-section: var(--app-font-title);
+    --app-font-ui: var(--app-font-title);
+    --app-font-sans: var(--app-font-title);
+    --app-font-body: var(--app-font-title);
     --app-font-mono: "IBM Plex Mono", "Cascadia Code", Consolas, monospace;
     --app-font-numeric: var(--app-font-mono);
     --app-primary-50: #eff6ff;
@@ -95,7 +95,7 @@ html[data-theme="dark"] {
 
 html {
     min-height: 100%;
-    font-size: 15px;
+    font-size: 14.5px;
 }
 
 body.app-role-admin {
@@ -3319,11 +3319,11 @@ body.app-role-admin .admin-shell-dense :is(.admin-shell-card, .admin-shell-hero,
 
 /* AdminPortal visual refresh shared by every admin view except the isolated dashboard. */
 :root {
-    --app-font-title: "Inter", "Segoe UI", system-ui, sans-serif;
+    --app-font-title: "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, sans-serif;
     --app-font-display: var(--app-font-title);
-    --app-font-section: "Inter", system-ui, sans-serif;
-    --app-font-ui: "Inter", system-ui, sans-serif;
-    --app-font-body: "Inter", system-ui, sans-serif;
+    --app-font-section: var(--app-font-title);
+    --app-font-ui: var(--app-font-title);
+    --app-font-body: var(--app-font-title);
     --app-font-mono: "IBM Plex Mono", "Cascadia Code", Consolas, monospace;
     --app-font-numeric: var(--app-font-mono);
     --app-bg: #f9fafb;
@@ -10104,9 +10104,10 @@ html[data-theme="dark"] .admin-certificate-congrats {
     }
 
     body.app-role-admin[data-view="admin/certificate_preview"] {
-        width: 210mm !important;
-        min-width: 210mm !important;
-        min-height: 297mm !important;
+        width: 297mm !important;
+        min-width: 297mm !important;
+        height: 210mm !important;
+        min-height: 210mm !important;
         margin: 0 !important;
         overflow: hidden !important;
         background: #ffffff !important;
@@ -10121,8 +10122,9 @@ html[data-theme="dark"] .admin-certificate-congrats {
     body.app-role-admin[data-view="admin/certificate_preview"] .admin-shell-root,
     body.app-role-admin[data-view="admin/certificate_preview"] .admin-shell-main {
         display: block !important;
-        width: 210mm !important;
-        min-height: 297mm !important;
+        width: 297mm !important;
+        height: 210mm !important;
+        min-height: 210mm !important;
         margin: 0 !important;
         padding: 0 !important;
     }
@@ -10131,11 +10133,12 @@ html[data-theme="dark"] .admin-certificate-congrats {
         padding-top: 0 !important;
     }
 
-    body.app-role-admin[data-view="admin/certificate_preview"] .admin-shell-content,
+body.app-role-admin[data-view="admin/certificate_preview"] .admin-shell-content,
 body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-stage {
     display: flex !important;
-    width: 210mm !important;
-    min-height: 297mm !important;
+    width: 297mm !important;
+    height: 210mm !important;
+    min-height: 210mm !important;
     align-items: center !important;
         justify-content: center !important;
         margin: 0 !important;
@@ -10148,11 +10151,11 @@ body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-st
 
 body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-card {
     box-sizing: border-box !important;
-    width: 196mm !important;
+    width: 285mm !important;
         max-width: none !important;
-        height: 285mm !important;
+        height: auto !important;
         min-height: 0 !important;
-        aspect-ratio: auto !important;
+        aspect-ratio: 1.414 / 1 !important;
         border-width: 2.4mm !important;
         border-radius: 5mm !important;
         box-shadow: none !important;
@@ -10380,7 +10383,7 @@ body.app-role-admin[data-view="admin/certificate_preview"] .admin-certificate-ca
 /* Typography calibration: keep section labels compact, but make cards and tables read naturally. */
 body.app-role-admin {
     font-size: 14px;
-    line-height: 1.45;
+    line-height: 1.5;
 }
 
 body.app-role-admin :is(input, select, textarea)::placeholder {

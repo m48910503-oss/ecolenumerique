@@ -188,15 +188,6 @@ abstract class Controller
                     'variant' => 'secondary',
                 ],
             ];
-
-            if ($isLoggedIn) {
-                $actions[] = [
-                    'label' => 'Mon espace',
-                    'url' => $dashboardUrl,
-                    'icon' => 'external-link',
-                    'variant' => 'secondary',
-                ];
-            }
         }
 
         return [

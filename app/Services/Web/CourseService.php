@@ -5,6 +5,7 @@ namespace App\Services\Web;
 
 use App\Core\Service;
 
+use App\Models\ApiCatalogModel;
 use App\Models\WebCourseModel;
 use App\Models\WebProfileModel;
 use App\Services\Shared\PromotionsService;
@@ -74,6 +75,17 @@ final class CourseService extends Service
         $relatedCourses = [];
         $relatedCoursesLabel = '';
         $courseId = (int) ($course['id'] ?? 0);
+        $isFavorite = false;
+        if ($currentUser && $courseId > 0) {
+            try {
+                $favoritesModel = new ApiCatalogModel($this->pdo());
+                if ($favoritesModel->courseFavoritesTableReady()) {
+                    $isFavorite = $favoritesModel->isCourseFavorite((int) ($currentUser['id'] ?? 0), $courseId);
+                }
+            } catch (Throwable $e) {
+                $isFavorite = false;
+            }
+        }
         $teacherId = (int) ($course['teacher_id'] ?? 0);
         $categoryId = (int) ($course['category_id'] ?? 0);
         if ($teacherId > 0) {
@@ -547,6 +559,7 @@ final class CourseService extends Service
                 'referralL1Label' => $referralL1Label,
                 'referralL2Label' => $referralL2Label,
                 'referralL2Enabled' => $referralL2Enabled,
+                'isFavorite' => $isFavorite,
                 'courseShareUrl' => $courseShareUrl,
                 'shareLinks' => $shareLinks,
                 'referralCode' => $referralCode,

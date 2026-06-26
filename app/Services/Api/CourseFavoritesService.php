@@ -31,12 +31,6 @@ final class CourseFavoritesService extends Service
             return ['status' => 503, 'payload' => ['ok' => false, 'error' => 'favorites_schema_missing']];
         }
 
-        try {
-            $this->model->removeOwnedCourseFavorites($userId);
-        } catch (\Throwable $e) {
-            // Ignore cleanup failures and keep favorites endpoint available.
-        }
-
         if ($method === 'GET') {
             return [
                 'status' => 200,
@@ -60,10 +54,6 @@ final class CourseFavoritesService extends Service
         $course = $this->model->findApprovedCourseForFavorite($courseId);
         if (!$course) {
             return ['status' => 404, 'payload' => ['ok' => false, 'error' => 'course_not_found']];
-        }
-
-        if ($this->model->hasActiveEnrollmentForCourseGroup($userId, $courseId)) {
-            return ['status' => 400, 'payload' => ['ok' => false, 'error' => 'already_owned']];
         }
 
         $action = strtolower(trim((string) ($input['action'] ?? 'toggle')));

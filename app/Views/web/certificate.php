@@ -18,7 +18,6 @@ $issuedLabel = trim((string) ($issuedLabel ?? ''));
 $verifyUrl = trim((string) ($verifyUrl ?? site_url('')));
 $qrVerifyUrl = trim((string) ($qrVerifyUrl ?? ''));
 $exportFormat = strtolower(trim((string) ($exportFormat ?? 'html')));
-$isWordExport = !empty($isWordExport);
 $isPdfExport = !empty($isPdfExport);
 
 $certificateCode = trim((string) ($cert['code'] ?? ''));
@@ -65,7 +64,6 @@ $supportParts = array_values(array_filter([
 $supportLine = implode(' · ', $supportParts);
 $htmlUrl = site_url('certificate?code=' . urlencode($certificateCode));
 $pdfUrl = site_url('certificate?code=' . urlencode($certificateCode) . '&format=pdf');
-$wordUrl = site_url('certificate?code=' . urlencode($certificateCode) . '&format=docx');
 ?>
 <!doctype html>
 <html lang="fr">
@@ -77,29 +75,24 @@ $wordUrl = site_url('certificate?code=' . urlencode($certificateCode) . '&format
     <title>Certificat - <?php echo e($fullName); ?> · <?php echo e($siteName); ?></title>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/standalone-dashboard.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/standalone-dashboard.css') ?: time()))); ?>">
-    <?php if (!$isWordExport): ?>
-        <script src="<?php echo e(site_url('assets/vendor/qrcode-generator/qrcode.js')); ?>" defer></script>
-        <script src="<?php echo e(site_url('assets/js/web_certificate.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/web_certificate.js') ?: time()))); ?>" defer></script>
-    <?php endif; ?>
+    <script src="<?php echo e(site_url('assets/vendor/qrcode-generator/qrcode.js')); ?>" defer></script>
+    <script src="<?php echo e(site_url('assets/js/web_certificate.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/web_certificate.js') ?: time()))); ?>" defer></script>
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
 </head>
 <body class="certificate-page" data-view="web/certificate" data-export="<?php echo e($exportFormat); ?>">
     <main class="cert-page-shell">
-        <?php if (!$isWordExport): ?>
-            <header class="cert-toolbar no-print" aria-label="Actions du certificat">
-                <div class="cert-toolbar__copy">
-                    <p class="cert-toolbar__eyebrow">Certificat professionnel</p>
-                    <h1>Certificat de réussite</h1>
-                    <p>Code <strong><?php echo e($certificateCode !== '' ? $certificateCode : 'n/c'); ?></strong></p>
-                </div>
-                <nav class="cert-toolbar__actions" aria-label="Exports">
-                    <a href="<?php echo e($htmlUrl); ?>" class="cert-action">Vue web</a>
-                    <a href="<?php echo e($wordUrl); ?>" class="cert-action">Word</a>
-                    <a href="<?php echo e($pdfUrl); ?>" class="cert-action cert-action--primary">PDF</a>
-                    <button type="button" onclick="window.print()" class="cert-action">Imprimer</button>
-                </nav>
-            </header>
-        <?php endif; ?>
+        <header class="cert-toolbar no-print" aria-label="Actions du certificat">
+            <div class="cert-toolbar__copy">
+                <p class="cert-toolbar__eyebrow">Certificat professionnel</p>
+                <h1>Certificat de réussite</h1>
+                <p>Code <strong><?php echo e($certificateCode !== '' ? $certificateCode : 'n/c'); ?></strong></p>
+            </div>
+            <nav class="cert-toolbar__actions" aria-label="Exports">
+                <a href="<?php echo e($htmlUrl); ?>" class="cert-action">Vue web</a>
+                <a href="<?php echo e($pdfUrl); ?>" class="cert-action cert-action--primary">PDF</a>
+                <button type="button" onclick="window.print()" class="cert-action">Imprimer</button>
+            </nav>
+        </header>
 
         <section class="cert-sheet" aria-label="Certificat">
             <article class="cert-document">
@@ -165,8 +158,8 @@ $wordUrl = site_url('certificate?code=' . urlencode($certificateCode) . '&format
                         <?php endif; ?>
                         <strong><?php echo e($verifyUrl); ?></strong>
                     </div>
-                    <div class="cert-qr" aria-label="QR de vérification"<?php if (!$isWordExport): ?> data-certificate-qr="<?php echo e($qrVerifyUrl !== '' ? $qrVerifyUrl : $verifyUrl); ?>"<?php endif; ?>>
-                        <span><?php echo e($isWordExport ? 'Vérification par lien' : 'QR de vérification'); ?></span>
+                    <div class="cert-qr" aria-label="QR de vérification" data-certificate-qr="<?php echo e($qrVerifyUrl !== '' ? $qrVerifyUrl : $verifyUrl); ?>">
+                        <span>QR de vérification</span>
                     </div>
                 </section>
 
@@ -212,7 +205,7 @@ $wordUrl = site_url('certificate?code=' . urlencode($certificateCode) . '&format
         </section>
     </main>
 
-    <?php if ($isPdfExport && !$isWordExport): ?>
+    <?php if ($isPdfExport): ?>
         <script>
             window.addEventListener('load', function () {
                 window.setTimeout(function () {

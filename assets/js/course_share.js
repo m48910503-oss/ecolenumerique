@@ -46,15 +46,66 @@
     }
   }
 
+  function buildReturnUrl() {
+    return window.location.pathname + window.location.search + window.location.hash;
+  }
+
+  function redirectToLogin(loginUrl) {
+    if (!loginUrl) return;
+    const separator = loginUrl.indexOf("?") === -1 ? "?" : "&";
+    window.location.href = loginUrl + separator + "return=" + encodeURIComponent(buildReturnUrl());
+  }
+
+  function postForm(url, payload) {
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "Accept": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: payload.toString(),
+      credentials: "same-origin",
+    }).then((response) => {
+      return response
+        .json()
+        .catch(() => null)
+        .then((data) => ({
+          ok: response.ok,
+          status: response.status,
+          data,
+        }));
+    });
+  }
+
+  function updateFavoriteButton(button, active) {
+    if (!button) return;
+    button.classList.toggle("is-active", !!active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+    button.setAttribute("aria-label", active ? "Retirer des favoris" : "Ajouter aux favoris");
+    button.dataset.favoriteActive = active ? "1" : "0";
+    button.innerHTML = `<i class="${active ? "fas" : "far"} fa-heart" aria-hidden="true"></i>`;
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     const root = document.getElementById("course-share");
     if (!root) return;
 
-    const shareUrl = root.getAttribute("data-share-url") || "";
+    const shareUrl = root.getAttribute("data-share-url") || window.location.href || "";
     const shareTitle = root.getAttribute("data-share-title") || document.title || "Cours";
+    const courseId = Number(root.getAttribute("data-course-id") || 0);
+    const isAuthenticated = root.getAttribute("data-authenticated") === "1";
+    const loginUrl = root.getAttribute("data-login-url") || "";
+    const csrfToken =
+      root.getAttribute("data-csrf-token")
+      || document.querySelector('meta[name="csrf-token"]')?.content
+      || "";
+    const favoritesApiUrl = root.getAttribute("data-favorites-api") || "";
+    const favoriteInitial = root.getAttribute("data-favorite-initial") === "1";
 
     const panel = root.querySelector("#course-share-panel");
     const btnToggle = root.querySelector("#btn-toggle-share");
+    const btnFavorite = root.querySelector("[data-course-favorite]") || root.querySelector("#btn-toggle-favorite");
     const input = root.querySelector("#course-share-url");
     const status = root.querySelector("#course-share-status");
     const btnCopy = root.querySelector("#btn-copy-course-link");
@@ -63,6 +114,7 @@
     const refLinkInput = root.querySelector("#course-ref-link");
     const btnCopyRefLink = root.querySelector("#btn-copy-ref-link");
     const btnNative = root.querySelector("#btn-native-share");
+    let favoriteActive = favoriteInitial;
 
     if (btnToggle && panel) {
       btnToggle.addEventListener("click", () => {
@@ -77,6 +129,57 @@
     }
 
     if (input && shareUrl) input.value = shareUrl;
+
+    if (btnFavorite) {
+      updateFavoriteButton(btnFavorite, favoriteActive);
+      btnFavorite.addEventListener("click", async () => {
+        if (courseId < 1) {
+          setStatus(status, "Cours introuvable.", "error");
+          notify("Cours introuvable.", "error");
+          return;
+        }
+        if (!isAuthenticated) {
+          redirectToLogin(loginUrl);
+          return;
+        }
+        if (!favoritesApiUrl) {
+          setStatus(status, "Service des favoris indisponible.", "error");
+          notify("Service des favoris indisponible.", "error");
+          return;
+        }
+
+        const payload = new URLSearchParams();
+        payload.set("_csrf", csrfToken);
+        payload.set("course_id", String(courseId));
+        payload.set("action", "toggle");
+
+        btnFavorite.disabled = true;
+        btnFavorite.classList.add("is-busy");
+        setStatus(status, "", "neutral");
+
+        try {
+          const result = await postForm(favoritesApiUrl, payload);
+          if (result && result.status === 401) {
+            redirectToLogin(loginUrl);
+            return;
+          }
+          if (!result || !result.ok || !result.data || result.data.ok === false) {
+            throw new Error("favorite_request_failed");
+          }
+
+          favoriteActive = Number(result.data.favorited || 0) > 0;
+          updateFavoriteButton(btnFavorite, favoriteActive);
+          setStatus(status, favoriteActive ? "Ajouté aux favoris." : "Retiré des favoris.", "success");
+          notify(favoriteActive ? "Formation ajoutée aux favoris." : "Formation retirée des favoris.", "success");
+        } catch (_) {
+          setStatus(status, "Impossible de mettre à jour les favoris.", "error");
+          notify("Impossible de mettre à jour les favoris.", "error");
+        } finally {
+          btnFavorite.disabled = false;
+          btnFavorite.classList.remove("is-busy");
+        }
+      });
+    }
 
     if (btnCopy) {
       btnCopy.addEventListener("click", async () => {

@@ -50,7 +50,7 @@ $generalFileCacheName = trim((string) ($generalFileCacheName ?? ''));
 $generalFileCacheSize = max(0, (int) ($generalFileCacheSize ?? 0));
 
 $coverExistingUrl = $coverPathExisting !== '' ? site_url(ltrim($coverPathExisting, '/')) : '';
-$createdCourseUrl = $createdCourseId > 0 ? site_url('teacher/course_content?id=' . $createdCourseId) : '';
+$createdCourseUrl = $createdCourseId > 0 ? site_url('teacher/course_edit?id=' . $createdCourseId) : '';
 $formAction = $editMode && $courseId > 0 ? site_url('teacher/course_edit?id=' . $courseId) : site_url('teacher/course_create');
 $autosaveKey = $editMode && $courseId > 0 ? 'course_edit_' . $courseId : 'course_create_' . $teacherId;
 $autosaveClear = ($createdCourseId > 0 || $updatedCourseId > 0) ? '1' : '0';
@@ -124,7 +124,144 @@ $requiredDone = count(array_filter($requiredChecks));
 $requiredTotal = count($requiredChecks);
 $requiredRemaining = max(0, $requiredTotal - $requiredDone);
 $draftProgressPct = $requiredTotal > 0 ? (int) round(($requiredDone / $requiredTotal) * 100) : 0;
-$pedagogyOpen = ($countFilledList($objectives) + $countFilledList($prerequisites) + $countFilledList($equipment)) > 0;
+$pedagogyCount = $countFilledList($objectives) + $countFilledList($prerequisites) + $countFilledList($equipment);
+$pedagogyOpen = $pedagogyCount > 0;
+$commercialReady = $priceXof !== '' && $categoryId !== '' && $coverPathExisting !== '';
+
+$decodeBuilderCollection = static function (string $payload, string $rootKey): array {
+    $decoded = json_decode($payload, true);
+    if (!is_array($decoded)) {
+        return [];
+    }
+    $items = $decoded[$rootKey] ?? [];
+    return array_values(is_array($items) ? $items : []);
+};
+
+$draftModules = $decodeBuilderCollection($contentBuilderPayload, 'modules');
+$draftModuleCount = count($draftModules);
+$draftLessonCount = 0;
+$draftMeetingCount = 0;
+foreach ($draftModules as $moduleDraft) {
+    $items = array_values(is_array($moduleDraft['items'] ?? null) ? $moduleDraft['items'] : []);
+    $draftLessonCount += count($items);
+    foreach ($items as $itemDraft) {
+        if (trim((string) ($itemDraft['type'] ?? '')) === 'meeting') {
+            $draftMeetingCount++;
+        }
+    }
+}
+
+$draftExams = $decodeBuilderCollection($examBuilderPayload, 'exams');
+$draftExamCount = count($draftExams);
+$journeyCards = [
+    [
+        'step' => 1,
+        'title' => 'Présentation',
+        'hint' => '',
+        'state' => $requiredRemaining === 0 ? 'Prêt' : 'À faire',
+    ],
+    [
+        'step' => 2,
+        'title' => 'Offre & médias',
+        'hint' => '',
+        'state' => $commercialReady ? 'Prêt' : 'À faire',
+    ],
+    [
+        'step' => 3,
+        'title' => 'Contenu',
+        'hint' => '',
+        'state' => $draftModuleCount . ' module(s)',
+    ],
+    [
+        'step' => 4,
+        'title' => 'Évaluation',
+        'hint' => '',
+        'state' => $draftExamCount . ' examen(s)',
+    ],
+];
+
+$phaseIntroductions = [
+    1 => [
+        'eyebrow' => 'Étape 1',
+        'title' => 'Présentation du cours',
+        'copy' => 'Complétez les champs de base du cours.',
+        'fields' => [
+            ['label' => 'Titre', 'help' => 'Nom visible du cours. Il doit être court, clair et facile à retenir.'],
+            ['label' => 'Niveau', 'help' => 'Indique si le cours s’adresse à un débutant, à un niveau intermédiaire ou avancé.'],
+            ['label' => 'Description', 'help' => 'Texte qui résume ce que l’apprenant va apprendre dans le cours.'],
+            ['label' => 'Objectifs', 'help' => 'Liste des résultats attendus à la fin du cours.'],
+            ['label' => 'Prérequis', 'help' => 'Ce que l’apprenant doit déjà savoir ou avoir avant de commencer.'],
+            ['label' => 'Équipement', 'help' => 'Matériel ou outils nécessaires pour suivre le cours.'],
+        ],
+        'cta' => 'Commencer',
+    ],
+    2 => [
+        'eyebrow' => 'Étape 2',
+        'title' => 'Médias & tarification',
+        'copy' => 'Renseignez l’offre et les médias du cours.',
+        'fields' => [
+            ['label' => 'Miniature', 'help' => 'Image de couverture du cours affichée dans les listes et sur la page du cours.'],
+            ['label' => 'Prix public', 'help' => 'Montant payé par un apprenant individuel pour accéder au cours.'],
+            ['label' => 'Offre entreprise', 'help' => 'Tarif spécial ou remise appliqué quand une entreprise achète le cours.'],
+            ['label' => 'Catégorie', 'help' => 'Domaine dans lequel le cours sera classé et retrouvé par les utilisateurs.'],
+            ['label' => 'Parrainage', 'help' => 'Active le partage de revenus lié aux recommandations, si vous souhaitez l’utiliser.'],
+            ['label' => 'Ressource générale', 'help' => 'Document ou fichier partagé à tous les apprenants du cours.'],
+        ],
+        'cta' => 'Continuer',
+    ],
+    3 => [
+        'eyebrow' => 'Étape 3',
+        'title' => 'Contenu du cours',
+        'copy' => 'Structurez votre cours en modules et leçons.',
+        'fields' => [
+            ['label' => 'Modules', 'help' => 'Grands chapitres du cours qui organisent l’apprentissage.'],
+            ['label' => 'Leçons', 'help' => 'Contenus à l’intérieur de chaque module: vidéo, document ou rendez-vous.'],
+            ['label' => 'Type de leçon', 'help' => 'Format de chaque leçon: vidéo, document à télécharger ou session planifiée.'],
+            ['label' => 'Durée', 'help' => 'Temps estimé pour suivre une leçon ou la terminer.'],
+            ['label' => 'Liens / fichiers', 'help' => 'Ressource à fournir pour la leçon, comme une vidéo ou un document.'],
+        ],
+        'cta' => 'Continuer',
+    ],
+    4 => [
+        'eyebrow' => 'Étape 4',
+        'title' => 'Évaluation finale',
+        'copy' => 'Préparez l’évaluation finale du cours.',
+        'fields' => [
+            ['label' => 'Titre', 'help' => 'Nom de l’évaluation finale affiché aux apprenants.'],
+            ['label' => 'Type', 'help' => 'Format de l’évaluation: QCM, document ou rendez-vous selon votre besoin.'],
+            ['label' => 'Durée', 'help' => 'Temps accordé pour compléter l’évaluation.'],
+            ['label' => 'Questions', 'help' => 'Énoncés proposés aux apprenants dans le test.'],
+            ['label' => 'Réponses', 'help' => 'Choix ou réponses correctes attendues pour valider le test.'],
+            ['label' => 'Sujet', 'help' => 'Fichier ou document utilisé comme base de l’évaluation, si nécessaire.'],
+        ],
+        'cta' => 'Continuer',
+    ],
+];
+
+$renderIntroFields = static function (array $fields): void {
+    if ($fields === []) {
+        return;
+    }
+    ?>
+    <div class="course-step-intro__fields">
+        <?php foreach ($fields as $field): ?>
+            <?php
+            $label = is_array($field) ? trim((string) ($field['label'] ?? '')) : trim((string) $field);
+            $help = is_array($field) ? trim((string) ($field['help'] ?? '')) : '';
+            ?>
+            <article class="course-step-intro__field-card">
+                <span class="course-step-intro__field-label">
+                    <i class="fas fa-circle-info"></i>
+                    <span><?php echo e($label !== '' ? $label : 'Champ'); ?></span>
+                </span>
+                <?php if ($help !== ''): ?>
+                    <p class="course-step-intro__field-help"><?php echo e($help); ?></p>
+                <?php endif; ?>
+            </article>
+        <?php endforeach; ?>
+    </div>
+    <?php
+};
 
 $renderSimpleRows = static function (array $items, string $name, string $placeholder) use ($listValues): void {
     foreach ($listValues($items) as $value) {
@@ -178,14 +315,12 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
         <input type="hidden" id="referral_l2_enabled" name="referral_l2_enabled" value="<?php echo $referralL2Enabled ? '1' : '0'; ?>">
         <input type="hidden" id="duration_hours" name="duration_hours" value="<?php echo e($durationHours !== '' ? $durationHours : '1'); ?>">
 
-                        <div class="course-builder-toolbar flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-800">
+                        <section class="mb-4 flex flex-col gap-3 rounded-[1.6rem] border border-slate-200 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                                <h1 class="flex items-center gap-3 text-lg font-extrabold text-slate-900 dark:text-white">
-                                    <i class="fas fa-edit text-primary-600"></i> <?php echo $editMode ? 'Modification unifiée' : 'Brouillon unique'; ?>
-                                </h1>
-                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-300"><?php echo e($requiredRemaining === 0 ? 'Champs requis prêts.' : $requiredRemaining . ' champ(s) requis à finaliser.'); ?></p>
+                                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400"><?php echo $editMode ? 'Édition' : 'Création'; ?></p>
+                                <h1 class="mt-1 text-2xl font-black text-slate-900 dark:text-white"><?php echo e($pageTitle); ?></h1>
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-wrap gap-2">
                                 <button type="button" data-preview-course class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-700">
                                     <i class="far fa-check-circle"></i> Vérifier
                                 </button>
@@ -193,7 +328,7 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                                     <i class="far fa-save"></i> <?php echo e($draftButtonLabel); ?>
                                 </button>
                             </div>
-                        </div>
+                        </section>
 
             <?php if ($errors !== []): ?>
                 <section class="course-builder-error-banner mb-6 rounded-2xl px-5 py-4 text-sm shadow-card">
@@ -217,7 +352,7 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                             <p class="font-semibold"><?php echo e($successMessage); ?></p>
                             <?php if ($createdCourseUrl !== ''): ?>
                                 <a href="<?php echo e($createdCourseUrl); ?>" class="inline-flex items-center gap-2 font-semibold text-emerald-700 hover:text-emerald-900">
-                                    Ouvrir le cours <i class="fas fa-arrow-right"></i>
+                                    Reprendre le formulaire <i class="fas fa-arrow-right"></i>
                                 </a>
                             <?php endif; ?>
                         </div>
@@ -225,28 +360,54 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                 </section>
             <?php endif; ?>
 
-            <div class="course-stepper-compact flex items-center justify-between bg-white rounded-2xl shadow-card p-3">
-                <button type="button" data-step-target="1" id="stepBtn1" class="flex items-center gap-3 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 bg-primary-600 text-white shadow-lg shadow-primary-500/25">
-                    <span class="w-7 h-7 bg-white text-primary-600 rounded-full flex items-center justify-center text-xs font-bold">1</span>
-                    <span class="hidden sm:inline">Général</span>
-                </button>
-                <div class="flex-1 h-0.5 bg-slate-200 mx-4 rounded-full relative overflow-hidden">
-                    <div id="progressBar" class="course-create-progress-fill absolute top-0 left-0 h-full bg-primary-500 transition-all duration-500 rounded-full"></div>
+            <section class="course-builder-workflow rounded-[1.8rem] border border-slate-200 bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-800 sm:p-5">
+                <div class="course-builder-workflow__head">
+                    <div>
+                        <p class="course-builder-workflow__eyebrow">Parcours</p>
+                        <h2 class="course-builder-workflow__title">4 parties</h2>
+                    </div>
                 </div>
-                <button type="button" data-step-target="2" id="stepBtn2" class="flex items-center gap-3 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 bg-white text-slate-600 border border-slate-200">
-                    <span class="w-7 h-7 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center text-xs font-bold">2</span>
-                    <span class="hidden sm:inline">Contenu</span>
-                </button>
-                <div class="flex-1 h-0.5 bg-slate-200 mx-4 rounded-full relative overflow-hidden">
-                    <div id="progressBar2" class="course-create-progress-fill absolute top-0 left-0 h-full bg-primary-500 transition-all duration-500 rounded-full"></div>
+                <div class="course-builder-workflow__grid">
+                    <?php foreach ($journeyCards as $journeyCard): ?>
+                        <?php $stepNumber = (int) ($journeyCard['step'] ?? 1); ?>
+                        <button type="button" data-step-target="<?php echo e((string) (($stepNumber - 1) * 2 + 1)); ?>" id="stepBtn<?php echo e((string) $stepNumber); ?>" class="course-builder-workflow__step flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold transition-all duration-300 <?php echo $stepNumber === 1 ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/25' : 'bg-white text-slate-600 border border-slate-200'; ?>">
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold <?php echo $stepNumber === 1 ? 'bg-white text-primary-600' : 'bg-slate-100 text-slate-500'; ?>"><?php echo e((string) $stepNumber); ?></span>
+                            <span class="course-builder-workflow__step-copy">
+                                <strong><?php echo e((string) ($journeyCard['title'] ?? 'Étape')); ?></strong>
+                                <?php if (trim((string) ($journeyCard['hint'] ?? '')) !== ''): ?>
+                                    <small><?php echo e((string) ($journeyCard['hint'] ?? '')); ?></small>
+                                <?php endif; ?>
+                            </span>
+                            <em class="course-builder-workflow__step-state"><?php echo e((string) ($journeyCard['state'] ?? '')); ?></em>
+                        </button>
+                    <?php endforeach; ?>
                 </div>
-                <button type="button" data-step-target="3" id="stepBtn3" class="flex items-center gap-3 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 bg-white text-slate-600 border border-slate-200">
-                    <span class="w-7 h-7 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center text-xs font-bold">3</span>
-                    <span class="hidden sm:inline">Examens</span>
-                </button>
-            </div>
+                <div class="course-builder-workflow__progress">
+                    <div class="course-builder-workflow__progress-track">
+                        <div id="progressBar" class="course-create-progress-fill course-builder-workflow__progress-fill"></div>
+                    </div>
+                    <div class="course-builder-workflow__progress-track">
+                        <div id="progressBar2" class="course-create-progress-fill course-builder-workflow__progress-fill"></div>
+                    </div>
+                    <div class="course-builder-workflow__progress-track">
+                        <div id="progressBar3" class="course-create-progress-fill course-builder-workflow__progress-fill"></div>
+                    </div>
+                </div>
+            </section>
 
-            <div id="step1Content" class="course-step-content space-y-5">
+            <section id="step1Intro" class="course-step-intro rounded-[1.8rem] border border-slate-200 bg-white p-6 text-center shadow-card dark:border-gray-700 dark:bg-gray-800 sm:p-8">
+                <p class="course-step-intro__eyebrow"><?php echo e($phaseIntroductions[1]['eyebrow']); ?></p>
+                <h2 class="course-step-intro__title"><?php echo e($phaseIntroductions[1]['title']); ?></h2>
+                <p class="course-step-intro__copy"><?php echo e($phaseIntroductions[1]['copy']); ?></p>
+                <?php $renderIntroFields($phaseIntroductions[1]['fields'] ?? []); ?>
+                <div class="course-step-intro__actions">
+                    <button type="button" data-step-target="2" class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-primary-700">
+                        <?php echo e($phaseIntroductions[1]['cta']); ?> <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </section>
+
+            <div id="step1Content" class="hidden course-step-content space-y-5">
                 <div class="course-form-card bg-white rounded-2xl shadow-card p-5 sm:p-6">
                     <div class="flex items-center gap-3 mb-5">
                         <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
@@ -315,6 +476,32 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                     </details>
                 </div>
 
+                <div class="course-step-actions flex justify-between">
+                    <button type="button" data-step-target="1" class="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold shadow-sm hover:bg-slate-50 transition">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </button>
+                    <button type="button" data-step-target="3" class="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl text-sm font-semibold shadow-lg hover:bg-primary-700 transition">
+                        Continuer <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <section id="step2Intro" class="hidden course-step-intro rounded-[1.8rem] border border-slate-200 bg-white p-6 text-center shadow-card dark:border-gray-700 dark:bg-gray-800 sm:p-8">
+                <p class="course-step-intro__eyebrow"><?php echo e($phaseIntroductions[2]['eyebrow']); ?></p>
+                <h2 class="course-step-intro__title"><?php echo e($phaseIntroductions[2]['title']); ?></h2>
+                <p class="course-step-intro__copy"><?php echo e($phaseIntroductions[2]['copy']); ?></p>
+                <?php $renderIntroFields($phaseIntroductions[2]['fields'] ?? []); ?>
+                <div class="course-step-intro__actions">
+                    <button type="button" data-step-target="2" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </button>
+                    <button type="button" data-step-target="4" class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-primary-700">
+                        <?php echo e($phaseIntroductions[2]['cta']); ?> <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </section>
+
+            <div id="step2Content" class="hidden space-y-6">
                 <div class="course-form-card bg-white rounded-2xl shadow-card p-5 sm:p-6">
                     <div class="flex items-center gap-3 mb-5">
                         <div class="w-10 h-10 bg-accent-100 rounded-xl flex items-center justify-center">
@@ -331,8 +518,8 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                                 <input type="file" id="cover_file" name="cover_file" accept=".jpg,.jpeg,.png,.webp,image/*" <?php echo $coverPathExisting === '' ? 'required' : ''; ?> class="hidden">
                                 <div id="thumb-placeholder" class="<?php echo $coverExistingUrl !== '' ? 'hidden' : ''; ?>">
                                     <i class="fas fa-cloud-upload-alt text-2xl text-slate-400 mb-2"></i>
-                                    <p class="text-sm text-slate-700">Glissez ou parcourez</p>
-                                    <p class="text-xs text-slate-400 mt-1">PNG, JPG, WebP • 1280×720px</p>
+                                    <p class="text-sm text-slate-700">Choisir une image</p>
+                                    <p class="text-xs text-slate-400 mt-1">PNG, JPG, WebP</p>
                                 </div>
                                 <div id="thumb-preview" class="<?php echo $coverExistingUrl !== '' ? '' : 'hidden'; ?> relative">
                                     <img id="thumb-img" src="<?php echo e($coverExistingUrl); ?>" alt="Miniature du cours" class="w-full h-32 object-cover rounded-lg">
@@ -400,17 +587,11 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                     <details class="course-builder-details mt-6 rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50" <?php echo $generalFileCacheName !== '' ? 'open' : ''; ?>>
                         <summary class="course-builder-details-summary flex cursor-pointer items-center justify-between gap-3 px-4 py-3">
                             <span class="font-semibold text-slate-900 dark:text-white"><i class="fas fa-cloud-upload-alt mr-1 text-emerald-500"></i>Ressource générale</span>
-                            <span class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-300">
-                                Optionnel
-                                <i class="fas fa-chevron-down"></i>
-                            </span>
+                            <span class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-300"><i class="fas fa-chevron-down"></i></span>
                         </summary>
                         <div class="course-builder-details-body border-t border-slate-200 p-4 dark:border-slate-700">
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                <p class="text-xs text-slate-500 dark:text-slate-300">
-                                    Taille max <?php echo e((string) $driveMaxMb); ?> Mo.
-                                    <?php if ($driveUploadNote !== ''): ?><?php echo e($driveUploadNote); ?><?php endif; ?>
-                                </p>
+                                <p class="text-xs text-slate-500 dark:text-slate-300">Max <?php echo e((string) $driveMaxMb); ?> Mo</p>
                             <?php if ($driveConnectRecommended): ?>
                                 <a href="<?php echo e(site_url('drive/oauth_connect')); ?>" class="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700">
                                     Connecter Drive <i class="fas fa-arrow-right"></i>
@@ -431,14 +612,32 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                         </div>
                     </details>
                 </div>
-                <div class="course-step-actions flex justify-end">
-                    <button type="button" data-step-target="2" class="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl text-sm font-semibold shadow-lg hover:bg-primary-700 transition">
-                        Continuer vers le contenu <i class="fas fa-arrow-right"></i>
+                <div class="course-step-actions flex justify-between">
+                    <button type="button" data-step-target="3" class="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold shadow-sm hover:bg-slate-50 transition">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </button>
+                    <button type="button" data-step-target="5" class="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl text-sm font-semibold shadow-lg hover:bg-primary-700 transition">
+                        Continuer <i class="fas fa-arrow-right"></i>
                     </button>
                 </div>
             </div>
 
-            <div id="step2Content" class="hidden space-y-6">
+            <section id="step3Intro" class="hidden course-step-intro rounded-[1.8rem] border border-slate-200 bg-white p-6 text-center shadow-card dark:border-gray-700 dark:bg-gray-800 sm:p-8">
+                <p class="course-step-intro__eyebrow"><?php echo e($phaseIntroductions[3]['eyebrow']); ?></p>
+                <h2 class="course-step-intro__title"><?php echo e($phaseIntroductions[3]['title']); ?></h2>
+                <p class="course-step-intro__copy"><?php echo e($phaseIntroductions[3]['copy']); ?></p>
+                <?php $renderIntroFields($phaseIntroductions[3]['fields'] ?? []); ?>
+                <div class="course-step-intro__actions">
+                    <button type="button" data-step-target="4" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </button>
+                    <button type="button" data-step-target="6" class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-primary-700">
+                        <?php echo e($phaseIntroductions[3]['cta']); ?> <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </section>
+
+            <div id="step3Content" class="hidden space-y-6">
                 <div class="bg-white rounded-2xl shadow-card p-6 sm:p-8">
                     <div class="flex items-center justify-between mb-6">
                         <div class="flex items-center gap-3">
@@ -454,22 +653,33 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                         </button>
                     </div>
                     <div id="modules-container" class="space-y-4"></div>
-                    <div id="no-modules-message" class="hidden text-center py-12 text-slate-400">
-                        <i class="fas fa-cube text-4xl mb-3"></i>
-                        <p>Aucun module</p>
-                    </div>
                 </div>
                 <div class="course-step-actions flex justify-between">
-                    <button type="button" data-step-target="1" class="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold shadow-sm hover:bg-slate-50 transition">
+                    <button type="button" data-step-target="5" class="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold shadow-sm hover:bg-slate-50 transition">
                         <i class="fas fa-arrow-left"></i> Retour
                     </button>
-                    <button type="button" data-step-target="3" class="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl text-sm font-semibold shadow-lg hover:bg-primary-700 transition">
-                        Continuer vers les examens <i class="fas fa-arrow-right"></i>
+                    <button type="button" data-step-target="7" class="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl text-sm font-semibold shadow-lg hover:bg-primary-700 transition">
+                        Continuer <i class="fas fa-arrow-right"></i>
                     </button>
                 </div>
             </div>
 
-            <div id="step3Content" class="hidden space-y-6">
+            <section id="step4Intro" class="hidden course-step-intro rounded-[1.8rem] border border-slate-200 bg-white p-6 text-center shadow-card dark:border-gray-700 dark:bg-gray-800 sm:p-8">
+                <p class="course-step-intro__eyebrow"><?php echo e($phaseIntroductions[4]['eyebrow']); ?></p>
+                <h2 class="course-step-intro__title"><?php echo e($phaseIntroductions[4]['title']); ?></h2>
+                <p class="course-step-intro__copy"><?php echo e($phaseIntroductions[4]['copy']); ?></p>
+                <?php $renderIntroFields($phaseIntroductions[4]['fields'] ?? []); ?>
+                <div class="course-step-intro__actions">
+                    <button type="button" data-step-target="6" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </button>
+                    <button type="button" data-step-target="8" class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-primary-700">
+                        <?php echo e($phaseIntroductions[4]['cta']); ?> <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </section>
+
+            <div id="step4Content" class="hidden space-y-6">
                 <div class="bg-white rounded-2xl shadow-card p-6 sm:p-8">
                     <div class="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
                         <div class="flex items-center gap-3">
@@ -480,18 +690,11 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                                 <h2 class="text-lg font-bold">Examens & Évaluations</h2>
                             </div>
                         </div>
-                        <span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
-                            <i class="fas fa-lock text-xs"></i> 1 seule évaluation
-                        </span>
                     </div>
                     <div id="exams-container" class="space-y-4"></div>
-                    <div id="no-exam-message" class="hidden text-center py-8 text-slate-400">
-                        <i class="fas fa-clipboard text-3xl mb-2"></i>
-                        <p>Aucun examen</p>
-                    </div>
                 </div>
                 <div class="course-step-actions flex justify-between">
-                    <button type="button" data-step-target="2" class="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold shadow-sm hover:bg-slate-50 transition">
+                    <button type="button" data-step-target="7" class="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold shadow-sm hover:bg-slate-50 transition">
                         <i class="fas fa-arrow-left"></i> Retour
                     </button>
                     <button type="submit" name="submit_action" value="submit" class="flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl text-sm font-bold shadow-lg hover:from-primary-700 transition">
@@ -502,72 +705,21 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                     </form>
 
                     <aside class="course-builder-aside space-y-3 xl:sticky xl:top-24">
-                        <section class="course-side-card rounded-2xl border border-slate-200 bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-800">
-                            <div class="flex items-center justify-between gap-3">
-                                <div>
-                                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Progression</p>
-                                    <h2 class="mt-1 text-base font-bold text-slate-900 dark:text-white"><?php echo e((string) $draftProgressPct); ?>% prêt</h2>
-                                </div>
-                                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">
-                                    <i class="fas fa-list-check"></i>
-                                </span>
-                            </div>
-                            <div class="mt-4 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-900">
-                                <div class="h-full rounded-full bg-primary-600" style="width: <?php echo e((string) $draftProgressPct); ?>%"></div>
-                            </div>
-                            <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
-                                <div class="rounded-xl bg-slate-50 p-3 dark:bg-gray-900/70">
-                                    <p class="text-xs text-slate-500 dark:text-slate-400">Restants</p>
-                                    <p class="mt-1 text-xl font-extrabold text-slate-900 dark:text-white"><?php echo e((string) $requiredRemaining); ?></p>
-                                </div>
-                                <div class="rounded-xl bg-slate-50 p-3 dark:bg-gray-900/70">
-                                    <p class="text-xs text-slate-500 dark:text-slate-400">Brouillons</p>
-                                    <p class="mt-1 text-xl font-extrabold text-slate-900 dark:text-white"><?php echo e((string) count($teacherDraftCourses)); ?></p>
-                                </div>
+                        <section class="course-side-card course-side-roadmap rounded-2xl border border-slate-200 bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-800">
+                            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Parcours</p>
+                            <h2 class="mt-2 text-base font-bold text-slate-900 dark:text-white">Étapes</h2>
+                            <div class="course-side-roadmap__list">
+                                <?php foreach ($journeyCards as $journeyCard): ?>
+                                    <button type="button" data-step-target="<?php echo e((string) ((((int) ($journeyCard['step'] ?? 1)) - 1) * 2 + 1)); ?>" class="course-side-roadmap__item">
+                                        <span class="course-side-roadmap__index"><?php echo e((string) ($journeyCard['step'] ?? 1)); ?></span>
+                                        <span class="course-side-roadmap__copy">
+                                            <strong><?php echo e((string) ($journeyCard['title'] ?? 'Étape')); ?></strong>
+                                            <small><?php echo e((string) ($journeyCard['state'] ?? '')); ?></small>
+                                        </span>
+                                    </button>
+                                <?php endforeach; ?>
                             </div>
                         </section>
-
-                        <details class="course-side-disclosure rounded-2xl border border-slate-200 bg-white shadow-card dark:border-gray-700 dark:bg-gray-800">
-                            <summary class="flex cursor-pointer items-center justify-between gap-3 p-4">
-                                <span class="text-sm font-bold text-slate-900 dark:text-white">Stockage</span>
-                                <span class="course-side-summary-meta">
-                                    <span class="rounded-full px-3 py-1 text-xs font-semibold <?php echo e($driveStatusClass); ?>"><?php echo e($driveStatusLabel); ?></span>
-                                    <i class="fas fa-chevron-down course-side-chevron" aria-hidden="true"></i>
-                                </span>
-                            </summary>
-                            <div class="border-t border-slate-100 px-4 pb-4 pt-3 text-sm text-slate-500 dark:border-gray-700 dark:text-slate-300">
-                                <p><?php echo e($driveUploadNote !== '' ? $driveUploadNote : 'Documents associés au cours.'); ?></p>
-                                <p class="mt-2 text-xs text-slate-400">Max : <?php echo e((string) $driveMaxMb); ?> Mo</p>
-                                <?php if ($generalFileCacheName !== ''): ?>
-                                    <p class="mt-3 truncate rounded-xl bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 dark:bg-blue-500/10 dark:text-blue-200"><?php echo e($generalFileCacheName); ?></p>
-                                <?php endif; ?>
-                                <?php if ($driveConnectRecommended): ?>
-                                    <a href="<?php echo e(site_url('drive/oauth_connect')); ?>" class="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-300">
-                                        Connecter Drive <i class="fas fa-arrow-right"></i>
-                                    </a>
-                                <?php endif; ?>
-                            </div>
-                        </details>
-
-                        <details class="course-side-disclosure rounded-2xl border border-slate-200 bg-white shadow-card dark:border-gray-700 dark:bg-gray-800">
-                            <summary class="flex cursor-pointer items-center justify-between gap-3 p-4">
-                                <span class="text-sm font-bold text-slate-900 dark:text-white">Parrainage</span>
-                                <span class="course-side-summary-meta">
-                                    <i class="fas fa-handshake text-teal-500" aria-hidden="true"></i>
-                                    <i class="fas fa-chevron-down course-side-chevron" aria-hidden="true"></i>
-                                </span>
-                            </summary>
-                            <div class="grid grid-cols-2 gap-2 border-t border-slate-100 p-4 dark:border-gray-700">
-                                <div class="rounded-xl bg-slate-50 p-3 dark:bg-gray-900/70">
-                                    <p class="text-xs text-slate-500 dark:text-slate-400">Niveau 1</p>
-                                    <p class="mt-1 text-base font-bold text-slate-900 dark:text-white"><?php echo e(number_format((float) ($platformReferral['l1_rate'] ?? 0), 2, ',', ' ')); ?>%</p>
-                                </div>
-                                <div class="rounded-xl bg-slate-50 p-3 dark:bg-gray-900/70">
-                                    <p class="text-xs text-slate-500 dark:text-slate-400">Niveau 2</p>
-                                    <p class="mt-1 text-base font-bold text-slate-900 dark:text-white"><?php echo e(number_format((float) ($platformReferral['l2_rate'] ?? 0), 2, ',', ' ')); ?>%</p>
-                                </div>
-                            </div>
-                        </details>
 
                         <?php if ($teacherDraftCourses !== []): ?>
                             <details class="course-side-disclosure rounded-2xl border border-slate-200 bg-white shadow-card dark:border-gray-700 dark:bg-gray-800">
@@ -584,7 +736,7 @@ $renderSimpleRows = static function (array $items, string $name, string $placeho
                                         $draftId = max(0, (int) ($draftCourse['id'] ?? 0));
                                         $draftTitle = trim((string) ($draftCourse['title'] ?? 'Cours sans titre'));
                                         ?>
-                                        <a href="<?php echo e(site_url('teacher/course_content?id=' . $draftId)); ?>" class="block rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-blue-200 hover:bg-blue-50 dark:border-gray-700 dark:bg-gray-900/60 dark:hover:border-blue-500/40 dark:hover:bg-blue-500/10">
+                                        <a href="<?php echo e(site_url('teacher/course_edit?id=' . $draftId)); ?>" class="block rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-blue-200 hover:bg-blue-50 dark:border-gray-700 dark:bg-gray-900/60 dark:hover:border-blue-500/40 dark:hover:bg-blue-500/10">
                                             <p class="truncate text-sm font-semibold text-slate-800 dark:text-white"><?php echo e($draftTitle); ?></p>
                                         </a>
                                     <?php endforeach; ?>

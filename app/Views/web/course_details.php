@@ -21,6 +21,7 @@ $meetingSuccess = trim((string) ($meetingSuccess ?? ''));
 $myMeetingsByKey = is_array($myMeetingsByKey ?? null) ? $myMeetingsByKey : [];
 $ratingStats = is_array($ratingStats ?? null) ? $ratingStats : ['avg' => null, 'count' => 0];
 $reviews = is_array($reviews ?? null) ? $reviews : [];
+$isFavorite = !empty($isFavorite);
 $shareLinks = array_merge(
     ['whatsapp' => '', 'facebook' => '', 'x' => '', 'linkedin' => ''],
     is_array($shareLinks ?? null) ? $shareLinks : []
@@ -315,6 +316,7 @@ if ($courseShareUrl === '') {
  <link rel="stylesheet" href="<?php echo e(site_url('assets/vendor/fontawesome/all.min.css?v=' . (@filemtime(__DIR__ . '/../../../assets/vendor/fontawesome/all.min.css') ?: time()))); ?>">
   <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
   <script src="<?php echo e($webThemeJsUrl); ?>" defer></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
   <script src="<?php echo e(site_url('assets/js/course_progress.js')); ?>" defer></script>
   <script src="<?php echo e(site_url('assets/js/course_notes.js')); ?>" defer></script>
   <script src="<?php echo e(site_url('assets/js/course_player.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/course_player.js') ?: time()))); ?>" defer></script>
@@ -322,7 +324,7 @@ if ($courseShareUrl === '') {
   <script src="<?php echo e(site_url('assets/js/course_player_guard.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/course_player_guard.js') ?: time()))); ?>" defer></script>
   <script src="<?php echo e(site_url('assets/js/course_public_preview.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/course_public_preview.js') ?: time()))); ?>" defer></script>
   <script src="<?php echo e(site_url('assets/js/course_rating.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/course_rating.js') ?: time()))); ?>" defer></script>
-  <script src="<?php echo e(site_url('assets/js/course_share.js')); ?>" defer></script>
+  <script src="<?php echo e(site_url('assets/js/course_share.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/course_share.js') ?: time()))); ?>" defer></script>
   <style>
 
     .hover-lift {
@@ -704,7 +706,7 @@ if ($courseShareUrl === '') {
                         </div>
                       <?php endif; ?>
 
-                      <?php foreach ($chapterLessons as $lesson): ?>
+                      <?php foreach ($chapterLessons as $lessonIndex => $lesson): ?>
                         <?php
                         $lessonId = (int) ($lesson['id'] ?? 0);
                         $lessonTitle = trim((string) ($lesson['title'] ?? 'Leçon'));
@@ -714,21 +716,53 @@ if ($courseShareUrl === '') {
                         $lessonDuration = !empty($lesson['duration_estimate_min'])
                             ? format_duration_minutes_hm((int) $lesson['duration_estimate_min'])
                             : '';
+                        $chapterNumber = trim((string) ($chapter['position'] ?? ''));
+                        if ($chapterNumber === '') {
+                            $chapterNumber = (string) ($chapterIndex + 1);
+                        }
+                        $lessonNumber = trim((string) ($lesson['position'] ?? ''));
+                        if ($lessonNumber === '') {
+                            $lessonNumber = (string) ($lessonIndex + 1);
+                        }
+                        $lessonCode = $chapterNumber . '.' . $lessonNumber;
+                        $lessonIsPreview = $firstLessonId !== null && $lessonId === $firstLessonId && $publicPreviewAvailable && $previewSourceUrl !== '';
+                        $lessonIsLocked = !$isEnrolled && !$lessonIsPreview;
+                        $lessonIcon = $lessonIsPreview
+                            ? 'fa-play-circle'
+                            : ($lessonIsLocked
+                                ? 'fa-lock'
+                                : ($lessonType === 'video' ? 'fa-play-circle' : 'fa-file-alt'));
                         ?>
-                        <div class="flex items-start gap-3 rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800/60 px-4 py-3">
-                          <div class="mt-0.5 w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-300 flex items-center justify-center shrink-0">
-                            <i class="fas <?php echo e($lessonType === 'video' ? 'fa-play-circle' : 'fa-file-alt'); ?>"></i>
-                          </div>
+                      <div class="course-lesson-card <?php echo $lessonIsPreview ? 'course-lesson-card--preview' : ''; ?> flex items-start gap-3 rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800/60 px-4 py-3">
+                        <div class="mt-0.5 w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-300 flex items-center justify-center shrink-0">
+                          <i class="fas <?php echo e($lessonIcon); ?>"></i>
+                        </div>
                           <div class="min-w-0 flex-1">
                             <div class="flex items-start justify-between gap-3">
                               <div class="min-w-0">
+                                <div class="mb-1 flex flex-wrap items-center gap-2">
+                                  <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-[10px] font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300">Leçon <?php echo e($lessonCode); ?></span>
+                                  <?php if ($lessonIsPreview): ?>
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
+                                      <i class="fas fa-play-circle"></i> Aperçu gratuit
+                                    </span>
+                                  <?php elseif ($lessonIsLocked): ?>
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                                      <i class="fas fa-lock"></i> Verrouillée
+                                    </span>
+                                  <?php elseif ($isEnrolled): ?>
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                                      <i class="fas fa-check"></i> Vue
+                                    </span>
+                                  <?php endif; ?>
+                                </div>
                                 <p class="font-medium text-gray-900 dark:text-white truncate"><?php echo e($lessonTitle); ?></p>
                                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                   <?php echo e($lessonType === 'video' ? 'Vidéo' : 'Leçon'); ?>
                                   <?php if ($lessonDuration !== ''): ?> · <?php echo e($lessonDuration); ?><?php endif; ?>
-                                  <?php if ($firstLessonId !== null && $lessonId === $firstLessonId): ?> · <span class="text-primary-600 dark:text-primary-400">Aperçu gratuit</span><?php elseif (!empty($lesson['youtube_url'])): ?> · <span class="text-gray-500 dark:text-gray-400">Vidéo du cours</span><?php endif; ?>
+                                  <?php if ($lessonIsPreview): ?> · <span class="text-primary-600 dark:text-primary-400">Aperçu gratuit</span><?php elseif (!empty($lesson['youtube_url'])): ?> · <span class="text-gray-500 dark:text-gray-400">Vidéo du cours</span><?php endif; ?>
                                 </p>
-                                <?php if ($firstLessonId !== null && $lessonId === $firstLessonId && $publicPreviewAvailable && $previewSourceUrl !== ''): ?>
+                                <?php if ($lessonIsPreview): ?>
                                   <button type="button" data-public-preview-play class="mt-2 inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-[11px] font-semibold text-primary-700 transition hover:bg-primary-100 dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/45">
                                     <i class="fas fa-play-circle"></i>
                                     Ouvrir l’aperçu gratuit
@@ -738,6 +772,10 @@ if ($courseShareUrl === '') {
                               <?php if ($isEnrolled): ?>
                                 <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold <?php echo $lessonDone ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300'; ?>">
                                   <?php echo $lessonDone ? 'Vue' : 'À voir'; ?>
+                                </span>
+                              <?php elseif ($lessonIsLocked): ?>
+                                <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-semibold text-gray-500 dark:bg-gray-700 dark:text-gray-300">
+                                  <i class="fas fa-lock mr-1"></i> Verrouillée
                                 </span>
                               <?php endif; ?>
                             </div>
@@ -1482,7 +1520,15 @@ if ($courseShareUrl === '') {
         </div>
 
         <div class="course-content-aside lg:col-span-1 space-y-6">
-          <div class="course-purchase-card sticky-summary overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/95 shadow-2xl dark:bg-gray-800/70">
+          <div id="course-share" class="course-purchase-card sticky-summary overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/95 shadow-2xl dark:bg-gray-800/70"
+               data-share-url="<?php echo e($courseShareUrl); ?>"
+               data-share-title="<?php echo e($courseTitle); ?>"
+               data-course-id="<?php echo e((string) ($course['id'] ?? '0')); ?>"
+               data-authenticated="<?php echo !empty($currentUser) ? '1' : '0'; ?>"
+               data-login-url="<?php echo e($loginUrl); ?>"
+               data-csrf-token="<?php echo e(view_csrf_token()); ?>"
+               data-favorites-api="<?php echo e(site_url('api/course_favorites')); ?>"
+               data-favorite-initial="<?php echo $isFavorite ? '1' : '0'; ?>">
             <div class="relative border-b border-gray-100 dark:border-gray-700">
               <img src="<?php echo e($heroCoverUrl); ?>" alt="<?php echo e($courseCoverAlt); ?>" class="h-44 w-full object-cover md:h-52">
               <div class="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-950/10 to-transparent"></div>
@@ -1534,8 +1580,15 @@ if ($courseShareUrl === '') {
               </div>
 
               <div class="mt-3 grid grid-cols-2 gap-2">
-                <button type="button" class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-200">
-                  <i class="far fa-heart"></i>
+                <button
+                  type="button"
+                  id="btn-toggle-favorite"
+                  data-course-favorite
+                  aria-pressed="<?php echo $isFavorite ? 'true' : 'false'; ?>"
+                  aria-label="<?php echo $isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'; ?>"
+                  class="course-favorite-btn inline-flex items-center justify-center rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-200<?php echo $isFavorite ? ' is-active' : ''; ?>"
+                >
+                  <i class="<?php echo $isFavorite ? 'fas' : 'far'; ?> fa-heart"></i>
                 </button>
                 <button type="button" id="btn-toggle-share" aria-controls="course-share-panel" aria-expanded="false" class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-200">
                   <i class="fas fa-share-alt"></i>

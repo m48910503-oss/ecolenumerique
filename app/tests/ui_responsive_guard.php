@@ -351,6 +351,12 @@ require_snippet(
 );
 require_snippet(
     $adminHeadAssets,
+    'app-typography.css',
+    $errors,
+    'Admin shared head should load the shared typography stylesheet'
+);
+require_snippet(
+    $adminHeadAssets,
     'sidebar_toggle.js',
     $errors,
     'Admin shared head should load the sidebar toggle script'
@@ -441,27 +447,9 @@ foreach ($adminViews as $viewName => $viewFile) {
 $adminDashboardView = $rootDir . '/app/Views/admin/dashboard.php';
 require_snippet(
     $adminDashboardView,
-    'meta name="app-global-assets" content="off"',
-    $errors,
-    'Admin dashboard page should opt out of global assets'
-);
-require_snippet(
-    $adminDashboardView,
     'data-view="admin/dashboard"',
     $errors,
     'Admin dashboard page should expose its admin view id'
-);
-require_snippet(
-    $adminDashboardView,
-    'tailwind_theme_bootstrap.js',
-    $errors,
-    'Admin dashboard page should load the shared Tailwind bootstrap script'
-);
-require_snippet(
-    $adminDashboardView,
-    'cdn.tailwindcss.com',
-    $errors,
-    'Admin dashboard page should load Tailwind from the approved CDN'
 );
 require_snippet(
     $adminDashboardView,
@@ -477,39 +465,27 @@ require_snippet(
 );
 ensure_not_contains(
     $adminDashboardView,
-    "require __DIR__ . '/_head_assets.php'",
-    $errors,
-    'Admin dashboard page should not use the shared admin head assets'
-);
-ensure_not_contains(
-    $adminDashboardView,
-    "require __DIR__ . '/_sidebar.php'",
-    $errors,
-    'Admin dashboard page should not use the shared admin sidebar partial'
-);
-ensure_not_contains(
-    $adminDashboardView,
-    "require __DIR__ . '/_topbar.php'",
-    $errors,
-    'Admin dashboard page should not use the shared admin topbar partial'
-);
-ensure_not_contains(
-    $adminDashboardView,
-    'assets/css/admin-dashboard.css',
-    $errors,
-    'Admin dashboard page should not include the shared admin stylesheet'
-);
-ensure_not_contains(
-    $adminDashboardView,
-    'assets/js/admin_dashboard.js',
-    $errors,
-    'Admin dashboard page should not include the shared admin shell script'
-);
-ensure_not_contains(
-    $adminDashboardView,
     'assets/css/global-theme.css',
     $errors,
     'Admin dashboard page should not include the global theme stylesheet'
+);
+require_snippet(
+    $adminDashboardView,
+    "require __DIR__ . '/_head_assets.php'",
+    $errors,
+    'Admin dashboard page should use the shared admin head assets'
+);
+require_snippet(
+    $adminDashboardView,
+    "require __DIR__ . '/_sidebar.php'",
+    $errors,
+    'Admin dashboard page should use the shared admin sidebar partial'
+);
+require_snippet(
+    $adminDashboardView,
+    "require __DIR__ . '/_topbar.php'",
+    $errors,
+    'Admin dashboard page should use the shared admin topbar partial'
 );
 ensure_not_contains(
     $adminDashboardView,

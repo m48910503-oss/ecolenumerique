@@ -1024,7 +1024,7 @@ body.app-auth-page :is(.auth-notice__message, .auth-notice__list, .auth-message_
 
 /* Teacher pages use the same typography rhythm as student dashboards. */
 html[data-view^="teacher/"] {
-  font-size: 14px !important;
+  font-size: 14.5px !important;
 }
 
 body.app-role-teacher[data-view^="teacher/"] {

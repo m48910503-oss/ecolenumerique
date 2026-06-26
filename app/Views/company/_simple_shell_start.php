@@ -50,13 +50,13 @@ $companyNav = $companySimpleMemberMode ? [
   <title><?php echo e($companySimpleTitle); ?> · Entreprise · École Numérique</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="<?php echo e($tailwindThemeBootstrapJsUrl); ?>"></script>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/vendor/fontawesome/all.min.css?v=' . (@filemtime(__DIR__ . '/../../../assets/vendor/fontawesome/all.min.css') ?: time()))); ?>">
     <link rel="stylesheet" href="<?php echo e($studentDashboardCssUrl); ?>">
-    <link rel="stylesheet" href="<?php echo e($appTypographyCssUrl); ?>">
     <script src="<?php echo e($webThemeJsUrl); ?>" defer></script>
   <script src="<?php echo e(site_url('assets/js/sidebar_toggle.js')); ?>" defer></script>
 <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
+    <link rel="stylesheet" href="<?php echo e($appTypographyCssUrl); ?>">
 </head>
 <body data-view="company/<?php echo e($companySimplePage); ?>" data-sidebar-desktop-toggle="0" class="app-role-company student-dashboard-page font-sans antialiased text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-900 transition-colors duration-300 overflow-hidden overflow-x-hidden min-h-screen">
 
