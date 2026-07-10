@@ -366,7 +366,7 @@ if (!is_string($chartPayloadJson) || $chartPayloadJson === '') {
                   <p class="text-sm text-gray-500 dark:text-gray-400"><?php echo e((string) ($stat['label'] ?? '')); ?></p>
                   <p class="text-xl font-bold text-gray-900 dark:text-white mt-1 sm:text-2xl"><?php echo e((string) ($stat['value'] ?? '0')); ?></p>
                 </div>
-                <div class="flex h-9 w-9 items-center justify-center rounded-xl <?php echo e((string) ($stat['icon_class'] ?? 'bg-gray-100 text-gray-600')); ?> sm:h-10 sm:w-10">
+                <div class="student-dashboard-icon-tile flex h-9 w-9 items-center justify-center rounded-xl <?php echo e((string) ($stat['icon_class'] ?? 'bg-gray-100 text-gray-600')); ?> sm:h-10 sm:w-10">
                   <i class="<?php echo e(dashboard_icon_fa_class((string) ($stat['icon'] ?? 'bar-chart'))); ?>" aria-hidden="true"></i>
                 </div>
               </div>

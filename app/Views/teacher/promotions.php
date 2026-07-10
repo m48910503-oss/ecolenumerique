@@ -588,6 +588,143 @@ $courseStatusLabel = static function (string $status) use ($courseStatusLabels):
     .tab-btn.is-active .tab-active-pill {
       display: inline-flex;
     }
+
+    .teacher-promotions-metric-icon,
+    .teacher-promotions-tab-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: rgba(148, 163, 184, 0.12);
+      color: rgb(71, 85, 105);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+    }
+
+    .teacher-promotions-metric-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 0.875rem;
+    }
+
+    .teacher-promotions-tab-icon {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 0.75rem;
+    }
+
+    .teacher-promotions-metric-icon :is(i, svg),
+    .teacher-promotions-tab-icon :is(i, svg) {
+      --app-icon-color: currentColor;
+      color: inherit;
+    }
+
+    html.dark .teacher-promotions-metric-icon,
+    html[data-theme="dark"] .teacher-promotions-metric-icon,
+    html.dark .teacher-promotions-tab-icon,
+    html[data-theme="dark"] .teacher-promotions-tab-icon {
+      border-color: rgba(148, 163, 184, 0.22);
+      background: rgba(15, 23, 42, 0.45);
+      color: rgb(226, 232, 240);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .teacher-promotions-action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      width: 2.5rem;
+      height: 2.5rem;
+      border: 1px solid transparent;
+      border-radius: 0.875rem;
+      color: #fff;
+      line-height: 1;
+      box-shadow: 0 12px 22px -16px rgba(15, 23, 42, 0.45);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .teacher-promotions-action-btn :is(i, svg) {
+      color: #fff !important;
+      fill: currentColor;
+      stroke: currentColor;
+      --app-icon-color: #fff;
+    }
+
+    .teacher-promotions-action-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .teacher-promotions-action-btn:focus-visible {
+      outline: 2px solid rgba(148, 163, 184, 0.8);
+      outline-offset: 2px;
+    }
+
+    .teacher-promotions-action-btn--copy {
+      border-color: rgb(71 85 105);
+      background: rgb(71 85 105);
+    }
+
+    .teacher-promotions-action-btn--copy:hover {
+      border-color: rgb(51 65 85);
+      background: rgb(51 65 85);
+    }
+
+    .teacher-promotions-action-btn--edit {
+      border-color: rgb(2 132 199);
+      background: rgb(2 132 199);
+    }
+
+    .teacher-promotions-action-btn--edit:hover {
+      border-color: rgb(3 105 161);
+      background: rgb(3 105 161);
+    }
+
+    .teacher-promotions-action-btn--delete {
+      border-color: rgb(225 29 72);
+      background: rgb(225 29 72);
+    }
+
+    .teacher-promotions-action-btn--delete:hover {
+      border-color: rgb(190 18 60);
+      background: rgb(190 18 60);
+    }
+
+    html.dark .teacher-promotions-action-btn--copy,
+    html[data-theme="dark"] .teacher-promotions-action-btn--copy {
+      border-color: rgb(100 116 139);
+      background: rgb(100 116 139);
+    }
+
+    html.dark .teacher-promotions-action-btn--copy:hover,
+    html[data-theme="dark"] .teacher-promotions-action-btn--copy:hover {
+      border-color: rgb(71 85 105);
+      background: rgb(71 85 105);
+    }
+
+    html.dark .teacher-promotions-action-btn--edit,
+    html[data-theme="dark"] .teacher-promotions-action-btn--edit {
+      border-color: rgb(14 165 233);
+      background: rgb(14 165 233);
+    }
+
+    html.dark .teacher-promotions-action-btn--edit:hover,
+    html[data-theme="dark"] .teacher-promotions-action-btn--edit:hover {
+      border-color: rgb(2 132 199);
+      background: rgb(2 132 199);
+    }
+
+    html.dark .teacher-promotions-action-btn--delete,
+    html[data-theme="dark"] .teacher-promotions-action-btn--delete {
+      border-color: rgb(244 63 94);
+      background: rgb(244 63 94);
+    }
+
+    html.dark .teacher-promotions-action-btn--delete:hover,
+    html[data-theme="dark"] .teacher-promotions-action-btn--delete:hover {
+      border-color: rgb(225 29 72);
+      background: rgb(225 29 72);
+    }
   </style>
 <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
 </head>
@@ -681,7 +818,7 @@ $courseStatusLabel = static function (string $status) use ($courseStatusLabels):
               <p class="text-sm font-semibold text-slate-600 dark:text-slate-300">Promotions</p>
               <p class="mt-2 text-3xl font-extrabold text-slate-950 dark:text-white"><?php echo e((string) $promotionTotal); ?></p>
             </div>
-            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-900/30 dark:text-sky-200">
+            <span class="teacher-promotions-metric-icon">
               <i class="fas fa-percent"></i>
             </span>
           </div>
@@ -693,7 +830,7 @@ $courseStatusLabel = static function (string $status) use ($courseStatusLabels):
               <p class="text-sm font-semibold text-slate-600 dark:text-slate-300">Codes promo</p>
               <p class="mt-2 text-3xl font-extrabold text-slate-950 dark:text-white"><?php echo e((string) $couponTotal); ?></p>
             </div>
-            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-200">
+            <span class="teacher-promotions-metric-icon">
               <i class="fas fa-ticket-alt"></i>
             </span>
           </div>
@@ -705,7 +842,7 @@ $courseStatusLabel = static function (string $status) use ($courseStatusLabels):
               <p class="text-sm font-semibold text-slate-600 dark:text-slate-300">Utilisations</p>
               <p class="mt-2 text-3xl font-extrabold text-slate-950 dark:text-white"><?php echo e((string) ((int) ($couponUsageSummary['uses_count'] ?? 0))); ?></p>
             </div>
-            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-200">
+            <span class="teacher-promotions-metric-icon">
               <i class="fas fa-chart-line"></i>
             </span>
           </div>
@@ -717,7 +854,7 @@ $courseStatusLabel = static function (string $status) use ($courseStatusLabels):
               <p class="text-sm font-semibold text-slate-600 dark:text-slate-300">Revenus codes</p>
               <p class="mt-2 text-3xl font-extrabold text-slate-950 dark:text-white"><?php echo e($formatMoney((int) ($couponUsageSummary['revenue_xof'] ?? 0))); ?></p>
             </div>
-            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-200">
+            <span class="teacher-promotions-metric-icon">
               <i class="fas fa-wallet"></i>
             </span>
           </div>
@@ -730,7 +867,7 @@ $courseStatusLabel = static function (string $status) use ($courseStatusLabels):
       <section class="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex flex-wrap gap-2">
           <button id="tab-promotions" class="tab-btn inline-flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition <?php echo $promotionsTabActive ? 'is-active' : ''; ?>" aria-pressed="<?php echo $promotionsTabActive ? 'true' : 'false'; ?>"<?php echo $promotionsTabActive ? ' aria-current="page"' : ''; ?>>
-            <span class="tab-chip inline-flex h-8 w-8 items-center justify-center rounded-lg">
+            <span class="tab-chip teacher-promotions-tab-icon">
               <i class="fas fa-percent text-sm"></i>
             </span>
             <span>Promotions publiques</span>
@@ -738,7 +875,7 @@ $courseStatusLabel = static function (string $status) use ($courseStatusLabels):
             <span class="tab-count ml-1 inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold"><?php echo e((string) $promotionTotal); ?></span>
           </button>
           <button id="tab-coupons" class="tab-btn inline-flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition <?php echo $couponsTabActive ? 'is-active' : ''; ?>" aria-pressed="<?php echo $couponsTabActive ? 'true' : 'false'; ?>"<?php echo $couponsTabActive ? ' aria-current="page"' : ''; ?>>
-            <span class="tab-chip inline-flex h-8 w-8 items-center justify-center rounded-lg">
+            <span class="tab-chip teacher-promotions-tab-icon">
               <i class="fas fa-ticket-alt text-sm"></i>
             </span>
             <span>Codes promo privés</span>
@@ -836,7 +973,7 @@ $courseStatusLabel = static function (string $status) use ($courseStatusLabels):
                             <button
                               type="button"
                               data-edit-toggle="promo-edit-row-<?php echo e((string) $promoId); ?>"
-                              class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 text-sky-600 shadow-sm transition hover:border-sky-300 hover:bg-sky-100 dark:border-sky-900/40 dark:bg-sky-900/20 dark:text-sky-300 dark:hover:bg-sky-900/35"
+                              class="teacher-promotions-action-btn teacher-promotions-action-btn--edit"
                               aria-label="Modifier cette promotion"
                               title="Modifier"
                             >
@@ -858,7 +995,7 @@ $courseStatusLabel = static function (string $status) use ($courseStatusLabels):
                               <input type="hidden" name="promo_mode" value="promotion">
                               <input type="hidden" name="offer" value="promotion">
                               <input type="hidden" name="promo_id" value="<?php echo e((string) $promoId); ?>">
-                              <button type="submit" class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-600 shadow-sm transition hover:border-rose-300 hover:bg-rose-100 dark:border-rose-900/40 dark:bg-rose-900/20 dark:text-rose-300 dark:hover:bg-rose-900/35" aria-label="Archiver cette promotion" title="Archiver">
+                              <button type="submit" class="teacher-promotions-action-btn teacher-promotions-action-btn--delete" aria-label="Archiver cette promotion" title="Archiver">
                                 <i class="fas fa-archive"></i>
                               </button>
                             </form>
@@ -1142,7 +1279,7 @@ $courseStatusLabel = static function (string $status) use ($courseStatusLabels):
                           <div class="inline-flex items-center gap-2">
                             <button
                               type="button"
-                              class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300 dark:hover:bg-slate-800"
+                              class="teacher-promotions-action-btn teacher-promotions-action-btn--copy"
                               data-copy-text="<?php echo e($couponCopyText); ?>"
                               data-copy-success="Code copié"
                               aria-label="Copier le code"
@@ -1153,7 +1290,7 @@ $courseStatusLabel = static function (string $status) use ($courseStatusLabels):
                             <button
                               type="button"
                               data-edit-toggle="coupon-edit-row-<?php echo e((string) $promoId); ?>"
-                              class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-violet-200 bg-violet-50 text-violet-600 shadow-sm transition hover:border-violet-300 hover:bg-violet-100 dark:border-violet-900/40 dark:bg-violet-900/20 dark:text-violet-300 dark:hover:bg-violet-900/35"
+                              class="teacher-promotions-action-btn teacher-promotions-action-btn--edit"
                               aria-label="Modifier ce code promo"
                               title="Modifier"
                             >
@@ -1175,7 +1312,7 @@ $courseStatusLabel = static function (string $status) use ($courseStatusLabels):
                               <input type="hidden" name="promo_mode" value="coupon">
                               <input type="hidden" name="offer" value="coupon">
                               <input type="hidden" name="promo_id" value="<?php echo e((string) $promoId); ?>">
-                              <button type="submit" class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-600 shadow-sm transition hover:border-rose-300 hover:bg-rose-100 dark:border-rose-900/40 dark:bg-rose-900/20 dark:text-rose-300 dark:hover:bg-rose-900/35" aria-label="Archiver ce code promo" title="Archiver">
+                              <button type="submit" class="teacher-promotions-action-btn teacher-promotions-action-btn--delete" aria-label="Archiver ce code promo" title="Archiver">
                                 <i class="fas fa-archive"></i>
                               </button>
                             </form>

@@ -662,6 +662,23 @@ body.app-role-teacher .teacher-dashboard-sidebar :is(i[class*=" fa-"], svg[data-
   flex: 0 0 auto;
 }
 
+/* Let card-level icon tiles keep the color defined by their component. */
+:is(
+  .app-kpi-card__icon,
+  .admin-dashboard-kpi-icon,
+  .student-dashboard-icon-tile,
+  .teacher-courses-summary-card__icon,
+  .teacher-promotions-metric-icon,
+  .teacher-promotions-tab-icon,
+  .exam-summary-pill__icon,
+  .app-empty-state__icon,
+  .auth-message__icon,
+  .auth-admin-access-card__icon,
+  .app-title-icon
+) :where(svg[data-app-icon], i[class*=" fa-"]) {
+  color: inherit;
+}
+
 .app-page-hero__lead,
 .app-section-head__lead {
   display: flex;

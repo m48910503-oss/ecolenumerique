@@ -36,7 +36,10 @@ $filesByAttempt = is_array($filesByAttempt ?? null) ? $filesByAttempt : [];
 $answersByAttempt = is_array($answersByAttempt ?? null) ? $answersByAttempt : [];
 $meetingSlots = array_values(is_array($meetingSlots ?? null) ? $meetingSlots : []);
 $defaultMeetingDuration = max(1, (int) ($defaultMeetingDuration ?? 60));
-$defaultMeetingMode = in_array((string) ($defaultMeetingMode ?? 'online'), ['online', 'onsite'], true) ? (string) $defaultMeetingMode : 'online';
+$defaultMeetingMode = (string) ($defaultMeetingMode ?? 'online');
+if (!in_array($defaultMeetingMode, ['online', 'onsite'], true)) {
+    $defaultMeetingMode = 'online';
+}
 $examId = max(0, (int) ($examId ?? ($exam['id'] ?? 0)));
 $siteLogoUrl = trim((string) ($siteLogoUrl ?? ''));
 $csrfToken = view_csrf_token();

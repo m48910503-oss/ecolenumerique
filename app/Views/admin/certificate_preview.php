@@ -42,7 +42,11 @@ $adminTopActions = [
     ['label' => 'Paramètres', 'url' => site_url('admin/site_settings?tab=certificate'), 'tone' => 'neutral'],
     ['label' => 'Tableau de bord', 'url' => site_url('admin/dashboard'), 'tone' => 'neutral'],
 ];
-$adminPageScripts = ['assets/vendor/qrcode-generator/qrcode.js', 'admin_certificate_preview.js'];
+$adminPageScripts = [
+    'assets/vendor/qrcode-generator/qrcode.js',
+    'admin_certificate_preview.js',
+    'certificate_pdf_download.js',
+];
 ?>
 <!doctype html>
 <html lang="fr">
@@ -52,9 +56,11 @@ $adminPageScripts = ['assets/vendor/qrcode-generator/qrcode.js', 'admin_certific
     <title>Exemplaire de certificat · Administration</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
     <?php require __DIR__ . '/_head_assets.php'; ?>
-<link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
+    <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
+    <link rel="stylesheet" href="<?php echo e(site_url('assets/css/certificate-model.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/certificate-model.css') ?: time()))); ?>">
 </head>
 <body class="app-view app-role-admin min-h-screen bg-slate-50 text-slate-900 font-body dark:bg-slate-950 dark:text-slate-100" data-view="admin/certificate_preview" data-sidebar-desktop-toggle="1">
     <div class="admin-shell-backdrop" aria-hidden="true">
@@ -86,7 +92,14 @@ $adminPageScripts = ['assets/vendor/qrcode-generator/qrcode.js', 'admin_certific
                                     <i class="fas fa-chevron-down admin-certificate-download__chevron" aria-hidden="true"></i>
                                 </summary>
                                 <div class="admin-certificate-download-menu__panel">
-                                    <a href="<?php echo e(site_url('admin/certificate_preview?export=pdf')); ?>" class="admin-certificate-download-menu__item" data-certificate-download-link="pdf" data-certificate-download-action>
+                                    <a
+                                        href="<?php echo e(site_url('admin/certificate_preview?export=pdf')); ?>"
+                                        class="admin-certificate-download-menu__item"
+                                        data-certificate-download-link="pdf"
+                                        data-certificate-download-action
+                                        data-certificate-pdf-download
+                                        data-certificate-filename="exemplaire-certificat-<?php echo e(strtolower($code)); ?>.pdf"
+                                    >
                                         <i class="fas fa-file-pdf" aria-hidden="true"></i>
                                         <span>PDF</span>
                                     </a>

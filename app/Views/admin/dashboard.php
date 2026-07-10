@@ -208,7 +208,7 @@ $quickActions = [
                     <article class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 p-5 shadow-card dark:border-gray-700 hover-lift">
                         <div class="flex items-center justify-between gap-4">
                             <div><p class="text-sm text-gray-500 dark:text-gray-400">Étudiants</p><p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white"><?php echo e($formatNumber($summary['students'] ?? 0)); ?></p></div>
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-primary-600 dark:bg-blue-900/30"><i class="fas fa-user-graduate"></i></div>
+                            <div class="admin-dashboard-kpi-icon admin-dashboard-kpi-surface--info"><i class="fas fa-user-graduate"></i></div>
                         </div>
                         <p class="mt-2 flex items-center text-xs text-green-600 dark:text-green-400"><i class="fas fa-arrow-up mr-1"></i><?php echo e($formatNumber($summary['new_users_this_month'] ?? 0)); ?> inscrits ce mois</p>
                     </article>
@@ -216,7 +216,7 @@ $quickActions = [
                     <article class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 p-5 shadow-card dark:border-gray-700 hover-lift">
                         <div class="flex items-center justify-between gap-4">
                             <div><p class="text-sm text-gray-500 dark:text-gray-400">Enseignants</p><p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white"><?php echo e($formatNumber($summary['teachers'] ?? 0)); ?></p></div>
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30"><i class="fas fa-chalkboard-teacher"></i></div>
+                            <div class="admin-dashboard-kpi-icon admin-dashboard-kpi-surface--violet"><i class="fas fa-chalkboard-teacher"></i></div>
                         </div>
                         <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Profils enseignants actifs</p>
                     </article>
@@ -224,7 +224,7 @@ $quickActions = [
                     <article class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 p-5 shadow-card dark:border-gray-700 hover-lift">
                         <div class="flex items-center justify-between gap-4">
                             <div><p class="text-sm text-gray-500 dark:text-gray-400">Cours publiés</p><p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white"><?php echo e($formatNumber($summary['published_courses'] ?? 0)); ?></p></div>
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-100 text-accent-600 dark:bg-cyan-900/30"><i class="fas fa-layer-group"></i></div>
+                            <div class="admin-dashboard-kpi-icon admin-dashboard-kpi-surface--info"><i class="fas fa-layer-group"></i></div>
                         </div>
                         <p class="mt-2 flex items-center text-xs text-yellow-600 dark:text-yellow-400"><i class="fas fa-clock mr-1"></i><?php echo e($formatNumber($pendingCourses)); ?> en attente</p>
                     </article>
@@ -232,7 +232,7 @@ $quickActions = [
                     <article class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 p-5 shadow-card dark:border-gray-700 hover-lift">
                         <div class="flex items-center justify-between gap-4">
                             <div><p class="text-sm text-gray-500 dark:text-gray-400">Revenus</p><p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white"><?php echo e($formatMoney($summary['revenue_xof'] ?? 0)); ?></p></div>
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100 text-green-600 dark:bg-green-900/30"><i class="fas fa-money-bill-wave"></i></div>
+                            <div class="admin-dashboard-kpi-icon admin-dashboard-kpi-surface--success"><i class="fas fa-money-bill-wave"></i></div>
                         </div>
                         <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Commission: <?php echo e($formatMoney($summary['admin_revenue_xof'] ?? 0)); ?></p>
                     </article>
@@ -240,7 +240,7 @@ $quickActions = [
                     <article class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 p-5 shadow-card dark:border-gray-700 hover-lift">
                         <div class="flex items-center justify-between gap-4">
                             <div><p class="text-sm text-gray-500 dark:text-gray-400">Conversion ventes</p><p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white"><?php echo e($formatPercent($summary['conversion_rate'] ?? 0)); ?></p></div>
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/30"><i class="fas fa-percent"></i></div>
+                            <div class="admin-dashboard-kpi-icon admin-dashboard-kpi-surface--warning"><i class="fas fa-percent"></i></div>
                         </div>
                         <p class="mt-2 text-xs text-gray-500 dark:text-gray-400"><?php echo e($formatNumber($summary['paid_orders'] ?? 0)); ?> commandes payées</p>
                     </article>

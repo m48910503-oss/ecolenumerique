@@ -1497,8 +1497,8 @@ textarea {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2.2rem;
-    height: 2.2rem;
+    width: 2.5rem;
+    height: 2.5rem;
     border: 1px solid color-mix(in srgb, var(--admin-kpi-surface-tone) 28%, var(--app-border) 72%);
     border-radius: 0.9rem;
     background: color-mix(in srgb, var(--admin-kpi-surface-tone) 14%, var(--app-surface) 86%);

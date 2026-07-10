@@ -6134,6 +6134,13 @@ body.app-role-student.student-dashboard-page :is(.student-dashboard-stat-card, .
   border-radius: 0.85rem !important;
 }
 
+body.app-role-student[data-view^="student/"] .student-dashboard-stat-card .student-dashboard-icon-tile :is(svg, i),
+body.app-role-student.student-dashboard-page .student-dashboard-stat-card .student-dashboard-icon-tile :is(svg, i),
+body.app-role-student[data-view^="student/"] :is(.student-dashboard-stat-card, .student-dashboard-panel) > div[class*="rounded-2xl"]:has(> i) :is(svg, i),
+body.app-role-student.student-dashboard-page :is(.student-dashboard-stat-card, .student-dashboard-panel) > div[class*="rounded-2xl"]:has(> i) :is(svg, i) {
+  color: inherit !important;
+}
+
 body.app-role-student[data-view^="student/"] :is(.student-dashboard-content i[class*="fa-"], #student-sidebar i[class*="fa-"], .app-shell-topbar i[class*="fa-"]) {
   display: inline-flex;
   align-items: center;
