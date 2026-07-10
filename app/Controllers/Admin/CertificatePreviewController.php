@@ -6,7 +6,9 @@ namespace App\Controllers\Admin;
 use App\Core\Controller;
 use App\Models\SharedPlatformSettingsModel;
 use App\Services\Admin\AdminAccessService;
+use App\Services\Web\BrowserScreenshotService;
 use App\Services\Shared\PlatformSettingsService;
+use App\Services\Web\CertificateDocxBuilder;
 use App\Services\Web\ReceiptPdfDocumentBuilder;
 
 final class CertificatePreviewController extends Controller
@@ -87,43 +89,80 @@ final class CertificatePreviewController extends Controller
         ];
 
         $exportFormat = strtolower(trim((string) ($_GET['export'] ?? '')));
-        if ($exportFormat === 'pdf') {
+        if (in_array($exportFormat, ['pdf', 'word', 'docx'], true)) {
             $filenameBase = $this->certificateExportFilename((string) $sampleCertificate['code']);
-            $pdfHtml = $this->injectAbsoluteBaseHref($this->renderViewToString('web/certificate', $this->buildPdfCertificateViewData(
-                $siteName,
-                $siteTagline,
-                $siteDescription,
-                $supportEmail,
-                $supportPhone,
-                $supportWhatsapp,
-                $siteAddress,
-                $footerText,
-                $dgName,
-                $dgSignatureUrl,
-                $siteLogoUrl,
-                $sampleCertificate
-            )));
-            $pdfBinary = (new ReceiptPdfDocumentBuilder())->buildFromHtml($pdfHtml);
-            if (is_string($pdfBinary) && $pdfBinary !== '') {
-                header('Content-Type: application/pdf');
-                header('Content-Disposition: attachment; filename="' . $filenameBase . '.pdf"');
-                header('Content-Length: ' . strlen($pdfBinary));
-                header('X-Content-Type-Options: nosniff');
-                echo $pdfBinary;
-                return;
+            $renderExpires = $this->certificatePreviewRenderExpires();
+            $renderToken = $this->certificatePreviewRenderToken($renderExpires);
+            $screenshotUrl = $this->siteUrl(
+                'admin/certificate_preview?render=export'
+                . '&expires=' . (string) $renderExpires
+                . '&token=' . urlencode($renderToken)
+            );
+            $screenshot = (new BrowserScreenshotService())->captureUrl($screenshotUrl);
+            if (!is_string($screenshot) || $screenshot === '') {
+                $exportViewData = $viewData;
+                $exportHtml = $this->renderViewToString('admin/certificate_preview_export', $exportViewData + [
+                    'injectGlobalAssets' => false,
+                ]);
+                $screenshot = (new BrowserScreenshotService())->captureHtml($exportHtml);
+            }
+            if (is_string($screenshot) && $screenshot !== '') {
+                if ($exportFormat === 'pdf') {
+                    $pdfBinary = (new ReceiptPdfDocumentBuilder())->buildFromHtml($this->buildPdfWrapperHtml($screenshot));
+                    if (is_string($pdfBinary) && $pdfBinary !== '') {
+                        header('Content-Type: application/pdf');
+                        header('Content-Disposition: attachment; filename="' . $filenameBase . '.pdf"');
+                        header('Content-Length: ' . strlen($pdfBinary));
+                        header('X-Content-Type-Options: nosniff');
+                        echo $pdfBinary;
+                        return;
+                    }
+                } else {
+                    $docxBinary = (new CertificateDocxBuilder())->buildFromImage($screenshot);
+                    if (is_string($docxBinary) && $docxBinary !== '') {
+                        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+                        header('Content-Disposition: attachment; filename="' . $filenameBase . '.docx"');
+                        header('X-Content-Type-Options: nosniff');
+                        echo $docxBinary;
+                        return;
+                    }
+                }
             }
 
-            $html = $this->injectAbsoluteBaseHref($this->renderViewToString('admin/certificate_preview_export', $viewData + [
-                'injectGlobalAssets' => false,
-            ]));
-            $pdfBinary = (new ReceiptPdfDocumentBuilder())->buildFromHtml($html);
-            if (is_string($pdfBinary) && $pdfBinary !== '') {
-                header('Content-Type: application/pdf');
-                header('Content-Disposition: attachment; filename="' . $filenameBase . '.pdf"');
-                header('Content-Length: ' . strlen($pdfBinary));
-                header('X-Content-Type-Options: nosniff');
-                echo $pdfBinary;
-                return;
+            if ($exportFormat === 'pdf') {
+                $html = $this->renderViewToString('admin/certificate_preview_export', $viewData + [
+                    'injectGlobalAssets' => false,
+                ]);
+                $pdfBinary = (new ReceiptPdfDocumentBuilder())->buildFromHtml($html);
+                if (is_string($pdfBinary) && $pdfBinary !== '') {
+                    header('Content-Type: application/pdf');
+                    header('Content-Disposition: attachment; filename="' . $filenameBase . '.pdf"');
+                    header('Content-Length: ' . strlen($pdfBinary));
+                    header('X-Content-Type-Options: nosniff');
+                    echo $pdfBinary;
+                    return;
+                }
+            } else {
+                $docxBinary = (new CertificateDocxBuilder())->build($this->buildDocxView(
+                    $siteName !== '' ? $siteName : 'École Numérique',
+                    $siteTagline,
+                    $siteDescription,
+                    $supportEmail,
+                    $supportPhone,
+                    $supportWhatsapp,
+                    $footerText,
+                    $dgName !== '' ? $dgName : 'Directeur général',
+                    $dgSignatureUrl,
+                    $siteLogoUrl,
+                    $sampleCertificate
+                ));
+                if (is_string($docxBinary) && $docxBinary !== '') {
+                    header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+                    header('Content-Disposition: attachment; filename="' . $filenameBase . '.docx"');
+                    header('X-Content-Type-Options: nosniff');
+                    echo $docxBinary;
+                    return;
+                }
             }
         }
 
@@ -154,53 +193,25 @@ final class CertificatePreviewController extends Controller
      * @param array<string,mixed> $sampleCertificate
      * @return array<string,mixed>
      */
-    private function buildPdfCertificateViewData(
+    private function buildDocxView(
         string $siteName,
         string $siteTagline,
         string $siteDescription,
         string $supportEmail,
         string $supportPhone,
         string $supportWhatsapp,
-        string $siteAddress,
         string $footerText,
         string $dgName,
         string $dgSignatureUrl,
         string $siteLogoUrl,
         array $sampleCertificate
     ): array {
-        $certificateCode = trim((string) ($sampleCertificate['code'] ?? 'CERT-DEMO-2026-0001'));
-        if ($certificateCode === '') {
-            $certificateCode = 'CERT-DEMO-2026-0001';
-        }
-
-        $siteName = trim($siteName);
-        if ($siteName === '') {
-            $siteName = 'École Numérique';
-        }
-
-        $fullName = trim((string) ($sampleCertificate['studentName'] ?? 'Étudiant'));
-        if ($fullName === '') {
-            $fullName = 'Étudiant';
-        }
-
-        $teacherName = trim((string) ($sampleCertificate['teacherName'] ?? 'Formateur'));
-        if ($teacherName === '') {
-            $teacherName = 'Formateur';
-        }
-
-        $dgName = trim($dgName);
-        if ($dgName === '') {
-            $dgName = 'Direction générale';
-        }
-
-        $verifyUrl = $this->absUrl('certificate?code=' . urlencode($certificateCode));
-
         return [
             'cert' => [
-                'code' => $certificateCode,
                 'course_title' => (string) ($sampleCertificate['courseTitle'] ?? 'Cours'),
                 'exam_title' => (string) ($sampleCertificate['examTitle'] ?? 'Examen'),
                 'score' => (string) ($sampleCertificate['score'] ?? ''),
+                'code' => (string) ($sampleCertificate['code'] ?? 'n/c'),
             ],
             'siteName' => $siteName,
             'siteTagline' => $siteTagline,
@@ -208,20 +219,31 @@ final class CertificatePreviewController extends Controller
             'supportEmail' => $supportEmail,
             'supportPhone' => $supportPhone,
             'supportWhatsapp' => $supportWhatsapp,
-            'siteAddress' => $siteAddress,
             'footerText' => $footerText,
-            'fullName' => $fullName,
-            'teacherName' => $teacherName,
+            'fullName' => (string) ($sampleCertificate['studentName'] ?? 'Étudiant'),
+            'teacherName' => (string) ($sampleCertificate['teacherName'] ?? 'Formateur'),
             'dgName' => $dgName,
             'siteLogoUrl' => $siteLogoUrl,
             'teacherSignatureUrl' => '',
             'dgSignatureUrl' => $dgSignatureUrl,
             'issuedLabel' => (string) ($sampleCertificate['issuedLabel'] ?? 'n/c'),
-            'verifyUrl' => $verifyUrl,
-            'qrVerifyUrl' => $verifyUrl,
-            'exportFormat' => 'html',
-            'isPdfExport' => false,
+            'verifyUrl' => (string) ($sampleCertificate['verifyUrl'] ?? ''),
         ];
+    }
+
+    private function buildPdfWrapperHtml(string $imageBinary): string
+    {
+        $dataUri = 'data:image/png;base64,' . base64_encode($imageBinary);
+
+        return '<!doctype html><html lang="fr"><head><meta charset="UTF-8">'
+            . '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+            . '<style>'
+            . '@page{size:A4 landscape;margin:0;}'
+            . 'html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#0f172a;print-color-adjust:exact;-webkit-print-color-adjust:exact;}'
+            . 'body{display:flex;align-items:center;justify-content:center;}'
+            . 'img{display:block;width:100vw;height:100vh;object-fit:contain;}'
+            . '</style>'
+            . '</head><body><img alt="Certificat" src="' . $dataUri . '"></body></html>';
     }
 
     private function certificatePreviewRenderExpires(): int
@@ -252,28 +274,6 @@ final class CertificatePreviewController extends Controller
         ob_start();
         $this->render($view, $data);
         return (string) ob_get_clean();
-    }
-
-    private function injectAbsoluteBaseHref(string $html): string
-    {
-        $html = trim($html);
-        if ($html === '') {
-            return $html;
-        }
-
-        if (stripos($html, '<base ') !== false) {
-            return $html;
-        }
-
-        $baseHref = rtrim($this->absUrl(''), '/') . '/';
-        $baseTag = '<base href="' . htmlspecialchars($baseHref, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">';
-
-        $injected = preg_replace('~<head([^>]*)>~i', '<head$1>' . $baseTag, $html, 1);
-        if (is_string($injected) && $injected !== '') {
-            return $injected;
-        }
-
-        return $html;
     }
 
     private function certificateExportFilename(string $code): string
