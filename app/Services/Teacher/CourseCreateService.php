@@ -281,29 +281,22 @@ final class CourseCreateService extends Service
             $coverPath = $coverPathExisting !== '' ? $coverPathExisting : null;
             $previousCoverPath = $coverPath;
             $coverFile = $files['cover_file'] ?? null;
-            if (is_array($coverFile) && !empty($coverFile['name'])) {
+            $coverProvided = is_array($coverFile) && !empty($coverFile['name']);
+            if ($coverProvided) {
                 if ((int) ($coverFile['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
-                    $maxSize = 5 * 1024 * 1024;
-                    if ((int) ($coverFile['size'] ?? 0) > $maxSize) {
-                        $errors[] = 'La miniature depasse 5 Mo.';
-                    } else {
-                        $allowedExt = ['jpg', 'jpeg', 'png', 'webp'];
-                        $ext = strtolower(pathinfo((string) $coverFile['name'], PATHINFO_EXTENSION));
-                        if (!in_array($ext, $allowedExt, true)) {
-                            $errors[] = 'Extension de miniature non autorisee.';
+                    $coverUpload = $this->validateCourseCoverUpload((array) $coverFile, $errors);
+                    if ($coverUpload !== null) {
+                        $uploadDir = $this->projectRoot() . '/storage/uploads/covers';
+                        if (!is_dir($uploadDir)) {
+                            mkdir($uploadDir, 0755, true);
+                        }
+                        $filename = bin2hex(random_bytes(8)) . '.' . $coverUpload['extension'];
+                        $dest = $uploadDir . '/' . $filename;
+                        if (!move_uploaded_file((string) $coverFile['tmp_name'], $dest)) {
+                            $errors[] = 'Echec de l upload de la miniature.';
                         } else {
-                            $uploadDir = $this->projectRoot() . '/storage/uploads/covers';
-                            if (!is_dir($uploadDir)) {
-                                mkdir($uploadDir, 0755, true);
-                            }
-                            $filename = bin2hex(random_bytes(8)) . '.' . $ext;
-                            $dest = $uploadDir . '/' . $filename;
-                            if (!move_uploaded_file((string) $coverFile['tmp_name'], $dest)) {
-                                $errors[] = 'Echec de l upload de la miniature.';
-                            } else {
-                                $coverPath = 'storage/uploads/covers/' . $filename;
-                                $coverPathExisting = $coverPath;
-                            }
+                            $coverPath = 'storage/uploads/covers/' . $filename;
+                            $coverPathExisting = $coverPath;
                         }
                     }
                 } else {
@@ -311,7 +304,7 @@ final class CourseCreateService extends Service
                 }
             }
 
-            if ($coverPath === null) {
+            if ($coverPath === null && !$coverProvided) {
                 $errors[] = 'La miniature est obligatoire.';
             }
             if ($previousCoverPath && $previousCoverPath !== $coverPath) {
@@ -457,8 +450,8 @@ final class CourseCreateService extends Service
                         }
 
                         $successMessage = $submitAction === 'submit'
-                            ? 'Cours soumis a la validation admin.'
-                            : 'Fiche du cours enregistree.';
+                            ? 'Cours soumis à la validation admin.'
+                            : 'Fiche du cours enregistrée.';
                         $this->flashSet('success', $successMessage);
                         $this->flashSet('created_course_id', (int) $newCourseId);
 
@@ -695,36 +688,29 @@ final class CourseCreateService extends Service
 
             $coverPath = $coverPathExisting !== '' ? $coverPathExisting : null;
             $coverFile = $files['cover_file'] ?? null;
-            if (is_array($coverFile) && !empty($coverFile['name'])) {
+            $coverProvided = is_array($coverFile) && !empty($coverFile['name']);
+            if ($coverProvided) {
                 if ((int) ($coverFile['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
-                    $maxSize = 5 * 1024 * 1024;
-                    if ((int) ($coverFile['size'] ?? 0) > $maxSize) {
-                        $errors[] = 'La miniature depasse 5 Mo.';
-                    } else {
-                        $allowedExt = ['jpg', 'jpeg', 'png', 'webp'];
-                        $ext = strtolower(pathinfo((string) $coverFile['name'], PATHINFO_EXTENSION));
-                        if (!in_array($ext, $allowedExt, true)) {
-                            $errors[] = 'Extension de miniature non autorisee.';
+                    $coverUpload = $this->validateCourseCoverUpload((array) $coverFile, $errors);
+                    if ($coverUpload !== null) {
+                        $uploadDir = $this->projectRoot() . '/storage/uploads/covers';
+                        if (!is_dir($uploadDir)) {
+                            mkdir($uploadDir, 0755, true);
+                        }
+                        $filename = bin2hex(random_bytes(8)) . '.' . $coverUpload['extension'];
+                        $dest = $uploadDir . '/' . $filename;
+                        if (!move_uploaded_file((string) $coverFile['tmp_name'], $dest)) {
+                            $errors[] = 'Echec de l upload de la miniature.';
                         } else {
-                            $uploadDir = $this->projectRoot() . '/storage/uploads/covers';
-                            if (!is_dir($uploadDir)) {
-                                mkdir($uploadDir, 0755, true);
-                            }
-                            $filename = bin2hex(random_bytes(8)) . '.' . $ext;
-                            $dest = $uploadDir . '/' . $filename;
-                            if (!move_uploaded_file((string) $coverFile['tmp_name'], $dest)) {
-                                $errors[] = 'Echec de l upload de la miniature.';
-                            } else {
-                                $coverPath = 'storage/uploads/covers/' . $filename;
-                                $coverPathExisting = $coverPath;
-                            }
+                            $coverPath = 'storage/uploads/covers/' . $filename;
+                            $coverPathExisting = $coverPath;
                         }
                     }
                 } else {
                     $errors[] = 'Erreur d upload de la miniature.';
                 }
             }
-            if ($coverPath === null) {
+            if ($coverPath === null && !$coverProvided) {
                 $errors[] = 'La miniature est obligatoire.';
             }
 
@@ -903,7 +889,7 @@ final class CourseCreateService extends Service
                         }
                         $didSubmitForValidation = $submitAction === 'submit' && in_array((string) ($course['status'] ?? ''), ['draft', 'rejected'], true);
 
-                        $this->flashSet('success', $didSubmitForValidation ? 'Cours soumis a la validation admin.' : 'Cours mis a jour.');
+                        $this->flashSet('success', $didSubmitForValidation ? 'Cours soumis à la validation admin.' : 'Cours mis à jour.');
                         $this->flashSet('updated_course_id', $courseId);
                         return [
                             'redirectTo' => $this->siteUrl('teacher/course_edit?id=' . $courseId),
@@ -1328,13 +1314,8 @@ final class CourseCreateService extends Service
                         $errors[] = 'Lien YouTube invalide pour la leçon "' . $itemTitle . '".';
                         continue;
                     }
-                    if ($durationMin < 1) {
-                        $errors[] = 'Durée obligatoire pour la leçon vidéo "' . $itemTitle . '".';
-                        continue;
-                    }
-                    $lessonCount++;
                 } elseif ($type === 'document') {
-                    $lessonCount++;
+                    // Le document est validé plus loin lors de l'envoi du fichier.
                 } else {
                     if (!in_array($mode, ['online', 'onsite'], true)) {
                         $mode = 'online';
@@ -1343,6 +1324,15 @@ final class CourseCreateService extends Service
                         $durationMin = 60;
                     }
                     $meetingCount++;
+                }
+
+                if ($type !== 'meeting' && $durationMin < 1) {
+                    $errors[] = 'Durée obligatoire pour la leçon "' . $itemTitle . '".';
+                    continue;
+                }
+
+                if ($type !== 'meeting') {
+                    $lessonCount++;
                 }
 
                 $items[] = [

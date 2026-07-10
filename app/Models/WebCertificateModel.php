@@ -17,7 +17,7 @@ final class WebCertificateModel extends Model
             $studentSelect = ', sp.certificate_display_name';
         }
         $stmt = $this->pdo->prepare(
-            'SELECT cert.*, u.first_name, u.last_name, c.title AS course_title, es.title AS exam_title,
+            'SELECT cert.*, u.first_name, u.last_name, c.title AS course_title, c.duration_hours, es.title AS exam_title,
                     t.first_name AS teacher_first_name, t.last_name AS teacher_last_name' . $teacherSelect . $studentSelect . '
              FROM certificates cert
              JOIN users u ON u.id = cert.user_id

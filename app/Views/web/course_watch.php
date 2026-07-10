@@ -156,7 +156,7 @@ $normalizeDocuments = static function (array $documents, string $contextLabel = 
             'label' => $label,
             'kind' => $isGoogleDrive ? 'Google Drive' : trim((string) ($document['type'] ?? 'Document')),
             'url' => $url,
-            'icon' => preg_match('#\\.pdf($|[?#])#i', $url) === 1
+            'icon' => preg_match('~\\.pdf(?:$|[?#])~i', $url) === 1
                 ? 'file-pdf'
                 : (
                     stripos((string) ($document['label'] ?? ''), 'github') !== false

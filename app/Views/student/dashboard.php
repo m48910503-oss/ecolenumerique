@@ -559,8 +559,8 @@ if (!is_string($chartPayloadJson) || $chartPayloadJson === '') {
                     <h4 class="font-bold text-gray-900 dark:text-white"><?php echo e($courseTitle); ?></h4>
                     <p class="text-xs text-gray-500 dark:text-gray-400"><?php echo e($courseTeacher); ?></p>
                     <div class="flex items-center justify-between mt-2">
-                      <span class="text-blue-600 font-bold"><?php echo e($coursePrice); ?></span>
-                      <span class="text-yellow-400 text-sm flex items-center gap-0.5">
+                      <span class="app-price font-bold"><?php echo e($coursePrice); ?></span>
+                      <span class="app-rating-stars text-yellow-400 text-sm flex items-center gap-0.5">
                         <?php echo $renderStars($rating); ?>
                         <?php if ($ratingCount > 0): ?>
                           <span class="sr-only"><?php echo e((string) $ratingCount); ?> avis</span>

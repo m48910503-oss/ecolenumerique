@@ -167,7 +167,7 @@ $lastRejectionReason = trim((string) ($course['last_rejection_reason'] ?? ''));
                             </span>
                             <span class="teacher-courses-chip inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-1 dark:border-slate-700">
                                 <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg('wallet'); ?></span>
-                                <span>Prix : <?php echo e($coursePriceLabel); ?></span>
+                                <span>Prix : <span class="app-price"><?php echo e($coursePriceLabel); ?></span></span>
                             </span>
                         </div>
 

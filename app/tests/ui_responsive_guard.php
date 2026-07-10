@@ -80,6 +80,200 @@ foreach ($dashboardPages as $page) {
 }
 
 require_snippet(
+    $rootDir . '/app/Views/web/catalogue.php',
+    'data-filter-close',
+    $errors,
+    'Catalogue page should expose a mobile filter close button'
+);
+require_snippet(
+    $rootDir . '/assets/js/web_catalogue.js',
+    'data-filter-close',
+    $errors,
+    'Catalogue page should wire the mobile filter close button'
+);
+
+require_snippet(
+    $rootDir . '/assets/js/sidebar_toggle.js',
+    'const desktopBreakpoint = () =>',
+    $errors,
+    'Shared sidebar toggle should support a configurable desktop breakpoint'
+);
+require_snippet(
+    $rootDir . '/assets/css/teacher-dashboard.css',
+    '@media (max-width: 1023.98px)',
+    $errors,
+    'Teacher dashboard shell should keep a compact drawer layout on medium widths'
+);
+require_snippet(
+    $rootDir . '/assets/css/teacher-dashboard.css',
+    'body.app-role-teacher[data-view="teacher/course_create"] .teacher-dashboard-layout',
+    $errors,
+    'Course creation and edition pages should remove the sidebar offset'
+);
+require_snippet(
+    $rootDir . '/assets/css/teacher-dashboard.css',
+    'body.app-role-teacher[data-view="teacher/course_create"] #teacher-dashboard-sidebar',
+    $errors,
+    'Course creation and edition pages should hide the sidebar panel'
+);
+require_snippet(
+    $rootDir . '/assets/css/teacher-dashboard.css',
+    'body.app-role-teacher[data-view="teacher/course_create"] .teacher-dashboard-topbar .js-sidebar-toggle',
+    $errors,
+    'Course creation and edition pages should hide the sidebar toggle'
+);
+require_snippet(
+    $rootDir . '/assets/css/student_dashboard.css',
+    '@media (max-width: 1023.98px)',
+    $errors,
+    'Student dashboard shell should keep a compact drawer layout on medium widths'
+);
+require_snippet(
+    $rootDir . '/assets/css/admin-dashboard.css',
+    '@media (max-width: 1023.98px)',
+    $errors,
+    'Admin dashboard shell should keep a compact drawer layout on medium widths'
+);
+require_snippet(
+    $rootDir . '/assets/js/course_complete_builder.js',
+    'indexedDB.open("ecole-course-drafts", 1)',
+    $errors,
+    'Course create builder should persist thumbnail drafts in IndexedDB'
+);
+require_snippet(
+    $rootDir . '/assets/js/course_complete_builder.js',
+    'has_cover_file',
+    $errors,
+    'Course create builder should track whether a thumbnail file is present in the local draft'
+);
+require_snippet(
+    $rootDir . '/assets/js/course_complete_builder.js',
+    'restoreCoverDraftStorage(form);',
+    $errors,
+    'Course create builder should restore the locally saved thumbnail draft'
+);
+require_snippet(
+    $rootDir . '/assets/js/course_complete_builder.js',
+    'localDraftCoverPreviewKey(form)',
+    $errors,
+    'Course create builder should keep a separate preview draft key for refresh recovery'
+);
+require_snippet(
+    $rootDir . '/assets/js/course_complete_builder.js',
+    'restoreCoverPreviewStorage(form)',
+    $errors,
+    'Course create builder should restore the thumbnail preview from the browser draft when possible'
+);
+require_snippet(
+    $rootDir . '/assets/js/course_complete_builder.js',
+    'captureCoverPreviewDraft(form, file)',
+    $errors,
+    'Course create builder should capture the thumbnail preview as soon as a file is selected'
+);
+require_snippet(
+    $rootDir . '/assets/js/course_complete_builder.js',
+    'var durationValue = duration > 0 ? String(duration) : "";',
+    $errors,
+    'Course create builder should not prefill a fake lesson duration'
+);
+require_snippet(
+    $rootDir . '/assets/js/course_complete_builder.js',
+    'window.importQcmFile = async function (button)',
+    $errors,
+    'Course create builder should support QCM CSV/Excel import'
+);
+require_snippet(
+    $rootDir . '/assets/js/course_complete_builder.js',
+    'qcmOptionLabel(index)',
+    $errors,
+    'Course create builder should label QCM proposals with letters'
+);
+require_snippet(
+    $rootDir . '/app/Services/Teacher/CourseCreateService.php',
+    'Durée obligatoire pour la leçon "',
+    $errors,
+    'Course create service should reject lessons without a duration'
+);
+require_snippet(
+    $rootDir . '/app/Views/teacher/course_create.php',
+    'data-course-create-draft-prompt',
+    $errors,
+    'Course create page should expose the local draft prompt flag'
+);
+require_snippet(
+    $rootDir . '/app/Views/teacher/course_create.php',
+    'course-create-draft-modal',
+    $errors,
+    'Course create page should render the draft choice modal'
+);
+require_snippet(
+    $rootDir . '/app/Views/teacher/course_create.php',
+    'Choisissez un brouillon à ouvrir',
+    $errors,
+    'Course create page should show the draft selection list in the modal'
+);
+require_snippet(
+    $rootDir . '/app/Views/teacher/course_create.php',
+    'data-course-create-draft-list-panel',
+    $errors,
+    'Course create page should keep the draft list hidden until the second step'
+);
+require_snippet(
+    $rootDir . '/app/Views/teacher/course_create.php',
+    'max-h-[calc(100vh-2rem)] overflow-y-auto',
+    $errors,
+    'Course create modal should stay scrollable on smaller screens'
+);
+require_snippet(
+    $rootDir . '/assets/js/course_complete_builder.js',
+    'showDraftPrompt(form, pendingDraft)',
+    $errors,
+    'Course create builder should prompt before restoring a local draft'
+);
+require_snippet(
+    $rootDir . '/assets/js/course_complete_builder.js',
+    'restoreDraftIntoForm(form, draft)',
+    $errors,
+    'Course create builder should restore the selected draft after confirmation'
+);
+require_snippet(
+    $rootDir . '/assets/js/course_complete_builder.js',
+    'if (draftPrompt.enabled && pendingDraft)',
+    $errors,
+    'Course create builder should prompt whenever a local draft exists'
+);
+require_snippet(
+    $rootDir . '/app/Views/teacher/course_create.php',
+    'course-builder-referral-switch',
+    $errors,
+    'Course create referral control should use the refreshed switch markup'
+);
+require_snippet(
+    $rootDir . '/assets/css/course_create_builder.css',
+    '.course-builder-referral-switch.is-active',
+    $errors,
+    'Course create referral control should style the active state clearly'
+);
+require_snippet(
+    $rootDir . '/assets/css/course_create_builder.css',
+    '.course-builder-workflow__step--complete',
+    $errors,
+    'Course create workflow should style completed steps in blue'
+);
+require_snippet(
+    $rootDir . '/assets/css/course_create_builder.css',
+    '.course-builder-workflow__step--pending',
+    $errors,
+    'Course create workflow should style remaining steps as warning'
+);
+ensure_not_contains(
+    $rootDir . '/app/Views/teacher/course_create.php',
+    'À compléter',
+    $errors,
+    'Course create workflow should not use the old "À compléter" label'
+);
+
+require_snippet(
     $rootDir . '/app/Views/teacher/reviews.php',
     'meta name="app-global-assets" content="off"',
     $errors,
@@ -374,6 +568,7 @@ $adminViews = [
     'course_preview' => $rootDir . '/app/Views/admin/course_preview.php',
     'courses' => $rootDir . '/app/Views/admin/courses.php',
     'error_logs' => $rootDir . '/app/Views/admin/error_logs.php',
+    'exam_preview' => $rootDir . '/app/Views/admin/exam_preview.php',
     'announcements' => $rootDir . '/app/Views/admin/announcements.php',
     'notifications' => $rootDir . '/app/Views/admin/notifications.php',
     'sales' => $rootDir . '/app/Views/admin/sales.php',
@@ -443,6 +638,13 @@ foreach ($adminViews as $viewName => $viewFile) {
         "Admin {$viewName} page should not include inline scripts"
     );
 }
+
+require_snippet(
+    $rootDir . '/app/Views/admin/course_preview.php',
+    'data-scroll-top-root="1"',
+    $errors,
+    'Admin course preview page should expose an internal scroll root for the mobile shell'
+);
 
 $adminDashboardView = $rootDir . '/app/Views/admin/dashboard.php';
 require_snippet(

@@ -402,7 +402,7 @@ if (!is_string($chartValuesJson) || $chartValuesJson === '') {
               </div>
             </div>
             <?php if ($isRating): ?>
-              <div class="flex text-yellow-400 text-sm mt-2"><?php echo $renderStars((float) $value); ?></div>
+              <div class="app-rating-stars flex items-center gap-0.5 text-yellow-400 text-sm mt-2"><?php echo $renderStars((float) $value); ?></div>
               <p class="text-xs text-gray-600 dark:text-gray-300 mt-2"><?php echo e($meta !== '' ? $meta : 'Aucun avis pour le moment'); ?></p>
             <?php else: ?>
               <p class="text-xs text-gray-600 dark:text-gray-300 mt-2"><?php echo e($meta !== '' ? $meta : ''); ?></p>
@@ -633,7 +633,7 @@ if (!is_string($chartValuesJson) || $chartValuesJson === '') {
                     <span class="rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-semibold text-primary-700 dark:bg-primary-500/15 dark:text-primary-200"><?php echo e($reviewCourse); ?></span>
                   </div>
                   <div class="mt-1 flex items-center gap-2 text-yellow-400 text-sm">
-                    <span><?php echo $renderStars((float) $reviewRating); ?></span>
+                    <span class="app-rating-stars inline-flex items-center gap-0.5"><?php echo $renderStars((float) $reviewRating); ?></span>
                     <span class="text-xs font-semibold text-gray-600 dark:text-gray-300"><?php echo e((string) $reviewRating); ?>/5</span>
                   </div>
                   <p class="mt-2 text-gray-700 dark:text-gray-200 text-sm">"<?php echo e($reviewComment); ?>"</p>

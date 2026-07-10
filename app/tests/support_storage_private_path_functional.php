@@ -30,6 +30,7 @@ $filePath = $tempDir . DIRECTORY_SEPARATOR . $filename;
 $legacyDir = $rootDir . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'support';
 $legacyFilename = 'legacy-support-' . bin2hex(random_bytes(6)) . '.txt';
 $legacyFilePath = $legacyDir . DIRECTORY_SEPARATOR . $legacyFilename;
+$blockingPath = tempnam(sys_get_temp_dir(), 'support-block-');
 $originalSupportDir = getenv('APP_SUPPORT_STORAGE_DIR');
 
 putenv('APP_SUPPORT_STORAGE_DIR=' . $tempDir);
@@ -51,8 +52,29 @@ assert_true($legacyResolved === realpath($legacyFilePath), 'Legacy support paths
 assert_true(support_storage_reference($filename) === 'support://' . $filename, 'Helper should emit support:// references.', $errors);
 assert_true(support_resolve_stored_path('support://' . $filename) === realpath($filePath), 'Helper should resolve support:// references.', $errors);
 
+putenv('APP_SUPPORT_STORAGE_DIR=' . $blockingPath);
+$serviceWithoutFile = $service->handleUploads([
+    'name' => [''],
+    'type' => [''],
+    'tmp_name' => [''],
+    'error' => [UPLOAD_ERR_NO_FILE],
+    'size' => [0],
+]);
+$helperWithoutFile = support_handle_uploads([
+    'name' => [''],
+    'type' => [''],
+    'tmp_name' => [''],
+    'error' => [UPLOAD_ERR_NO_FILE],
+    'size' => [0],
+]);
+assert_true($serviceWithoutFile['ok'] === true, 'Support storage service should ignore empty upload fields.', $errors);
+assert_true($helperWithoutFile['ok'] === true, 'Legacy support helper should ignore empty upload fields.', $errors);
+
 @unlink($filePath);
 @unlink($legacyFilePath);
+if (is_string($blockingPath) && $blockingPath !== '' && is_file($blockingPath)) {
+    @unlink($blockingPath);
+}
 cleanup_tree($tempDir);
 putenv($originalSupportDir === false ? 'APP_SUPPORT_STORAGE_DIR' : 'APP_SUPPORT_STORAGE_DIR=' . $originalSupportDir);
 

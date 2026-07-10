@@ -41,13 +41,58 @@
   activateTab(page.getAttribute('data-default-tab') || 'identity');
 
   Array.prototype.slice.call(page.querySelectorAll('[data-settings-file]')).forEach(function (input) {
-    input.addEventListener('change', function () {
+    input.addEventListener('change', async function () {
       var key = input.getAttribute('data-settings-file') || '';
       var label = page.querySelector('[data-settings-file-name="' + key + '"]');
       if (!label) {
         return;
       }
-      label.textContent = input.files && input.files.length > 0 ? input.files[0].name : 'Aucun fichier choisi';
+      var file = input.files && input.files.length > 0 ? input.files[0] : null;
+      var feedbackId = input.getAttribute('data-signature-feedback') || '';
+      var feedback = feedbackId ? document.getElementById(feedbackId) : null;
+
+      if (file && input.getAttribute('data-signature-normalize') === '1') {
+        var sourceLimitMb = Number(input.getAttribute('data-signature-source-max-mb') || 10);
+        if (file.size > sourceLimitMb * 1024 * 1024) {
+          input.value = '';
+          label.textContent = 'Aucun fichier choisi';
+          if (feedback) feedback.textContent = 'Capture trop volumineuse (max ' + sourceLimitMb + ' Mo).';
+          return;
+        }
+
+        if (!window.CertificateSignatureImage) {
+          input.value = '';
+          label.textContent = 'Aucun fichier choisi';
+          if (feedback) feedback.textContent = 'Le module de préparation de la signature est indisponible.';
+          return;
+        }
+
+        try {
+          if (feedback) feedback.textContent = 'Recadrage et suppression du fond en cours…';
+          file = await window.CertificateSignatureImage.normalize(file);
+          var transfer = new DataTransfer();
+          transfer.items.add(file);
+          input.files = transfer.files;
+
+          var previewId = input.getAttribute('data-signature-preview') || '';
+          var placeholderId = input.getAttribute('data-signature-placeholder') || '';
+          var preview = previewId ? document.getElementById(previewId) : null;
+          var placeholder = placeholderId ? document.getElementById(placeholderId) : null;
+          if (preview) {
+            preview.src = URL.createObjectURL(file);
+            preview.classList.remove('hidden');
+          }
+          if (placeholder) placeholder.classList.add('hidden');
+          if (feedback) feedback.textContent = 'Signature prête : PNG transparent 800 × 240 px.';
+        } catch (error) {
+          input.value = '';
+          label.textContent = 'Aucun fichier choisi';
+          if (feedback) feedback.textContent = error instanceof Error ? error.message : 'Impossible de préparer la signature.';
+          return;
+        }
+      }
+
+      label.textContent = file ? file.name : 'Aucun fichier choisi';
     });
   });
 

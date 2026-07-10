@@ -62,8 +62,8 @@ if (($labelsByChannel['fedapay.api'] ?? '') !== 'Critique') {
 if (($labelsByChannel['google.oauth'] ?? '') !== 'Erreur') {
     $errors[] = 'google.oauth entry must be labeled Erreur.';
 }
-if (($labelsByChannel['drive.oauth'] ?? '') !== 'Warning') {
-    $errors[] = 'drive.oauth entry must be labeled Warning.';
+if (($labelsByChannel['drive.oauth'] ?? '') !== 'Avertissement') {
+    $errors[] = 'drive.oauth entry must be labeled Avertissement.';
 }
 if (($labelsByChannel['mail.delivery'] ?? '') !== 'Info') {
     $errors[] = 'mail.delivery entry must be labeled Info.';

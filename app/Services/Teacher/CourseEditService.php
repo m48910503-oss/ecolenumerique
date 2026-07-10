@@ -473,26 +473,18 @@ final class CourseEditService extends Service
         $coverFile = $files['cover_file'] ?? null;
         if (is_array($coverFile) && !empty($coverFile['name'])) {
             if ((int) ($coverFile['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
-                $maxSize = 5 * 1024 * 1024;
-                if ((int) ($coverFile['size'] ?? 0) > $maxSize) {
-                    $state['errors'][] = "La miniature d\u{00e9}passe 5 Mo.";
-                } else {
-                    $allowedExt = ['jpg', 'jpeg', 'png', 'webp'];
-                    $ext = strtolower(pathinfo((string) ($coverFile['name'] ?? ''), PATHINFO_EXTENSION));
-                    if (!in_array($ext, $allowedExt, true)) {
-                        $state['errors'][] = "Extension de miniature non autoris\u{00e9}e.";
+                $coverUpload = $this->validateCourseCoverUpload((array) $coverFile, $state['errors']);
+                if ($coverUpload !== null) {
+                    $uploadDir = __DIR__ . '/../../../storage/uploads/covers';
+                    if (!is_dir($uploadDir)) {
+                        @mkdir($uploadDir, 0755, true);
+                    }
+                    $filename = bin2hex(random_bytes(8)) . '.' . $coverUpload['extension'];
+                    $dest = $uploadDir . '/' . $filename;
+                    if (!move_uploaded_file((string) $coverFile['tmp_name'], $dest)) {
+                        $state['errors'][] = "\u{00c9}chec de l'upload de la miniature.";
                     } else {
-                        $uploadDir = __DIR__ . '/../../../storage/uploads/covers';
-                        if (!is_dir($uploadDir)) {
-                            @mkdir($uploadDir, 0755, true);
-                        }
-                        $filename = bin2hex(random_bytes(8)) . '.' . $ext;
-                        $dest = $uploadDir . '/' . $filename;
-                        if (!move_uploaded_file((string) $coverFile['tmp_name'], $dest)) {
-                            $state['errors'][] = "\u{00c9}chec de l'upload de la miniature.";
-                        } else {
-                            $coverPath = 'storage/uploads/covers/' . $filename;
-                        }
+                        $coverPath = 'storage/uploads/covers/' . $filename;
                     }
                 }
             } else {

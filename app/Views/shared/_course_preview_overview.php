@@ -37,7 +37,7 @@ $isTeacherPreview = $previewMode === 'teacher';
                 <?php endif; ?>
                 <span class="admin-preview-meta admin-preview-meta--price">
                     <span class="app-icon text-blue-600 dark:text-blue-300" aria-hidden="true"><?php echo dashboard_icon_svg('wallet'); ?></span>
-                    Prix : <?php echo e($formatMoney($coursePrice)); ?>
+                    <span class="app-price">Prix : <?php echo e($formatMoney($coursePrice)); ?></span>
                 </span>
                 <span class="admin-preview-meta admin-preview-meta--resources">
                     <span class="app-icon text-blue-600 dark:text-blue-300" aria-hidden="true"><?php echo dashboard_icon_svg('folder'); ?></span>

@@ -806,7 +806,7 @@ $courseStatusLabel = static function (string $status) use ($courseStatusLabels):
                         </td>
                         <td class="px-6 py-4">
                           <div class="font-medium text-gray-900 dark:text-white"><?php echo e($courseTitle !== '' ? $courseTitle : 'Cours sans titre'); ?></div>
-                          <div class="text-xs text-gray-500 dark:text-gray-400"><?php echo e($formatMoney($coursePrice)); ?></div>
+                          <div class="app-price text-xs"><?php echo e($formatMoney($coursePrice)); ?></div>
                         </td>
                         <td class="px-6 py-4">
                           <div class="font-semibold text-gray-900 dark:text-white"><?php echo e($discountMeta['main']); ?></div>
@@ -890,7 +890,7 @@ $courseStatusLabel = static function (string $status) use ($courseStatusLabels):
                                   <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70">
                                     <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Cours</p>
                                     <p class="mt-2 text-sm font-semibold text-slate-900 dark:text-white"><?php echo e($courseTitle !== '' ? $courseTitle : 'Cours sans titre'); ?></p>
-                                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400"><?php echo e($formatMoney($coursePrice)); ?></p>
+                                    <p class="mt-1 app-price text-xs"><?php echo e($formatMoney($coursePrice)); ?></p>
                                   </div>
                                   <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70">
                                     <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Réduction actuelle</p>

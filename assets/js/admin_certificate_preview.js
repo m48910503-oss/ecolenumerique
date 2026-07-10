@@ -57,6 +57,17 @@
     return url.toString();
   }
 
+  function buildPrintUrl() {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("export");
+    url.searchParams.delete("inline");
+    url.searchParams.delete("token");
+    url.searchParams.delete("expires");
+    url.searchParams.set("render", "export");
+    url.searchParams.set("print", "1");
+    return url.toString();
+  }
+
   function syncDownloadLinks() {
     downloadLinks.forEach((link) => {
       const mode = link.getAttribute("data-certificate-download-link") || "";
@@ -78,7 +89,14 @@
       closeDownloadMenu();
       renderQrCodes();
       applyPrintPageStyle();
-      window.print();
+      const printUrl = buildPrintUrl();
+      const printWindow = window.open(printUrl, "_blank");
+      if (printWindow) {
+        printWindow.focus();
+        return;
+      }
+
+      window.location.href = printUrl;
     });
   });
 

@@ -5,22 +5,33 @@ namespace App\Services\Web;
 
 final class ReceiptPdfDocumentBuilder
 {
-    public function build(array $receiptData): ?string
+    /**
+     * @param array<string,mixed>|null $fallbackDocument
+     */
+    public function build(array $receiptData, ?array $fallbackDocument = null): ?string
     {
         $html = $this->renderHtml($receiptData);
-        return $this->buildFromHtml($html);
+        $bytes = $this->buildFromHtml($html, $fallbackDocument ?? $receiptData);
+        if (is_string($bytes) && $bytes !== '') {
+            return $bytes;
+        }
+
+        return $this->buildFallbackPdf($fallbackDocument ?? $receiptData);
     }
 
-    public function buildFromHtml(string $html): ?string
+    /**
+     * @param array<string,mixed>|null $fallbackDocument
+     */
+    public function buildFromHtml(string $html, ?array $fallbackDocument = null): ?string
     {
         $html = trim($html);
         if ($html === '') {
-            return null;
+            return $fallbackDocument !== null ? $this->buildFallbackPdf($fallbackDocument) : null;
         }
 
         $tmpDir = $this->ensureTempDir();
         if ($tmpDir === '') {
-            return null;
+            return $fallbackDocument !== null ? $this->buildFallbackPdf($fallbackDocument) : null;
         }
 
         $suffix = $this->randomSuffix();
@@ -31,7 +42,7 @@ final class ReceiptPdfDocumentBuilder
 
         if (@file_put_contents($htmlPath, $html) === false) {
             $this->deleteFile($htmlPath);
-            return null;
+            return $fallbackDocument !== null ? $this->buildFallbackPdf($fallbackDocument) : null;
         }
 
         $ok = $this->buildWithChrome($htmlPath, $pdfPath, $profileDir);
@@ -51,6 +62,10 @@ final class ReceiptPdfDocumentBuilder
         $this->deleteFile($htmlPath);
         $this->deleteFile($pdfPath);
         $this->deleteDirectory($profileDir);
+
+        if ($bytes === null && $fallbackDocument !== null) {
+            $bytes = $this->buildFallbackPdf($fallbackDocument);
+        }
 
         return $bytes;
     }
@@ -194,9 +209,10 @@ final class ReceiptPdfDocumentBuilder
             '--run-all-compositor-stages-before-draw',
             '--virtual-time-budget=12000',
             '--allow-file-access-from-files',
+            '--force-device-scale-factor=1',
             '--user-data-dir=' . escapeshellarg($profileDir),
             '--print-to-pdf=' . escapeshellarg($pdfPath),
-            '--print-to-pdf-no-header',
+            '--no-pdf-header-footer',
             escapeshellarg($this->fileUrlFromPath($htmlPath)),
         ]);
 
@@ -247,11 +263,22 @@ final class ReceiptPdfDocumentBuilder
 
     private function findChromeBinary(): string
     {
+        $localAppData = trim((string) getenv('LOCALAPPDATA'));
+        $programFiles = trim((string) getenv('ProgramFiles'));
+        $programFilesX86 = trim((string) getenv('ProgramFiles(x86)'));
+        $programW6432 = trim((string) getenv('ProgramW6432'));
+
         $candidates = [
-            'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-            'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-            'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
-            'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+            $localAppData !== '' ? $localAppData . '\\Google\\Chrome\\Application\\chrome.exe' : '',
+            $localAppData !== '' ? $localAppData . '\\Microsoft\\Edge\\Application\\msedge.exe' : '',
+            $localAppData !== '' ? $localAppData . '\\Microsoft\\EdgeCore\\msedge.exe' : '',
+            $localAppData !== '' ? $localAppData . '\\Microsoft\\EdgeWebView\\Application\\msedge.exe' : '',
+            $programFiles !== '' ? $programFiles . '\\Google\\Chrome\\Application\\chrome.exe' : '',
+            $programFilesX86 !== '' ? $programFilesX86 . '\\Google\\Chrome\\Application\\chrome.exe' : '',
+            $programW6432 !== '' ? $programW6432 . '\\Google\\Chrome\\Application\\chrome.exe' : '',
+            $programFiles !== '' ? $programFiles . '\\Microsoft\\Edge\\Application\\msedge.exe' : '',
+            $programFilesX86 !== '' ? $programFilesX86 . '\\Microsoft\\Edge\\Application\\msedge.exe' : '',
+            $programW6432 !== '' ? $programW6432 . '\\Microsoft\\Edge\\Application\\msedge.exe' : '',
             '/usr/bin/google-chrome',
             '/usr/bin/chromium',
             '/usr/bin/chromium-browser',
@@ -366,6 +393,331 @@ final class ReceiptPdfDocumentBuilder
         @rmdir($path);
     }
 
+    /**
+     * @param array<string,mixed> $receiptData
+     */
+    private function buildFallbackPdf(array $receiptData): ?string
+    {
+        $order = is_array($receiptData['order'] ?? null) ? $receiptData['order'] : [];
+        $items = is_array($receiptData['items'] ?? null) ? array_values($receiptData['items']) : [];
+
+        $siteName = $this->cleanText(
+            $receiptData['site_name'] ?? (defined('APP_FROM_NAME') ? (string) APP_FROM_NAME : 'École Numérique'),
+            'École Numérique'
+        );
+        $reference = $this->cleanText((string) ($order['reference'] ?? ''), '');
+        if ($reference === '') {
+            $reference = 'Commande';
+        }
+
+        $customerName = $this->cleanText((string) ($receiptData['customer_name'] ?? ''), '');
+        if ($customerName === '') {
+            $customerName = $this->displayName($receiptData['user'] ?? null);
+        }
+        if ($customerName === '') {
+            $customerName = 'Étudiant';
+        }
+
+        $providerLabel = $this->cleanText((string) ($receiptData['provider_label'] ?? ''), '');
+        if ($providerLabel === '') {
+            $providerLabel = 'Non renseigné';
+        }
+
+        $statusLabel = '';
+        $statusMeta = is_array($receiptData['status_meta'] ?? null) ? $receiptData['status_meta'] : [];
+        if ($statusMeta !== []) {
+            $statusLabel = $this->cleanText((string) ($statusMeta['label'] ?? ''), '');
+        }
+        if ($statusLabel === '') {
+            $statusLabel = 'Validée';
+        }
+
+        $issuedLabel = $this->cleanText((string) ($order['paid_at'] ?? $order['created_at'] ?? ''), '');
+        if ($issuedLabel === '') {
+            $issuedLabel = date('d/m/Y');
+        }
+
+        $supportUrl = $this->cleanText((string) ($receiptData['support_url'] ?? ''), '');
+        $ordersUrl = $this->cleanText((string) ($receiptData['orders_url'] ?? ''), '');
+        $coursesUrl = $this->cleanText((string) ($receiptData['courses_url'] ?? ''), '');
+        $dashboardUrl = $this->cleanText((string) ($receiptData['dashboard_url'] ?? ''), '');
+        $headerNote = 'Document de secours généré côté serveur.';
+        $footerNote = $this->cleanText((string) ($receiptData['footer_note'] ?? ''), '');
+        if ($footerNote === '') {
+            $footerNote = 'Version de secours générée côté serveur.';
+        }
+
+        $totalXof = max(0, (int) ($order['total_xof'] ?? ($receiptData['subtotal_xof'] ?? 0)));
+        $itemCount = max(0, (int) ($receiptData['item_count'] ?? count($items)));
+        $orderId = max(0, (int) ($order['id'] ?? 0));
+        $initials = $this->initialsFromText($siteName, 'EN');
+
+        $commands = [];
+        $commands[] = 'q';
+        $commands[] = '0.97 0.98 1 rg 0.97 0.98 1 RG 40 40 515 762 re f';
+        $commands[] = '0.84 0.88 0.94 RG 0.8 w 40 40 515 762 re S';
+        $commands[] = '0.09 0.29 0.87 rg 40 740 515 62 re f';
+        $commands[] = '1 1 1 rg';
+        $commands[] = $this->pdfTextCommand(56, 788, 'F2', 18, $siteName);
+        $commands[] = $this->pdfTextCommand(56, 770, 'F3', 9, 'Reçu de paiement');
+        $commands[] = $this->pdfTextCommand(56, 754, 'F1', 9, $headerNote);
+        $commands[] = '0.13 0.18 0.48 rg 397 752 138 40 re f';
+        $commands[] = '1 1 1 rg';
+        $commands[] = $this->pdfTextCommand(408, 782, 'F3', 8, 'Référence');
+        $commands[] = $this->pdfTextCommand(408, 766, 'F2', 14, '#' . $reference);
+        $commands[] = $this->pdfTextCommand(408, 752, 'F1', 8, 'Commande #' . ($orderId > 0 ? (string) $orderId : $reference));
+        $commands[] = '0 0 0 rg';
+
+        $cardY = 660;
+        $cardHeight = 60;
+        $cardWidth = 165;
+        $cardXs = [40, 215, 390];
+        $cardFill = '1 1 1 rg';
+        $cardStroke = '0.86 0.89 0.94 RG 0.7 w';
+
+        foreach ($cardXs as $cardX) {
+            $commands[] = $cardFill . ' ' . $cardX . ' ' . $cardY . ' ' . $cardWidth . ' ' . $cardHeight . ' re f';
+            $commands[] = $cardStroke . ' ' . $cardX . ' ' . $cardY . ' ' . $cardWidth . ' ' . $cardHeight . ' re S';
+        }
+
+        $commands[] = $this->pdfTextCommand(52, 710, 'F3', 8, 'Client');
+        $commands[] = $this->pdfTextCommand(52, 694, 'F2', 13, $customerName);
+        $commands[] = $this->pdfTextCommand(52, 678, 'F1', 8, 'Commande #' . ($orderId > 0 ? (string) $orderId : $reference));
+
+        $commands[] = $this->pdfTextCommand(227, 710, 'F3', 8, 'Paiement');
+        $commands[] = $this->pdfTextCommand(227, 694, 'F2', 13, $statusLabel);
+        $commands[] = $this->pdfTextCommand(227, 678, 'F1', 8, $itemCount . ' cours · Via ' . $providerLabel);
+
+        $commands[] = $this->pdfTextCommand(402, 710, 'F3', 8, 'Montant réglé');
+        $commands[] = $this->pdfTextCommand(402, 694, 'F2', 14, $this->money($totalXof));
+        $commands[] = $this->pdfTextCommand(402, 678, 'F1', 8, 'Émise le ' . $issuedLabel);
+
+        $commands[] = '0.09 0.29 0.87 rg';
+        $commands[] = $this->pdfTextCommand(40, 635, 'F2', 15, 'Détail des cours');
+        $commands[] = '0 0 0 rg';
+        $commands[] = '0.93 0.95 0.98 rg 40 608 515 24 re f';
+        $commands[] = '0.84 0.88 0.94 RG 0.6 w 40 608 515 24 re S';
+        $commands[] = $this->pdfTextCommand(48, 623, 'F3', 8, 'COURS');
+        $commands[] = $this->pdfTextCommand(353, 623, 'F3', 8, 'QTÉ');
+        $commands[] = $this->pdfTextCommand(406, 623, 'F3', 8, 'PRIX UNIT.');
+        $commands[] = $this->pdfTextCommand(494, 623, 'F3', 8, 'TOTAL');
+
+        $y = 596;
+        $overflowCount = 0;
+        foreach ($items as $index => $row) {
+            if ($y < 160) {
+                $overflowCount = count($items) - $index;
+                break;
+            }
+
+            $title = trim((string) ($row['course_title'] ?? 'Cours'));
+            if ($title === '') {
+                $title = 'Cours';
+            }
+
+            $qty = max(1, (int) ($row['quantity'] ?? 1));
+            $unit = max(0, (int) ($row['unit_price_xof'] ?? 0));
+            $lineTotal = max(0, (int) ($row['line_total_xof'] ?? ($qty * $unit)));
+            $titleLines = $this->wrapText($title, 48);
+            if ($titleLines === []) {
+                $titleLines = [$title];
+            }
+
+            $firstLine = array_shift($titleLines);
+            if (!is_string($firstLine) || $firstLine === '') {
+                $firstLine = $title;
+            }
+
+            $commands[] = $this->pdfTextCommand(40, $y, 'F2', 10, $firstLine);
+            $commands[] = $this->pdfTextCommand(350, $y, 'F1', 10, (string) $qty);
+            $commands[] = $this->pdfTextCommand(402, $y, 'F1', 10, $this->money($unit));
+            $commands[] = $this->pdfTextCommand(490, $y, 'F1', 10, $this->money($lineTotal));
+            $y -= 13;
+
+            foreach ($titleLines as $line) {
+                $commands[] = $this->pdfTextCommand(52, $y, 'F1', 9, $line);
+                $y -= 11;
+            }
+
+            $commands[] = '0.91 0.94 0.98 RG 0.5 w 40 ' . ($y + 4) . ' m 555 ' . ($y + 4) . ' l S';
+            $y -= 6;
+        }
+
+        if ($overflowCount > 0) {
+            $commands[] = $this->pdfTextCommand(40, $y, 'F3', 9, '+ ' . $overflowCount . ' article(s) supplémentaire(s) non affiché(s)');
+            $y -= 14;
+        }
+
+        $commands[] = '0.96 0.97 1 rg 40 126 515 44 re f';
+        $commands[] = '0.84 0.88 0.94 RG 0.8 w 40 126 515 44 re S';
+        $commands[] = $this->pdfTextCommand(52, 152, 'F3', 9, 'Total réglé');
+        $commands[] = $this->pdfTextCommand(52, 136, 'F1', 8, 'Articles: ' . $itemCount . ' · ' . $statusLabel . ' · ' . $providerLabel);
+        $commands[] = $this->pdfTextCommand(484, 145, 'F2', 16, $this->money($totalXof));
+
+        $footerY = 96;
+        $commands[] = $this->pdfTextCommand(40, $footerY, 'F1', 8, $footerNote);
+        $footerY -= 12;
+
+        $footerLinks = [];
+        if ($supportUrl !== '') {
+            $footerLinks[] = 'Support: ' . $supportUrl;
+        }
+        if ($dashboardUrl !== '') {
+            $footerLinks[] = 'Tableau de bord: ' . $dashboardUrl;
+        }
+        if ($ordersUrl !== '') {
+            $footerLinks[] = 'Commandes: ' . $ordersUrl;
+        }
+        if ($coursesUrl !== '') {
+            $footerLinks[] = 'Cours: ' . $coursesUrl;
+        }
+
+        foreach ($footerLinks as $line) {
+            foreach ($this->wrapText($line, 74) as $chunk) {
+                $commands[] = $this->pdfTextCommand(40, $footerY, 'F1', 8, $chunk);
+                $footerY -= 10;
+            }
+        }
+
+        $commands[] = $this->pdfTextCommand(56, 754, 'F1', 9, $headerNote);
+        $commands[] = $this->pdfTextCommand(40, 60, 'F3', 8, 'Initiales de la plateforme: ' . $initials);
+        $commands[] = 'Q';
+
+        return $this->assembleSimplePdf(implode("\n", $commands), 595, 842);
+    }
+
+    private function assembleSimplePdf(string $contentStream, int $width, int $height): string
+    {
+        $objects = [];
+        $objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+        $objects[2] = '<< /Type /Pages /Kids [3 0 R] /Count 1 >>';
+        $objects[3] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' . $width . ' ' . $height . '] /Resources << /Font << /F1 4 0 R /F2 5 0 R /F3 6 0 R >> >> /Contents 7 0 R >>';
+        $objects[4] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+        $objects[5] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+        $objects[6] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>';
+        $objects[7] = '<< /Length ' . strlen($contentStream) . " >>\nstream\n" . $contentStream . "\nendstream";
+
+        $pdf = "%PDF-1.4\n%\xE2\xE3\xCF\xD3\n";
+        $offsets = [];
+        ksort($objects);
+        foreach ($objects as $index => $object) {
+            $offsets[] = strlen($pdf);
+            $pdf .= $index . " 0 obj\n" . $object . "\nendobj\n";
+        }
+
+        $xref = strlen($pdf);
+        $pdf .= "xref\n0 " . (count($objects) + 1) . "\n";
+        $pdf .= "0000000000 65535 f \n";
+        foreach ($offsets as $offset) {
+            $pdf .= sprintf('%010d 00000 n ', $offset) . "\n";
+        }
+        $pdf .= "trailer\n<< /Size " . (count($objects) + 1) . " /Root 1 0 R >>\nstartxref\n" . $xref . "\n%%EOF";
+
+        return $pdf;
+    }
+
+    private function pdfTextCommand(int $x, int $y, string $font, int $size, string $text): string
+    {
+        return sprintf(
+            'BT /%s %d Tf 1 0 0 1 %d %d Tm %s Tj ET',
+            $font,
+            max(1, $size),
+            $x,
+            $y,
+            $this->escapePdfText($this->toPdfText($text))
+        );
+    }
+
+    private function escapePdfText(string $text): string
+    {
+        return '(' . strtr($text, [
+            '\\' => '\\\\',
+            '(' => '\\(',
+            ')' => '\\)',
+        ]) . ')';
+    }
+
+    private function toPdfText(string $text): string
+    {
+        $text = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', ' ', $text) ?? $text;
+        $text = str_replace(["\r", "\n", "\t"], ' ', $text);
+
+        if (function_exists('iconv')) {
+            $converted = @iconv('UTF-8', 'Windows-1252//TRANSLIT//IGNORE', $text);
+            if (is_string($converted) && $converted !== '') {
+                return $converted;
+            }
+        }
+
+        if (function_exists('utf8_decode')) {
+            $converted = utf8_decode($text);
+            if (is_string($converted) && $converted !== '') {
+                return $converted;
+            }
+        }
+
+        return $text;
+    }
+
+    private function cleanText(mixed $value, string $default = ''): string
+    {
+        $text = trim((string) $value);
+        if ($text === '') {
+            $text = $default;
+        }
+        $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
+        return trim($text);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function wrapText(string $text, int $maxChars): array
+    {
+        $text = trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
+        if ($text === '') {
+            return [];
+        }
+
+        $words = preg_split('/\s+/u', $text) ?: [];
+        $lines = [];
+        $current = '';
+
+        foreach ($words as $word) {
+            $word = trim($word);
+            if ($word === '') {
+                continue;
+            }
+
+            $candidate = $current === '' ? $word : ($current . ' ' . $word);
+            if ($current !== '' && $this->textLength($candidate) > $maxChars) {
+                $lines[] = $current;
+                $current = $word;
+                continue;
+            }
+
+            $current = $candidate;
+        }
+
+        if ($current !== '') {
+            $lines[] = $current;
+        }
+
+        return $lines;
+    }
+
+    private function textLength(string $text): int
+    {
+        if (function_exists('mb_strlen')) {
+            $length = mb_strlen($text, 'UTF-8');
+            if (is_int($length)) {
+                return $length;
+            }
+        }
+
+        return strlen($text);
+    }
+
     private function logoDataUri(string $source): string
     {
         if ($source === '') {
@@ -417,8 +769,8 @@ final class ReceiptPdfDocumentBuilder
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_CONNECTTIMEOUT => 5,
                 CURLOPT_TIMEOUT => 10,
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_SSL_VERIFYHOST => false,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
                 CURLOPT_USERAGENT => 'EcoleNumeriqueReceiptPdf/1.0',
             ]);
             $binary = curl_exec($ch);

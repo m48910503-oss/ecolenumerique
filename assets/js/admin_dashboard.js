@@ -61,7 +61,7 @@
       return;
     }
 
-    var toolbar = document.querySelector(".app-shell-toolbar.admin-shell-toolbar");
+    var toolbar = document.querySelector(".admin-dashboard-topbar, .app-shell-toolbar.admin-shell-toolbar, .admin-shell-toolbar");
     if (!toolbar) {
       return;
     }
@@ -81,7 +81,7 @@
     window.addEventListener("orientationchange", syncToolbarOffset, { passive: true });
 
     if ("ResizeObserver" in window) {
-      var toolbar = document.querySelector(".app-shell-toolbar.admin-shell-toolbar");
+      var toolbar = document.querySelector(".admin-dashboard-topbar, .app-shell-toolbar.admin-shell-toolbar, .admin-shell-toolbar");
       if (toolbar) {
         new ResizeObserver(syncToolbarOffset).observe(toolbar);
       }
@@ -90,7 +90,18 @@
 
   function getScrollTopRoot() {
     var candidate = document.querySelector("[data-scroll-top-root]");
-    return candidate instanceof HTMLElement ? candidate : null;
+    if (candidate instanceof HTMLElement) {
+      return candidate;
+    }
+
+    if (document.body && document.body.matches(".app-role-admin[data-view^='admin/']")) {
+      var adminMain = document.querySelector(".admin-shell-main");
+      if (adminMain instanceof HTMLElement) {
+        return adminMain;
+      }
+    }
+
+    return null;
   }
 
   function updateScrollTopButtonVisibility() {

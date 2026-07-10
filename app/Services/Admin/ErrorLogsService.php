@@ -63,6 +63,7 @@ final class ErrorLogsService extends Service
         $logLines = [];
         $logEntries = [];
         $severitySummary = $this->emptySeveritySummary();
+        $logInsights = [];
 
         if ($pathToRead !== '' && is_file($pathToRead)) {
             $logMeta['exists'] = true;
@@ -86,6 +87,7 @@ final class ErrorLogsService extends Service
                     $entries
                 ));
                 $severitySummary = $this->buildSeveritySummary($entries);
+                $logInsights = $this->buildLogInsights($entries);
             } else {
                 $logWarnings[] = 'Le fichier de log est introuvable ou non lisible.';
             }
@@ -111,6 +113,7 @@ final class ErrorLogsService extends Service
             'rawLineCount' => count($rawLines),
             'filteredLineCount' => count($logEntries),
             'severitySummary' => $severitySummary,
+            'logInsights' => $logInsights,
         ];
     }
 
@@ -212,6 +215,8 @@ final class ErrorLogsService extends Service
 
             $severityKey = $this->inferSeverity($level, $raw);
             $severityMeta = $this->severityMeta($severityKey);
+            $contextData = $this->parseContextData($context);
+            $contextSummary = $this->buildContextSummary($contextData);
 
             $entries[] = [
                 'raw' => $raw,
@@ -219,6 +224,8 @@ final class ErrorLogsService extends Service
                 'channel' => $channel,
                 'message' => $message,
                 'context' => $context,
+                'contextData' => $contextData,
+                'contextSummary' => $contextSummary,
                 'severityKey' => $severityKey,
                 'severityLabel' => $severityMeta['label'],
                 'severityTone' => $severityMeta['tone'],
@@ -226,6 +233,173 @@ final class ErrorLogsService extends Service
         }
 
         return $entries;
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private function parseContextData(string $context): array
+    {
+        $context = trim($context);
+        if ($context === '') {
+            return [];
+        }
+
+        $decoded = json_decode($context, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        return $decoded;
+    }
+
+    /**
+     * @param array<string,mixed> $contextData
+     */
+    private function buildContextSummary(array $contextData): string
+    {
+        if ($contextData === []) {
+            return '';
+        }
+
+        $parts = [];
+
+        $method = $this->contextScalarValue($contextData, ['method']);
+        if ($method !== '') {
+            $parts[] = 'method: ' . strtoupper($method);
+        }
+
+        $path = $this->contextScalarValue($contextData, ['path', 'uri']);
+        if ($path !== '') {
+            $parts[] = 'path: ' . $this->truncateText($path, 48);
+        }
+
+        $status = $this->contextScalarValue($contextData, ['status', 'code', 'http_code']);
+        if ($status !== '') {
+            $parts[] = 'status: ' . $status;
+        }
+
+        $env = $this->contextScalarValue($contextData, ['fedapay_env', 'environment']);
+        if ($env !== '') {
+            $parts[] = 'env: ' . $env;
+        }
+
+        $detail = $this->contextScalarValue($contextData, ['hint', 'detail', 'error', 'message']);
+        if ($detail !== '') {
+            $parts[] = 'detail: ' . $this->truncateText($detail, 96);
+        }
+
+        if ($parts === []) {
+            return '';
+        }
+
+        return implode(' | ', $parts);
+    }
+
+    /**
+     * @param array<string,mixed> $contextData
+     * @param array<int,string> $keys
+     */
+    private function contextScalarValue(array $contextData, array $keys): string
+    {
+        foreach ($keys as $key) {
+            if (!array_key_exists($key, $contextData)) {
+                continue;
+            }
+
+            $value = $contextData[$key];
+            if (is_bool($value)) {
+                return $value ? 'true' : 'false';
+            }
+            if (is_int($value) || is_float($value)) {
+                return trim((string) $value);
+            }
+            if (is_string($value)) {
+                $value = trim($value);
+                if ($value !== '') {
+                    return $value;
+                }
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<int,array<string,mixed>> $entries
+     * @return array<int,string>
+     */
+    private function buildLogInsights(array $entries): array
+    {
+        $insights = [];
+
+        foreach ($entries as $entry) {
+            $insight = $this->buildEntryInsight($entry);
+            if ($insight === '' || in_array($insight, $insights, true)) {
+                continue;
+            }
+
+            $insights[] = $insight;
+            if (count($insights) >= 3) {
+                break;
+            }
+        }
+
+        return $insights;
+    }
+
+    /**
+     * @param array<string,mixed> $entry
+     */
+    private function buildEntryInsight(array $entry): string
+    {
+        $channel = strtolower((string) ($entry['channel'] ?? ''));
+        if ($channel === '' || !str_contains($channel, 'fedapay')) {
+            return '';
+        }
+
+        $haystack = strtolower(implode(' ', [
+            (string) ($entry['raw'] ?? ''),
+            (string) ($entry['message'] ?? ''),
+            (string) ($entry['contextSummary'] ?? ''),
+        ]));
+
+        if (
+            str_contains($haystack, 'self-signed certificate')
+            || str_contains($haystack, 'certificate problem')
+            || str_contains($haystack, 'unable to get local issuer certificate')
+            || str_contains($haystack, 'ssl certificate')
+        ) {
+            return 'SSL/TLS FedaPay: le serveur ne fait pas confiance au certificat de l API. Mettez a jour le bundle CA de PHP/cURL ou configurez curl.cainfo / openssl.cafile.';
+        }
+
+        if (str_contains($haystack, 'cle secrete fedapay manquante') || str_contains($haystack, 'missing secret key')) {
+            return 'FedaPay: configurez la cle secrete dans Parametres > Paiements.';
+        }
+
+        if (str_contains($haystack, 'reponse json invalide')) {
+            return 'FedaPay: la reponse API est invalide. Verifiez le proxy, le bundle CA et la disponibilite de l API.';
+        }
+
+        if (str_contains($haystack, 'echec reseau lors d un appel fedapay') || str_contains($haystack, 'curl_error')) {
+            return 'FedaPay: verifier la connectivite reseau et le certificat TLS de l API.';
+        }
+
+        return '';
+    }
+
+    private function truncateText(string $value, int $limit): string
+    {
+        $value = preg_replace('/\s+/', ' ', trim($value)) ?? trim($value);
+        if ($value === '' || $limit <= 0) {
+            return '';
+        }
+
+        if (mb_strlen($value) <= $limit) {
+            return $value;
+        }
+
+        return rtrim(mb_substr($value, 0, max(1, $limit - 3))) . '...';
     }
 
     /**

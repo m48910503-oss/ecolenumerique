@@ -22,8 +22,10 @@ $publicNavPanelId = 'home-public-nav-panel';
 $marketingJsUrl = site_url('assets/js/web-marketing.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/web-marketing.js') ?: time()));
 $homePageJsUrl = site_url('assets/js/home_page.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/home_page.js') ?: time()));
 $webThemeJsUrl = site_url('assets/js/web_theme.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/web_theme.js') ?: time()));
+$supportModalJsUrl = site_url('assets/js/support_modal.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/support_modal.js') ?: time()));
 $tailwindThemeBootstrapJsUrl = site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()));
 $csrfToken = view_csrf_token();
+$homeHeroTextSizeClass = 'text-[2rem] sm:text-[2.5rem] lg:text-[3rem]';
 
 /** @var null|callable(array):array $publicDecorateCourse */
 $publicDecorateCourse = null;
@@ -38,6 +40,7 @@ $displayUser = is_array($user ?? null) ? $user : null;
 $isLoggedIn = !empty($isLoggedIn) || $displayUser !== null;
 $headerNotificationCount = max(0, (int) ($totalUnread ?? 0));
 $cartCount = max(0, (int) ($cartCount ?? 0));
+$supportUnreadCount = max(0, (int) ($supportUnreadCount ?? 0));
 
 if (!is_callable($publicDecorateCourse)) {
     $publicDecorateCourse = static function (array $course): array {
@@ -200,14 +203,39 @@ $deriveLevelLabel = static function (string $levelKey): string {
     };
 };
 
-$decorateHomeCourse = static function (array $course) use ($publicDecorateCourse, $deriveLevelLabel, $catalogueUrl, $makeCoverPlaceholder): array {
-    $decorated = $publicDecorateCourse($course);
-    $title = trim((string) ($decorated['title'] ?? $course['title'] ?? 'Cours numérique'));
-    if ($title === '') {
-        $title = 'Cours numérique';
+$homeCollapseWhitespace = static function (string $value): string {
+    $value = preg_replace('/\s+/u', ' ', trim($value));
+    return trim((string) $value);
+};
+
+$homeFormatCourseTitle = static function (string $value) use ($homeCollapseWhitespace): string {
+    $value = $homeCollapseWhitespace($value);
+    if ($value === '') {
+        return 'Cours numérique';
     }
 
-    $category = trim((string) ($decorated['category'] ?? $course['category'] ?? 'Formation'));
+    $wordReplacements = [
+        'Php' => 'PHP',
+        'Html' => 'HTML',
+        'Css' => 'CSS',
+        'Sql' => 'SQL',
+        'Seo' => 'SEO',
+        'Ui' => 'UI',
+        'Ux' => 'UX',
+    ];
+
+    foreach ($wordReplacements as $search => $replace) {
+        $value = preg_replace('/\b' . preg_quote($search, '/') . '\b/u', $replace, $value) ?? $value;
+    }
+
+    return $value;
+};
+
+$decorateHomeCourse = static function (array $course) use ($publicDecorateCourse, $deriveLevelLabel, $catalogueUrl, $makeCoverPlaceholder, $homeCollapseWhitespace, $homeFormatCourseTitle): array {
+    $decorated = $publicDecorateCourse($course);
+    $title = $homeFormatCourseTitle((string) ($decorated['title'] ?? $course['title'] ?? 'Cours numérique'));
+
+    $category = $homeCollapseWhitespace((string) ($decorated['category'] ?? $course['category'] ?? 'Formation'));
     if ($category === '') {
         $category = 'Formation';
     }
@@ -217,6 +245,11 @@ $decorateHomeCourse = static function (array $course) use ($publicDecorateCourse
     $createdAt = trim((string) ($course['createdAt'] ?? $decorated['createdAt'] ?? ''));
     $createdTs = $createdAt !== '' ? (int) strtotime($createdAt) : 0;
     $levelKey = strtolower(trim((string) ($decorated['levelKey'] ?? $course['level'] ?? '')));
+    $teacher = $homeCollapseWhitespace((string) ($decorated['teacher'] ?? $course['teacher'] ?? 'Formateur'));
+    if ($teacher === '') {
+        $teacher = 'Formateur';
+    }
+    $enrolledCount = max(0, (int) ($decorated['enrolledCount'] ?? $course['enrolledCount'] ?? 0));
     $cover = trim((string) ($decorated['cover'] ?? $course['cover'] ?? ''));
     if ($cover === '') {
         $cover = $makeCoverPlaceholder($title, $category);
@@ -225,11 +258,12 @@ $decorateHomeCourse = static function (array $course) use ($publicDecorateCourse
     return [
         'id' => max(0, (int) ($decorated['id'] ?? $course['id'] ?? 0)),
         'title' => $title,
-        'description' => trim((string) ($decorated['description'] ?? $course['description'] ?? '')),
-        'teacher' => trim((string) ($decorated['teacher'] ?? $course['teacher'] ?? 'Formateur')),
+        'description' => $homeCollapseWhitespace((string) ($decorated['description'] ?? $course['description'] ?? '')),
+        'teacher' => $teacher,
         'category' => $category,
         'categoryKey' => trim((string) ($decorated['categoryKey'] ?? '')),
-        'enrolledCount' => max(0, (int) ($decorated['enrolledCount'] ?? $course['enrolledCount'] ?? 0)),
+        'enrolledCount' => $enrolledCount,
+        'studentsLabel' => $enrolledCount > 0 ? view_pluralize($enrolledCount, 'inscrit', 'inscrits') : 'Nouveau',
         'cover' => $cover,
         'coverAlt' => trim((string) ($decorated['coverAlt'] ?? $course['coverAlt'] ?? ('Visuel du cours ' . $title))),
         'url' => trim((string) ($decorated['url'] ?? $course['url'] ?? $catalogueUrl)),
@@ -250,39 +284,69 @@ $decorateHomeCourse = static function (array $course) use ($publicDecorateCourse
 
 $courseCards = array_values(array_map($decorateHomeCourse, $ssrCourses));
 
-$categoryIconFor = static function (string $label) use ($publicNormalizeKey): string {
+$categoryThemeFor = static function (string $label) use ($publicNormalizeKey): string {
     $key = $publicNormalizeKey($label);
 
-    if ($key === '' || str_contains($key, 'dev') || str_contains($key, 'code') || str_contains($key, 'web') || str_contains($key, 'python')) {
-        return 'fa-code';
-    }
-    if (str_contains($key, 'data') || str_contains($key, 'science') || str_contains($key, 'analyse') || str_contains($key, 'ia')) {
-        return 'fa-chart-simple';
-    }
-    if (str_contains($key, 'excel') || str_contains($key, 'bureau') || str_contains($key, 'office')) {
-        return 'fa-table-cells-large';
-    }
-    if (str_contains($key, 'marketing') || str_contains($key, 'copy') || str_contains($key, 'business') || str_contains($key, 'vente') || str_contains($key, 'affiliation')) {
-        return 'fa-bullhorn';
+    $rules = [
+        [
+            'keywords' => ['bureautique', 'bureau', 'office', 'excel', 'word', 'powerpoint', 'tableur'],
+            'icon' => 'fa-keyboard',
+        ],
+        [
+            'keywords' => ['compta', 'comptabil', 'finance', 'facture', 'budget', 'fiscal', 'payroll'],
+            'icon' => 'fa-file-invoice-dollar',
+        ],
+        [
+            'keywords' => ['marketing', 'vente', 'copy', 'communication', 'publicite', 'pub', 'affiliation'],
+            'icon' => 'fa-bullhorn',
+        ],
+        [
+            'keywords' => ['dev', 'code', 'web', 'python', 'javascript', 'php', 'html', 'css', 'programmation'],
+            'icon' => 'fa-laptop-code',
+        ],
+        [
+            'keywords' => ['data', 'science', 'analyse', 'ia', 'machine', 'stat', 'bi'],
+            'icon' => 'fa-chart-line',
+        ],
+        [
+            'keywords' => ['design', 'graph', 'ui', 'ux', 'crea', 'illustr', 'branding'],
+            'icon' => 'fa-pen-ruler',
+        ],
+        [
+            'keywords' => ['langue', 'anglais', 'francais', 'espagnol', 'allemand', 'arabe', 'lingu'],
+            'icon' => 'fa-globe',
+        ],
+        [
+            'keywords' => ['gestion', 'business', 'entrepreneuriat', 'projet', 'leadership', 'strategy'],
+            'icon' => 'fa-rocket',
+        ],
+        [
+            'keywords' => ['secur', 'reseau', 'cyber', 'cloud', 'infra', 'systeme', 'admin'],
+            'icon' => 'fa-user-shield',
+        ],
+        [
+            'keywords' => ['photo', 'video', 'audio', 'montage', 'media', 'contenu', 'podcast'],
+            'icon' => 'fa-clapperboard',
+        ],
+    ];
+
+    foreach ($rules as $rule) {
+        foreach ($rule['keywords'] as $keyword) {
+            if ($key !== '' && str_contains($key, $keyword)) {
+                return (string) $rule['icon'];
+            }
+        }
     }
 
-    return 'fa-graduation-cap';
+    if ($key === '' || str_contains($key, 'general') || str_contains($key, 'formation')) {
+        return 'fa-book-open-reader';
+    }
+
+    return 'fa-table-cells-large';
 };
 
-$categoryGradientFor = static function (string $label) use ($publicNormalizeKey): string {
-    $key = $publicNormalizeKey($label);
-
-    if ($key === '' || str_contains($key, 'dev') || str_contains($key, 'code') || str_contains($key, 'web') || str_contains($key, 'python')) {
-        return 'from-blue-600 to-cyan-500';
-    }
-    if (str_contains($key, 'excel') || str_contains($key, 'bureau') || str_contains($key, 'office')) {
-        return 'from-emerald-500 to-green-600';
-    }
-    if (str_contains($key, 'marketing') || str_contains($key, 'copy') || str_contains($key, 'business') || str_contains($key, 'vente') || str_contains($key, 'affiliation')) {
-        return 'from-amber-500 to-orange-500';
-    }
-
-    return 'from-indigo-500 to-blue-600';
+$categoryIconFor = static function (string $label) use ($categoryThemeFor): string {
+    return (string) $categoryThemeFor($label);
 };
 
 $makeStarIcons = static function (float $rating): string {
@@ -345,13 +409,24 @@ foreach ($categoryCounts as $categoryKey => $count) {
         'key' => $categoryKey,
         'href' => $catalogueUrl,
         'icon' => $categoryIconFor($label),
-        'gradient' => $categoryGradientFor($label),
         'name' => $label,
         'count' => view_pluralize((int) $count, 'cours', 'cours'),
     ];
 
     if (count($categoryCarouselItems) >= 6) {
         break;
+    }
+}
+
+$homeCategoryCarouselGroups = [];
+$categoryCarouselItemCount = count($categoryCarouselItems);
+if ($categoryCarouselItemCount > 0) {
+    $homeCategoryCarouselRepeatCount = max(2, min(5, (int) ceil(12 / $categoryCarouselItemCount)));
+    for ($repeatIndex = 0; $repeatIndex < $homeCategoryCarouselRepeatCount; $repeatIndex++) {
+        $homeCategoryCarouselGroups[] = [
+            'items' => $categoryCarouselItems,
+            'clone' => $repeatIndex > 0,
+        ];
     }
 }
 
@@ -377,13 +452,13 @@ $isMeaningfulMarketingCopy = static function (string $text): bool {
     return true;
 };
 
-$defaultSiteDescription = 'Chez ' . $platformName . ', chacun mérite d apprendre. Des formations accessibles et interactives pour progresser sans limite.';
+$defaultSiteDescription = 'Des cours clairs, pratiques et accessibles pour apprendre vite, pratiquer souvent et progresser sans perdre de temps.';
 $siteDescription = $isMeaningfulMarketingCopy($siteDescription ?? '')
     ? trim((string) $siteDescription)
     : $defaultSiteDescription;
 $siteTagline = $isMeaningfulMarketingCopy($siteTagline ?? '')
     ? trim((string) $siteTagline)
-    : 'Des formations claires, utiles et accessibles.';
+    : 'Des parcours concrets pour progresser à votre rythme.';
 $footerText = $isMeaningfulMarketingCopy($footerText ?? '')
     ? trim((string) $footerText)
     : ('© ' . date('Y') . ' ' . $platformName . '. Tous droits réservés.');
@@ -417,9 +492,9 @@ if ($isLoggedIn && !in_array('teacher', $homeUserRoles, true) && !in_array('admi
 $homeFavoritesUrl = $isLoggedIn ? site_url('student/favorites') : $loginUrl;
 $homeProfileUrl = $isLoggedIn ? site_url('profile') : $loginUrl;
 $homePrimaryCtaUrl = $isLoggedIn ? $homeMyCoursesUrl : $registerUrl;
-$homePrimaryCtaLabel = $isLoggedIn ? 'Mon apprentissage' : 'Créer un compte';
+$homePrimaryCtaLabel = $isLoggedIn ? 'Reprendre mes cours' : 'Commencer maintenant';
 $homeSecondaryCtaUrl = $catalogueUrl;
-$homeSecondaryCtaLabel = 'Explorer les cours';
+$homeSecondaryCtaLabel = 'Explorer le catalogue';
 $homePreferenceUrl = $isLoggedIn ? $homeProfileUrl : $registerUrl;
 $homeShowcaseCourses = array_slice($courseCards, 0, 5);
 $homePopularCourses = $courseCards;
@@ -450,11 +525,48 @@ $homeResumeCourse = is_array($continueLearningItems[0] ?? null) ? $continueLearn
 $homeResumeProgress = max(0, min(100, (int) ($homeResumeCourse['progressPct'] ?? 0)));
 $homeResumeSecondaryCourses = array_values(array_slice($continueLearningItems, 1, 2));
 
-$homeAllCategoriesUrl = $catalogueUrl;
+$homeAllcategoriesUrl = $catalogueUrl;
 $homeResumeCourseActionUrl = trim((string) ($homeResumeCourse['url'] ?? $catalogueUrl));
 $homeResumePrimaryUrl = $homeResumeCourseActionUrl;
 $homeResumePrimaryLabel = $homeResumeProgress > 0 ? 'Reprendre le cours' : 'Commencer le cours';
 $homeResumeSecondaryLabel = 'Voir mes cours';
+$whyChoosePoints = [
+    [
+        'icon' => 'fa-layer-group',
+        'title' => 'Des parcours clairs',
+        'description' => 'Des formations organisées pour savoir quoi apprendre et dans quel ordre.',
+        'cardClass' => 'why-card why-card--blue',
+        'iconClass' => 'bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-200',
+    ],
+    [
+        'icon' => 'fa-mobile-screen-button',
+        'title' => 'Apprentissage mobile',
+        'description' => 'Une expérience fluide sur téléphone, tablette et ordinateur.',
+        'cardClass' => 'why-card why-card--emerald',
+        'iconClass' => 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-200',
+    ],
+    [
+        'icon' => 'fa-headset',
+        'title' => 'Support réactif',
+        'description' => 'Le chat support reste accessible dès que vous bloquez sur un point.',
+        'cardClass' => 'why-card why-card--amber',
+        'iconClass' => 'bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-200',
+    ],
+];
+$whyChooseStats = [
+    [
+        'value' => number_format(max(0, (int) count($courseCards)), 0, ',', ' '),
+        'label' => 'formations publiées',
+    ],
+    [
+        'value' => number_format(max(0, (int) $activeEnrollmentCount), 0, ',', ' '),
+        'label' => 'apprenants actifs',
+    ],
+    [
+        'value' => number_format(max(0, (int) count($categoryCarouselItems)), 0, ',', ' '),
+        'label' => 'domaines populaires',
+    ],
+];
 $heroVisualUrl = site_url('storage/uploads/site/home-hero.png?v=' . (@filemtime(__DIR__ . '/../../../storage/uploads/site/home-hero.png') ?: time()));
 $homeHeaderNav = [
     ['label' => 'Explorer', 'href' => $catalogueUrl],
@@ -477,7 +589,7 @@ $faqItems = [
     ],
     [
         'question' => 'Y a-t-il un accompagnement si besoin ?',
-        'answer' => 'Oui. Le support reste accessible pour vous aider si vous avez une difficulté de navigation ou d inscription.',
+        'answer' => "Oui. Le support reste accessible pour vous aider si vous avez une difficulté de navigation ou d'inscription.",
     ],
 ];
 ?>
@@ -500,6 +612,10 @@ $faqItems = [
   <script src="<?php echo e($webThemeJsUrl); ?>" defer></script>
   <script src="<?php echo e($homePageJsUrl); ?>" defer></script>
   <script src="<?php echo e($marketingJsUrl); ?>" defer></script>
+  <script src="<?php echo e($supportModalJsUrl); ?>" defer></script>
+  <script>
+    document.documentElement.classList.add("home-animate-js");
+  </script>
   <style>
     :root {
       --home-primary: #2d63ea;
@@ -555,6 +671,30 @@ $faqItems = [
     .home-course-shadow {
       box-shadow: 0 20px 48px -34px rgba(15, 23, 42, 0.22);
     }
+    .home-course-category-badge {
+      position: absolute;
+      top: 0.75rem;
+      left: 0.75rem;
+      z-index: 20;
+      display: inline-flex;
+      max-width: calc(100% - 5rem);
+      align-items: center;
+      overflow: hidden;
+      padding: 0.42rem 0.8rem;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 9999px;
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.95) 0%, rgba(14, 165, 233, 0.95) 100%);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      text-transform: uppercase;
+      white-space: nowrap;
+      box-shadow: 0 16px 30px -20px rgba(37, 99, 235, 0.8);
+      backdrop-filter: blur(10px);
+      pointer-events: none;
+    }
     .home-panel-shadow {
       box-shadow: 0 30px 70px -42px rgba(15, 23, 42, 0.16);
     }
@@ -566,18 +706,574 @@ $faqItems = [
       border-radius: 18px;
     }
     .home-card-hover {
-      transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+      transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: translate3d(0, 0, 0);
+      will-change: transform, box-shadow, border-color;
     }
     .home-card-hover:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 28px 62px -38px rgba(37, 99, 235, 0.26);
+      transform: translate3d(0, -8px, 0) scale(1.01);
+      box-shadow: 0 32px 72px -42px rgba(37, 99, 235, 0.28);
       border-color: rgba(59, 130, 246, 0.35);
+    }
+    .home-animate-js [data-home-reveal] {
+      opacity: 0;
+      transform: translate3d(0, 18px, 0);
+      filter: blur(3px);
+      transition-property: opacity, transform, filter;
+      transition-duration: var(--home-reveal-duration, 720ms);
+      transition-timing-function: cubic-bezier(0.14, 1, 0.24, 1);
+      transition-delay: var(--home-delay, 0ms);
+      will-change: opacity, transform, filter;
+    }
+    .home-animate-js [data-home-reveal="hero"] {
+      --home-reveal-duration: 900ms;
+      transform: translate3d(0, 26px, 0) scale(0.982);
+      filter: blur(4px);
+    }
+    .home-animate-js [data-home-reveal="hero-copy"] {
+      --home-reveal-duration: 760ms;
+      transform: translate3d(0, 22px, 0);
+      filter: blur(4px);
+    }
+    .home-animate-js [data-home-reveal="hero-badge"] {
+      --home-reveal-duration: 620ms;
+      transform: translate3d(0, 14px, 0) scale(0.965);
+      filter: blur(2px);
+    }
+    .home-animate-js [data-home-reveal="hero-action"] {
+      --home-reveal-duration: 680ms;
+      transform: translate3d(0, 16px, 0) scale(0.97);
+      filter: blur(2px);
+    }
+    .home-animate-js [data-home-reveal="up"] {
+      transform: translate3d(0, 18px, 0);
+    }
+    .home-animate-js [data-home-reveal="slide-left"] {
+      transform: translate3d(-28px, 0, 0);
+    }
+    .home-animate-js [data-home-reveal="slide-right"] {
+      transform: translate3d(28px, 0, 0);
+    }
+    .home-animate-js [data-home-reveal="scale"] {
+      transform: scale(0.96);
+    }
+    .home-animate-js [data-home-reveal="title"] {
+      --home-reveal-duration: 920ms;
+      transform: translate3d(0, 22px, 0) scale(0.975);
+      filter: blur(4px);
+    }
+    .home-animate-js [data-home-reveal="card"] {
+      --home-reveal-duration: 980ms;
+      transform-origin: center bottom;
+      transform: translate3d(0, 34px, 0) scale(0.92) perspective(1200px) rotateX(6deg);
+      filter: blur(6px);
+    }
+    @keyframes home-card-title-rise {
+      0% {
+        opacity: 0;
+        transform: translate3d(0, 14px, 0);
+        filter: blur(2px);
+      }
+      100% {
+        opacity: 1;
+        transform: none;
+        filter: none;
+      }
+    }
+    .home-animate-js [data-home-reveal="card"].is-visible .home-card-title {
+      animation: home-card-title-rise 720ms cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: 150ms;
+      will-change: opacity, transform, filter;
+    }
+    .home-animate-js [data-home-reveal].is-visible {
+      opacity: 1;
+      transform: none;
+      filter: none;
+    }
+    @keyframes home-ambient-float {
+      0%,
+      100% {
+        transform: translate3d(0, 0, 0);
+      }
+      50% {
+        transform: translate3d(0, -10px, 0);
+      }
+    }
+    @keyframes home-ambient-drift {
+      0%,
+      100% {
+        transform: translate3d(0, 0, 0);
+      }
+      33% {
+        transform: translate3d(8px, -8px, 0);
+      }
+      66% {
+        transform: translate3d(-8px, -4px, 0);
+      }
+    }
+    @keyframes home-ambient-pulse {
+      0%,
+      100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.02);
+      }
+    }
+    .home-hero-orb {
+      pointer-events: none;
+      transform-origin: center;
+      will-change: transform;
+    }
+    .home-hero-orb--slow {
+      animation: home-ambient-float 15s ease-in-out infinite;
+    }
+    .home-hero-orb--fast {
+      animation: home-ambient-drift 18s ease-in-out infinite;
+    }
+    .home-animate-js [data-home-ambient] {
+      will-change: transform;
+    }
+    .home-animate-js [data-home-ambient].is-ambient-active {
+      animation-duration: var(--home-ambient-duration, 12s);
+      animation-delay: var(--home-ambient-delay, 0ms);
+      animation-timing-function: ease-in-out;
+      animation-iteration-count: infinite;
+      animation-fill-mode: both;
+    }
+    .home-animate-js [data-home-ambient="float"].is-ambient-active {
+      animation-name: home-ambient-float;
+    }
+    .home-animate-js [data-home-ambient="drift"].is-ambient-active {
+      animation-name: home-ambient-drift;
+    }
+    .home-animate-js [data-home-ambient="pulse"].is-ambient-active {
+      animation-name: home-ambient-pulse;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .home-animate-js [data-home-reveal] {
+        opacity: 1 !important;
+        transform: none !important;
+        filter: none !important;
+        transition: none !important;
+        will-change: auto;
+      }
+      .home-animate-js [data-home-ambient].is-ambient-active,
+      .home-hero-orb {
+        animation: none !important;
+      }
+      body[data-view="web/home"] [data-scroll-top],
+      body[data-view="web/home"] [data-support-fab] {
+        transition: none !important;
+      }
     }
     .home-section-panel {
       border: 1px solid rgba(219, 228, 240, 0.92);
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(250, 251, 255, 0.98) 100%);
       backdrop-filter: blur(10px);
+    }
+    .why-card {
+      position: relative;
+      overflow: hidden;
+    }
+    .why-card::after {
+      content: "";
+      position: absolute;
+      right: -1.75rem;
+      top: -1.75rem;
+      width: 8.5rem;
+      height: 8.5rem;
+      border-radius: 9999px;
+      pointer-events: none;
+      opacity: 0.42;
+      filter: blur(2px);
+    }
+    .why-card--blue {
+      border-color: rgba(191, 219, 254, 0.92);
+      background:
+        linear-gradient(180deg, rgba(239, 246, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+    }
+    .why-card--blue::after {
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.18) 0%, rgba(59, 130, 246, 0) 70%);
+    }
+    .why-card--emerald {
+      border-color: rgba(167, 243, 208, 0.9);
+      background:
+        linear-gradient(180deg, rgba(236, 253, 245, 0.98) 0%, rgba(250, 252, 251, 0.98) 100%);
+    }
+    .why-card--emerald::after {
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.16) 0%, rgba(16, 185, 129, 0) 70%);
+    }
+    .why-card--amber {
+      border-color: rgba(253, 230, 138, 0.9);
+      background:
+        linear-gradient(180deg, rgba(255, 247, 237, 0.98) 0%, rgba(255, 251, 247, 0.98) 100%);
+    }
+    .why-card--amber::after {
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0) 70%);
+    }
+    .home-search-shell {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(191, 219, 254, 0.68);
+      border-radius: 34px;
+      background:
+        radial-gradient(circle at top left, rgba(45, 99, 234, 0.12), transparent 28%),
+        radial-gradient(circle at right center, rgba(255, 122, 26, 0.10), transparent 24%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 250, 255, 0.95) 100%);
+      box-shadow: 0 30px 70px -42px rgba(15, 23, 42, 0.18);
+    }
+    .home-search-shell::before,
+    .home-search-shell::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      border-radius: 999px;
+    }
+    .home-search-shell::before {
+      top: 1rem;
+      left: 1rem;
+      width: 10rem;
+      height: 10rem;
+      background: radial-gradient(circle, rgba(45, 99, 234, 0.12), transparent 68%);
+    }
+    .home-search-shell::after {
+      right: -3rem;
+      bottom: -3.5rem;
+      width: 13rem;
+      height: 13rem;
+      background: radial-gradient(circle, rgba(255, 122, 26, 0.10), transparent 70%);
+    }
+    .home-search-shell__content {
+      position: relative;
+      z-index: 1;
+    }
+    .home-search-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.55rem 0.85rem;
+      border: 1px solid rgba(147, 197, 253, 0.55);
+      border-radius: 999px;
+      background: rgba(239, 246, 255, 0.92);
+      color: var(--home-primary);
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+    .home-search-title {
+      max-width: 30rem;
+      color: var(--home-ink);
+      font-size: clamp(1.55rem, 2.15vw, 2.35rem);
+      font-weight: 900;
+      line-height: 1.06;
+      letter-spacing: -0.05em;
+    }
+    .home-search-subtitle {
+      margin-top: 0.65rem;
+      max-width: 40rem;
+      color: var(--home-muted);
+      font-size: 1rem;
+      line-height: 1.72;
+    }
+    .home-search-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+    }
+    .home-search-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.5rem 0.8rem;
+      border: 1px solid rgba(219, 228, 240, 0.95);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.82);
+      color: #475569;
+      font-size: 0.84rem;
+      font-weight: 700;
+      box-shadow: 0 12px 24px -18px rgba(15, 23, 42, 0.18);
+    }
+    .home-search-dock {
+      display: grid;
+      gap: 0.65rem;
+      padding: 0.65rem;
+      border: 1px solid rgba(191, 219, 254, 0.7);
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 18px 40px -28px rgba(15, 23, 42, 0.22);
+      backdrop-filter: blur(14px);
+    }
+    .home-search-field {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      min-width: 0;
+      min-height: 4.75rem;
+      padding: 1rem 1.1rem;
+      border: 1px solid rgba(219, 228, 240, 0.96);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.97);
+      color: #334155;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+    }
+    .home-search-field:focus-within {
+      border-color: rgba(96, 165, 250, 0.75);
+      box-shadow: 0 0 0 4px rgba(191, 219, 254, 0.28);
+    }
+    .home-search-field select,
+    .home-search-field input {
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      padding: 0;
+      line-height: 1.2;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .home-search-field select {
+      cursor: pointer;
+      appearance: none;
+      font-weight: 700;
+    }
+    .home-search-field input {
+      font-weight: 600;
+    }
+    .home-search-field__icon {
+      flex-shrink: 0;
+      align-self: center;
+      color: #94a3b8;
+    }
+    .home-search-field__chevron {
+      position: absolute;
+      right: 1rem;
+      pointer-events: none;
+      align-self: center;
+      color: #94a3b8;
+    }
+    .home-category-picker {
+      position: relative;
+      z-index: 0;
+      overflow: visible;
+    }
+    .home-category-picker.is-open {
+      z-index: 20;
+    }
+    .home-category-trigger {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      width: 100%;
+      min-width: 0;
+      min-height: 100%;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .home-category-trigger:focus-visible {
+      outline: none;
+    }
+    .home-category-value {
+      min-width: 0;
+      flex: 1 1 auto;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 700;
+    }
+    .home-category-menu {
+      position: absolute;
+      top: calc(100% + 0.7rem);
+      left: 0;
+      right: 0;
+      z-index: 30;
+      display: grid;
+      gap: 0.35rem;
+      padding: 0.55rem;
+      border: 1px solid rgba(191, 219, 254, 0.9);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 26px 54px -34px rgba(15, 23, 42, 0.35);
+      backdrop-filter: blur(12px);
+    }
+    .home-category-menu[hidden] {
+      display: none;
+    }
+    .home-category-option {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      width: 100%;
+      min-height: 3.15rem;
+      padding: 0.85rem 0.95rem;
+      border: 0;
+      border-radius: 16px;
+      background: transparent;
+      color: #334155;
+      font: inherit;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+    }
+    .home-category-option:hover,
+    .home-category-option:focus-visible {
+      background: rgba(239, 246, 255, 0.95);
+      color: var(--home-primary);
+      outline: none;
+    }
+    .home-category-option.is-active {
+      background: linear-gradient(135deg, var(--home-primary) 0%, #4f8cff 100%);
+      color: #fff;
+      box-shadow: 0 14px 28px -22px rgba(45, 99, 234, 0.55);
+    }
+    .home-category-option__icon {
+      width: 1rem;
+      flex-shrink: 0;
+      opacity: 0;
+    }
+    .home-category-option.is-active .home-category-option__icon {
+      opacity: 1;
+    }
+    .home-category-option__label {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+    .home-search-field input[type="search"]::-webkit-search-decoration,
+    .home-search-field input[type="search"]::-webkit-search-cancel-button,
+    .home-search-field input[type="search"]::-webkit-search-results-button,
+    .home-search-field input[type="search"]::-webkit-search-results-decoration {
+      display: none;
+      appearance: none;
+    }
+    .home-search-field-title {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .home-search-field--select {
+      padding-right: 2.15rem;
+      background: linear-gradient(180deg, rgba(239, 246, 255, 0.95), rgba(255, 255, 255, 0.98));
+    }
+    .home-search-field--button {
+      justify-content: center;
+      border: none;
+      background: linear-gradient(135deg, var(--home-primary) 0%, #4f8cff 100%);
+      box-shadow: 0 18px 38px -22px rgba(45, 99, 234, 0.68);
+      color: #fff;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+    .home-search-field--button:hover {
+      background: linear-gradient(135deg, var(--home-primary-dark) 0%, #3f76ff 100%);
+      transform: translateY(-1px);
+    }
+    .home-search-field--button i {
+      font-size: 0.9rem;
+    }
+    @media (min-width: 1024px) {
+      .home-search-shell__content {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+        align-items: end;
+        gap: 1.4rem;
+      }
+      .home-search-dock {
+        grid-template-columns: minmax(0, 240px) minmax(0, 1fr) minmax(0, 220px);
+        gap: 0;
+        padding: 0;
+        overflow: hidden;
+        align-self: end;
+      }
+      .home-search-field {
+        border: none;
+        border-radius: 0;
+        min-height: 5.25rem;
+        padding: 1.15rem 1.25rem;
+        background: transparent;
+      }
+      .home-search-field + .home-search-field {
+        border-left: 1px solid rgba(226, 232, 240, 0.95);
+      }
+      .home-search-field--select {
+        padding-right: 2.35rem;
+        background: rgba(248, 250, 255, 0.96);
+      }
+      .home-search-field--button {
+        padding-inline: 1.35rem;
+      }
+    }
+    @media (max-width: 1023px) {
+      .home-search-shell__content {
+        display: grid;
+        gap: 1rem;
+      }
+      .home-search-dock {
+        padding: 0.75rem;
+      }
+      .home-search-field {
+        min-height: 4.25rem;
+      }
+      .home-search-field--button {
+        min-height: 4.35rem;
+      }
+    }
+    @media (max-width: 639px) {
+      .home-search-field {
+        min-height: 3.5rem;
+        padding: 0.75rem 0.9rem;
+        gap: 0.65rem;
+        border-radius: 18px;
+      }
+      .home-search-field--select {
+        padding-right: 1.8rem;
+      }
+      .home-search-field select,
+      .home-search-field input {
+        font-size: 0.95rem;
+      }
+      .home-search-field--button {
+        min-height: 3.5rem;
+        padding-inline: 1rem;
+        border-radius: 18px;
+        font-size: 0.95rem;
+      }
+      .home-search-field__icon {
+        font-size: 0.95rem;
+      }
+      .home-search-field__chevron {
+        right: 0.85rem;
+      }
+      .home-category-trigger {
+        gap: 0.65rem;
+      }
+      .home-category-menu {
+        top: calc(100% + 0.5rem);
+        padding: 0.45rem;
+      }
+      .home-category-option {
+        min-height: 2.75rem;
+        padding: 0.75rem 0.85rem;
+      }
     }
     .home-line-clamp-2 {
       display: -webkit-box;
@@ -591,8 +1287,15 @@ $faqItems = [
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
+    .faq-item {
+      transition: border-color 0.24s ease, box-shadow 0.24s ease, background-color 0.24s ease;
+    }
     .faq-item summary::-webkit-details-marker {
       display: none;
+    }
+    .faq-item[open] {
+      border-color: rgba(96, 165, 250, 0.52);
+      box-shadow: 0 24px 48px -36px rgba(37, 99, 235, 0.28);
     }
     .faq-item[open] .faq-chevron {
       transform: rotate(180deg);
@@ -610,6 +1313,40 @@ $faqItems = [
     .home-scrollbar::-webkit-scrollbar-track {
       background: rgba(226, 232, 240, 0.55);
       border-radius: 999px;
+    }
+    .home-carousel {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      position: relative;
+      overflow: hidden;
+    }
+    .home-carousel::-webkit-scrollbar {
+      display: none;
+    }
+    .home-carousel-track {
+      display: flex;
+      width: max-content;
+      will-change: transform;
+      animation: home-carousel-marquee var(--home-carousel-duration, 32s) linear infinite;
+      transform: translate3d(0, 0, 0);
+    }
+    .home-carousel:hover .home-carousel-track,
+    .home-carousel:focus-within .home-carousel-track {
+      animation-play-state: paused;
+    }
+    .home-carousel-group {
+      display: flex;
+      gap: 0.75rem;
+      padding-right: 0.75rem;
+      flex: 0 0 auto;
+    }
+    @keyframes home-carousel-marquee {
+      from {
+        transform: translate3d(0, 0, 0);
+      }
+      to {
+        transform: translate3d(calc(-1 * var(--home-carousel-shift, 0px)), 0, 0);
+      }
     }
     html.dark body[data-view="web/home"] main > section:first-child {
       background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(8, 15, 27, 0.96)) !important;
@@ -637,77 +1374,214 @@ $faqItems = [
     html.dark body[data-view="web/home"] :is(.text-slate-500, .text-slate-400, .text-gray-500, .text-gray-400) {
       color: #94a3b8 !important;
     }
+    html.dark body[data-view="web/home"] .home-search-shell {
+      border-color: rgba(148, 163, 184, 0.18);
+      background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 28%),
+        radial-gradient(circle at right center, rgba(14, 165, 233, 0.08), transparent 24%),
+        linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0%, rgba(15, 23, 42, 0.90) 100%);
+      box-shadow: 0 34px 76px -44px rgba(0, 0, 0, 0.82);
+    }
+    html.dark body[data-view="web/home"] .home-search-kicker {
+      border-color: rgba(96, 165, 250, 0.25);
+      background: rgba(30, 41, 59, 0.82);
+      color: #93c5fd;
+    }
+    html.dark body[data-view="web/home"] .home-search-badge {
+      border-color: rgba(148, 163, 184, 0.2);
+      background: rgba(15, 23, 42, 0.78);
+      color: #dbe4f0;
+    }
+    html.dark body[data-view="web/home"] .home-search-dock {
+      border-color: rgba(148, 163, 184, 0.18);
+      background: rgba(15, 23, 42, 0.78);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 18px 40px -28px rgba(0, 0, 0, 0.5);
+    }
+    html.dark body[data-view="web/home"] .home-search-field {
+      border-color: rgba(148, 163, 184, 0.16);
+      background: rgba(15, 23, 42, 0.80);
+      color: #e2e8f0;
+    }
+    html.dark body[data-view="web/home"] .home-search-field--select {
+      background: rgba(15, 23, 42, 0.88);
+    }
+    html.dark body[data-view="web/home"] .home-search-field__icon,
+    html.dark body[data-view="web/home"] .home-search-field__chevron {
+      color: #94a3b8;
+    }
+    html.dark body[data-view="web/home"] .home-category-menu {
+      border-color: rgba(148, 163, 184, 0.2);
+      background: rgba(15, 23, 42, 0.94);
+      box-shadow: 0 30px 66px -38px rgba(0, 0, 0, 0.78);
+    }
+    html.dark body[data-view="web/home"] .home-category-option {
+      color: #dbe4f0;
+    }
+    html.dark body[data-view="web/home"] .home-category-option:hover,
+    html.dark body[data-view="web/home"] .home-category-option:focus-visible {
+      background: rgba(30, 41, 59, 0.9);
+      color: #bfdbfe;
+    }
+    html.dark body[data-view="web/home"] .home-search-field:focus-within {
+      border-color: rgba(96, 165, 250, 0.55);
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.18);
+    }
+    .home-cta-button {
+      color: #fff !important;
+      background: #1d4ed8;
+      box-shadow: 0 18px 34px -24px rgba(29, 78, 216, 0.55);
+    }
+    .home-cta-button:hover,
+    .home-cta-button:focus-visible {
+      color: #fff !important;
+      background: #1e40af;
+    }
+    .home-cta-button--secondary {
+      color: #fff !important;
+      background: #f97316;
+      box-shadow: 0 18px 34px -24px rgba(249, 115, 22, 0.35);
+    }
+    .home-cta-button--secondary:hover,
+    .home-cta-button--secondary:focus-visible {
+      color: #fff !important;
+      background: #ea580c;
+    }
+    .home-section-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(251, 146, 60, 0.28);
+      border-radius: 999px;
+      padding: 0.7rem 1.5rem;
+      background: #fff7ed;
+      color: #ea580c;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+      font-weight: 700;
+      text-align: center;
+    }
+    .home-section-title {
+      margin: 1.25rem auto 0;
+      max-width: 64rem;
+      text-align: center;
+      font-size: clamp(2.15rem, 4vw, 3.1rem);
+      line-height: 1.05;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      color: #0f172a;
+      text-wrap: balance;
+    }
+    .home-section-header {
+      display: grid;
+      gap: 1rem;
+      align-items: center;
+    }
+    .home-section-header__spacer {
+      display: none;
+    }
+    .home-section-header__content {
+      text-align: center;
+    }
+    .home-section-header__action {
+      justify-self: center;
+    }
+    @media (min-width: 1024px) {
+      .home-section-header {
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      }
+      .home-section-header__spacer {
+        display: block;
+      }
+      .home-section-header__content {
+        grid-column: 2;
+      }
+      .home-section-header__action {
+        grid-column: 3;
+        justify-self: end;
+      }
+    }
+    html.dark body[data-view="web/home"] .home-section-eyebrow {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.28);
+      color: #fdba74;
+    }
+    html.dark body[data-view="web/home"] .why-card--blue,
+    html.dark body[data-view="web/home"] .why-card--emerald,
+    html.dark body[data-view="web/home"] .why-card--amber {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0%, rgba(15, 23, 42, 0.9) 100%);
+    }
+    html.dark body[data-view="web/home"] .why-card--blue {
+      border-color: rgba(59, 130, 246, 0.2);
+    }
+    html.dark body[data-view="web/home"] .why-card--emerald {
+      border-color: rgba(16, 185, 129, 0.2);
+    }
+    html.dark body[data-view="web/home"] .why-card--amber {
+      border-color: rgba(245, 158, 11, 0.2);
+    }
+    html.dark body[data-view="web/home"] .home-section-title {
+      color: #f8fafc !important;
+    }
   </style>
 </head>
-<body class="overflow-x-hidden bg-[#f7f8fc] text-slate-900 antialiased" data-view="web/home">
+<body class="overflow-x-hidden bg-[#f7f8fc] text-slate-900 antialiased" data-view="web/home" data-base-path="<?php echo e((string) ($basePath ?? '')); ?>">
 <div class="home-page-shell min-h-screen">
   <?php require __DIR__ . '/_public_header_catalogue.php'; ?>
 
   <main>
     <section class="relative overflow-hidden border-b border-slate-200/80 bg-gradient-to-br from-white via-[#f8fbff] to-[#eef4ff] pt-8 sm:pt-10 lg:pt-12">
       <div class="absolute inset-x-0 top-0 h-full">
-        <div class="absolute -left-24 top-28 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl"></div>
-        <div class="absolute right-[-5rem] top-12 h-80 w-80 rounded-full bg-blue-300/15 blur-3xl"></div>
+        <div class="home-hero-orb home-hero-orb--slow absolute -left-24 top-28 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl"></div>
+        <div class="home-hero-orb home-hero-orb--fast absolute right-[-5rem] top-12 h-80 w-80 rounded-full bg-blue-300/15 blur-3xl"></div>
       </div>
 
       <div class="relative mx-auto max-w-[1400px] px-4 sm:px-6 xl:px-8">
-        <div class="grid items-center gap-10 pb-20 lg:grid-cols-[1.03fr_0.97fr] lg:pb-24">
-          <div class="min-w-0">
-            <div class="flex items-center gap-4">
+        <div class="grid items-center gap-8 pb-16 lg:grid-cols-[1.03fr_0.97fr] lg:gap-10 lg:pb-20">
+          <div class="min-w-0" data-home-reveal="slide-left" data-home-delay="40">
+            <div class="min-w-0">
               <?php if ($isLoggedIn): ?>
-                <a href="<?php echo e($homeProfileUrl); ?>" class="inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-[#118a8e] text-2xl font-bold text-white shadow-sm">
-                  <?php if ($homeAvatarUrl !== ''): ?>
-                    <img src="<?php echo e($homeAvatarUrl); ?>" alt="<?php echo e($homeDisplayName); ?>" class="h-full w-full object-cover">
-                  <?php else: ?>
-                    <?php echo e($homeUserAvatarLetter); ?>
-                  <?php endif; ?>
+                <p class="<?php echo e($homeHeroTextSizeClass); ?> font-semibold leading-tight text-slate-950" data-home-reveal="hero-copy" data-home-delay="90">
+                  Bonjour
+                  <span class="font-extrabold text-blue-600"><?php echo e($homeFirstName !== '' ? $homeFirstName : $homeDisplayName); ?></span>,
+                  prêt à reprendre votre progression ?
+                </p>
+                <a href="<?php echo e($homePreferenceUrl); ?>" class="mt-3 inline-flex text-[1.05rem] font-medium text-blue-600 transition hover:text-blue-700" data-home-reveal="hero-copy" data-home-delay="150">
+                  Dites-nous ce que vous voulez apprendre
                 </a>
-                <div class="min-w-0">
-                  <p class="text-[1.65rem] font-semibold leading-tight text-slate-950 sm:text-[2rem]">
-                    Bonjour
-                    <span class="font-extrabold text-blue-600"><?php echo e($homeFirstName !== '' ? $homeFirstName : $homeDisplayName); ?></span>,
-                    heureux de vous retrouver sur <?php echo e($platformName); ?> !
-                  </p>
-                  <a href="<?php echo e($homePreferenceUrl); ?>" class="mt-3 inline-flex text-[1.05rem] font-medium text-blue-600 transition hover:text-blue-700">
-                    Ajouter vos préférences et intérêt
-                  </a>
-                </div>
               <?php else: ?>
-                <div class="min-w-0">
-                  <p class="text-[1.65rem] font-semibold leading-tight text-slate-950 sm:text-[2rem]">
-                    Bienvenue sur
-                    <span class="font-extrabold text-blue-600"><?php echo e($platformName); ?></span>
-                  </p>
-                  <a href="<?php echo e($registerUrl); ?>" class="mt-3 inline-flex text-[1.05rem] font-medium text-blue-600 transition hover:text-blue-700">
-                    Créez votre compte pour personnaliser vos recommandations
-                  </a>
-                </div>
+                <p class="<?php echo e($homeHeroTextSizeClass); ?> font-semibold leading-tight text-slate-950" data-home-reveal="hero-copy" data-home-delay="90">
+                  Bienvenue sur
+                  <span class="font-extrabold text-slate-900 dark:text-white"><?php echo site_brand_name_html($platformName); ?></span>
+                </p>
+                <a href="<?php echo e($registerUrl); ?>" class="mt-3 inline-flex text-[1.05rem] font-medium text-blue-600 transition hover:text-blue-700" data-home-reveal="hero-copy" data-home-delay="150">
+                  Créez votre compte pour recevoir des recommandations adaptées
+                </a>
               <?php endif; ?>
             </div>
 
-            <div class="mt-14 inline-flex rounded-full border border-orange-200 bg-orange-50 px-5 py-2 text-sm font-semibold text-orange-600">
-              L'apprentissage ouvert à chacun
+            <div class="mt-10 inline-flex rounded-full border border-orange-200 bg-orange-50 px-5 py-2 text-sm font-semibold text-orange-600" data-home-reveal="hero-badge" data-home-delay="220">
+              Apprenez des compétences utiles
             </div>
-            <h1 class="mt-5 max-w-3xl text-[2.8rem] font-black leading-[0.98] tracking-tight text-slate-950 sm:text-[3.6rem] lg:text-[4.25rem]">
-              Des cours en ligne
-              <span class="block text-blue-600">engageants</span>
-              et accessibles à tous
+            <h1 class="mt-5 max-w-3xl <?php echo e($homeHeroTextSizeClass); ?> font-black leading-[0.98] tracking-tight text-slate-950" data-home-reveal="title" data-home-delay="300">
+              Apprenez des compétences
+              <span class="block text-blue-600">qui ouvrent des portes</span>
+              à votre rythme
             </h1>
-            <p class="mt-8 max-w-2xl text-lg leading-9 text-slate-500 sm:text-[1.28rem]">
-              <?php echo e($siteDescription); ?>
+            <p class="mt-8 max-w-2xl text-lg leading-9 text-slate-500 sm:text-[1.28rem]" data-home-reveal="hero-copy" data-home-delay="380">
+              Des formations claires, concrètes et accessibles pour avancer sans perdre de temps.
             </p>
             <div class="mt-8 flex flex-wrap gap-3">
-              <a href="<?php echo e($homePrimaryCtaUrl); ?>" class="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700">
+              <a href="<?php echo e($homePrimaryCtaUrl); ?>" class="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700" data-home-reveal="hero-action" data-home-delay="460">
                 <?php echo e($homePrimaryCtaLabel); ?>
               </a>
-              <a href="<?php echo e($homeSecondaryCtaUrl); ?>" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-bold text-slate-900 transition hover:border-blue-300 hover:text-blue-600">
+              <a href="<?php echo e($homeSecondaryCtaUrl); ?>" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-bold text-slate-900 transition hover:border-blue-300 hover:text-blue-600" data-home-reveal="hero-action" data-home-delay="540">
                 <?php echo e($homeSecondaryCtaLabel); ?>
               </a>
             </div>
           </div>
 
-          <div class="relative">
-            <div class="home-card-shadow relative min-h-[420px] overflow-hidden rounded-[34px] border border-slate-200 bg-gradient-to-br from-white via-[#f7fbff] to-[#eef4ff] lg:min-h-[560px]">
+          <div class="relative" data-home-reveal="slide-right" data-home-delay="180" data-home-ambient="float" data-home-ambient-duration="14">
+            <div class="home-card-shadow relative min-h-[420px] overflow-hidden rounded-[34px] border border-slate-200 bg-gradient-to-br from-blue-100 via-[#dff0ff] to-[#c9e7ff] lg:min-h-[560px]">
               <img
                 src="<?php echo e($heroVisualUrl); ?>"
                 alt="Étudiante en ligne"
@@ -715,58 +1589,112 @@ $faqItems = [
                 style="object-position: 56% center;"
                 fetchpriority="high"
               >
-              <div class="absolute inset-0 bg-gradient-to-l from-white/6 via-transparent to-white/0"></div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="relative -mt-10 pb-10 sm:-mt-12 lg:-mt-14">
+    <section class="relative -mt-10 pb-6 sm:-mt-12 lg:-mt-14">
       <div class="mx-auto max-w-[1400px] px-4 sm:px-6 xl:px-8">
-        <div class="home-panel-shadow home-section-panel rounded-[34px] p-4 sm:p-5">
-          <form action="<?php echo e($catalogueUrl); ?>" method="get" class="grid gap-3 lg:grid-cols-[240px_minmax(0,1fr)_190px]">
-            <label class="flex items-center gap-3 rounded-[22px] bg-slate-50 px-4 py-4 text-slate-700">
-              <i class="far fa-book-open text-blue-600" aria-hidden="true"></i>
-              <select name="category" class="w-full bg-transparent text-sm font-semibold outline-none">
-                <option value="">Tous les cours</option>
+        <div class="home-panel-shadow home-section-panel rounded-[28px] p-3 sm:p-5" data-home-reveal="hero" data-home-delay="140" data-home-ambient="drift" data-home-ambient-duration="16">
+          <div class="mb-3 sm:mb-4" data-home-reveal="hero-copy" data-home-delay="220">
+            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">Recherche</p>
+            <h2 class="mt-1.5 text-[1.1rem] font-bold tracking-tight text-slate-950 dark:text-slate-100 sm:mt-2 sm:text-[1.25rem]">Trouver un cours</h2>
+            <p class="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">Choisissez une catégorie puis lancez la recherche.</p>
+          </div>
+          <form action="<?php echo e($catalogueUrl); ?>" method="get" class="grid gap-3 sm:gap-4 lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)_minmax(170px,190px)]" data-home-reveal="up" data-home-delay="320">
+            <div class="home-search-field home-search-field--select home-category-picker flex min-h-[3.5rem] w-full items-center gap-2.5 rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-slate-700 shadow-sm transition focus-within:border-blue-300 focus-within:ring-2 focus-within:ring-blue-200/60 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:focus-within:border-blue-500/70 dark:focus-within:ring-blue-500/20 sm:min-h-[4.5rem] sm:gap-3 sm:rounded-[22px] sm:px-5 sm:py-4" data-home-category-picker>
+              <span class="home-search-field-title">Catégorie</span>
+              <input type="hidden" name="category" value="" data-home-category-input>
+              <button type="button" class="home-category-trigger" data-home-category-trigger aria-haspopup="listbox" aria-expanded="false" aria-controls="homeCategoryMenu">
+                <i class="home-search-field__icon far fa-book-open text-base text-blue-600 sm:text-lg" aria-hidden="true"></i>
+                <span class="home-category-value" data-home-category-label>Tous les cours</span>
+              </button>
+              <i class="home-search-field__chevron fas fa-chevron-down text-xs text-slate-400" aria-hidden="true"></i>
+              <div id="homeCategoryMenu" class="home-category-menu" data-home-category-menu hidden role="listbox" aria-label="Catégorie">
+                <button type="button" class="home-category-option is-active" data-home-category-option data-category-value="" data-category-label="Tous les cours" aria-selected="true">
+                  <i class="home-category-option__icon fas fa-check" aria-hidden="true"></i>
+                  <span class="home-category-option__label">Tous les cours</span>
+                </button>
                 <?php foreach ($categoryCarouselItems as $categoryItem): ?>
-                  <option value="<?php echo e((string) ($categoryItem['key'] ?? '')); ?>"><?php echo e((string) ($categoryItem['name'] ?? 'Formation')); ?></option>
+                  <?php $homeCategoryOptionValue = (string) ($categoryItem['key'] ?? ''); ?>
+                  <?php $homeCategoryOptionLabel = (string) ($categoryItem['name'] ?? 'Formation'); ?>
+                  <button type="button" class="home-category-option" data-home-category-option data-category-value="<?php echo e($homeCategoryOptionValue); ?>" data-category-label="<?php echo e($homeCategoryOptionLabel); ?>" aria-selected="false">
+                    <i class="home-category-option__icon fas fa-check" aria-hidden="true"></i>
+                    <span class="home-category-option__label"><?php echo e($homeCategoryOptionLabel); ?></span>
+                  </button>
                 <?php endforeach; ?>
-              </select>
+              </div>
+            </div>
+            <label class="home-search-field flex min-h-[3.5rem] w-full items-center gap-2.5 rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-slate-700 shadow-sm transition focus-within:border-blue-300 focus-within:ring-2 focus-within:ring-blue-200/60 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:focus-within:border-blue-500/70 dark:focus-within:ring-blue-500/20 sm:min-h-[4.5rem] sm:gap-3 sm:rounded-[22px] sm:px-5 sm:py-4">
+              <span class="home-search-field-title">Recherche</span>
+              <i class="home-search-field__icon fas fa-search text-base text-slate-400 sm:text-lg" aria-hidden="true"></i>
+              <input
+                type="text"
+                name="q"
+                value=""
+                aria-label="Rechercher un cours ou un sujet"
+                placeholder="Rechercher un cours ou un sujet"
+                class="min-w-0 flex-1 appearance-none bg-transparent text-sm outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-400 sm:text-base"
+              >
             </label>
-            <label class="flex items-center gap-3 rounded-[22px] border border-slate-200 bg-white px-4 py-4 text-slate-700">
-              <i class="fas fa-search text-slate-400" aria-hidden="true"></i>
-              <input type="search" name="q" value="" placeholder="Recherchez un cours" class="w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-400">
-            </label>
-            <button type="submit" class="inline-flex items-center justify-center rounded-[22px] bg-blue-600 px-5 py-4 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700">
-              Rechercher
+            <button type="submit" class="home-search-field home-search-field--button inline-flex min-h-[3.5rem] w-full items-center justify-center rounded-[18px] bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:min-h-[4.5rem] sm:rounded-[22px] sm:px-6 sm:text-base lg:w-auto lg:min-w-[180px]">
+              Trouver
             </button>
           </form>
+        </div>
+      </div>
+    </section>
 
-          <div class="mt-5 flex flex-wrap gap-3">
-            <?php foreach (array_slice($categoryCarouselItems, 0, 5) as $categoryItem): ?>
-              <a href="<?php echo e((string) ($categoryItem['href'] ?? $catalogueUrl)); ?>" class="inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-300 hover:text-blue-600">
-                <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-blue-600">
-                  <i class="fas <?php echo e((string) ($categoryItem['icon'] ?? 'fa-graduation-cap')); ?>" aria-hidden="true"></i>
-                </span>
-                <?php echo e((string) ($categoryItem['name'] ?? 'Formation')); ?>
-              </a>
-            <?php endforeach; ?>
+    <section class="home-section-anchor pt-2 pb-10 lg:pb-12" id="why-choose">
+      <div class="mx-auto max-w-[1400px] px-4 sm:px-6 xl:px-8">
+        <div class="home-section-header mb-6" data-home-reveal="up" data-home-delay="40">
+          <div class="home-section-header__spacer" aria-hidden="true"></div>
+          <div class="home-section-header__content">
+            <span class="home-section-eyebrow">Pourquoi nous choisir</span>
+            <h2 class="home-section-title" data-home-reveal="title" data-home-delay="80">Une plateforme pensée pour apprendre sans perdre de temps</h2>
+            <p class="mx-auto mt-3 max-w-3xl text-lg leading-8 text-slate-500 sm:text-[1.15rem]">Des cours concrets, une navigation simple et un accompagnement rapide pour progresser avec confiance.</p>
           </div>
+          <div class="home-section-header__spacer" aria-hidden="true"></div>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <?php foreach ($whyChoosePoints as $whyChooseIndex => $whyChoosePoint): ?>
+            <article class="home-card-hover home-panel-shadow home-section-panel <?php echo e((string) ($whyChoosePoint['cardClass'] ?? '')); ?> rounded-[24px] p-5 sm:p-6" data-home-reveal="scale" data-home-delay="<?php echo e((string) ($whyChooseIndex * 90)); ?>">
+              <div class="flex items-start gap-4">
+                <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl <?php echo e((string) ($whyChoosePoint['iconClass'] ?? 'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-200')); ?>">
+                  <i class="fas <?php echo e((string) ($whyChoosePoint['icon'] ?? 'fa-star')); ?>" aria-hidden="true"></i>
+                </span>
+                <div class="min-w-0">
+                  <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100"><?php echo e((string) ($whyChoosePoint['title'] ?? 'Avantage')); ?></h3>
+                  <p class="mt-2 text-sm leading-7 text-slate-500 dark:text-slate-400"><?php echo e((string) ($whyChoosePoint['description'] ?? '')); ?></p>
+                </div>
+              </div>
+            </article>
+          <?php endforeach; ?>
+        </div>
+
+        <div class="mt-4 grid gap-4 md:grid-cols-3">
+          <?php foreach ($whyChooseStats as $whyChooseStatIndex => $whyChooseStat): ?>
+            <div class="home-panel-shadow home-section-panel rounded-[22px] px-5 py-4" data-home-reveal="up" data-home-delay="<?php echo e((string) (120 + ($whyChooseStatIndex * 90))); ?>">
+              <p class="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100"><?php echo e((string) ($whyChooseStat['value'] ?? '0')); ?></p>
+              <p class="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400"><?php echo e((string) ($whyChooseStat['label'] ?? '')); ?></p>
+            </div>
+          <?php endforeach; ?>
         </div>
       </div>
     </section>
 
     <?php if ($isLoggedIn && $homeResumeCourse !== null): ?>
-      <section class="home-section-anchor pt-2 pb-10 lg:pb-12" id="why-choose">
+      <section class="home-section-anchor pt-2 pb-10 lg:pb-12" id="continue-learning" data-home-reveal="up" data-home-delay="60">
         <div class="mx-auto max-w-[1400px] px-4 sm:px-6 xl:px-8">
           <?php $homeResumeCover = trim((string) ($homeResumeCourse['cover'] ?? '')); ?>
           <?php if ($homeResumeCover === '') { $homeResumeCover = $makeCoverPlaceholder((string) ($homeResumeCourse['title'] ?? 'Cours'), 'Mon cours'); } ?>
           <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <span class="inline-flex rounded-full border border-orange-200 bg-orange-50 px-5 py-2 text-sm font-semibold text-orange-600">Reprenez là où vous vous êtes arrêté</span>
-              <h2 class="mt-5 text-[2.25rem] font-black tracking-tight text-slate-950 sm:text-[3rem]">Continuez votre apprentissage maintenant</h2>
+              <h2 class="mt-5 text-[2.25rem] font-black tracking-tight text-slate-950 sm:text-[3rem]" data-home-reveal="title" data-home-delay="110">Continuez votre apprentissage maintenant</h2>
               <p class="mt-3 max-w-3xl text-lg leading-8 text-slate-500">Ne perdez pas votre élan. Continuez les cours que vous avez commencés et progressez vers vos objectifs.</p>
             </div>
             <a href="<?php echo e($homeMyCoursesUrl); ?>" class="inline-flex items-center gap-3 text-lg font-semibold text-blue-600 transition hover:text-blue-700">
@@ -776,7 +1704,7 @@ $faqItems = [
           </div>
 
           <div class="grid gap-6 xl:grid-cols-[minmax(0,1.18fr)_340px]">
-            <article class="home-panel-shadow home-section-panel overflow-hidden rounded-[30px]">
+            <article class="home-panel-shadow home-section-panel overflow-hidden rounded-[30px]" data-home-reveal="card" data-home-delay="180" data-home-ambient="float" data-home-ambient-duration="18" data-home-ambient-delay="120">
               <div class="grid gap-0 md:grid-cols-[280px_minmax(0,1fr)]">
                 <div class="relative overflow-hidden bg-slate-100">
                   <img
@@ -805,7 +1733,7 @@ $faqItems = [
                       </span>
                       <span class="font-medium"><?php echo e((string) ($homeResumeCourse['teacher'] ?? 'Formateur')); ?></span>
                     </div>
-                    <h3 class="mt-5 max-w-2xl text-[1.55rem] font-bold leading-tight text-slate-900 sm:text-[2rem]">
+                    <h3 class="home-card-title mt-5 max-w-2xl text-[1.55rem] font-bold leading-tight text-slate-900 sm:text-[2rem]">
                       <?php echo e((string) ($homeResumeCourse['title'] ?? 'Cours')); ?>
                     </h3>
                     <p class="home-line-clamp-3 mt-4 max-w-2xl text-sm leading-7 text-slate-500">
@@ -849,10 +1777,10 @@ $faqItems = [
             </article>
 
             <aside class="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-              <?php foreach (array_slice($homeResumeSecondaryCourses, 0, 2) as $sideCourse): ?>
+              <?php foreach (array_slice($homeResumeSecondaryCourses, 0, 2) as $sideCourseIndex => $sideCourse): ?>
                 <?php $sideCourseCover = trim((string) ($sideCourse['cover'] ?? '')); ?>
                 <?php if ($sideCourseCover === '') { $sideCourseCover = $makeCoverPlaceholder((string) ($sideCourse['title'] ?? 'Cours'), 'Mon cours'); } ?>
-                <article class="home-card-hover home-panel-shadow home-section-panel overflow-hidden rounded-[24px]">
+                <article class="home-card-hover home-panel-shadow home-section-panel overflow-hidden rounded-[24px]" data-home-reveal="card" data-home-delay="<?php echo e((string) (180 + ($sideCourseIndex * 90))); ?>">
                   <div class="flex gap-4 p-4">
                     <img
                       src="<?php echo e($sideCourseCover); ?>"
@@ -862,7 +1790,7 @@ $faqItems = [
                     >
                     <div class="min-w-0 flex-1">
                       <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">À suivre</p>
-                      <h3 class="home-line-clamp-2 mt-2 text-base font-bold leading-tight text-slate-900"><?php echo e((string) ($sideCourse['title'] ?? 'Cours')); ?></h3>
+                      <h3 class="home-card-title home-line-clamp-2 mt-2 text-base font-bold leading-tight text-slate-900"><?php echo e((string) ($sideCourse['title'] ?? 'Cours')); ?></h3>
                       <p class="mt-2 truncate text-sm text-slate-500"><?php echo e((string) ($sideCourse['teacher'] ?? 'Formateur')); ?></p>
                       <p class="mt-2 text-xs font-semibold text-slate-400"><?php echo e((string) ($sideCourse['summary'] ?? '')); ?></p>
                       <div class="mt-3 flex items-center justify-between gap-3">
@@ -891,89 +1819,131 @@ $faqItems = [
       </section>
     <?php endif; ?>
 
-    <section class="home-section-anchor py-10 lg:py-12" id="categories">
+    <section class="home-section-anchor py-8 lg:py-10" id="categories" data-home-reveal="up" data-home-delay="80">
       <div class="mx-auto max-w-[1400px] px-4 sm:px-6 xl:px-8">
-        <div class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <span class="inline-flex rounded-full border border-orange-200 bg-orange-50 px-5 py-2 text-sm font-semibold text-orange-600">Nouveautés du catalogue</span>
-            <h2 class="mt-5 max-w-5xl text-[2.3rem] font-black tracking-tight text-slate-950 sm:text-[3rem]">Les derniers cours publiés sur la plateforme</h2>
-            <p class="mt-3 max-w-4xl text-lg leading-8 text-slate-500">Voici les cours réellement disponibles en ce moment dans le catalogue public.</p>
+        <div class="home-section-header mb-6" data-home-reveal="up" data-home-delay="0">
+          <div class="home-section-header__spacer" aria-hidden="true"></div>
+          <div class="home-section-header__content">
+            <span class="home-section-eyebrow">Catégories</span>
+            <h2 class="home-section-title" data-home-reveal="title" data-home-delay="80">Parcourez les domaines enseignés</h2>
+            <p class="mx-auto mt-3 max-w-3xl text-lg leading-8 text-slate-500 sm:text-[1.15rem]">Faites défiler les thématiques pour trouver plus vite le bon point de départ.</p>
           </div>
-          <a href="<?php echo e($homeAllCategoriesUrl); ?>" class="inline-flex items-center gap-3 text-base font-semibold text-blue-600 transition hover:text-blue-700">
+          <a href="<?php echo e($homeAllcategoriesUrl); ?>" class="home-section-header__action inline-flex items-center gap-3 text-base font-semibold text-blue-600 transition hover:text-blue-700 lg:shrink-0">
             Voir tout le catalogue
             <i class="fas fa-chevron-right text-sm" aria-hidden="true"></i>
           </a>
         </div>
 
-        <div class="home-panel-shadow home-section-panel rounded-[32px] p-4 sm:p-5 lg:p-6">
+        <div class="home-carousel w-full overflow-hidden py-1" data-category-carousel data-home-reveal="scale" data-home-delay="120">
+          <div class="home-carousel-track" data-category-carousel-track>
+            <?php foreach ($homeCategoryCarouselGroups as $carouselGroup): ?>
+              <div class="home-carousel-group"<?php echo !empty($carouselGroup['clone']) ? ' aria-hidden="true" inert' : ' data-category-carousel-group'; ?>>
+                <?php foreach (($carouselGroup['items'] ?? []) as $categoryItem): ?>
+                  <a href="<?php echo e((string) ($categoryItem['href'] ?? $catalogueUrl)); ?>" class="home-card-hover home-soft-shadow flex w-[220px] shrink-0 flex-col items-center gap-3 rounded-[24px] border border-slate-200 bg-white px-5 py-5 text-center sm:w-[240px] dark:border-slate-700 dark:bg-slate-900/70">
+                    <span class="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-200">
+                      <i class="fas <?php echo e((string) ($categoryItem['icon'] ?? 'fa-book-open-reader')); ?> text-xl" aria-hidden="true"></i>
+                    </span>
+                    <span class="min-w-0">
+                      <span class="block truncate text-lg font-bold text-slate-900 dark:text-slate-100"><?php echo e((string) ($categoryItem['name'] ?? 'Formation')); ?></span>
+                      <span class="mt-1 block text-sm text-slate-500 dark:text-slate-400"><?php echo e((string) ($categoryItem['count'] ?? 'Cours')); ?></span>
+                    </span>
+                  </a>
+                <?php endforeach; ?>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="home-section-anchor py-8 lg:py-10" id="featured-courses" data-home-reveal="up" data-home-delay="80">
+      <div class="mx-auto max-w-[1400px] px-4 sm:px-6 xl:px-8">
+        <div class="home-section-header mb-6" data-home-reveal="up" data-home-delay="0">
+          <div class="home-section-header__spacer" aria-hidden="true"></div>
+          <div class="home-section-header__content">
+            <span class="home-section-eyebrow">Nouveautés du catalogue</span>
+            <h2 class="home-section-title" data-home-reveal="title" data-home-delay="80">Les derniers cours publiés sur la plateforme</h2>
+            <p class="mx-auto mt-3 max-w-4xl text-lg leading-8 text-slate-500 sm:text-[1.15rem]">Voici les cours réellement disponibles en ce moment dans le catalogue public.</p>
+          </div>
+          <a href="<?php echo e($homeAllcategoriesUrl); ?>" class="home-section-header__action inline-flex items-center gap-3 text-base font-semibold text-blue-600 transition hover:text-blue-700 lg:shrink-0">
+            Voir tout le catalogue
+            <i class="fas fa-chevron-right text-sm" aria-hidden="true"></i>
+          </a>
+        </div>
+
+        <div class="home-panel-shadow home-section-panel rounded-[32px] p-4 sm:p-5 lg:p-6" data-home-reveal="scale" data-home-delay="120" data-home-ambient="float" data-home-ambient-duration="20" data-home-ambient-delay="180">
           <?php if ($homeShowcaseCourses !== []): ?>
-            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
-            <?php foreach ($homeShowcaseCourses as $courseCard): ?>
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-5">
+            <?php foreach ($homeShowcaseCourses as $courseIndex => $courseCard): ?>
               <?php
               $currentPrice = max(0, (int) ($courseCard['priceRaw'] ?? 0));
+              $basePrice = max($currentPrice, (int) ($courseCard['basePriceXof'] ?? $currentPrice));
               $priceLabel = $currentPrice > 0 ? $publicFormatMoney($currentPrice) : 'Gratuit';
-              $courseActionUrl = trim((string) ($currentPrice > 0 ? ($courseCard['buyUrl'] ?? $catalogueUrl) : ($courseCard['url'] ?? $catalogueUrl)));
-              $courseActionIcon = $currentPrice > 0 ? 'fa-plus' : 'fa-arrow-right';
+              $courseDetailUrl = trim((string) ($courseCard['url'] ?? $catalogueUrl));
+              $courseCatalogUrl = $catalogueUrl;
               $courseCategory = trim((string) ($courseCard['category'] ?? 'Formation'));
               $courseDuration = trim((string) ($courseCard['durationLabel'] ?? 'À votre rythme'));
-              $ratingValue = max(0.0, (float) ($courseCard['rating'] ?? 0));
-              $ratingCount = max(0, (int) ($courseCard['ratingCount'] ?? 0));
+              $courseDurationMin = max(0, (int) ($courseCard['durationMin'] ?? 0));
+              $courseLevel = trim((string) ($courseCard['levelLabel'] ?? 'Tous niveaux'));
+              $courseHasPromo = $basePrice > $currentPrice && $currentPrice > 0;
+              $coursePriceClass = 'app-price text-[1.05rem] font-black tracking-tight sm:text-[1.2rem]' . ($courseHasPromo ? ' app-price--promo' : '');
               ?>
-              <article class="home-card-hover home-course-shadow flex h-full flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white">
+              <article class="home-card-hover home-course-shadow relative isolate flex h-full flex-col overflow-hidden rounded-[26px] border border-slate-200 bg-white" data-home-reveal="card" data-home-delay="<?php echo e((string) ($courseIndex * 95)); ?>">
+                <a
+                  href="<?php echo e($courseDetailUrl); ?>"
+                  class="absolute inset-0 z-10 block rounded-[26px] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                  aria-label="Ouvrir la fiche du cours <?php echo e((string) ($courseCard['title'] ?? 'Cours')); ?>"
+                ></a>
                 <div class="relative">
                   <img
                     src="<?php echo e((string) ($courseCard['cover'] ?? '')); ?>"
                     alt="<?php echo e((string) ($courseCard['coverAlt'] ?? 'Cours')); ?>"
-                    class="h-48 w-full object-cover"
+                    class="h-40 w-full object-cover"
                     loading="lazy"
                   >
-                  <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/60 via-slate-950/5 to-transparent px-5 pb-4 pt-10">
-                    <div class="flex items-center justify-between gap-3">
-                      <span class="rounded-full bg-white/92 px-3 py-1.5 text-xs font-bold text-slate-800">
-                        <?php echo e($courseCategory !== '' ? $courseCategory : 'Formation'); ?>
-                      </span>
-                      <?php if ($courseDuration !== ''): ?>
-                        <span class="rounded-full bg-white/88 px-3 py-1.5 text-xs font-bold text-slate-700">
+                  <div class="home-course-category-badge">
+                    <?php echo e($courseCategory !== '' ? $courseCategory : 'Formation'); ?>
+                  </div>
+                  <span class="absolute right-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-slate-500 shadow-sm dark:bg-slate-900/85 dark:text-slate-100" aria-hidden="true">
+                    <i class="<?php echo e(!empty($courseCard['isFavorite']) ? 'fas' : 'far'); ?> fa-heart"></i>
+                  </span>
+                </div>
+
+                <div class="relative z-0 flex flex-1 flex-col p-4">
+                  <div class="flex items-center gap-2">
+                    <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-200">
+                      <i class="fas fa-chalkboard-teacher text-xs" aria-hidden="true"></i>
+                    </span>
+                    <p class="truncate text-sm font-semibold text-slate-700 dark:text-slate-100"><?php echo e((string) ($courseCard['teacher'] ?? 'Formateur')); ?></p>
+                  </div>
+
+                  <h3 class="home-card-title home-line-clamp-2 mt-3 text-[1rem] font-extrabold leading-[1.28] text-slate-900 sm:text-[1.08rem]">
+                    <?php echo e((string) ($courseCard['title'] ?? 'Cours')); ?>
+                  </h3>
+
+                  <?php if ($courseLevel !== '' || ($courseDurationMin > 0 && $courseDuration !== '')): ?>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                      <?php if ($courseLevel !== ''): ?>
+                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                          <i class="fas fa-signal text-[10px]" aria-hidden="true"></i>
+                          <?php echo e($courseLevel); ?>
+                        </span>
+                      <?php endif; ?>
+                      <?php if ($courseDurationMin > 0 && $courseDuration !== ''): ?>
+                        <span class="inline-flex items-center gap-1 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
+                          <i class="far fa-clock text-[10px]" aria-hidden="true"></i>
                           <?php echo e($courseDuration); ?>
                         </span>
                       <?php endif; ?>
                     </div>
-                  </div>
-                  <span class="absolute right-4 top-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/95 text-slate-500 shadow-sm" aria-hidden="true">
-                    <i class="<?php echo e(!empty($courseCard['isFavorite']) ? 'fas' : 'far'); ?> fa-heart text-xl"></i>
-                  </span>
-                </div>
+                  <?php endif; ?>
 
-                <div class="flex flex-1 flex-col p-5">
-                  <div class="flex items-center gap-3 text-sm text-slate-500">
-                    <span class="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-400">
-                      <i class="far fa-user" aria-hidden="true"></i>
-                      <span class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
-                    </span>
-                    <span class="truncate"><?php echo e((string) ($courseCard['teacher'] ?? 'Formateur')); ?></span>
-                  </div>
-
-                  <h3 class="home-line-clamp-2 mt-5 text-[1.05rem] font-extrabold leading-[1.32] text-slate-900 sm:text-[1.15rem]">
-                    <?php echo e((string) ($courseCard['title'] ?? 'Cours')); ?>
-                  </h3>
-
-                  <div class="mt-6 flex items-center gap-2 text-sm text-slate-500">
-                    <?php if ($ratingCount > 0): ?>
-                      <span class="flex items-center gap-1 text-amber-400" aria-hidden="true"><?php echo $makeStarIcons($ratingValue); ?></span>
-                      <span class="font-semibold text-slate-900"><?php echo e(number_format($ratingValue, 1, ',', ' ')); ?></span>
-                      <span>(<?php echo e(number_format($ratingCount, 0, ',', ' ')); ?> Avis)</span>
-                    <?php else: ?>
-                      <i class="far fa-star text-slate-300" aria-hidden="true"></i>
-                      <span>Pas encore d'avis</span>
-                    <?php endif; ?>
-                  </div>
-
-                  <div class="mt-auto flex items-end justify-between gap-4 border-t border-slate-100 pt-6">
+                  <div class="mt-auto flex items-end justify-between gap-4 border-t border-slate-100 pt-4">
                     <div class="min-w-0">
-                      <p class="text-[1.15rem] font-black tracking-tight text-orange-500 sm:text-[1.35rem]"><?php echo e($priceLabel); ?></p>
+                      <p class="<?php echo e($coursePriceClass); ?>"><?php echo e($priceLabel); ?></p>
                     </div>
-                    <a href="<?php echo e($courseActionUrl); ?>" class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white transition hover:bg-blue-700" aria-label="Voir le cours">
-                      <i class="fas <?php echo e($courseActionIcon); ?>" aria-hidden="true"></i>
+                    <a href="<?php echo e($courseCatalogUrl); ?>" class="relative z-20 inline-flex h-11 min-w-[7.25rem] shrink-0 items-center justify-center rounded-full bg-blue-600 px-4 text-sm font-bold text-white transition hover:bg-blue-700" aria-label="Aller au catalogue" title="Catalogue">
+                      Catalogue
                     </a>
                   </div>
                 </div>
@@ -982,92 +1952,105 @@ $faqItems = [
             </div>
           <?php else: ?>
             <div class="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
-              <p class="text-lg font-semibold text-slate-800">Aucun cours public n’est encore disponible.</p>
-              <p class="mt-2 text-sm text-slate-500">Les prochaines publications apparaîtront ici automatiquement.</p>
+              <p class="text-lg font-semibold text-slate-800">Aucune nouveauté n’est encore publiée.</p>
+              <p class="mt-2 text-sm text-slate-500">Les prochains cours apparaîtront ici dès qu’ils seront mis en ligne.</p>
             </div>
           <?php endif; ?>
         </div>
       </div>
     </section>
 
-    <section class="py-10 lg:py-12">
+    <?php if ($homePopularCourses !== []): ?>
+    <section class="py-8 lg:py-10" data-home-reveal="up" data-home-delay="80">
       <div class="mx-auto max-w-[1400px] px-4 sm:px-6 xl:px-8">
-        <div class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <span class="inline-flex rounded-full border border-orange-200 bg-orange-50 px-5 py-2 text-sm font-semibold text-orange-600">Les plus suivis</span>
-            <h2 class="mt-5 max-w-5xl text-[2.25rem] font-black tracking-tight text-slate-950 sm:text-[3rem]">Les cours populaires du moment</h2>
-            <p class="mt-3 max-w-4xl text-lg leading-8 text-slate-500">Classement basé sur les inscriptions et les avis réellement présents sur la plateforme.</p>
+        <div class="home-section-header mb-6" data-home-reveal="up" data-home-delay="0">
+          <div class="home-section-header__spacer" aria-hidden="true"></div>
+          <div class="home-section-header__content">
+            <span class="home-section-eyebrow">Les favoris du moment</span>
+            <h2 class="home-section-title" data-home-reveal="title" data-home-delay="80">Les cours les plus choisis</h2>
+            <p class="mt-3 max-w-4xl text-lg leading-8 text-slate-500">Les formations qui attirent le plus d’apprenants et qui donnent envie de commencer tout de suite.</p>
           </div>
-          <a href="<?php echo e($catalogueUrl); ?>" class="inline-flex items-center gap-3 text-base font-semibold text-blue-600 transition hover:text-blue-700">
-            Explorer plus de cours
+          <a href="<?php echo e($catalogueUrl); ?>" class="home-section-header__action inline-flex items-center gap-3 text-base font-semibold text-blue-600 transition hover:text-blue-700 lg:shrink-0">
+            Voir tout le catalogue
             <i class="fas fa-chevron-right text-sm" aria-hidden="true"></i>
           </a>
         </div>
 
-        <div class="home-panel-shadow home-section-panel rounded-[32px] p-4 sm:p-5 lg:p-6">
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
-          <?php foreach ($homePopularCourses as $courseCard): ?>
+        <div class="home-panel-shadow home-section-panel rounded-[32px] p-4 sm:p-5 lg:p-6" data-home-reveal="scale" data-home-delay="120" data-home-ambient="drift" data-home-ambient-duration="19" data-home-ambient-delay="160">
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          <?php foreach ($homePopularCourses as $courseIndex => $courseCard): ?>
             <?php
             $currentPrice = max(0, (int) ($courseCard['priceRaw'] ?? 0));
             $basePrice = max($currentPrice, (int) ($courseCard['basePriceXof'] ?? $currentPrice));
             $priceLabel = $currentPrice > 0 ? $publicFormatMoney($currentPrice) : 'Gratuit';
-            $courseActionUrl = trim((string) ($currentPrice > 0 ? ($courseCard['buyUrl'] ?? $catalogueUrl) : ($courseCard['url'] ?? $catalogueUrl)));
+            $courseDetailUrl = trim((string) ($courseCard['url'] ?? $catalogueUrl));
+            $courseCatalogUrl = $catalogueUrl;
             $courseCategory = trim((string) ($courseCard['category'] ?? 'Formation'));
-            $ratingValue = max(0.0, (float) ($courseCard['rating'] ?? 0));
-            $ratingCount = max(0, (int) ($courseCard['ratingCount'] ?? 0));
+            $courseDuration = trim((string) ($courseCard['durationLabel'] ?? 'À votre rythme'));
+            $courseDurationMin = max(0, (int) ($courseCard['durationMin'] ?? 0));
+            $courseLevel = trim((string) ($courseCard['levelLabel'] ?? 'Tous niveaux'));
+            $courseHasPromo = $basePrice > $currentPrice && $currentPrice > 0;
+            $coursePriceClass = 'app-price text-[1.05rem] font-black tracking-tight sm:text-[1.2rem]' . ($courseHasPromo ? ' app-price--promo' : '');
             ?>
-            <article class="home-card-hover home-course-shadow flex h-full flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white">
+            <article class="home-card-hover home-course-shadow relative isolate flex h-full flex-col overflow-hidden rounded-[26px] border border-slate-200 bg-white" data-home-reveal="card" data-home-delay="<?php echo e((string) ($courseIndex * 95)); ?>">
+              <a
+                href="<?php echo e($courseDetailUrl); ?>"
+                class="absolute inset-0 z-10 block rounded-[26px] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                aria-label="Ouvrir la fiche du cours <?php echo e((string) ($courseCard['title'] ?? 'Cours')); ?>"
+              ></a>
               <div class="relative">
                 <img
                   src="<?php echo e((string) ($courseCard['cover'] ?? '')); ?>"
                   alt="<?php echo e((string) ($courseCard['coverAlt'] ?? 'Cours')); ?>"
-                  class="h-48 w-full object-cover"
+                  class="h-40 w-full object-cover"
                   loading="lazy"
                 >
-                <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/60 via-slate-950/5 to-transparent px-5 pb-4 pt-10">
-                  <span class="rounded-full bg-white/92 px-3 py-1.5 text-xs font-bold text-slate-800">
-                    <?php echo e($courseCategory !== '' ? $courseCategory : 'Formation'); ?>
-                  </span>
+                <div class="home-course-category-badge">
+                  <?php echo e($courseCategory !== '' ? $courseCategory : 'Formation'); ?>
                 </div>
-                <span class="absolute right-4 top-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/95 text-slate-500 shadow-sm" aria-hidden="true">
-                  <i class="<?php echo e(!empty($courseCard['isFavorite']) ? 'fas' : 'far'); ?> fa-heart text-xl"></i>
+                <span class="absolute right-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-slate-500 shadow-sm dark:bg-slate-900/85 dark:text-slate-100" aria-hidden="true">
+                  <i class="<?php echo e(!empty($courseCard['isFavorite']) ? 'fas' : 'far'); ?> fa-heart"></i>
                 </span>
               </div>
 
-              <div class="flex flex-1 flex-col p-5">
-                <div class="flex items-center gap-3 text-sm text-slate-500">
-                  <span class="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-400">
-                    <i class="far fa-user" aria-hidden="true"></i>
-                    <span class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+              <div class="relative z-0 flex flex-1 flex-col p-4">
+                <div class="flex items-center gap-2">
+                  <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-200">
+                    <i class="fas fa-chalkboard-teacher text-xs" aria-hidden="true"></i>
                   </span>
-                  <span class="truncate"><?php echo e((string) ($courseCard['teacher'] ?? 'Formateur')); ?></span>
+                  <p class="truncate text-sm font-semibold text-slate-700 dark:text-slate-100"><?php echo e((string) ($courseCard['teacher'] ?? 'Formateur')); ?></p>
                 </div>
 
-                <h3 class="home-line-clamp-2 mt-5 text-[1.05rem] font-extrabold leading-[1.32] text-slate-900 sm:text-[1.15rem]">
+                  <h3 class="home-card-title home-line-clamp-2 mt-3 text-[1rem] font-extrabold leading-[1.28] text-slate-900 sm:text-[1.08rem]">
                   <?php echo e((string) ($courseCard['title'] ?? 'Cours')); ?>
                 </h3>
-                <p class="home-line-clamp-3 mt-4 text-sm leading-7 text-slate-500"><?php echo e((string) ($courseCard['description'] ?? '')); ?></p>
 
-                <div class="mt-5 flex items-center gap-2 text-sm text-slate-500">
-                  <?php if ($ratingCount > 0): ?>
-                    <span class="flex items-center gap-1 text-amber-400" aria-hidden="true"><?php echo $makeStarIcons($ratingValue); ?></span>
-                    <span class="font-semibold text-slate-900"><?php echo e(number_format($ratingValue, 1, ',', ' ')); ?></span>
-                    <span>(<?php echo e(number_format($ratingCount, 0, ',', ' ')); ?> Avis)</span>
-                  <?php else: ?>
-                    <i class="far fa-star text-slate-300" aria-hidden="true"></i>
-                    <span>Pas encore d'avis</span>
-                  <?php endif; ?>
-                </div>
+                <?php if ($courseLevel !== '' || ($courseDurationMin > 0 && $courseDuration !== '')): ?>
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    <?php if ($courseLevel !== ''): ?>
+                      <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                        <i class="fas fa-signal text-[10px]" aria-hidden="true"></i>
+                        <?php echo e($courseLevel); ?>
+                      </span>
+                    <?php endif; ?>
+                    <?php if ($courseDurationMin > 0 && $courseDuration !== ''): ?>
+                      <span class="inline-flex items-center gap-1 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
+                        <i class="far fa-clock text-[10px]" aria-hidden="true"></i>
+                        <?php echo e($courseDuration); ?>
+                      </span>
+                    <?php endif; ?>
+                  </div>
+                <?php endif; ?>
 
-                <div class="mt-auto flex items-end justify-between gap-4 border-t border-slate-100 pt-6">
+                <div class="mt-auto flex items-end justify-between gap-4 border-t border-slate-100 pt-4">
                   <div class="min-w-0">
-                    <p class="text-[1.15rem] font-black tracking-tight text-orange-500 sm:text-[1.35rem]"><?php echo e($priceLabel); ?></p>
+                    <p class="<?php echo e($coursePriceClass); ?>"><?php echo e($priceLabel); ?></p>
                     <?php if ($basePrice > $currentPrice && $currentPrice > 0): ?>
                       <p class="mt-1 text-xs text-slate-400 line-through"><?php echo e($publicFormatMoney($basePrice)); ?></p>
                     <?php endif; ?>
                   </div>
-                  <a href="<?php echo e($courseActionUrl); ?>" class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white transition hover:bg-blue-700" aria-label="Voir le cours">
-                    <i class="fas <?php echo e($currentPrice > 0 ? 'fa-plus' : 'fa-arrow-right'); ?>" aria-hidden="true"></i>
+                  <a href="<?php echo e($courseCatalogUrl); ?>" class="relative z-20 inline-flex h-11 min-w-[7.25rem] shrink-0 items-center justify-center rounded-full bg-blue-600 px-4 text-sm font-bold text-white transition hover:bg-blue-700" aria-label="Aller au catalogue" title="Catalogue">
+                    Catalogue
                   </a>
                 </div>
               </div>
@@ -1078,77 +2061,45 @@ $faqItems = [
       </div>
     </section>
 
-    <section class="py-10 lg:py-12">
-      <div class="mx-auto max-w-[1400px] px-4 sm:px-6 xl:px-8">
-        <div class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <span class="inline-flex rounded-full border border-orange-200 bg-orange-50 px-5 py-2 text-sm font-semibold text-orange-600">Explorez par domaine</span>
-            <h2 class="mt-5 text-[2.1rem] font-black tracking-tight text-slate-950 sm:text-[2.8rem]">Catégories populaires</h2>
-            <p class="mt-3 max-w-3xl text-lg leading-8 text-slate-500">Des raccourcis visuels pour retrouver rapidement les thématiques les plus demandées.</p>
-          </div>
-          <a href="<?php echo e($catalogueUrl); ?>" class="inline-flex items-center gap-3 text-base font-semibold text-blue-600 transition hover:text-blue-700">
-            Parcourir les catégories
-            <i class="fas fa-chevron-right text-sm" aria-hidden="true"></i>
-          </a>
-        </div>
-
-        <div class="home-panel-shadow home-section-panel rounded-[32px] p-4 sm:p-5 lg:p-6">
-          <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-          <?php foreach ($categoryCarouselItems as $categoryItem): ?>
-            <a href="<?php echo e((string) ($categoryItem['href'] ?? $catalogueUrl)); ?>" class="home-card-hover home-soft-shadow flex items-center gap-4 rounded-[24px] border border-slate-200 bg-white px-5 py-5">
-              <span class="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br <?php echo e((string) ($categoryItem['gradient'] ?? 'from-blue-600 to-cyan-500')); ?> text-white">
-                <i class="fas <?php echo e((string) ($categoryItem['icon'] ?? 'fa-graduation-cap')); ?> text-xl" aria-hidden="true"></i>
-              </span>
-              <span class="min-w-0">
-                <span class="block truncate text-lg font-bold text-slate-900"><?php echo e((string) ($categoryItem['name'] ?? 'Formation')); ?></span>
-                <span class="mt-1 block text-sm text-slate-500"><?php echo e((string) ($categoryItem['count'] ?? 'Cours')); ?></span>
-              </span>
-              <span class="ml-auto inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-blue-600">
-                <i class="fas fa-arrow-right text-sm" aria-hidden="true"></i>
-              </span>
-            </a>
-          <?php endforeach; ?>
-          </div>
-        </div>
-      </div>
     </section>
+    <?php endif; ?>
 
-    <section class="home-section-anchor bg-slate-50/70 py-12 lg:py-16" id="faq">
+    <section class="home-section-anchor bg-slate-50/70 py-10 lg:py-12" id="faq" data-home-reveal="up" data-home-delay="80">
       <div class="mx-auto max-w-[1400px] px-4 sm:px-6 xl:px-8">
-        <div class="mb-8">
-          <span class="inline-flex rounded-full border border-orange-200 bg-orange-50 px-5 py-2 text-sm font-semibold text-orange-600">FAQ</span>
-          <h2 class="mt-5 text-[2.1rem] font-black tracking-tight text-slate-950 sm:text-[2.8rem]">Questions fréquentes avant de commencer</h2>
-          <p class="mt-3 max-w-3xl text-lg leading-8 text-slate-500">Les réponses essentielles pour démarrer sans friction.</p>
+        <div class="mb-6 text-center" data-home-reveal="up" data-home-delay="0">
+          <span class="home-section-eyebrow">FAQ</span>
+          <h2 class="home-section-title" data-home-reveal="title" data-home-delay="80">Tout savoir avant de commencer</h2>
+          <p class="mx-auto mt-3 max-w-3xl text-lg leading-8 text-slate-500 sm:text-[1.15rem]">Des réponses simples pour démarrer sereinement et sans perdre de temps.</p>
         </div>
 
         <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
           <?php foreach ($faqItems as $faqIndex => $faqItem): ?>
-            <details class="faq-item rounded-[24px] border border-slate-200 bg-white px-6 py-5 home-soft-shadow"<?php echo $faqIndex === 0 ? ' open' : ''; ?>>
+            <details class="faq-item rounded-[24px] border border-slate-200 bg-white px-5 py-4 home-soft-shadow" data-home-reveal="up" data-home-delay="<?php echo e((string) ($faqIndex * 90)); ?>"<?php echo $faqIndex === 0 ? ' open' : ''; ?>>
               <summary class="flex cursor-pointer list-none items-start justify-between gap-4">
-                <span class="text-left text-base font-bold text-slate-900"><?php echo e((string) ($faqItem['question'] ?? 'Question')); ?></span>
+                <span class="text-left text-[0.98rem] font-bold text-slate-900"><?php echo e((string) ($faqItem['question'] ?? 'Question')); ?></span>
                 <span class="faq-chevron inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-500 transition-transform">
                   <i class="fas fa-chevron-down text-xs" aria-hidden="true"></i>
                 </span>
               </summary>
-              <p class="mt-4 pr-10 text-sm leading-7 text-slate-500"><?php echo e((string) ($faqItem['answer'] ?? '')); ?></p>
+              <p class="mt-3 pr-8 text-sm leading-6 text-slate-600"><?php echo e((string) ($faqItem['answer'] ?? '')); ?></p>
             </details>
           <?php endforeach; ?>
         </div>
       </div>
     </section>
 
-    <section class="py-12 lg:py-16">
+    <section class="py-10 lg:py-12" data-home-reveal="scale" data-home-delay="100">
       <div class="mx-auto max-w-[1400px] px-4 sm:px-6 xl:px-8">
-        <div class="home-card-shadow overflow-hidden rounded-[32px] bg-gradient-to-br from-blue-700 via-blue-600 to-cyan-500 px-6 py-12 text-white sm:px-10 lg:px-14">
-          <div class="max-w-3xl">
-            <h2 class="text-[2rem] font-black leading-tight sm:text-[2.6rem]">Prêt à apprendre une compétence utile cette semaine ?</h2>
-            <p class="mt-5 text-lg leading-8 text-blue-100">Commencez dès maintenant, explorez le catalogue et reprenez vos formations quand vous le souhaitez.</p>
+        <div class="home-card-shadow relative isolate overflow-hidden rounded-[32px] bg-gradient-to-br from-blue-700 via-blue-600 to-cyan-500 px-6 py-10 text-white sm:px-10 lg:px-14 lg:py-12" data-home-ambient="pulse" data-home-ambient-duration="10" data-home-ambient-delay="140">
+          <div class="max-w-[42rem]">
+            <h2 class="text-[2rem] font-black leading-tight sm:text-[2.6rem]" data-home-reveal="title" data-home-delay="100">Prêt à apprendre quelque chose d’utile dès aujourd’hui&nbsp;?</h2>
+            <p class="mt-5 text-lg leading-8 text-blue-100">Choisissez un cours, lancez-vous et progressez à votre rythme avec des contenus concrets.</p>
             <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a href="<?php echo e($homePrimaryCtaUrl); ?>" class="inline-flex items-center justify-center rounded-2xl bg-white px-6 py-3.5 text-sm font-bold text-blue-700 transition hover:bg-slate-100">
+              <a href="<?php echo e($homePrimaryCtaUrl); ?>" class="home-cta-button inline-flex items-center justify-center rounded-2xl px-6 py-3.5 text-sm font-bold transition">
                 <?php echo e($homePrimaryCtaLabel); ?>
               </a>
-              <a href="<?php echo e($catalogueUrl); ?>" class="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-6 py-3.5 text-sm font-bold text-white transition hover:bg-white/15">
-                Voir les formations
+              <a href="<?php echo e($catalogueUrl); ?>" class="home-cta-button home-cta-button--secondary inline-flex items-center justify-center rounded-2xl px-6 py-3.5 text-sm font-bold transition">
+                Explorer le catalogue
               </a>
             </div>
           </div>
@@ -1157,9 +2108,27 @@ $faqItems = [
     </section>
   </main>
 
-  <a href="<?php echo e($supportUrl); ?>" class="fixed bottom-6 right-6 z-40 inline-flex h-16 w-16 items-center justify-center rounded-full bg-blue-600 text-white shadow-[0_18px_40px_-18px_rgba(45,99,234,0.7)] transition hover:bg-blue-700" aria-label="Support">
-    <i class="far fa-comments text-2xl" aria-hidden="true"></i>
-  </a>
+  <div class="fixed bottom-4 right-4 z-40 flex flex-col items-end gap-2 sm:bottom-5 sm:right-5 sm:gap-3">
+    <a
+      href="<?php echo e($supportUrl); ?>"
+      data-support-url="<?php echo e($supportUrl); ?>"
+      data-support-fab="1"
+      class="pointer-events-none relative inline-flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-white opacity-0 shadow-[0_18px_35px_-15px_rgba(37,99,235,0.9)] transform-gpu translate-y-3 scale-95 transition-all duration-300 ease-out hover:bg-blue-700 sm:pointer-events-auto sm:h-12 sm:w-12 sm:translate-y-0 sm:scale-100 sm:opacity-100"
+      aria-label="Assistance"
+      title="Assistance"
+    >
+      <i class="fas fa-headset" aria-hidden="true"></i>
+    </a>
+    <button
+      type="button"
+      class="pointer-events-none inline-flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-white opacity-0 shadow-[0_18px_35px_-15px_rgba(37,99,235,0.9)] transform-gpu translate-y-3 scale-95 transition-all duration-300 ease-out hover:bg-blue-700 dark:bg-blue-500 dark:text-white dark:hover:bg-blue-600 sm:h-12 sm:w-12"
+      data-scroll-top
+      aria-label="Remonter en haut"
+      title="Remonter en haut"
+    >
+      <i class="fas fa-arrow-up" aria-hidden="true"></i>
+    </button>
+  </div>
 
   <?php require __DIR__ . '/_public_footer_home.php'; ?>
 </div>

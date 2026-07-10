@@ -1,6 +1,27 @@
 <?php
 declare(strict_types=1);
 
+$truncateText = isset($truncateText) && is_callable($truncateText) ? $truncateText : static function (string $value, int $limit = 120): string {
+    $value = trim(preg_replace('/\s+/u', ' ', strip_tags(html_entity_decode($value, ENT_QUOTES, 'UTF-8'))) ?? '');
+    if ($value === '') {
+        return '';
+    }
+
+    if (function_exists('mb_strlen') && function_exists('mb_substr')) {
+        if (mb_strlen($value) <= $limit) {
+            return $value;
+        }
+
+        return rtrim(mb_substr($value, 0, max(0, $limit - 3))) . '...';
+    }
+
+    if (strlen($value) <= $limit) {
+        return $value;
+    }
+
+    return rtrim(substr($value, 0, max(0, $limit - 3))) . '...';
+};
+
 if ($exams === []) {
     return;
 }
@@ -21,7 +42,7 @@ if ($exams === []) {
         <?php foreach ($exams as $exam): ?>
             <?php
             $examType = (string) ($exam['type'] ?? '');
-            $examPreviewUrl = site_url('teacher/exam_preview?exam_id=' . (int) ($exam['id'] ?? 0));
+            $examPreviewUrl = site_url('admin/exam_preview?exam_id=' . (int) ($exam['id'] ?? 0));
             ?>
             <article class="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-800 dark:bg-slate-900/55">
                 <div class="flex items-start gap-3">
@@ -34,7 +55,7 @@ if ($exams === []) {
                             <span class="admin-course-badge admin-course-badge--neutral"><?php echo e(strtoupper($examType)); ?></span>
                         </div>
                         <?php if (!empty($exam['description'])): ?>
-                            <p class="mt-1.5 text-sm leading-6 text-slate-600 dark:text-slate-300"><?php echo e((string) $exam['description']); ?></p>
+                            <p class="mt-1.5 text-sm leading-6 text-slate-600 dark:text-slate-300"><?php echo e($truncateText((string) $exam['description'], 120)); ?></p>
                         <?php endif; ?>
                         <div class="mt-2 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
                             <?php if (!empty($exam['duration_min'])): ?>
@@ -45,7 +66,7 @@ if ($exams === []) {
                         </div>
 
                         <?php if ($examType === 'drive'): ?>
-                            <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Remise de fichier prévue dans l'espace Drive de la plateforme.</p>
+                            <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Dépôt via Drive.</p>
                         <?php elseif ($examType === 'meeting'): ?>
                             <p class="mt-2 break-all text-sm text-slate-600 dark:text-slate-300">
                                 Mode : <?php echo e((string) (($exam['meeting_mode'] ?? '') === 'online' ? 'En ligne' : 'Sur place')); ?>
@@ -57,11 +78,11 @@ if ($exams === []) {
                                 <?php endif; ?>
                             </p>
                         <?php elseif ($examType === 'qcm'): ?>
-                            <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">QCM prêt. Vérifiez les questions.</p>
+                            <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">QCM prêt.</p>
                         <?php endif; ?>
 
                         <div class="mt-3">
-                            <a href="<?php echo e($examPreviewUrl); ?>" class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-100 dark:hover:border-slate-500">
+                            <a href="<?php echo e($examPreviewUrl); ?>" class="admin-course-preview-button inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition">
                                 <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg('external-link'); ?></span>
                                 <span>Voir l'examen</span>
                             </a>

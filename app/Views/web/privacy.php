@@ -43,7 +43,7 @@ $backHref = (string) ($backHref ?? site_url(''));
                         <?php if ($siteTagline !== ''): ?>
                             <p class="text-xs text-slate-500 dark:text-slate-300"><?php echo e($siteTagline); ?></p>
                         <?php endif; ?>
-                        <p class="text-xs text-slate-500 dark:text-slate-300"><?php echo e($siteName); ?></p>
+                        <p class="text-xs text-slate-500 dark:text-slate-300"><?php echo site_brand_name_html($siteName); ?></p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2 text-xs font-semibold">
@@ -64,7 +64,7 @@ $backHref = (string) ($backHref ?? site_url(''));
                 <div class="mt-6 space-y-6 text-sm text-slate-700 dark:text-slate-200">
                     <section class="space-y-2">
                         <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">1. Responsable du traitement</h2>
-                        <p>École Numérique est responsable du traitement des données personnelles collectées sur la plateforme pour la gestion des comptes, des cours, des paiements, des certifications et du support.</p>
+                        <p><?php echo site_brand_name_html($siteName); ?> est responsable du traitement des données personnelles collectées sur la plateforme pour la gestion des comptes, des cours, des paiements, des certifications et du support.</p>
                     </section>
 
                     <section class="space-y-2">

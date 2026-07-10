@@ -51,9 +51,16 @@ foreach ($questionsByVariant as $variantQuestions) {
 if ($variantCount < 1) {
     $variantCount = $hasVariant ? 3 : ($questionTotal > 0 ? 1 : 0);
 }
+
+$teacherNavActive = 'exams_manage';
+$teacherDashboardShell = true;
+$teacherTopTitle = "Aperçu de l'examen";
+$teacherTopSubtitle = 'Espace formateur';
+$teacherTopContextSection = 'Examens';
+$teacherTopContextLabel = $examTitle;
 ?>
 <!doctype html>
-<html lang="fr">
+<html lang="fr" class="light" data-default-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -68,18 +75,19 @@ if ($variantCount < 1) {
     <script src="<?php echo e(site_url('assets/js/teacher_dashboard.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/teacher_dashboard.js') ?: time()))); ?>" defer></script>
 <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
 </head>
-<body class="app-view app-role-teacher min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-body" data-view="teacher/exam_preview">
+<body class="app-view app-role-teacher teacher-dashboard-page font-sans antialiased text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-900 transition-colors duration-300 overflow-hidden overflow-x-hidden min-h-screen" data-view="teacher/exam_preview">
     <div class="teacher-dashboard-layout relative h-screen overflow-hidden pt-16 sm:pt-[4.5rem] md:pl-72 md:flex-row">
-        <?php $teacherNavActive = 'courses'; ?>
+        <?php $teacherNavActive = 'exams_manage'; ?>
         <?php require __DIR__ . '/_sidebar.php'; ?>
         <div class="js-sidebar-backdrop fixed inset-0 z-30 bg-slate-950/60 opacity-0 pointer-events-none transition md:hidden"></div>
 
-        <div class="flex-1 min-w-0">
+        <div class="h-full min-w-0">
             <?php $teacherTopTitle = 'Aperçu de l\'examen'; ?>
-            <?php $teacherTopSubtitle = 'Espace enseignant'; ?>
+            <?php $teacherTopSubtitle = 'Espace formateur'; ?>
             <?php require __DIR__ . '/_topbar.php'; ?>
 
-            <main class="teacher-hub-main mx-auto max-w-7xl px-4 py-6 md:px-6 xl:px-8 space-y-6">
+            <main class="teacher-dashboard-main teacher-hub-main h-full overflow-y-auto bg-gray-50 dark:bg-gray-900" data-scroll-top-root="1">
+                <div class="teacher-dashboard-content p-4 pb-24 space-y-6 animate-fade-up sm:p-6 sm:pb-24">
                 <?php $teacherWelcomeTitle = $examTitle; ?>
                 <?php $teacherWelcomeSummary = $courseTitle . ' · ' . $typeLabel . ' · ' . $durationLabel; ?>
                 <?php $teacherWelcomeActionUrl = site_url('teacher/exams_manage?exam_id=' . $examId); ?>
@@ -87,7 +95,7 @@ if ($variantCount < 1) {
                 <?php $teacherWelcomeActionIcon = 'clipboard-list'; ?>
                 <?php require __DIR__ . '/_welcome_hero.php'; ?>
 
-                <section class="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
+                <section class="teacher-dashboard-card rounded-xl border border-gray-100 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
                     <div class="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
                         <div class="min-w-0 flex-1">
                             <div class="flex items-start gap-4">
@@ -123,17 +131,17 @@ if ($variantCount < 1) {
                         </div>
 
                         <div class="flex flex-wrap items-center gap-3 xl:justify-end">
-                            <a href="<?php echo e(site_url('teacher/exams_manage?exam_id=' . $examId)); ?>" class="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500">
+                            <a href="<?php echo e(site_url('teacher/exams_manage?exam_id=' . $examId)); ?>" class="teacher-primary-action inline-flex items-center gap-2 rounded-xl bg-primary-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300">
                                 Gérer les tentatives
                             </a>
-                            <a href="<?php echo e($backUrl); ?>" class="inline-flex items-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:border-slate-500">
+                            <a href="<?php echo e($backUrl); ?>" class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
                                 Retour
                             </a>
                         </div>
                     </div>
                 </section>
 
-                <section class="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
+                <section class="teacher-dashboard-card rounded-xl border border-gray-100 bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-800">
                     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div>
                             <p class="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Validation enseignant</p>
@@ -151,24 +159,32 @@ if ($variantCount < 1) {
                     </div>
                 </section>
 
-                <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <article class="app-kpi-card app-kpi-card--blue rounded-2xl border p-4">
-                        <p class="app-kpi-card__head">
-                            <span class="app-kpi-card__icon" aria-hidden="true"><?php echo dashboard_icon_svg('clipboard-list'); ?></span>
-                            <span>Type</span>
-                        </p>
-                        <p class="app-kpi-card__value text-2xl"><?php echo e($typeLabel); ?></p>
-                        <p class="app-kpi-card__meta">Format de l'examen</p>
+                <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <article class="teacher-dashboard-card teacher-kpi-card rounded-xl border border-gray-100 bg-white p-4 shadow-card hover-lift dark:border-gray-700 dark:bg-gray-800">
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="min-w-0">
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Type</p>
+                                <p class="mt-1 text-2xl font-bold text-gray-950 dark:text-white"><?php echo e($typeLabel); ?></p>
+                                <p class="mt-2 text-xs text-gray-600 dark:text-gray-300">Format de l'examen</p>
+                            </div>
+                            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-primary-600 dark:bg-blue-900/30 dark:text-primary-300">
+                                <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg('clipboard-list'); ?></span>
+                            </div>
+                        </div>
                     </article>
-                    <article class="app-kpi-card app-kpi-card--indigo rounded-2xl border p-4">
-                        <p class="app-kpi-card__head">
-                            <span class="app-kpi-card__icon" aria-hidden="true"><?php echo dashboard_icon_svg('clock'); ?></span>
-                            <span>Durée</span>
-                        </p>
-                        <p class="app-kpi-card__value text-2xl"><?php echo e($durationLabel); ?></p>
-                        <p class="app-kpi-card__meta">Temps alloué</p>
+                    <article class="teacher-dashboard-card teacher-kpi-card rounded-xl border border-gray-100 bg-white p-4 shadow-card hover-lift dark:border-gray-700 dark:bg-gray-800">
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="min-w-0">
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Dur&eacute;e</p>
+                                <p class="mt-1 text-2xl font-bold text-gray-950 dark:text-white"><?php echo e($durationLabel); ?></p>
+                                <p class="mt-2 text-xs text-gray-600 dark:text-gray-300">Temps allou&eacute;</p>
+                            </div>
+                            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300">
+                                <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg('clock'); ?></span>
+                            </div>
+                        </div>
                     </article>
-                    <article class="app-kpi-card app-kpi-card--emerald rounded-2xl border p-4">
+                    <article class="teacher-dashboard-card teacher-kpi-card rounded-xl border border-gray-100 bg-white p-4 shadow-card hover-lift dark:border-gray-700 dark:bg-gray-800">
                         <p class="app-kpi-card__head">
                             <span class="app-kpi-card__icon" aria-hidden="true"><?php echo dashboard_icon_svg('award'); ?></span>
                             <span>Note min</span>
@@ -176,7 +192,7 @@ if ($variantCount < 1) {
                         <p class="app-kpi-card__value text-2xl"><?php echo e($minScoreLabel); ?></p>
                         <p class="app-kpi-card__meta">Seuil de validation</p>
                     </article>
-                    <article class="app-kpi-card app-kpi-card--sky rounded-2xl border p-4">
+                    <article class="teacher-dashboard-card teacher-kpi-card rounded-xl border border-gray-100 bg-white p-4 shadow-card hover-lift dark:border-gray-700 dark:bg-gray-800">
                         <p class="app-kpi-card__head">
                             <span class="app-kpi-card__icon" aria-hidden="true"><?php echo dashboard_icon_svg('layers'); ?></span>
                             <span>Contenu</span>
@@ -349,6 +365,7 @@ $subjectName = (string) ($exam['drive_subject_name'] ?? '');
                         <?php endif; ?>
                     </section>
                 <?php endif; ?>
+                </div>
             </main>
         </div>
     </div>

@@ -144,16 +144,16 @@ $courseActionButtonClass = static function (string $label): string {
         'Continuer', 'Modifier' => 'flex-1 rounded-lg border border-blue-500 bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-[0_14px_24px_-18px_rgba(37,99,235,0.68)] transition hover:bg-blue-700 dark:border-blue-400 dark:bg-blue-500 dark:text-white dark:hover:bg-blue-400',
         'Aperçu' => 'flex-1 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-center text-sm font-medium text-sky-700 transition hover:bg-sky-100 dark:border-sky-400/40 dark:bg-sky-500/15 dark:text-sky-100 dark:hover:bg-sky-500/25',
         'Statistiques' => 'flex-1 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-center text-sm font-medium text-violet-700 transition hover:bg-violet-100 dark:border-violet-400/40 dark:bg-violet-500/15 dark:text-violet-100 dark:hover:bg-violet-500/25',
-        'Détails' => 'flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-400/40 dark:bg-slate-500/15 dark:text-slate-100 dark:hover:bg-slate-500/25',
+        'Détails' => 'flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-800 transition hover:bg-slate-50 dark:border-slate-500/60 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700',
         'Corriger' => 'flex-1 rounded-lg border border-rose-500 bg-rose-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-[0_14px_24px_-18px_rgba(225,29,72,0.68)] transition hover:bg-rose-700 dark:border-rose-400 dark:bg-rose-500 dark:text-white dark:hover:bg-rose-400',
         'Restaurer' => 'flex-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-sm font-medium text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-400/40 dark:bg-emerald-500/15 dark:text-emerald-100 dark:hover:bg-emerald-500/25',
-        default => 'flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-400/40 dark:bg-slate-500/15 dark:text-slate-100 dark:hover:bg-slate-500/25',
+        default => 'flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-800 transition hover:bg-slate-50 dark:border-slate-500/60 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700',
     };
 };
 $courseArchiveButtonClass = static function (string $workflow): string {
     return $workflow === 'archived'
-        ? 'inline-flex h-10 w-10 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600 transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-400/40 dark:bg-emerald-500/15 dark:text-emerald-100 dark:hover:bg-emerald-500/25'
-        : 'inline-flex h-10 w-10 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-600 transition hover:border-rose-300 hover:bg-rose-100 dark:border-rose-400/40 dark:bg-rose-500/15 dark:text-rose-100 dark:hover:bg-rose-500/25';
+        ? 'teacher-course-card__archive-action teacher-course-card__archive-action--restore'
+        : 'teacher-course-card__archive-action teacher-course-card__archive-action--danger';
 };
 $workflowLabels = [
     'draft' => 'Brouillon',
@@ -722,7 +722,6 @@ $formatRating = static function (float $value): string {
                                 if ($workflow === 'approved' && $progressPct < 100) {
                                     $progressPct = 100;
                                 }
-                                $progressLabel = $workflow === 'approved' ? 'Complétion moyenne' : 'Progression de création';
                                 $primaryLabel = match ($workflow) {
                                     'draft' => 'Continuer',
                                     'submitted' => 'Détails',
@@ -742,6 +741,11 @@ $formatRating = static function (float $value): string {
                                     'archived' => 'Détails',
                                     default => 'Statistiques',
                                 };
+                                $secondaryIcon = match ($secondaryLabel) {
+                                    'Modifier' => 'pen-to-square',
+                                    'Détails' => 'circle-info',
+                                    default => 'eye',
+                                };
                                 $secondaryUrl = match ($workflow) {
                                     'draft', 'rejected' => site_url('teacher/course_preview?id=' . $courseId),
                                     'submitted' => site_url('teacher/course_edit?id=' . $courseId),
@@ -756,11 +760,11 @@ $formatRating = static function (float $value): string {
                                     : 'Le cours sera retiré du catalogue.';
                                 $archiveVariant = $workflow === 'archived' ? 'success' : 'danger';
                                 $cardSubline = match ($workflow) {
-                                    'approved' => $lessonsCnt . ' leçons · ' . $chaptersCnt . ' modules · ' . $enrollments . ' étudiants',
-                                    'submitted' => 'Soumis le ' . $courseUpdated . ' · En cours de validation',
-                                    'rejected' => 'Soumis le ' . $courseUpdated . ' · À corriger',
-                                    'archived' => 'Archivé le ' . $courseUpdated . ' · Hors catalogue',
-                                    default => 'En cours de création · ' . $lessonsCnt . ' leçons',
+                                    'approved' => $lessonsCnt . ' leçons · ' . $chaptersCnt . ' modules',
+                                    'submitted' => 'Soumis le ' . $courseUpdated,
+                                    'rejected' => 'À corriger depuis le ' . $courseUpdated,
+                                    'archived' => 'Archivé le ' . $courseUpdated,
+                                    default => $lessonsCnt > 0 ? ('En cours de création · ' . $lessonsCnt . ' leçons') : 'En cours de création',
                                 };
                             ?>
                             <article class="teacher-course-card flex flex-col transition duration-200 hover:-translate-y-0.5" data-course-state="<?php echo e($workflow); ?>">
@@ -782,60 +786,7 @@ $formatRating = static function (float $value): string {
                                         <h3 class="teacher-course-card__title text-lg font-bold text-gray-900 dark:text-white" title="<?php echo e($courseTitle); ?>"><?php echo e($courseTitle); ?></h3>
                                         <p class="teacher-course-card__subline text-xs text-gray-500 dark:text-gray-400"><?php echo e($cardSubline); ?></p>
                                     </div>
-
-                                    <div class="teacher-course-card__progress">
-                                        <div class="teacher-course-card__progress-head">
-                                            <span class="teacher-course-card__progress-label"><?php echo e($progressLabel); ?></span>
-                                            <span class="teacher-course-card__progress-value"><?php echo e((string) $progressPct); ?>%</span>
-                                        </div>
-                                        <div
-                                            class="teacher-course-card__progress-track"
-                                            role="progressbar"
-                                            aria-label="<?php echo e($progressLabel . ' : ' . (string) $progressPct . '%'); ?>"
-                                            aria-valuemin="0"
-                                            aria-valuemax="100"
-                                            aria-valuenow="<?php echo e((string) $progressPct); ?>"
-                                        >
-                                            <div class="teacher-course-card__progress-fill" style="width: <?php echo e((string) $progressPct); ?>%"></div>
-                                        </div>
-                                    </div>
-
-                                    <div class="teacher-course-card__meta">
-                                        <?php if ($workflow === 'approved' && $ratingCount > 0): ?>
-                                            <span class="teacher-course-card__meta-item" title="Note moyenne">
-                                                <i class="fas fa-star text-yellow-400" aria-hidden="true"></i>
-                                                <span><?php echo e($formatRating($rating)); ?></span>
-                                            </span>
-                                            <span class="teacher-course-card__meta-item" title="Prix">
-                                                <i class="fas fa-tag" aria-hidden="true"></i>
-                                                <span>Prix : <?php echo e($coursePriceLabel); ?></span>
-                                            </span>
-                                            <span class="teacher-course-card__meta-item" title="Avis">
-                                                <i class="fas fa-comment" aria-hidden="true"></i>
-                                                <span><?php echo e((string) $ratingCount); ?> avis</span>
-                                            </span>
-                                        <?php elseif ($workflow === 'draft'): ?>
-                                            <span class="teacher-course-card__meta-item" title="Prix">
-                                                <i class="fas fa-tag" aria-hidden="true"></i>
-                                                <span>Prix : <?php echo e($coursePriceLabel); ?></span>
-                                            </span>
-                                            <span class="teacher-course-card__meta-item" title="Dernière modification">
-                                                <i class="fas fa-calendar-alt" aria-hidden="true"></i>
-                                                <span><?php echo e($courseUpdated); ?></span>
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="teacher-course-card__meta-item" title="Prix">
-                                                <i class="fas fa-tag" aria-hidden="true"></i>
-                                                <span>Prix : <?php echo e($coursePriceLabel); ?></span>
-                                            </span>
-                                            <span class="teacher-course-card__meta-item" title="Suivi">
-                                                <i class="fas fa-info-circle" aria-hidden="true"></i>
-                                                <span><?php echo e($views > 0 ? (string) $views . ' vues' : 'Suivi en cours'); ?></span>
-                                            </span>
-                                        <?php endif; ?>
-                                    </div>
-
-                                    <div class="teacher-course-card__actions flex items-center gap-2">
+                                    <div class="teacher-course-card__actions">
                                         <a href="<?php echo e($primaryUrl); ?>" class="teacher-course-card__primary-action <?php echo e($courseActionButtonClass($primaryLabel)); ?>">
                                             <?php echo e($primaryLabel); ?>
                                         </a>
@@ -861,14 +812,38 @@ $formatRating = static function (float $value): string {
                                                 <span>Statistiques</span>
                                             </button>
                                         <?php endif; ?>
+                                        <?php if ($workflow !== 'approved' && $workflow !== 'archived' && $secondaryUrl !== ''): ?>
+                                            <a href="<?php echo e($secondaryUrl); ?>" class="teacher-course-card__secondary-action">
+                                                <i class="fas fa-<?php echo e($secondaryIcon); ?>" aria-hidden="true"></i>
+                                                <span><?php echo e($secondaryLabel); ?></span>
+                                            </a>
+                                        <?php endif; ?>
+                                        <form method="post" action="<?php echo e(site_url('teacher/courses')); ?>" class="teacher-course-card__action-form">
+                                            <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
+                                            <input type="hidden" name="action" value="<?php echo e($archiveAction); ?>">
+                                            <input type="hidden" name="course_id" value="<?php echo e((string) $courseId); ?>">
+                                            <input type="hidden" name="list_query" value="<?php echo e($listQuery); ?>">
+                                            <button
+                                                type="submit"
+                                                class="<?php echo e($courseArchiveButtonClass($workflow)); ?>"
+                                                data-confirm-action="form"
+                                                data-confirm-title="<?php echo e($archiveTitle); ?>"
+                                                data-confirm-message="<?php echo e($archiveMessage); ?>"
+                                                data-confirm-label="<?php echo e($archiveLabel); ?>"
+                                                data-confirm-variant="<?php echo e($archiveVariant); ?>"
+                                            >
+                                                <i class="fas <?php echo e($workflow === 'archived' ? 'fa-undo-alt' : 'fa-trash-alt'); ?>" aria-hidden="true"></i>
+                                                <span><?php echo e($archiveLabel); ?></span>
+                                            </button>
+                                        </form>
                                         <details class="teacher-course-card-menu relative">
                                             <summary class="teacher-course-card-menu__trigger" aria-label="Autres actions" title="Autres actions">
                                                 <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg('more-vertical'); ?></span>
                                             </summary>
                                             <div class="teacher-course-card-menu__panel" role="menu">
-                                                <?php if ($workflow !== 'approved'): ?>
+                                                <?php if ($secondaryUrl !== ''): ?>
                                                     <a href="<?php echo e($secondaryUrl); ?>" class="teacher-course-card-menu__item" role="menuitem">
-                                                        <i class="fas <?php echo $secondaryLabel === 'Statistiques' ? 'fa-chart-line' : 'fa-eye'; ?>" aria-hidden="true"></i>
+                                                        <i class="fas fa-<?php echo e($secondaryIcon); ?>" aria-hidden="true"></i>
                                                         <span><?php echo e($secondaryLabel); ?></span>
                                                     </a>
                                                 <?php endif; ?>
@@ -1279,7 +1254,7 @@ $draftStatusLabel = $workflowLabels[$draftStatus] ?? 'Brouillon';
                                                     <?php echo e($formatCount($enrollments)); ?>
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900 dark:text-white">
-                                                    <?php echo e($coursePriceLabel); ?>
+                                                    <span class="app-price"><?php echo e($coursePriceLabel); ?></span>
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-right">
                                                     <div class="inline-flex items-center justify-end gap-2">

@@ -290,7 +290,7 @@ if ($categorySpotlights === []) {
                                 <i class="fas fa-compass" aria-hidden="true"></i>
                                 Candidature simple
                             </span>
-                            <h2 class="mt-5 max-w-md text-3xl font-black tracking-tight sm:text-4xl">Pourquoi enseigner sur <?php echo e($platformName); ?> ?</h2>
+                            <h2 class="mt-5 max-w-md text-3xl font-black tracking-tight sm:text-4xl">Pourquoi enseigner sur <?php echo site_brand_name_html($platformName); ?> ?</h2>
                             <p class="mt-5 max-w-lg text-sm leading-8 text-slate-600 dark:text-blue-50/90 sm:text-base">
                                 Si vous avez une compétence à transmettre, le plus important est d’aller droit au but. On vous laisse décrire l’essentiel, puis on vérifie le dossier avant publication.
                             </p>
@@ -432,7 +432,7 @@ if ($categorySpotlights === []) {
                     <?php foreach ($faqItems as $faqItem): ?>
                         <details class="teacher-landing-faq group rounded-[28px] border border-slate-200/80 bg-white p-6 shadow-sm transition open:border-blue-300 open:bg-blue-50/40 dark:border-white/10 dark:bg-slate-900/70 dark:open:border-blue-400/30 dark:open:bg-blue-500/10">
                             <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-left">
-                                <span class="text-lg font-black tracking-tight text-slate-950 dark:text-white"><?php echo e((string) $faqItem['question']); ?></span>
+                                <span class="text-lg font-black tracking-tight text-slate-950 dark:text-white"><?php echo site_brand_name_html((string) $faqItem['question']); ?></span>
                                 <span class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-500 transition group-open:rotate-180 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
                                     <i class="fas fa-chevron-down" aria-hidden="true"></i>
                                 </span>

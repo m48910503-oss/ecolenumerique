@@ -190,7 +190,7 @@ $standaloneCssUrl = site_url('assets/css/standalone-dashboard.css?v=' . (@filemt
                 <?php endif; ?>
             </div>
             <div>
-                <p class="maintenance-brand__name"><?php echo e($siteName); ?></p>
+                <p class="maintenance-brand__name"><?php echo site_brand_name_html($siteName); ?></p>
             </div>
         </div>
 

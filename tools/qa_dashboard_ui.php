@@ -124,6 +124,9 @@ foreach ($sidebarFiles as $relativePath) {
         continue;
     }
     assertContainsAll($content, $relativePath, ['dashboard_menu_config('], $errors);
+    if ($relativePath === 'app/Views/teacher/_sidebar.php' && strpos($content, 'teacherDashboardVisibleSections') !== false) {
+        $errors[] = $relativePath . ' ne doit pas masquer des sections avec une whitelist figée.';
+    }
 }
 
 $topbarFiles = [

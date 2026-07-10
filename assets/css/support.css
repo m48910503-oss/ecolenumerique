@@ -210,6 +210,19 @@ body.font-sans {
     color: #1d4ed8;
 }
 
+#chat-widget .support-chat-attach,
+#chat-widget .support-chat-attach:hover {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+#chat-widget .support-chat-attach i,
+#chat-widget #minimize-chat i,
+#chat-widget #close-chat i,
+#chat-widget #send-chat-btn i {
+    color: #ffffff !important;
+}
+
 .support-chat-image-link {
     display: inline-flex;
     border-radius: 0.85rem;

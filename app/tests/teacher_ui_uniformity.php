@@ -302,6 +302,12 @@ ensure_contains(
     $errors,
     'Teacher sidebar should use the shared teacher menu configuration'
 );
+ensure_not_contains(
+    $rootDir . '/app/Views/teacher/_sidebar.php',
+    'teacherDashboardVisibleSections',
+    $errors,
+    'Teacher sidebar should not hide menu sections behind a hard-coded whitelist'
+);
 ensure_contains(
     $rootDir . '/app/Controllers/Teacher/PromotionsController.php',
     "'all'",

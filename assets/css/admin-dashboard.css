@@ -187,11 +187,23 @@ a {
 
 .admin-shell-root {
     min-height: 100vh;
+    height: 100dvh;
+    max-width: 100vw;
+    overflow: hidden;
+    overflow-x: clip;
+    width: 100%;
 }
 
 .admin-shell-main {
+    min-height: 0;
     min-width: 0;
+    height: 100%;
+    max-width: 100vw;
+    overflow-x: clip;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding-top: var(--admin-topbar-offset-mobile);
+    width: 100%;
 }
 
 .admin-shell-content {
@@ -210,6 +222,10 @@ html.dark .app-shell-sidebar,
 html[data-theme="dark"] .app-shell-sidebar {
     background: linear-gradient(180deg, color-mix(in srgb, #0284c7 8%, #0f172a 92%), #0f172a);
     box-shadow: 10px 0 30px -28px rgba(14, 165, 233, 0.24);
+}
+
+body.app-role-admin :is(.admin-dashboard-topbar, .app-shell-toolbar, .app-shell-sidebar, #admin-sidebar) {
+    border-radius: 0 !important;
 }
 
 .app-shell-sidebar__brand {
@@ -497,6 +513,39 @@ html[data-theme="dark"] .app-shell-toolbar {
     width: var(--app-control-height-sm);
     min-width: var(--app-control-height-sm);
     padding: 0;
+}
+
+body.app-role-admin #admin-sidebar .app-shell-sidebar__close {
+    display: none;
+    width: var(--app-control-height-sm);
+    min-width: var(--app-control-height-sm);
+    height: var(--app-control-height-sm);
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid var(--app-border);
+    border-radius: 0;
+    background: var(--app-surface);
+    color: var(--app-text);
+    box-shadow: none;
+    transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+body.app-role-admin #admin-sidebar .app-shell-sidebar__close:hover {
+    border-color: var(--app-border-strong);
+    background: var(--app-surface-hover);
+    color: var(--app-text);
+    transform: translateY(-1px);
+}
+
+body.app-role-admin #admin-sidebar .app-shell-sidebar__close-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
 }
 
 .admin-topbar-action--primary {
@@ -4069,9 +4118,9 @@ body.app-role-admin .app-shell-burger--desktop {
 }
 
 .admin-course-chip--price {
-    background: rgba(34, 197, 94, 0.15);
-    border-color: rgba(34, 197, 94, 0.32);
-    color: #86efac;
+    background: rgba(14, 165, 233, 0.14);
+    border-color: rgba(14, 165, 233, 0.32);
+    color: #7dd3fc;
 }
 
 .admin-course-chip--free {
@@ -4132,7 +4181,7 @@ html:not(.dark):not([data-theme="dark"]) .admin-course-chip--category {
 }
 
 html:not(.dark):not([data-theme="dark"]) .admin-course-chip--price {
-    color: #047857;
+    color: #0369a1;
 }
 
 html:not(.dark):not([data-theme="dark"]) .admin-course-chip--free {
@@ -4489,11 +4538,16 @@ html[data-theme="dark"] .admin-course-preview-page .admin-preview-meta--price {
     color: #cbd5e1;
 }
 
-.admin-course-chip--price,
+.admin-course-chip--price {
+    background: rgba(14, 165, 233, 0.12);
+    border-color: rgba(14, 165, 233, 0.24);
+    color: #7dd3fc;
+}
+
 .admin-course-chip--free {
-    background: rgba(34, 197, 94, 0.1);
-    border-color: rgba(34, 197, 94, 0.2);
-    color: #bbf7d0;
+    background: rgba(20, 184, 166, 0.1);
+    border-color: rgba(20, 184, 166, 0.2);
+    color: #99f6e4;
 }
 
 .admin-course-chip--duration {
@@ -4528,9 +4582,12 @@ html:not(.dark):not([data-theme="dark"]) .admin-course-chip--level-advanced {
     color: #475569;
 }
 
-html:not(.dark):not([data-theme="dark"]) .admin-course-chip--price,
+html:not(.dark):not([data-theme="dark"]) .admin-course-chip--price {
+    color: #0369a1;
+}
+
 html:not(.dark):not([data-theme="dark"]) .admin-course-chip--free {
-    color: #047857;
+    color: #0f766e;
 }
 
 html:not(.dark):not([data-theme="dark"]) .admin-course-chip--duration {
@@ -4563,28 +4620,30 @@ html[data-theme="dark"] .admin-course-stats-button:hover {
 }
 
 .admin-course-preview-button {
-    border: 1px solid rgba(20, 184, 166, 0.2);
-    background: #ccfbf1;
-    color: #0f766e;
+    border: 1px solid rgba(37, 99, 235, 0.28);
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #ffffff;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18);
 }
 
 .admin-course-preview-button:hover {
-    border-color: rgba(13, 148, 136, 0.3);
-    background: #99f6e4;
-    color: #115e59;
+    border-color: rgba(29, 78, 216, 0.45);
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
 }
 
 html.dark .admin-course-preview-button,
 html[data-theme="dark"] .admin-course-preview-button {
-    border-color: rgba(45, 212, 191, 0.24);
-    background: rgba(13, 148, 136, 0.18);
-    color: #99f6e4;
+    border-color: rgba(96, 165, 250, 0.35);
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #eff6ff;
 }
 
 html.dark .admin-course-preview-button:hover,
 html[data-theme="dark"] .admin-course-preview-button:hover {
-    background: rgba(13, 148, 136, 0.26);
-    color: #f0fdfa;
+    border-color: rgba(96, 165, 250, 0.5);
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
 }
 
 .admin-course-card {
@@ -4797,16 +4856,18 @@ html[data-theme="dark"] .admin-course-preview-button:hover {
     flex-direction: column;
     gap: 0.62rem;
     align-items: stretch;
-    justify-content: center;
+    justify-content: flex-start;
 }
 
 .admin-course-card__actions form {
+    display: flex;
     width: 100%;
 }
 
 .admin-course-action {
     display: inline-flex;
     width: 100%;
+    box-sizing: border-box;
     min-height: 2.9rem;
     align-items: center;
     justify-content: center;
@@ -4822,6 +4883,14 @@ html[data-theme="dark"] .admin-course-preview-button:hover {
 
 .admin-course-action:hover {
     transform: translateY(-1px);
+}
+
+body[data-view="admin/courses"] .admin-course-action :is(i, svg) {
+    color: inherit !important;
+    font-size: 0.92em;
+    line-height: 1;
+    flex-shrink: 0;
+    opacity: 1;
 }
 
 .admin-course-action--preview {
@@ -5035,12 +5104,48 @@ html[data-theme="dark"] .admin-course-action--stats:hover {
         flex-direction: column;
         flex-wrap: nowrap;
         align-self: stretch;
-        justify-content: center;
+        justify-content: flex-start;
     }
 
     .admin-course-card__actions > .admin-course-action,
     .admin-course-card__actions form {
         flex: 0 0 auto;
+    }
+}
+
+body[data-view="admin/courses"] .admin-course-card__actions {
+    gap: 0.5rem;
+}
+
+body[data-view="admin/courses"] .admin-course-action {
+    min-height: 2.55rem;
+    padding: 0.5rem 0.78rem;
+    border-radius: 0.95rem;
+    font-size: 0.84rem;
+    font-weight: 780;
+    gap: 0.4rem;
+}
+
+@media (min-width: 1200px) {
+    body[data-view="admin/courses"] .admin-course-card__layout {
+        grid-template-columns: 9rem minmax(0, 1fr) 13rem;
+        align-items: start;
+    }
+
+    body[data-view="admin/courses"] .admin-course-card__actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-content: start;
+        gap: 0.5rem;
+    }
+
+    body[data-view="admin/courses"] .admin-course-card[data-status="submitted"] .admin-course-card__actions > :first-child,
+    body[data-view="admin/courses"] .admin-course-card[data-status="approved"] .admin-course-card__actions > :nth-child(3) {
+        grid-column: 1 / -1;
+    }
+
+    body[data-view="admin/courses"] .admin-course-card__actions form {
+        display: flex;
     }
 }
 
@@ -5596,12 +5701,12 @@ html[data-theme="dark"] .admin-course-section-nav a:hover {
 
 @media (min-width: 1024px) {
     .admin-course-header-grid {
-        grid-template-columns: 8.25rem minmax(0, 1fr) 18rem;
+        grid-template-columns: 24rem minmax(0, 1fr) 18rem;
         align-items: start;
     }
 
     .admin-course-cover-frame {
-        min-height: 8.25rem;
+        min-height: 18rem;
     }
 }
 
@@ -8504,6 +8609,54 @@ html[data-theme="dark"] .admin-notifications-inspired .admin-notifications-pagin
     font-weight: 800;
 }
 
+.admin-error-logs-alert {
+    display: flex;
+    gap: 0.85rem;
+    margin-top: 0.95rem;
+    border: 1px solid color-mix(in srgb, #0ea5e9 30%, var(--app-border) 70%);
+    border-radius: 1rem;
+    background: linear-gradient(135deg, color-mix(in srgb, #0ea5e9 8%, var(--app-surface) 92%), var(--app-surface));
+    padding: 0.85rem 0.95rem;
+}
+
+.admin-error-logs-alert--info {
+    color: color-mix(in srgb, #0f172a 78%, #0ea5e9 22%);
+}
+
+.admin-error-logs-alert__icon {
+    display: inline-flex;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.85rem;
+    background: color-mix(in srgb, #0ea5e9 12%, var(--app-surface) 88%);
+    color: #0284c7;
+}
+
+.admin-error-logs-alert__content {
+    min-width: 0;
+}
+
+.admin-error-logs-alert__title {
+    margin: 0 0 0.2rem;
+    font-size: 0.72rem;
+    font-weight: 950;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.admin-error-logs-alert__content p {
+    margin: 0;
+}
+
+.admin-error-logs-alert__content p:not(.admin-error-logs-alert__title) {
+    font-size: 0.84rem;
+    font-weight: 750;
+    line-height: 1.55;
+}
+
 .admin-error-logs-table-card__head {
     display: flex;
     flex-wrap: wrap;
@@ -8581,6 +8734,29 @@ html[data-theme="dark"] .admin-notifications-inspired .admin-notifications-pagin
     color: var(--app-text-secondary);
     font-weight: 750;
     overflow-wrap: anywhere;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.admin-error-logs-table__message-main {
+    color: var(--app-text);
+    font-weight: 850;
+    line-height: 1.45;
+}
+
+.admin-error-logs-table__context {
+    display: block;
+    border: 1px solid color-mix(in srgb, var(--admin-shell-accent) 14%, var(--app-border) 86%);
+    border-radius: 0.9rem;
+    background: color-mix(in srgb, var(--admin-shell-accent) 6%, var(--app-surface) 94%);
+    color: var(--app-text-secondary);
+    font-family: var(--app-font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.45;
+    padding: 0.6rem 0.7rem;
+    margin: 0;
 }
 
 .admin-error-logs-table__message pre,
@@ -8737,6 +8913,26 @@ html[data-theme="dark"] .admin-error-log-stat {
     background:
         linear-gradient(135deg, rgba(37, 99, 235, 0.05), transparent 55%),
         rgba(15, 23, 42, 0.86);
+}
+
+html.dark .admin-error-logs-alert,
+html[data-theme="dark"] .admin-error-logs-alert {
+    border-color: color-mix(in srgb, #0ea5e9 28%, var(--app-border) 72%);
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(15, 23, 42, 0.84));
+    color: #dbeafe;
+}
+
+html.dark .admin-error-logs-alert__icon,
+html[data-theme="dark"] .admin-error-logs-alert__icon {
+    background: rgba(14, 165, 233, 0.16);
+    color: #7dd3fc;
+}
+
+html.dark .admin-error-logs-table__context,
+html[data-theme="dark"] .admin-error-logs-table__context {
+    border-color: rgba(148, 163, 184, 0.22);
+    background: rgba(15, 23, 42, 0.72);
+    color: #cbd5e1;
 }
 
 html.dark .admin-log-badge--critical,
@@ -10768,4 +10964,77 @@ body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-shell-ta
 body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-shell-section-title,
 body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-shell-label {
     font-size: 0.8rem;
+}
+
+@media (max-width: 1023.98px) {
+    body.app-role-admin .admin-shell-main {
+        padding-left: 0 !important;
+    }
+
+    body.app-role-admin.sidebar-open .admin-shell-main {
+        overflow: hidden !important;
+    }
+
+    body.app-role-admin :is(.admin-dashboard-topbar, .app-shell-toolbar) {
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+    }
+
+    body.app-role-admin .admin-dashboard-topbar .js-sidebar-toggle,
+    body.app-role-admin #admin-sidebar [data-close-sidebar] {
+        display: inline-flex !important;
+    }
+
+    body.app-role-admin #admin-sidebar .app-shell-burger--desktop {
+        display: none !important;
+    }
+
+    body.app-role-admin .js-sidebar-backdrop {
+        display: block !important;
+    }
+
+    body.app-role-admin.sidebar-open :is(.admin-dashboard-topbar, .app-shell-toolbar) {
+        z-index: 10 !important;
+    }
+
+    body.app-role-admin.sidebar-open .js-sidebar-backdrop {
+        z-index: 50 !important;
+    }
+
+    body.app-role-admin #admin-sidebar {
+        position: fixed !important;
+        left: -100% !important;
+        width: min(15rem, calc(100vw - 4.5rem)) !important;
+        max-width: calc(100vw - 4.5rem) !important;
+        height: 100dvh !important;
+        border-top-right-radius: 1.5rem !important;
+        border-bottom-right-radius: 1.5rem !important;
+        box-shadow: 0 22px 52px -30px rgba(15, 23, 42, 0.46);
+    }
+
+    body.app-role-admin.sidebar-open #admin-sidebar {
+        left: 0 !important;
+        z-index: 60 !important;
+    }
+
+    body.app-role-admin.sidebar-collapsed #admin-sidebar {
+        left: -100% !important;
+    }
+}
+
+@media (max-width: 1279.98px) {
+    body.app-role-admin .admin-dashboard-topbar > :first-child {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    body.app-role-admin .admin-dashboard-topbar > :last-child {
+        min-width: 0;
+        gap: 0.5rem;
+    }
+
+    body.app-role-admin .admin-topbar-search {
+        display: none !important;
+    }
 }

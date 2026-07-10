@@ -48,7 +48,7 @@ if (!isset($stepMeta[$initialStep])) {
                     <?php if ($siteLogoUrl !== ''): ?>
                         <img src="<?php echo e($siteLogoUrl); ?>" alt="Logo" class="h-10 w-auto">
                     <?php else: ?>
-                        <span class="text-3xl font-extrabold tracking-tight text-blue-600">Ecole Numerique</span>
+                        <span class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white"><?php echo site_brand_name_html('Ecole Numerique'); ?></span>
                     <?php endif; ?>
                 </a>
                 <a href="<?php echo e($coursesIndexUrl); ?>" class="text-sm font-semibold text-blue-600 transition hover:text-blue-700">Quitter</a>

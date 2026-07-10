@@ -181,12 +181,12 @@ final class WebPushService extends Service
             'Content-Length: 0',
         ];
 
-        [$responseBody, $httpCode, $curlError] = $this->executePushRequest($endpoint, $headers, false);
-        if ($responseBody === false && $this->shouldRetryWithoutSslVerification($curlError)) {
-            [$responseBody, $httpCode, $curlError] = $this->executePushRequest($endpoint, $headers, true);
-        }
+        [$responseBody, $httpCode, $curlError] = $this->executePushRequest($endpoint, $headers);
 
         if ($responseBody === false) {
+            if ($this->isSslVerificationError($curlError)) {
+                return ['status' => 'failed', 'error' => $curlError !== '' ? $curlError : 'ssl_verification_failed'];
+            }
             return ['status' => 'retry', 'error' => $curlError !== '' ? $curlError : 'curl_exec_error'];
         }
 
@@ -206,7 +206,7 @@ final class WebPushService extends Service
      * @param array<int,string> $headers
      * @return array{0:string|false,1:int,2:string}
      */
-    private function executePushRequest(string $endpoint, array $headers, bool $disableSslVerification): array
+    private function executePushRequest(string $endpoint, array $headers): array
     {
         $ch = curl_init($endpoint);
         if ($ch === false) {
@@ -220,16 +220,13 @@ final class WebPushService extends Service
             CURLOPT_TIMEOUT => 10,
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_POSTFIELDS => '',
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
         ]);
 
-        if ($disableSslVerification) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        } else {
-            $caInfo = $this->caInfoPath();
-            if ($caInfo !== '') {
-                curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
-            }
+        $caInfo = $this->caInfoPath();
+        if ($caInfo !== '') {
+            curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
         }
 
         $responseBody = curl_exec($ch);
@@ -240,27 +237,13 @@ final class WebPushService extends Service
         return [$responseBody, $httpCode, $curlError];
     }
 
-    private function shouldRetryWithoutSslVerification(string $error): bool
+    private function isSslVerificationError(string $error): bool
     {
-        if (!$this->localInsecureSslAllowed()) {
-            return false;
-        }
-
         $error = strtolower($error);
         return str_contains($error, 'ssl certificate')
             || str_contains($error, 'certificate problem')
             || str_contains($error, 'self-signed certificate')
             || str_contains($error, 'unable to get local issuer certificate');
-    }
-
-    private function localInsecureSslAllowed(): bool
-    {
-        if (function_exists('is_local_environment') && \is_local_environment()) {
-            return true;
-        }
-
-        $host = strtolower(trim((string) ($_SERVER['HTTP_HOST'] ?? '')));
-        return in_array($host, ['localhost', '127.0.0.1', '[::1]'], true);
     }
 
     /**
@@ -302,7 +285,9 @@ final class WebPushService extends Service
         $candidates = [
             trim((string) ini_get('curl.cainfo')),
             trim((string) ini_get('openssl.cafile')),
+            'C:\\xampp\\phpMyAdmin\\vendor\\composer\\ca-bundle\\res\\cacert.pem',
             'C:\\xampp\\apache\\bin\\curl-ca-bundle.crt',
+            'C:\\xampp\\perl\\vendor\\lib\\Mozilla\\CA\\cacert.pem',
         ];
 
         foreach ($candidates as $path) {

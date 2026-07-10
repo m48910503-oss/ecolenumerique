@@ -1171,6 +1171,17 @@ body.certificate-page {
   box-shadow: 0 32px 92px -62px rgba(2, 6, 23, 0.96);
 }
 
+.cert-model-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cert-model-stage .admin-certificate-card,
+.cert-model-stage .admin-certificate-card--landscape {
+  width: min(100%, 980px);
+}
+
 .cert-document {
   position: relative;
   display: flex;
@@ -1635,6 +1646,12 @@ body.certificate-page {
     height: auto;
     min-height: 4.4rem;
   }
+
+  .cert-model-stage .admin-certificate-card,
+  .cert-model-stage .admin-certificate-card--landscape {
+    width: 100%;
+    max-width: 100%;
+  }
 }
 
 @page {
@@ -1669,6 +1686,38 @@ body.certificate-page {
     border-radius: 0;
     background: transparent;
     box-shadow: none;
+  }
+
+  .cert-model-stage .admin-certificate-card,
+  .cert-model-stage .admin-certificate-card--landscape {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    aspect-ratio: 1.414 / 1 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    break-after: avoid !important;
+    break-before: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .cert-model-stage .admin-certificate-content {
+    box-sizing: border-box !important;
+    min-height: 0 !important;
+    padding: 9mm 10mm 8mm !important;
+  }
+
+  .cert-model-stage .admin-certificate-footer {
+    margin-top: 0.35rem !important;
+    padding-top: 0.32rem !important;
+  }
+
+  .cert-model-stage .admin-certificate-verify strong {
+    max-width: 18rem !important;
+    white-space: nowrap !important;
   }
 
   .cert-document {

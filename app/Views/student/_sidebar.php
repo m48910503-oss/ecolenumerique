@@ -85,6 +85,9 @@ $isProfileComplete = $profileCompletionPct >= 100;
         <i class="fas fa-graduation-cap"></i>
       </span>
     <?php endif; ?>
+    <button type="button" class="app-shell-sidebar__close ml-auto order-last md:hidden" data-close-sidebar aria-label="Fermer le menu">
+      <span class="app-shell-sidebar__close-mark" aria-hidden="true">&#x2715;</span>
+    </button>
     <span class="whitespace-nowrap text-lg font-bold tracking-tight text-gray-900 dark:text-white sm:text-xl">École <span class="text-blue-600 dark:text-blue-400">Numérique</span></span>
   </div>
 
@@ -206,8 +209,8 @@ $isProfileComplete = $profileCompletionPct >= 100;
             <span class="app-icon" aria-hidden="true"><i class="<?php echo e(dashboard_icon_fa_class('panel-left-close')); ?>"></i></span>
             <span class="sr-only">Réduire la barre latérale</span>
         </button>
-        <button type="button" class="app-shell-burger ml-auto md:hidden" data-close-sidebar aria-label="Fermer le menu">
-            &times;
+        <button type="button" class="app-shell-sidebar__close ml-auto md:hidden" data-close-sidebar aria-label="Fermer le menu">
+            <span class="app-shell-sidebar__close-mark" aria-hidden="true">&#x2715;</span>
         </button>
     </div>
 

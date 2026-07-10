@@ -844,6 +844,24 @@ body.app-auth-page :is(p, li, label, a, button, input, select, textarea, summary
   line-height: 1.45 !important;
 }
 
+.app-price {
+  color: #ea580c;
+}
+
+html.dark .app-price,
+html[data-theme="dark"] .app-price {
+  color: #fdba74;
+}
+
+.app-price--promo {
+  color: #dc2626;
+}
+
+html.dark .app-price--promo,
+html[data-theme="dark"] .app-price--promo {
+  color: #fca5a5;
+}
+
 body[data-view^="web/"] :is(p, span, li, label, a, button, th)[class*="uppercase"],
 body[data-view^="auth/"] :is(p, span, li, label, a, button, th)[class*="uppercase"],
 body.app-auth-page :is(p, span, li, label, a, button, th)[class*="uppercase"],

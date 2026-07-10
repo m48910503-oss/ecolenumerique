@@ -385,9 +385,11 @@
       .dark .en-support-modal__panel, html[data-theme="dark"] .en-support-modal__panel { border-color: rgba(71, 85, 105, 0.7); background: #111827; color: #f8fafc; }
       .en-support-modal__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1rem; border-bottom: 1px solid rgba(226, 232, 240, 0.92); background: linear-gradient(135deg, #2563eb, #06b6d4); color: #ffffff; }
       .dark .en-support-modal__header, html[data-theme="dark"] .en-support-modal__header { border-bottom-color: rgba(30, 41, 59, 0.8); }
-      .en-support-modal__header-icon { display: inline-flex; width: 2.75rem; height: 2.75rem; flex: 0 0 auto; align-items: center; justify-content: center; border-radius: 999px; background: rgba(255, 255, 255, 0.16); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2); }
-      .en-support-modal__title { margin: 0; font-size: 1rem; font-weight: 800; line-height: 1.25; }
-      .en-support-modal__subtitle { margin: 0.2rem 0 0; color: rgba(255, 255, 255, 0.86); font-size: 0.78rem; line-height: 1.35; }
+      .en-support-modal__header-icon { display: inline-flex; width: 2.75rem; height: 2.75rem; flex: 0 0 auto; align-items: center; justify-content: center; border-radius: 999px; background: rgba(255, 255, 255, 0.16); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2); color: #ffffff; }
+      .en-support-modal__header-icon i,
+      .en-support-modal__header-icon svg { color: #ffffff; fill: currentColor; --app-icon-color: #ffffff; }
+      .en-support-modal__title { margin: 0; max-width: calc(100% - 6rem); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.92rem; font-weight: 800; line-height: 1.15; letter-spacing: -0.01em; }
+      .en-support-modal__subtitle { margin: 0.18rem 0 0; color: rgba(255, 255, 255, 0.86); font-size: 0.74rem; line-height: 1.28; }
       .en-support-modal__close { display: inline-flex; width: 2rem; height: 2rem; align-items: center; justify-content: center; border: 0; border-radius: 999px; background: rgba(255, 255, 255, 0.14); color: #ffffff; cursor: pointer; transition: background 0.2s ease; }
       .en-support-modal__close:hover { background: rgba(255, 255, 255, 0.24); }
       .en-support-modal__tickets { display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.75rem 1rem; border-bottom: 1px solid #e2e8f0; background: #f8fafc; scrollbar-width: thin; }
@@ -453,9 +455,9 @@
       .en-support-modal__backdrop { display: none; }
       .en-support-modal__panel { pointer-events: auto; width: min(480px, calc(100vw - 1rem)); max-height: min(620px, calc(100vh - 1rem)); border-color: rgba(226, 232, 240, 0.9); border-radius: 18px; box-shadow: 0 24px 64px -28px rgba(15, 23, 42, 0.72); }
       .en-support-modal__header { align-items: center; gap: 0.75rem; padding: 1.15rem 1.25rem; border-bottom: 0; background: #2563eb; }
-      .en-support-modal__header-icon { width: 2.6rem; height: 2.6rem; border: 2px solid rgba(255, 255, 255, 0.88); background: rgba(255, 255, 255, 0.18); font-size: 1rem; }
-      .en-support-modal__title { font-size: 1.05rem; font-weight: 850; }
-      .en-support-modal__subtitle { font-size: 0.86rem; font-weight: 700; }
+      .en-support-modal__header-icon { width: 2.6rem; height: 2.6rem; border: 2px solid rgba(255, 255, 255, 0.88); background: rgba(255, 255, 255, 0.18); color: #ffffff; font-size: 1rem; }
+      .en-support-modal__title { font-size: 0.96rem; font-weight: 850; line-height: 1.15; }
+      .en-support-modal__subtitle { font-size: 0.78rem; font-weight: 700; line-height: 1.25; }
       .en-support-modal__header-actions { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 0.25rem; }
       .en-support-modal__close { width: 1.85rem; height: 1.85rem; background: transparent; font-size: 0.95rem; }
       .en-support-modal__close:hover { background: rgba(255, 255, 255, 0.16); }
@@ -510,16 +512,17 @@
         color: #ffffff;
       }
       .en-support-modal__title {
-        font-size: 1rem;
+        max-width: calc(100% - 5.5rem);
+        font-size: 0.82rem;
+        font-weight: 800;
         line-height: 1.12;
-        white-space: nowrap;
       }
       .en-support-modal__subtitle {
-        margin-top: 0.25rem;
+        margin-top: 0.16rem;
         color: rgba(255, 255, 255, 0.9);
-        font-size: 0.82rem;
+        font-size: 0.72rem;
         font-weight: 750;
-        line-height: 1.2;
+        line-height: 1.18;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -653,16 +656,17 @@
         font-size: 0.9rem;
       }
       .en-support-modal__title {
-        font-size: 0.875rem;
+        max-width: calc(100% - 5rem);
+        font-size: 0.8rem;
         font-weight: 800;
-        line-height: 1.2;
+        line-height: 1.12;
       }
       .en-support-modal__subtitle {
-        margin-top: 0.1rem;
+        margin-top: 0.08rem;
         color: #dbeafe;
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         font-weight: 500;
-        line-height: 1.25;
+        line-height: 1.18;
       }
       .en-support-modal__close {
         width: 1.55rem;

@@ -77,7 +77,7 @@ final class SiteSettingsService extends Service
         $dgSignatureUrl = $this->pathToUrl($dgSignaturePath);
 
         $logoMaxMb = 5;
-        $dgSignatureMaxMb = 2;
+        $dgSignatureMaxMb = 1;
         $submittedTab = '';
 
         if ($method === 'POST') {
@@ -422,6 +422,16 @@ final class SiteSettingsService extends Service
         if (empty($allowed[$mimeType])) {
             $errors[] = 'Format ' . $this->uploadLabel($prefix) . ' invalide (PNG, JPG, WebP).';
             return null;
+        }
+
+        if ($prefix === 'dg_signature') {
+            $dimensions = @getimagesize($tmpPath);
+            $width = is_array($dimensions) ? (int) ($dimensions[0] ?? 0) : 0;
+            $height = is_array($dimensions) ? (int) ($dimensions[1] ?? 0) : 0;
+            if ($mimeType !== 'image/png' || $width !== 800 || $height !== 240) {
+                $errors[] = 'La signature DG doit être un PNG transparent de 800 × 240 px.';
+                return null;
+            }
         }
 
         $uploadDir = __DIR__ . '/../../../storage/uploads/site';

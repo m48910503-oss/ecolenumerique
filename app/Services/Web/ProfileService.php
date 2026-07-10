@@ -46,7 +46,7 @@ final class ProfileService extends Service
         $notificationPreferences = $this->normalizeNotificationPreferences($displayUser['notification_preferences_json'] ?? null);
 
         $avatarMaxMb = 2;
-        $signatureMaxMb = 2;
+        $signatureMaxMb = 1;
         $authProvider = strtolower(trim((string) ($displayUser['auth_provider'] ?? 'local')));
         if ($authProvider === '') {
             $authProvider = 'local';
@@ -245,7 +245,8 @@ final class ProfileService extends Service
                 $signatureMaxMb,
                 'signatures',
                 'signature_',
-                $signaturePath
+                $signaturePath,
+                true
             );
             $errors = array_merge($errors, $signatureErrors);
             if ($signatureUploadPath !== null) {
@@ -262,9 +263,6 @@ final class ProfileService extends Service
         }
 
         if ($errors !== []) {
-            if ($e->getMessage() === 'profile_email_delivery_failed') {
-                $errors = ["Le profil n a pas ete enregistre car l email de verification n a pas pu etre envoye."];
-            }
             return [
                 'user' => $user,
                 'studentProfile' => $studentProfile,
@@ -513,7 +511,14 @@ final class ProfileService extends Service
         return $phone;
     }
 
-    private function handleImageUpload(?array $file, int $maxMb, string $folder, string $prefix, string $currentPath): array
+    private function handleImageUpload(
+        ?array $file,
+        int $maxMb,
+        string $folder,
+        string $prefix,
+        string $currentPath,
+        bool $requireSignatureCanvas = false
+    ): array
     {
         if (!$file || !isset($file['error']) || (int) $file['error'] === UPLOAD_ERR_NO_FILE) {
             return [null, []];
@@ -555,6 +560,21 @@ final class ProfileService extends Service
         }
         if ($mime !== '' && !in_array($mime, $allowedMime, true)) {
             $errors[] = 'Format invalide (jpg, png, webp).';
+        }
+
+        if ($requireSignatureCanvas) {
+            if ($mime === '') {
+                $mime = strtolower(trim((string) ($file['type'] ?? '')));
+            }
+            if ($mime !== 'image/png') {
+                $errors[] = 'La signature doit être convertie en PNG transparent.';
+            }
+            $dimensions = @getimagesize($tmpName);
+            $width = is_array($dimensions) ? (int) ($dimensions[0] ?? 0) : 0;
+            $height = is_array($dimensions) ? (int) ($dimensions[1] ?? 0) : 0;
+            if ($width !== 800 || $height !== 240) {
+                $errors[] = 'Dimensions de signature invalides : 800 × 240 px attendus.';
+            }
         }
 
         if ($errors !== []) {

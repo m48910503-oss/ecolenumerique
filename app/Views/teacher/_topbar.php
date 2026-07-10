@@ -35,8 +35,8 @@ if ($teacherDashboardShell !== false) {
     <script src="<?php echo e($supportModalJsUrl); ?>" defer></script>
     <header class="teacher-dashboard-topbar fixed left-0 top-0 z-50 flex h-16 w-full items-center justify-between border-b border-gray-200 bg-white/80 px-3 backdrop-blur-xl dark:border-gray-700 dark:bg-gray-800/80 sm:h-[4.5rem] sm:px-4 lg:px-6">
         <div class="flex items-center gap-3 min-w-0 sm:gap-4">
-            <button type="button" class="md:hidden rounded-lg p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 js-sidebar-toggle" aria-controls="teacher-dashboard-sidebar" aria-expanded="false" aria-label="Ouvrir le menu" title="Ouvrir le menu">
-                <i class="fas fa-bars"></i>
+            <button type="button" class="md:hidden inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:border-gray-300 hover:bg-gray-100 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:text-white js-sidebar-toggle" aria-controls="teacher-dashboard-sidebar" aria-expanded="false" aria-label="Ouvrir le menu" title="Ouvrir le menu">
+                <i class="fas fa-bars text-lg" aria-hidden="true"></i>
             </button>
             <div class="min-w-0">
                 <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-gray-500 dark:text-gray-400">Espace formateur</p>
@@ -44,7 +44,7 @@ if ($teacherDashboardShell !== false) {
             </div>
         </div>
         <div class="teacher-dashboard-topbar__actions flex items-center gap-2 sm:gap-4 flex-nowrap">
-            <div class="relative hidden md:block">
+            <div class="teacher-dashboard-topbar__search relative hidden md:block">
                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
                 <input type="text" placeholder="Rechercher..." class="pl-9 pr-4 py-2 bg-gray-100 dark:bg-gray-700 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none w-64">
             </div>

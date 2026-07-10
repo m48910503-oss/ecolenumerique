@@ -91,8 +91,8 @@
         }
     `;
 
-    const THEME_ICON_LIGHT = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.15"></circle><path d="M12 2.75v2.1"></path><path d="M12 19.15v2.1"></path><path d="m5.46 5.46 1.48 1.48"></path><path d="m17.06 17.06 1.48 1.48"></path><path d="M2.75 12h2.1"></path><path d="M19.15 12h2.1"></path><path d="m5.46 18.54 1.48-1.48"></path><path d="m17.06 6.94 1.48-1.48"></path></svg>';
-    const THEME_ICON_DARK = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3.6a7.9 7.9 0 1 0 5.2 13.4A8.8 8.8 0 1 1 15.2 3.6Z"></path><path d="M16.7 5.2v2.1"></path><path d="M15.65 6.25h2.1"></path><path d="m19.55 8.15.55.55"></path><path d="m20.1 8.15-.55.55"></path></svg>';
+    const THEME_ICON_LIGHT = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.15"></circle><path d="M12 2.8v2.5"></path><path d="M12 18.7v2.5"></path><path d="M2.8 12h2.5"></path><path d="M18.7 12h2.5"></path></svg>';
+    const THEME_ICON_DARK = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3.6A7.9 7.9 0 1 0 20.4 17a8.7 8.7 0 1 1-5.2-13.4Z"></path></svg>';
     const scrollTopState = {
         button: null,
         initialized: false,

@@ -11,17 +11,32 @@
 
   const desktopToggleEnabled =
     body.classList.contains('app-role-teacher')
-    || (
-      body.dataset?.sidebarDesktopToggle === '1'
-      && !body.classList.contains('app-role-admin')
-    );
+    || body.dataset?.sidebarDesktopToggle === '1';
 
   const detailSections = Array.from(
     sidebar.querySelectorAll('details.app-shell-sidebar__section')
   );
   const storageKey = `app.sidebar.state.${sidebar.id || body.dataset?.view || 'default'}`;
 
-  const isDesktop = () => window.innerWidth >= 768;
+  const desktopBreakpoint = () => {
+    const configured = parseInt(body.dataset?.sidebarDesktopBreakpoint || '', 10);
+    if (Number.isFinite(configured) && configured >= 640) {
+      return configured;
+    }
+
+    if (
+      body.classList.contains('app-role-admin')
+      || body.classList.contains('app-role-teacher')
+      || body.classList.contains('app-role-student')
+      || body.classList.contains('student-dashboard-page')
+    ) {
+      return 1024;
+    }
+
+    return 768;
+  };
+
+  const isDesktop = () => window.innerWidth >= desktopBreakpoint();
 
   const readDesktopState = () => {
     try {

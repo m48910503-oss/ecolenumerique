@@ -323,7 +323,7 @@ $backUrl = site_url('teacher/promotions');
               </div>
               <div class="rounded-2xl border border-white/80 bg-white/85 px-4 py-3 shadow-sm ring-1 ring-slate-100 dark:border-slate-700 dark:bg-slate-900/70 dark:ring-slate-700">
                 <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Prix final</p>
-                <p class="mt-1 text-sm font-bold text-slate-900 dark:text-white"><?php echo e($previewFinalPrice !== null ? $formatMoney((int) $previewFinalPrice) : '—'); ?></p>
+                <p class="app-price mt-1 text-sm font-bold<?php echo $previewFinalPrice !== null ? ' app-price--promo' : ''; ?>"><?php echo e($previewFinalPrice !== null ? $formatMoney((int) $previewFinalPrice) : '—'); ?></p>
               </div>
             </div>
           </div>
@@ -453,7 +453,7 @@ $backUrl = site_url('teacher/promotions');
                       <div class="mt-4 grid gap-3 sm:grid-cols-3">
                         <div>
                           <p class="text-xs font-semibold uppercase tracking-[0.18em] <?php echo $isCouponMode ? 'text-violet-700/80 dark:text-violet-300/80' : 'text-sky-700/80 dark:text-sky-300/80'; ?>">Prix actuel</p>
-                          <p data-promo-preview-current class="mt-1 text-sm font-semibold text-gray-900 dark:text-white"><?php echo e($selectedCoursePrice > 0 ? $formatMoney($selectedCoursePrice) : '—'); ?></p>
+                          <p data-promo-preview-current class="app-price mt-1 text-sm font-semibold"><?php echo e($selectedCoursePrice > 0 ? $formatMoney($selectedCoursePrice) : '—'); ?></p>
                         </div>
                         <div>
                           <p class="text-xs font-semibold uppercase tracking-[0.18em] <?php echo $isCouponMode ? 'text-violet-700/80 dark:text-violet-300/80' : 'text-sky-700/80 dark:text-sky-300/80'; ?>">Remise</p>
@@ -461,7 +461,7 @@ $backUrl = site_url('teacher/promotions');
                         </div>
                         <div>
                           <p class="text-xs font-semibold uppercase tracking-[0.18em] <?php echo $isCouponMode ? 'text-violet-700/80 dark:text-violet-300/80' : 'text-sky-700/80 dark:text-sky-300/80'; ?>">Prix final</p>
-                          <p data-promo-preview-final class="mt-1 text-sm font-semibold text-gray-900 dark:text-white"><?php echo e($previewFinalPrice !== null ? $formatMoney((int) $previewFinalPrice) : '—'); ?></p>
+                          <p data-promo-preview-final class="app-price mt-1 text-sm font-semibold<?php echo $previewFinalPrice !== null ? ' app-price--promo' : ''; ?>"><?php echo e($previewFinalPrice !== null ? $formatMoney((int) $previewFinalPrice) : '—'); ?></p>
                         </div>
                       </div>
                       <p data-promo-preview-savings class="mt-3 text-xs <?php echo $isCouponMode ? 'text-violet-700 dark:text-violet-300' : 'text-sky-700 dark:text-sky-300'; ?>"><?php echo e($previewSavingsLabel); ?></p>
@@ -482,7 +482,7 @@ $backUrl = site_url('teacher/promotions');
                         </div>
                         <div class="rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800/80">
                           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Prix final estimé</p>
-                          <p data-promo-summary-final class="mt-1 text-sm font-semibold text-slate-900 dark:text-white"><?php echo e($previewFinalPrice !== null ? $formatMoney((int) $previewFinalPrice) : '—'); ?></p>
+                          <p data-promo-summary-final class="app-price mt-1 text-sm font-semibold<?php echo $previewFinalPrice !== null ? ' app-price--promo' : ''; ?>"><?php echo e($previewFinalPrice !== null ? $formatMoney((int) $previewFinalPrice) : '—'); ?></p>
                         </div>
                       </div>
                     </div>
@@ -607,7 +607,7 @@ $backUrl = site_url('teacher/promotions');
                         </div>
                         <div class="rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800/80">
                           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Prix final</p>
-                          <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-white"><?php echo e($previewFinalPrice !== null ? $formatMoney((int) $previewFinalPrice) : '—'); ?></p>
+                          <p class="app-price mt-1 text-sm font-semibold<?php echo $previewFinalPrice !== null ? ' app-price--promo' : ''; ?>"><?php echo e($previewFinalPrice !== null ? $formatMoney((int) $previewFinalPrice) : '—'); ?></p>
                         </div>
                         <div class="rounded-xl bg-slate-50 px-4 py-3 sm:col-span-2 dark:bg-slate-800/80">
                           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Période</p>
@@ -753,7 +753,7 @@ $backUrl = site_url('teacher/promotions');
                       </div>
                       <div class="rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-slate-100 dark:bg-slate-900 dark:ring-slate-700">
                         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Prix final</p>
-                        <p class="mt-1 text-xl font-extrabold text-slate-950 dark:text-white"><?php echo e($previewFinalPrice !== null ? $formatMoney((int) $previewFinalPrice) : '—'); ?></p>
+                        <p class="app-price mt-1 text-xl font-extrabold<?php echo $previewFinalPrice !== null ? ' app-price--promo' : ''; ?>"><?php echo e($previewFinalPrice !== null ? $formatMoney((int) $previewFinalPrice) : '—'); ?></p>
                       </div>
                     </div>
                   </div>
@@ -768,7 +768,7 @@ $backUrl = site_url('teacher/promotions');
                         </div>
                         <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3 dark:border-slate-800">
                           <dt class="text-sm text-slate-500 dark:text-slate-400">Réduction</dt>
-                          <dd class="text-sm font-semibold text-slate-900 dark:text-white text-right">
+                          <dd class="app-price text-sm font-semibold text-right">
                             <?php echo e($promoType === 'amount'
                                 ? $formatMoney((int) $promoAmountRaw)
                                 : ($compactNumber((float) $promoPercentRaw) . '%')); ?>
@@ -776,11 +776,11 @@ $backUrl = site_url('teacher/promotions');
                         </div>
                         <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3 dark:border-slate-800">
                           <dt class="text-sm text-slate-500 dark:text-slate-400">Prix actuel</dt>
-                          <dd class="text-sm font-semibold text-slate-900 dark:text-white text-right"><?php echo e($selectedCoursePrice > 0 ? $formatMoney($selectedCoursePrice) : '—'); ?></dd>
+                          <dd class="app-price text-sm font-semibold text-right"><?php echo e($selectedCoursePrice > 0 ? $formatMoney($selectedCoursePrice) : '—'); ?></dd>
                         </div>
                         <div class="flex items-start justify-between gap-3">
                           <dt class="text-sm text-slate-500 dark:text-slate-400">Prix final</dt>
-                          <dd class="text-sm font-semibold text-slate-900 dark:text-white text-right"><?php echo e($previewFinalPrice !== null ? $formatMoney((int) $previewFinalPrice) : '—'); ?></dd>
+                          <dd class="app-price text-sm font-semibold text-right<?php echo $previewFinalPrice !== null ? ' app-price--promo' : ''; ?>"><?php echo e($previewFinalPrice !== null ? $formatMoney((int) $previewFinalPrice) : '—'); ?></dd>
                         </div>
                       </dl>
                     </section>

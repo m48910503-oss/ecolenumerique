@@ -282,7 +282,7 @@ $removeCourseUrl = static function (int $courseId) use ($removeBaseUrl): string 
 
                     <div class="flex items-center justify-between mt-3 gap-3">
                       <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-lg font-bold text-gray-900 dark:text-white"><?php echo e($formatMoney($lineTotal)); ?></span>
+                        <span class="app-price text-lg font-bold<?php echo $promoActive ? ' app-price--promo' : ''; ?>"><?php echo e($formatMoney($lineTotal)); ?></span>
                         <?php if ($promoActive): ?>
                           <span class="text-sm text-gray-400 line-through"><?php echo e($formatMoney($priceBase * $quantity)); ?></span>
                         <?php endif; ?>
@@ -311,7 +311,7 @@ $removeCourseUrl = static function (int $courseId) use ($removeBaseUrl): string 
                         >
                       </div>
                     <?php elseif ($quantity > 1): ?>
-                      <p class="mt-3 text-xs text-gray-500"><?php echo e($formatMoney($priceFinal)); ?> par place × <?php echo e((string) $quantity); ?></p>
+                      <p class="mt-3 text-xs text-gray-500"><span class="app-price<?php echo $promoActive ? ' app-price--promo' : ''; ?>"><?php echo e($formatMoney($priceFinal)); ?></span> par place × <?php echo e((string) $quantity); ?></p>
                     <?php endif; ?>
                   </div>
                 </article>
@@ -461,7 +461,7 @@ $removeCourseUrl = static function (int $courseId) use ($removeBaseUrl): string 
             <div class="space-y-3 text-sm">
               <div class="flex justify-between gap-3">
                 <span class="text-gray-600 dark:text-gray-400">Sous-total (<?php echo e((string) $summaryQuantityCount); ?> <?php echo e($summaryQuantityLabel); ?>)</span>
-                <span class="font-medium"><?php echo e($formatMoney($subtotalBaseTotal)); ?></span>
+                <span class="app-price font-medium"><?php echo e($formatMoney($subtotalBaseTotal)); ?></span>
               </div>
               <div class="flex justify-between gap-3 <?php echo $summaryDiscountTotal > 0 ? 'text-green-600' : 'text-gray-500'; ?>">
                 <span>Réduction</span>
@@ -469,7 +469,7 @@ $removeCourseUrl = static function (int $courseId) use ($removeBaseUrl): string 
               </div>
               <div class="flex justify-between font-bold text-base border-t border-gray-100 dark:border-gray-700 pt-3 gap-3">
                 <span>Total</span>
-                <span class="text-gray-900 dark:text-white"><?php echo e($formatMoney($previewPayableTotal)); ?></span>
+                <span class="app-price<?php echo $summaryDiscountTotal > 0 ? ' app-price--promo' : ''; ?>"><?php echo e($formatMoney($previewPayableTotal)); ?></span>
               </div>
             </div>
 

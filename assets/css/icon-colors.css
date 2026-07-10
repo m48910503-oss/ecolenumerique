@@ -210,27 +210,12 @@ html[data-theme="dark"] {
 }
 
 :where(
-  svg[data-app-icon="calendar"],
-  svg[data-app-icon="clock"],
   svg[data-app-icon="alert-triangle"],
   svg[data-app-icon="alert-circle"],
-  svg[data-app-icon="help-circle"],
-  i.fa-calendar,
-  i.fa-calendar-alt,
-  i.fa-calendar-check,
-  i.fa-calendar-day,
-  i.fa-calendar-plus,
-  i.fa-clock,
-  i.fa-hourglass,
-  i.fa-hourglass-half,
   i.fa-exclamation-triangle,
   i.fa-exclamation-circle,
   i.fa-triangle-exclamation,
-  i.fa-circle-exclamation,
-  i.fa-info-circle,
-  i.fa-circle-info,
-  i.fa-circle-notch,
-  i.fa-question-circle
+  i.fa-circle-exclamation
 ) {
   --app-icon-color: var(--icon-warning);
 }
@@ -534,7 +519,7 @@ html[data-theme="dark"] {
   .auth-message__icon,
   .auth-admin-access-card__icon,
   .app-title-icon
-):has(:where(svg[data-app-icon="calendar"], svg[data-app-icon="clock"], svg[data-app-icon="alert-triangle"], svg[data-app-icon="alert-circle"], svg[data-app-icon="help-circle"], i.fa-calendar, i.fa-calendar-alt, i.fa-calendar-check, i.fa-clock, i.fa-exclamation-triangle, i.fa-exclamation-circle, i.fa-info-circle, i.fa-question-circle)) {
+):has(:where(svg[data-app-icon="alert-triangle"], svg[data-app-icon="alert-circle"], i.fa-exclamation-triangle, i.fa-exclamation-circle, i.fa-triangle-exclamation, i.fa-circle-exclamation)) {
   --app-icon-color: var(--icon-warning);
   --app-icon-soft: var(--icon-warning-soft);
   --app-icon-border: var(--icon-warning-border);
@@ -622,7 +607,7 @@ html[data-theme="dark"] {
   .auth-message__icon,
   .auth-admin-access-card__icon,
   .app-title-icon
-):has(:where(svg[data-app-icon="shield"], svg[data-app-icon="lock"], svg[data-app-icon="key"], svg[data-app-icon="settings"], svg[data-app-icon="search"], svg[data-app-icon="filter"], svg[data-app-icon="download"], svg[data-app-icon="printer"], svg[data-app-icon="save"], svg[data-app-icon="external-link"], svg[data-app-icon="repeat"], svg[data-app-icon="menu"], svg[data-app-icon="chevron-left"], svg[data-app-icon="chevron-right"], svg[data-app-icon="chevron-down"], svg[data-app-icon="more-vertical"], i.fa-shield-alt, i.fa-lock, i.fa-lock-open, i.fa-key, i.fa-cog, i.fa-cogs, i.fa-search, i.fa-filter, i.fa-download, i.fa-print, i.fa-save, i.fa-external-link-alt, i.fa-redo-alt, i.fa-sync-alt, i.fa-bars, i.fa-chevron-left, i.fa-chevron-right, i.fa-chevron-down, i.fa-ellipsis-v)) {
+):has(:where(svg[data-app-icon="calendar"], svg[data-app-icon="clock"], svg[data-app-icon="help-circle"], svg[data-app-icon="shield"], svg[data-app-icon="lock"], svg[data-app-icon="key"], svg[data-app-icon="settings"], svg[data-app-icon="search"], svg[data-app-icon="filter"], svg[data-app-icon="download"], svg[data-app-icon="printer"], svg[data-app-icon="save"], svg[data-app-icon="external-link"], svg[data-app-icon="repeat"], svg[data-app-icon="menu"], svg[data-app-icon="chevron-left"], svg[data-app-icon="chevron-right"], svg[data-app-icon="chevron-down"], svg[data-app-icon="more-vertical"], i.fa-calendar, i.fa-calendar-alt, i.fa-calendar-check, i.fa-calendar-day, i.fa-calendar-plus, i.fa-clock, i.fa-hourglass, i.fa-hourglass-half, i.fa-info-circle, i.fa-circle-info, i.fa-circle-notch, i.fa-question-circle, i.fa-shield-alt, i.fa-lock, i.fa-lock-open, i.fa-key, i.fa-cog, i.fa-cogs, i.fa-search, i.fa-filter, i.fa-download, i.fa-print, i.fa-save, i.fa-external-link-alt, i.fa-redo-alt, i.fa-sync-alt, i.fa-bars, i.fa-chevron-left, i.fa-chevron-right, i.fa-chevron-down, i.fa-ellipsis-v)) {
   --app-icon-color: var(--icon-system);
   --app-icon-soft: var(--icon-system-soft);
   --app-icon-border: var(--icon-system-border);
@@ -649,6 +634,12 @@ html[data-theme="dark"] {
 .app-icon-tone-communication { --app-icon-color: var(--icon-communication); }
 .app-icon-tone-people { --app-icon-color: var(--icon-people); }
 .app-icon-tone-system { --app-icon-color: var(--icon-system); }
+
+/* Keep teacher sidebar navigation icons aligned with the link color. */
+body.app-role-teacher .teacher-dashboard-sidebar :is(i[class*=" fa-"], svg[data-app-icon]) {
+  --app-icon-color: currentColor;
+  color: currentColor;
+}
 
 /* Shared heading icons for page heroes and section heads. */
 .app-title-icon {

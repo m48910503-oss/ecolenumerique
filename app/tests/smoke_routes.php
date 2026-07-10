@@ -67,6 +67,7 @@ $requiredRoutes = [
     'admin/secondary_admins/activity',
     'admin/announcements',
     'admin/announcements/create',
+    'admin/exam_preview',
 ];
 
 foreach ($requiredRoutes as $path) {

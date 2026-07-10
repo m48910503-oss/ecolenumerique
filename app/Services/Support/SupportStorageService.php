@@ -83,6 +83,12 @@ final class SupportStorageService extends Service
     public function handleUploads(?array $files, int $maxBytes = 5242880): array
     {
         $normalized = $files ? $this->normalizeFiles($files) : [];
+        $normalized = array_values(array_filter(
+            $normalized,
+            static function (array $file): bool {
+                return (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+            }
+        ));
         if (!$normalized) {
             return ['ok' => true, 'attachments' => [], 'errors' => []];
         }

@@ -23,6 +23,7 @@ use App\Controllers\Api\SupportMessagesController as ApiSupportMessagesControlle
 use App\Controllers\Admin\CategoriesController;
 use App\Controllers\Admin\CertificatePreviewController as AdminCertificatePreviewController;
 use App\Controllers\Admin\AnnouncementsController as AdminAnnouncementsController;
+use App\Controllers\Admin\ExamPreviewController as AdminExamPreviewController;
 use App\Controllers\Admin\CoursePreviewController as AdminCoursePreviewController;
 use App\Controllers\Admin\CoursesController;
 use App\Controllers\Admin\CourseInsightsController as AdminCourseInsightsController;
@@ -188,6 +189,7 @@ $routes = [
     'admin/courses' => CoursesController::class,
     'admin/course_insights' => AdminCourseInsightsController::class,
     'admin/course_preview' => AdminCoursePreviewController::class,
+    'admin/exam_preview' => AdminExamPreviewController::class,
     'admin/categories' => CategoriesController::class,
     'admin/certificate_preview' => AdminCertificatePreviewController::class,
     'admin/sales' => SalesController::class,

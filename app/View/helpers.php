@@ -109,10 +109,11 @@ if (!function_exists('format_announcement_body')) {
                     }
 
                     $href = preg_match('/^https?:\/\//i', $rawUrl) ? $rawUrl : ('https://' . $rawUrl);
+                    $safeHref = htmlspecialchars(html_entity_decode($href, ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8');
 
                     return '<span class="notif-inline-link">'
-                        . '<a class="notif-body-link" href="' . $href . '" target="_blank" rel="noopener noreferrer">' . $rawUrl . '</a>'
-                        . '<button type="button" class="notif-copy-link-btn" data-copy-url="' . $href . '">Copier</button>'
+                        . '<a class="notif-body-link" href="' . $safeHref . '" target="_blank" rel="noopener noreferrer">' . $rawUrl . '</a>'
+                        . '<button type="button" class="notif-copy-link-btn" data-copy-url="' . $safeHref . '">Copier</button>'
                         . '</span>';
                 },
                 $value
@@ -129,7 +130,7 @@ if (!function_exists('format_announcement_body')) {
             $trimmed = rtrim($line);
             if (preg_match('/^\\s*[-*]\\s+(.+)$/', $trimmed, $matches)) {
                 if (!$inList) {
-                    $output .= '<ul class=\"list-disc pl-5 space-y-1\">';
+                    $output .= '<ul class="list-disc pl-5 space-y-1">';
                     $inList = true;
                 }
                 $output .= '<li>' . $inline($matches[1]) . '</li>';
@@ -142,7 +143,7 @@ if (!function_exists('format_announcement_body')) {
             }
 
             if (trim($trimmed) === '') {
-                $output .= '<div class=\"h-2\"></div>';
+                $output .= '<div class="h-2"></div>';
                 continue;
             }
 
@@ -536,6 +537,38 @@ if (!function_exists('dashboard_icon_fa_class')) {
         ];
 
         return $icons[$icon] ?? 'fas fa-circle';
+    }
+}
+
+if (!function_exists('site_brand_name_html')) {
+    /**
+     * Render the site brand name and highlight the "Numerique" word.
+     */
+    function site_brand_name_html(string $name, string $accentClass = 'text-blue-600 dark:text-blue-400'): string
+    {
+        $name = trim($name);
+        if ($name === '') {
+            return '';
+        }
+
+        $escapedName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+        $accentClass = trim($accentClass);
+        $escapedAccentClass = $accentClass !== ''
+            ? htmlspecialchars($accentClass, ENT_QUOTES, 'UTF-8')
+            : 'text-blue-600 dark:text-blue-400';
+
+        foreach (['Numérique', 'numérique', 'Numerique', 'numerique'] as $accentWord) {
+            if (!str_contains($name, $accentWord)) {
+                continue;
+            }
+
+            $escapedAccentWord = htmlspecialchars($accentWord, ENT_QUOTES, 'UTF-8');
+            $replacement = '<span class="' . $escapedAccentClass . '">' . $escapedAccentWord . '</span>';
+
+            return str_replace($escapedAccentWord, $replacement, $escapedName);
+        }
+
+        return $escapedName;
     }
 }
 
@@ -1168,4 +1201,3 @@ if (!function_exists('teacher_sidebar_badge_counts')) {
         return $cache[$userId];
     }
 }
-

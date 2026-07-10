@@ -457,7 +457,7 @@ $sidebarItems = [
             <div class="flex items-center justify-between gap-4">
               <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Total réglé</p>
-                <p class="mt-1 text-3xl font-bold text-gray-900 dark:text-white"><?php echo e($formatMoney($totalSpentXof)); ?></p>
+                <p class="app-price mt-1 text-3xl font-bold"><?php echo e($formatMoney($totalSpentXof)); ?></p>
               </div>
               <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300">
                 <i class="fas fa-euro-sign text-xl"></i>
@@ -608,7 +608,7 @@ $sidebarItems = [
                             <p class="text-sm text-gray-500 dark:text-gray-400">Aucun cours lié n’a été trouvé.</p>
                           <?php endif; ?>
                         </td>
-                        <td class="px-3 py-3 align-top whitespace-nowrap font-semibold text-gray-900 dark:text-white sm:px-5 sm:py-4"><?php echo e((string) $item['amount_label']); ?></td>
+                        <td class="px-3 py-3 align-top whitespace-nowrap app-price font-semibold sm:px-5 sm:py-4"><?php echo e((string) $item['amount_label']); ?></td>
                         <td class="px-3 py-3 align-top sm:px-5 sm:py-4">
                           <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold <?php echo e((string) $item['status_class']); ?>"><?php echo e((string) $item['status_label']); ?></span>
                         </td>

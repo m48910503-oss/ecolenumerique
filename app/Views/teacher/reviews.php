@@ -73,7 +73,7 @@ $formatDateLabel = static function (string $value, string $fallback = '—'): st
     return date('j', $ts) . ' ' . $month . ' ' . date('Y', $ts);
 };
 
-$renderStars = static function (float $rating, string $wrapperClass = 'text-yellow-400 text-sm') : string {
+$renderStars = static function (float $rating, string $wrapperClass = 'app-rating-stars inline-flex items-center gap-0.5 text-yellow-400 text-sm') : string {
     $rating = max(0.0, min(5.0, $rating));
     $fullStars = (int) floor($rating);
     $hasHalf = ($rating - $fullStars) >= 0.5 && $fullStars < 5;

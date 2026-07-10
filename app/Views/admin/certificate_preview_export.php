@@ -33,6 +33,7 @@ $adminPageScripts = ['assets/vendor/qrcode-generator/qrcode.js', 'admin_certific
             height: 100%;
             margin: 0;
             overflow: hidden;
+            background: #ffffff;
         }
 
         @page {
@@ -44,29 +45,47 @@ $adminPageScripts = ['assets/vendor/qrcode-generator/qrcode.js', 'admin_certific
             display: flex;
             align-items: center;
             justify-content: center;
-            background:
-                radial-gradient(circle at top, rgba(59, 130, 246, 0.18), transparent 34%),
-                linear-gradient(180deg, #0f172a 0%, #111827 100%);
+            background: #ffffff;
         }
 
         .certificate-export-canvas {
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: clamp(16px, 2.2vw, 36px);
             box-sizing: border-box;
+            padding: 0;
         }
 
         .certificate-export-stage {
-            width: min(100%, 1400px);
+            width: min(100%, 2970px);
+            max-width: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            border: 0;
+            background: #ffffff;
+            box-shadow: none;
+        }
+
+        html.dark .certificate-export-stage.admin-certificate-stage,
+        html[data-theme="dark"] .certificate-export-stage.admin-certificate-stage {
+            background: #ffffff !important;
+            border: 0 !important;
+            box-shadow: none !important;
+        }
+
+        .certificate-export-stage .admin-certificate-card--landscape {
+            width: min(calc(100vw - 3.5rem), calc((100vh - 3.5rem) * 1.414)) !important;
+            max-width: none !important;
         }
     </style>
 </head>
-<body class="min-h-screen bg-slate-950 text-slate-100 font-body" data-view="admin/certificate_preview">
+<body class="app-role-admin min-h-screen bg-white text-slate-900 font-body" data-view="admin/certificate_preview">
     <main class="certificate-export-canvas">
-        <section class="certificate-export-stage admin-certificate-stage rounded-3xl p-2.5 sm:p-3.5">
+        <section class="certificate-export-stage admin-certificate-stage">
             <?php require __DIR__ . '/_certificate_card.php'; ?>
         </section>
     </main>

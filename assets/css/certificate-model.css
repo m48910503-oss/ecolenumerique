@@ -1,0 +1,557 @@
+.certificate-design,
+.certificate-design * {
+  box-sizing: border-box;
+}
+
+.certificate-design {
+  container-type: inline-size;
+  position: relative;
+  display: flex;
+  width: 100%;
+  max-width: 1120px;
+  aspect-ratio: 297 / 210;
+  margin: 0 auto;
+  overflow: hidden;
+  color: #1f2937;
+  background: linear-gradient(135deg, #f0f9ff 0%, #ecfeff 30%, #f8fafc 60%, #f0f9ff 100%);
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.3);
+  isolation: isolate;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.certificate-design::before,
+.certificate-design::after {
+  position: absolute;
+  z-index: 0;
+  width: 21.43cqi;
+  height: 21.43cqi;
+  border-radius: 50%;
+  content: "";
+}
+
+.certificate-design::before {
+  top: -5.36cqi;
+  right: -5.36cqi;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+}
+
+.certificate-design::after {
+  bottom: -5.36cqi;
+  left: -5.36cqi;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, transparent 70%);
+}
+
+.certificate-design__top-bar,
+.certificate-design__bottom-bar {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: 0;
+  height: max(3px, 0.45cqi);
+  background: linear-gradient(to right, #2563eb, #06b6d4, #2563eb);
+}
+
+.certificate-design__top-bar {
+  top: 0;
+}
+
+.certificate-design__bottom-bar {
+  bottom: 0;
+}
+
+.certificate-design__watermark {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000000;
+  font-size: 23.21cqi;
+  opacity: 0.018;
+  pointer-events: none;
+}
+
+.certificate-design__content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 2.5cqi 4.02cqi;
+  font-family: "Inter", sans-serif;
+}
+
+.certificate-design__header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.certificate-design__brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 1.07cqi;
+}
+
+.certificate-design__logo-icon {
+  display: flex;
+  width: 3.93cqi;
+  height: 3.93cqi;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 1.07cqi;
+  color: #ffffff;
+  font-size: 1.79cqi;
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
+  box-shadow: 0 0.36cqi 0.9cqi rgba(37, 99, 235, 0.3);
+}
+
+.certificate-design__logo-icon img {
+  width: 100%;
+  height: 100%;
+  padding: 0.27cqi;
+  object-fit: contain;
+  background: #ffffff;
+}
+
+.certificate-design__brand-name {
+  color: #111827;
+  font-size: 2.14cqi;
+  font-weight: 700;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.certificate-design__brand-name strong {
+  color: #2563eb;
+  font: inherit;
+}
+
+.certificate-design__brand-name strong::before {
+  content: " ";
+}
+
+.certificate-design__number {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.certificate-design__number span {
+  color: #6b7280;
+  font-size: 0.98cqi;
+  line-height: 1.25;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.certificate-design__number strong {
+  color: #1f2937;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 1.25cqi;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.certificate-design__title-section {
+  flex: 0 0 auto;
+  margin: 1.07cqi 0 0.71cqi;
+  text-align: center;
+}
+
+.certificate-design__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45cqi;
+  margin-bottom: 0.71cqi;
+  padding: 0.45cqi 1.61cqi;
+  border-radius: 999px;
+  color: #b45309;
+  font-size: 1.07cqi;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: #fef3c7;
+}
+
+.certificate-design__title-section h1 {
+  margin: 0;
+  color: #111827;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 4.46cqi;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.certificate-design__divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.07cqi;
+  margin: 0.71cqi 0;
+}
+
+.certificate-design__divider span {
+  width: 5.36cqi;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #facc15);
+}
+
+.certificate-design__divider span:last-child {
+  background: linear-gradient(to left, transparent, #facc15);
+}
+
+.certificate-design__divider i {
+  color: #facc15;
+  font-size: 1.07cqi;
+}
+
+.certificate-design__title-section p,
+.certificate-design__course-intro {
+  margin: 0;
+  color: #4b5563;
+  font-size: 1.61cqi;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.certificate-design__recipient {
+  flex: 0 0 auto;
+  text-align: center;
+}
+
+.certificate-design__recipient h2 {
+  margin: 0.89cqi 0 0;
+  color: transparent;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 5.18cqi;
+  font-weight: 900;
+  line-height: 1.1;
+  background: linear-gradient(to right, #2563eb, #06b6d4);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.certificate-design__recipient > span {
+  display: block;
+  width: 12.5cqi;
+  height: max(2px, 0.27cqi);
+  margin: 0.36cqi auto 0;
+  border-radius: 999px;
+  background: linear-gradient(to right, #3b82f6, #06b6d4);
+}
+
+.certificate-design__course-intro {
+  margin-top: 0.71cqi;
+}
+
+.certificate-design__course-name {
+  margin: 0.54cqi 0 0.71cqi;
+  color: #111827;
+  font-size: 2.5cqi;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.certificate-design__description {
+  width: min(100%, 58.04cqi);
+  margin: 0 auto;
+  color: #4b5563;
+  font-size: 1.25cqi;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.certificate-design__meta {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8cqi 1.61cqi;
+  margin: 1.25cqi 0;
+}
+
+.certificate-design__meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.63cqi;
+  padding: 0.63cqi 1.43cqi;
+  border-radius: 999px;
+  color: #374151;
+  font-size: 1.25cqi;
+  line-height: 1.2;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.certificate-design__meta i {
+  color: #2563eb;
+  font-size: 1.43cqi;
+}
+
+.certificate-design__meta > span:nth-child(2) i {
+  color: #eab308;
+}
+
+.certificate-design__meta strong {
+  color: #111827;
+  font-weight: 700;
+}
+
+.certificate-design__signatures {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.07cqi;
+}
+
+.certificate-design__signature {
+  display: flex;
+  width: 28cqi;
+  min-width: 0;
+  flex: 0 1 28cqi;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.certificate-design__signature-value {
+  display: flex;
+  width: 25cqi;
+  height: 6.2cqi;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: #374151;
+  font-family: "Dancing Script", cursive;
+  font-size: 2.32cqi;
+  line-height: 1;
+}
+
+.certificate-design__signature-value img {
+  width: 22cqi;
+  height: 6.2cqi;
+  object-fit: contain;
+}
+
+.certificate-design__signature-line {
+  display: block;
+  width: 15cqi;
+  height: 1px;
+  margin-top: 0.36cqi;
+  background: #9ca3af;
+}
+
+.certificate-design__signer-name {
+  max-width: 23cqi;
+  margin-top: 0.45cqi;
+  overflow: hidden;
+  color: #1f2937;
+  font-family: "Dancing Script", cursive;
+  font-size: 1.52cqi;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.certificate-design__signer-role {
+  margin-top: 0.18cqi;
+  color: #6b7280;
+  font-size: 0.89cqi;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.certificate-design__seal {
+  display: flex;
+  width: 9.82cqi;
+  height: 9.82cqi;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0.89cqi;
+  border: max(3px, 0.36cqi) solid #facc15;
+  border-radius: 50%;
+  color: #eab308;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0.54cqi 1.79cqi rgba(0, 0, 0, 0.1);
+  transform: rotate(-10deg);
+  backdrop-filter: blur(4px);
+}
+
+.certificate-design__seal > i:first-child {
+  font-size: 3.21cqi;
+}
+
+.certificate-design__seal strong {
+  margin-top: 0.27cqi;
+  font-size: 0.98cqi;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.certificate-design__seal > span {
+  max-width: 7.5cqi;
+  overflow: hidden;
+  font-size: 0.71cqi;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.certificate-design__seal > i:last-child {
+  margin-top: 0.18cqi;
+  color: #22c55e;
+  font-size: 0.89cqi;
+}
+
+.certificate-design__footer {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.43cqi;
+  margin-top: auto;
+  padding-top: 1.07cqi;
+  border-top: 1px dashed #d1d5db;
+  color: #6b7280;
+  font-size: 1.07cqi;
+  line-height: 1.35;
+}
+
+.certificate-design__verify {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 1.07cqi;
+}
+
+.certificate-design__qr {
+  display: flex;
+  width: 3.93cqi;
+  height: 3.93cqi;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 0.54cqi;
+  color: #9ca3af;
+  font-size: 1.96cqi;
+  background: #f3f4f6;
+}
+
+.certificate-design__qr svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.certificate-design__verify > span:last-child {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.certificate-design__verify strong {
+  color: #374151;
+  font-weight: 500;
+}
+
+.certificate-design__verify a {
+  display: block;
+  max-width: 40cqi;
+  overflow: hidden;
+  color: #2563eb;
+  font-family: "IBM Plex Mono", monospace;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.certificate-design__site {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.certificate-design--pdf-source {
+  width: 1120px !important;
+  min-width: 1120px !important;
+  max-width: 1120px !important;
+  aspect-ratio: 297 / 210 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
+[data-certificate-pdf-download][aria-busy="true"] {
+  cursor: wait !important;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+html.dark .certificate-design,
+html[data-theme="dark"] .certificate-design {
+  color: #1f2937;
+  background: linear-gradient(135deg, #f0f9ff 0%, #ecfeff 30%, #f8fafc 60%, #f0f9ff 100%);
+}
+
+@page {
+  size: A4 landscape;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body,
+  body.certificate-page {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .certificate-design {
+    width: 285mm !important;
+    min-width: 285mm !important;
+    max-width: 285mm !important;
+    aspect-ratio: 297 / 210 !important;
+    margin: 0 auto !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    box-shadow: none !important;
+  }
+}

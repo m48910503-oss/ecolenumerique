@@ -368,7 +368,7 @@ return;
                                             <span class="course-icon app-icon" aria-hidden="true"><?php echo $icon('wallet'); ?></span>
                                             <div>
                                                 <p class="course-kicker">Tarif du cours</p>
-                                                <p class="course-price__value"><?php echo e(view_format_money_xof($priceFinal)); ?></p>
+                                                <p class="course-price__value app-price<?php echo $promoActive ? ' app-price--promo' : ''; ?>"><?php echo e(view_format_money_xof($priceFinal)); ?></p>
                                             </div>
                                         </div>
                                         <?php if ($promoActive): ?>

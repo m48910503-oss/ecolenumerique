@@ -307,8 +307,8 @@ if ($courseCoverPath !== '') {
 <main class="teacher-workflow-main max-w-7xl mx-auto px-6 py-8 space-y-6">
         <?php $teacherWelcomeTitle = 'Modifier le cours'; ?>
         <?php $teacherWelcomeSummary = 'Modifiez le cours avec les données déjà chargées.'; ?>
-        <?php $teacherWelcomeActionUrl = site_url('teacher/courses'); ?>
-        <?php $teacherWelcomeActionLabel = 'Mes cours'; ?>
+        <?php $teacherWelcomeActionUrl = site_url('teacher/dashboard'); ?>
+        <?php $teacherWelcomeActionLabel = 'Retour au tableau de bord'; ?>
         <?php $teacherWelcomeActionIcon = 'arrow-left'; ?>
         <?php require __DIR__ . '/_welcome_hero.php'; ?>
 
@@ -920,11 +920,11 @@ if ($courseCoverPath !== '') {
 
             <div class="course-create-upload-panel rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
 
-                <label class="block text-sm" for="cover_file">Miniature (JPG/PNG/WebP, max 5 Mo)</label>
+                <label class="block text-sm" for="cover_file">Miniature (JPG/PNG/WebP, paysage 16:10, min. 1200 x 750 px, max 5 Mo)</label>
 
-                <input class="w-full px-4 py-3 rounded-lg bg-slate-900 border border-slate-700 focus:border-emerald-400 outline-none file:mr-3 file:py-2 file:px-3 file:border-0 file:text-sm file:bg-slate-800 file:text-slate-200" type="file" id="cover_file" name="cover_file" accept=".jpg,.jpeg,.png,.webp">
+                <input class="w-full px-4 py-3 rounded-lg bg-slate-900 border border-slate-700 focus:border-emerald-400 outline-none file:mr-3 file:py-2 file:px-3 file:border-0 file:text-sm file:bg-slate-800 file:text-slate-200" type="file" id="cover_file" name="cover_file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
 
-                <p class="text-xs text-slate-400">Ajoutez une image claire (ratio conseill&eacute; 16:9).</p>
+                <p class="text-xs text-slate-400">Ajoutez une image claire au format paysage 16:10 (min. 1200 x 750 px).</p>
 
                 <p class="course-create-hint course-create-hint--info hidden" data-hint-for="cover"></p>
 
@@ -2462,7 +2462,7 @@ if ($courseCoverPath !== '') {
 
                 <div class="course-content-preview-pill"><span>Dur&eacute;e</span><strong id="preview-duration"><?php echo e(((float) $durationHours) > 0 ? format_duration_hours_hm((float) $durationHours, true) : '0 min'); ?></strong></div>
 
-                <div class="course-content-preview-pill"><span>Tarif</span><strong id="preview-price"><?php echo trim((string) $priceXof) !== '' && (float) $priceXof > 0 ? e(number_format((float) $priceXof, 0, ',', ' ') . ' F CFA') : 'Gratuit'; ?></strong></div>
+                <div class="course-content-preview-pill"><span>Tarif</span><strong id="preview-price" class="app-price"><?php echo trim((string) $priceXof) !== '' && (float) $priceXof > 0 ? e(number_format((float) $priceXof, 0, ',', ' ') . ' F CFA') : 'Gratuit'; ?></strong></div>
 
             </div>
 

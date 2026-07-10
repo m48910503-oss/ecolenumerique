@@ -43,7 +43,7 @@ $backHref = (string) ($backHref ?? site_url(''));
                         <?php if ($siteTagline !== ''): ?>
                             <p class="text-xs text-slate-500 dark:text-slate-300"><?php echo e($siteTagline); ?></p>
                         <?php endif; ?>
-                        <p class="text-xs text-slate-500 dark:text-slate-300"><?php echo e($siteName); ?></p>
+                        <p class="text-xs text-slate-500 dark:text-slate-300"><?php echo site_brand_name_html($siteName); ?></p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2 text-xs font-semibold">
@@ -64,7 +64,7 @@ $backHref = (string) ($backHref ?? site_url(''));
                 <div class="mt-6 space-y-6 text-sm text-slate-700 dark:text-slate-200">
                     <section id="cgu" class="space-y-2">
                         <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">1. Objet et champ d'application</h2>
-                        <p>Les présentes conditions générales d'utilisation régissent l'accès et l'usage de la plateforme École Numérique pour les étudiants, enseignants, comptes entreprise et administrateurs.</p>
+                        <p>Les présentes conditions générales d'utilisation régissent l'accès et l'usage de la plateforme <?php echo site_brand_name_html($siteName); ?> pour les étudiants, enseignants, comptes entreprise et administrateurs.</p>
                     </section>
 
                     <section class="space-y-2">

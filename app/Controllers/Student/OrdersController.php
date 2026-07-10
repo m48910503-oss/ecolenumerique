@@ -36,7 +36,7 @@ final class OrdersController extends Controller
                 'user' => $user,
             ]);
 
-            $pdfBinary = (new ReceiptPdfDocumentBuilder())->build($receiptData);
+            $pdfBinary = (new ReceiptPdfDocumentBuilder())->build($receiptData, $receiptData);
             if (is_string($pdfBinary) && $pdfBinary !== '') {
                 $safeReference = preg_replace('/[^A-Za-z0-9_-]+/', '-', (string) (($receiptData['order']['reference'] ?? 'recu') ?: 'recu')) ?: 'recu';
                 $filenameBase = 'recu-commande-' . strtolower(trim($safeReference, '-'));

@@ -87,7 +87,35 @@
       stateEl.textContent = initialHasPreview ? 'État: fichier actuel chargé.' : 'État: aucune sélection.';
     }
 
-    const applyFile = (file) => {
+    const applyFile = async (file) => {
+      if (input.dataset.signatureNormalize === '1') {
+        const sourceLimitMb = Number(input.dataset.signatureSourceMaxMb || 10);
+        if (file && file.size > sourceLimitMb * 1024 * 1024) {
+          input.value = '';
+          setFeedback(feedbackEl, `Capture trop volumineuse (max ${sourceLimitMb} Mo).`, 'error');
+          return false;
+        }
+        if (!window.CertificateSignatureImage) {
+          input.value = '';
+          setFeedback(feedbackEl, 'Le module de préparation de la signature est indisponible.', 'error');
+          return false;
+        }
+
+        try {
+          setFeedback(feedbackEl, 'Recadrage et suppression du fond en cours…', 'neutral');
+          file = await window.CertificateSignatureImage.normalize(file);
+          const transfer = new DataTransfer();
+          transfer.items.add(file);
+          input.files = transfer.files;
+        } catch (error) {
+          input.value = '';
+          if (nameEl) nameEl.textContent = 'Aucun nouveau fichier choisi';
+          if (stateEl) stateEl.textContent = 'État: signature non valide.';
+          setFeedback(feedbackEl, error instanceof Error ? error.message : 'Impossible de préparer la signature.', 'error');
+          return false;
+        }
+      }
+
       const validation = validateFile(file, maxMb);
       if (!validation.ok) {
         input.value = '';
@@ -107,11 +135,17 @@
         stateEl.textContent = 'État: prêt pour enregistrement.';
       }
       updatePreview(previewEl, placeholderEl, file);
-      setFeedback(feedbackEl, 'Fichier prêt à être envoyé.', 'success');
+      setFeedback(
+        feedbackEl,
+        input.dataset.signatureNormalize === '1'
+          ? 'Signature recadrée en PNG transparent 800 × 240 px.'
+          : 'Fichier prêt à être envoyé.',
+        'success'
+      );
       return true;
     };
 
-    input.addEventListener('change', () => {
+    input.addEventListener('change', async () => {
       const file = input.files && input.files.length > 0 ? input.files[0] : null;
       if (!file) {
         if (nameEl) {
@@ -123,7 +157,7 @@
         setFeedback(feedbackEl, '');
         return;
       }
-      applyFile(file);
+      await applyFile(file);
     });
 
     const trigger = document.querySelector(`[data-upload-trigger="${input.id}"]`);
@@ -147,7 +181,7 @@
           leave();
         });
       });
-      dropzone.addEventListener('drop', (event) => {
+      dropzone.addEventListener('drop', async (event) => {
         const files = event.dataTransfer && event.dataTransfer.files ? event.dataTransfer.files : null;
         const file = files && files.length > 0 ? files[0] : null;
         if (!file) {
@@ -156,7 +190,7 @@
         const dt = new DataTransfer();
         dt.items.add(file);
         input.files = dt.files;
-        applyFile(file);
+        await applyFile(file);
       });
     }
   };

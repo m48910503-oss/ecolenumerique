@@ -181,27 +181,20 @@ final class CourseContentService extends Service
                         if ((int) ($coverFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
                             $errors[] = 'Erreur lors du televersement de la miniature.';
                         } else {
-                            $maxSize = 5 * 1024 * 1024;
-                            if ((int) ($coverFile['size'] ?? 0) > $maxSize) {
-                                $errors[] = 'La miniature depasse 5 Mo.';
-                            } else {
-                                $ext = strtolower(pathinfo((string) ($coverFile['name'] ?? ''), PATHINFO_EXTENSION));
-                                if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true)) {
-                                    $errors[] = 'Le format de miniature doit etre JPG, PNG ou WebP.';
-                                } else {
-                                    $uploadDir = $this->projectRoot() . '/storage/uploads/covers';
-                                    if (!is_dir($uploadDir)) {
-                                        mkdir($uploadDir, 0755, true);
-                                    }
+                            $coverUpload = $this->validateCourseCoverUpload((array) $coverFile, $errors);
+                            if ($coverUpload !== null) {
+                                $uploadDir = $this->projectRoot() . '/storage/uploads/covers';
+                                if (!is_dir($uploadDir)) {
+                                    mkdir($uploadDir, 0755, true);
+                                }
 
-                                    $filename = bin2hex(random_bytes(8)) . '.' . $ext;
-                                    $destination = $uploadDir . '/' . $filename;
-                                    if (!move_uploaded_file((string) ($coverFile['tmp_name'] ?? ''), $destination)) {
-                                        $errors[] = 'Impossible d enregistrer la nouvelle miniature.';
-                                    } else {
-                                        $coverPath = 'storage/uploads/covers/' . $filename;
-                                        $course['cover_path'] = $coverPath;
-                                    }
+                                $filename = bin2hex(random_bytes(8)) . '.' . $coverUpload['extension'];
+                                $destination = $uploadDir . '/' . $filename;
+                                if (!move_uploaded_file((string) ($coverFile['tmp_name'] ?? ''), $destination)) {
+                                    $errors[] = 'Impossible d enregistrer la nouvelle miniature.';
+                                } else {
+                                    $coverPath = 'storage/uploads/covers/' . $filename;
+                                    $course['cover_path'] = $coverPath;
                                 }
                             }
                         }

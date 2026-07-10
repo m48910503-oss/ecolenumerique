@@ -11,6 +11,11 @@ $supportRoleSpace = in_array($dashboardSpace, ['teacher', 'student'], true) ? $d
 $supportTickets = is_array($supportTickets ?? null) ? $supportTickets : [];
 $supportTicketStats = is_array($supportTicketStats ?? null) ? $supportTicketStats : ['open' => 0, 'waiting' => 0, 'resolved' => 0];
 $userId = max(0, (int) ($user['id'] ?? 0));
+$siteIdentity = function_exists('site_public_identity') ? site_public_identity() : [];
+$siteName = trim((string) ($siteIdentity['siteName'] ?? (defined('APP_FROM_NAME') ? (string) APP_FROM_NAME : 'École Numérique')));
+if ($siteName === '') {
+    $siteName = 'École Numérique';
+}
 
 $appendSpace = static function (string $url) use ($dashboardSpace): string {
     if ($dashboardSpace === '') {
@@ -157,7 +162,7 @@ $supportContentShellClass = $useTeacherShell
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo e($pageTitle . ' · École Numérique'); ?></title>
+    <title><?php echo e($pageTitle . ' · ' . $siteName); ?></title>
     <meta name="csrf-token" content="<?php echo e(view_csrf_token()); ?>">
     <meta name="app-global-assets" content="off">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -451,7 +456,7 @@ $supportContentShellClass = $useTeacherShell
                             <i class="<?php echo e(dashboard_icon_fa_class('headset')); ?>" aria-hidden="true"></i>
                         </div>
                         <div>
-                            <p class="text-sm font-bold">Assistance École Numérique</p>
+                        <p class="text-sm font-bold">Assistance <?php echo site_brand_name_html($siteName); ?></p>
                             <p id="chat-thread-meta" class="text-xs text-primary-100">Sélectionnez un ticket ou démarrez un nouveau message.</p>
                         </div>
                     </div>

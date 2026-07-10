@@ -238,7 +238,7 @@ $publicDecorateCourse = static function (array $course) use ($publicCourseFieldA
     $ratingLabel = $ratingCount > 0 ? number_format($rating, 1, ',', ' ') . '/5' : 'Nouveau';
     $ratingMeta = $ratingCount > 0
         ? $ratingLabel . ' · ' . view_pluralize($ratingCount, 'avis')
-        : 'Nouveau cours';
+        : ($enrolledCount > 0 ? 'Nouveau · ' . view_pluralize($enrolledCount, 'inscrit', 'inscrits') : 'Nouveau');
     $priceLabel = $publicFormatMoney($priceRaw);
     $objectives = $publicCourseFieldAsList($course['objectives'] ?? null);
     $prerequisites = $publicCourseFieldAsList($course['prerequisites'] ?? null);

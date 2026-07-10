@@ -142,6 +142,11 @@
                 }
                 event.preventDefault();
 
+                var triggerMenu = trigger.closest('details');
+                if (triggerMenu) {
+                    triggerMenu.open = false;
+                }
+
                 var kind = trigger.getAttribute('data-confirm-action');
                 var title = trigger.getAttribute('data-confirm-title') || 'Confirmation';
                 var message = trigger.getAttribute('data-confirm-message') || 'Confirmez-vous cette action ?';
@@ -275,6 +280,10 @@
             var trigger = event.target.closest('[data-course-stats-open]');
             if (trigger) {
                 event.preventDefault();
+                var triggerMenu = trigger.closest('details');
+                if (triggerMenu) {
+                    triggerMenu.open = false;
+                }
                 openModal(trigger);
                 return;
             }

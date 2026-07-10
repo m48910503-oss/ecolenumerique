@@ -227,7 +227,7 @@ $teacherApplyJsUrl = site_url('assets/js/teacher_apply.js?v=' . (@filemtime(__DI
                     </span>
                 <?php endif; ?>
                 <span class="min-w-0">
-                    <span class="block truncate text-lg font-black tracking-tight text-slate-950 dark:text-white"><?php echo e($platformName); ?></span>
+                    <span class="block truncate text-lg font-black tracking-tight text-slate-950 dark:text-white"><?php echo site_brand_name_html($platformName); ?></span>
                     <span class="block truncate text-xs font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Formulaire enseignant</span>
                 </span>
             </a>

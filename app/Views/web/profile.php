@@ -187,7 +187,8 @@ $profileSecondaryButtonClass = 'profile-modern-button profile-modern-button--sec
     <meta name="app-global-assets" content="off">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-tailwind.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-tailwind.css') ?: time()))); ?>">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="<?php echo e(site_url('assets/js/profile_form.js')); ?>" defer></script>
+    <script src="<?php echo e(site_url('assets/js/signature_image.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/signature_image.js') ?: time()))); ?>" defer></script>
+    <script src="<?php echo e(site_url('assets/js/profile_form.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/profile_form.js') ?: time()))); ?>" defer></script>
     <script src="<?php echo e(site_url('assets/js/togglePassword.js')); ?>" defer></script>
     <style>
         :root {
@@ -1360,7 +1361,7 @@ $profileSecondaryButtonClass = 'profile-modern-button profile-modern-button--sec
                                     <?php endif; ?>
                                 </div>
                                 <div>
-                                    <p class="text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-500 dark:text-slate-400">École Numérique</p>
+                                    <p class="text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-500 dark:text-slate-400"><?php echo site_brand_name_html('École Numérique'); ?></p>
                                     <p class="text-sm text-slate-500 dark:text-slate-400">Fiche de profil personnalisée</p>
                                 </div>
                             </div>
@@ -1692,7 +1693,7 @@ $profileSecondaryButtonClass = 'profile-modern-button profile-modern-button--sec
                                 <div>
                                     <p class="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Signature</p>
                                     <h2 class="mt-1 text-lg font-display font-semibold text-slate-900 dark:text-slate-100">Signature enseignant</h2>
-                                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Utilis&eacute;e automatiquement sur les certificats.</p>
+                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Utilis&eacute;e automatiquement sur les certificats. La capture sera recadr&eacute;e en PNG transparent 800 &times; 240 px.</p>
                                 </div>
                             </div>
                             <div class="profile-upload__meta mt-4 flex items-center gap-4">
@@ -1718,7 +1719,7 @@ $profileSecondaryButtonClass = 'profile-modern-button profile-modern-button--sec
                                     </button>
                                     <span>Max <?php echo e((string) $signatureMaxMb); ?> Mo</span>
                                 </div>
-                                <input class="sr-only" type="file" id="signature_file" name="signature_file" accept=".jpg,.jpeg,.png,.webp" data-max-mb="<?php echo e((string) $signatureMaxMb); ?>" data-upload-feedback="signature_feedback" data-upload-name="signature_filename" data-upload-preview="signature_preview" data-upload-placeholder="signature_placeholder">
+                                <input class="sr-only" type="file" id="signature_file" name="signature_file" accept=".jpg,.jpeg,.png,.webp" data-max-mb="<?php echo e((string) $signatureMaxMb); ?>" data-upload-feedback="signature_feedback" data-upload-name="signature_filename" data-upload-preview="signature_preview" data-upload-placeholder="signature_placeholder" data-signature-normalize="1" data-signature-source-max-mb="10">
                             </div>
                             <?php if ($signatureUrl !== ''): ?>
                                 <label class="mt-3 inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">

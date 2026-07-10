@@ -25,7 +25,7 @@ if ($platformSubtitle === '') {
                     <?php endif; ?>
                 </span>
                 <span class="mk-brand__wording">
-                    <span class="mk-brand__title"><?php echo e($platformName); ?></span>
+                    <span class="mk-brand__title"><?php echo site_brand_name_html($platformName); ?></span>
                     <span class="mk-brand__subtitle"><?php echo e($platformSubtitle); ?></span>
                 </span>
             </a>

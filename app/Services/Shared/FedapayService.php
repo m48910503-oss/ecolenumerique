@@ -93,38 +93,14 @@ final class FedapayService extends Service
         }
     }
 
-    private function localInsecureSslAllowed(): bool
-    {
-        if ($this->platformSetting('payment_fedapay_allow_local_insecure_ssl', '1') === '0') {
-            return false;
-        }
-        if (function_exists('is_local_environment') && \is_local_environment()) {
-            return true;
-        }
-
-        $host = strtolower(trim((string) ($_SERVER['HTTP_HOST'] ?? '')));
-        return in_array($host, ['localhost', '127.0.0.1', '[::1]'], true);
-    }
-
-    private function shouldRetryWithoutSslVerification(string $error): bool
-    {
-        if (!$this->localInsecureSslAllowed()) {
-            return false;
-        }
-
-        $error = strtolower($error);
-        return str_contains($error, 'ssl certificate')
-            || str_contains($error, 'certificate problem')
-            || str_contains($error, 'self-signed certificate')
-            || str_contains($error, 'unable to get local issuer certificate');
-    }
-
     private function caInfoPath(): string
     {
         $candidates = [
             trim((string) ini_get('curl.cainfo')),
             trim((string) ini_get('openssl.cafile')),
+            'C:\\xampp\\phpMyAdmin\\vendor\\composer\\ca-bundle\\res\\cacert.pem',
             'C:\\xampp\\apache\\bin\\curl-ca-bundle.crt',
+            'C:\\xampp\\perl\\vendor\\lib\\Mozilla\\CA\\cacert.pem',
         ];
 
         foreach ($candidates as $path) {
@@ -139,7 +115,7 @@ final class FedapayService extends Service
     /**
      * @return array{0:string|false,1:int,2:string}
      */
-    private function executeCurl(string $method, string $url, ?string $body, string $secretKey, bool $disableSslVerification): array
+    private function executeCurl(string $method, string $url, ?string $body, string $secretKey): array
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -151,14 +127,11 @@ final class FedapayService extends Service
             'Accept: application/json',
         ]);
 
-        if ($disableSslVerification) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        } else {
-            $caInfo = $this->caInfoPath();
-            if ($caInfo !== '') {
-                curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
-            }
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        $caInfo = $this->caInfoPath();
+        if ($caInfo !== '') {
+            curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
         }
 
         if ($body !== null) {
@@ -190,11 +163,15 @@ final class FedapayService extends Service
         $method = strtoupper($method);
         $environment = $this->environment();
         $secretKey = $this->secretKey();
+        $caInfo = $this->caInfoPath();
         $logContext = [
             'method' => $method,
             'path' => $path,
             'fedapay_env' => $environment,
         ];
+        if ($caInfo !== '') {
+            $logContext['ca_bundle'] = $caInfo;
+        }
 
         if (!function_exists('curl_init')) {
             $this->logError('cURL indisponible pour FedaPay.', $logContext);
@@ -214,13 +191,7 @@ final class FedapayService extends Service
             $body = json_encode($payload);
         }
 
-        [$resp, $code, $err] = $this->executeCurl($method, $url, $body, $secretKey, false);
-        if ($resp === false && $this->shouldRetryWithoutSslVerification($err)) {
-            $this->logWarning('Verification SSL FedaPay contournee en environnement local.', $logContext + [
-                'detail' => $err,
-            ]);
-            [$resp, $code, $err] = $this->executeCurl($method, $url, $body, $secretKey, true);
-        }
+        [$resp, $code, $err] = $this->executeCurl($method, $url, $body, $secretKey);
 
         if ($resp === false) {
             $this->logError('Echec reseau lors d un appel FedaPay.', $logContext + [

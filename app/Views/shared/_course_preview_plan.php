@@ -1,12 +1,33 @@
 <?php
 declare(strict_types=1);
+
+$truncateText = isset($truncateText) && is_callable($truncateText) ? $truncateText : static function (string $value, int $limit = 120): string {
+    $value = trim(preg_replace('/\s+/u', ' ', strip_tags(html_entity_decode($value, ENT_QUOTES, 'UTF-8'))) ?? '');
+    if ($value === '') {
+        return '';
+    }
+
+    if (function_exists('mb_strlen') && function_exists('mb_substr')) {
+        if (mb_strlen($value) <= $limit) {
+            return $value;
+        }
+
+        return rtrim(mb_substr($value, 0, max(0, $limit - 3))) . '...';
+    }
+
+    if (strlen($value) <= $limit) {
+        return $value;
+    }
+
+    return rtrim(substr($value, 0, max(0, $limit - 3))) . '...';
+};
 ?>
 <section id="structure" class="admin-course-panel admin-course-anchor-target p-4 sm:p-5">
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <p class="text-[0.72rem] font-black uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Structure détaillée</p>
             <h2 class="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">Plan du cours</h2>
-            <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Ouvrez un chapitre pour voir le contenu.</p>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Ouvrez un chapitre.</p>
         </div>
         <span class="admin-course-badge admin-course-badge--neutral">
             <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg('folder'); ?></span>
@@ -16,7 +37,7 @@ declare(strict_types=1);
  
     <?php if ($chapters === []): ?>
         <div class="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
-            Aucun chapitre défini.
+            Aucun chapitre.
         </div>
     <?php else: ?>
         <div class="mt-4 space-y-3">
@@ -100,7 +121,7 @@ declare(strict_types=1);
 
                                                 <h4 class="mt-2 text-sm font-black text-slate-900 dark:text-slate-100"><?php echo e((string) ($lesson['title'] ?? 'Leçon')); ?></h4>
                                                 <?php if (!empty($lesson['description'])): ?>
-                                                    <p class="mt-1.5 text-sm leading-6 text-slate-600 dark:text-slate-300"><?php echo e((string) $lesson['description']); ?></p>
+                                                    <p class="mt-1.5 text-sm leading-6 text-slate-600 dark:text-slate-300"><?php echo e($truncateText((string) $lesson['description'], 110)); ?></p>
                                                 <?php endif; ?>
 
                                                 <?php if ($lessonDocs !== []): ?>
@@ -121,7 +142,7 @@ declare(strict_types=1);
 
                                             <div class="flex shrink-0 flex-wrap gap-2 xl:justify-end">
                                                 <?php if ($lessonType === 'video' && $youtubeUrl !== ''): ?>
-                                                    <a href="<?php echo e($youtubeUrl); ?>" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:border-slate-500">
+                                                    <a href="<?php echo e($youtubeUrl); ?>" target="_blank" rel="noopener" class="admin-course-preview-button inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition">
                                                         <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg('external-link'); ?></span>
                                                         <span>Voir la vidéo</span>
                                                     </a>

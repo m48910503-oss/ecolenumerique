@@ -68,7 +68,7 @@ if ($dashboardSearchAriaLabel === '') {
   </div>
   <div class="flex items-center gap-2 sm:gap-4">
     <?php if ($studentTopShowSearch): ?>
-      <form action="<?php echo e($dashboardSearchUrl); ?>" method="get" class="relative hidden md:block">
+      <form action="<?php echo e($dashboardSearchUrl); ?>" method="get" class="student-dashboard-topbar__search relative hidden md:block">
         <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
         <input
           type="text"

@@ -383,7 +383,7 @@ final class DashboardService extends Service
                 'done_lessons' => $doneLessons,
                 'total_lessons' => $totalLessons,
                 'remaining_lessons' => max(0, $totalLessons - $doneLessons),
-                'url' => $this->siteUrl($resolveCourseUrl($row)),
+                'url' => $resolveCourseUrl($row),
                 'cover_url' => $resolveCourseCoverUrl($row),
                 'cover_alt' => trim((string) ($row['cover_alt'] ?? '')) ?: trim((string) ($row['title'] ?? 'Cours')),
             ];
@@ -467,7 +467,7 @@ final class DashboardService extends Service
                 'meta' => 'Cours mis en avant dans votre espace',
                 'badge' => 'Explorer',
                 'progress_pct' => 60,
-                'url' => $this->siteUrl($resolveCourseUrl($course)),
+                'url' => $resolveCourseUrl($course),
                 'cover_url' => $resolveCourseCoverUrl($course),
                 'cover_alt' => trim((string) ($course['cover_alt'] ?? '')) ?: trim((string) ($course['title'] ?? 'Cours recommandé')),
             ];

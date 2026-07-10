@@ -163,6 +163,12 @@ if (!function_exists('support_handle_uploads')) {
     function support_handle_uploads(?array $files, int $maxBytes = 5242880): array
     {
         $normalized = $files ? support_normalize_files($files) : [];
+        $normalized = array_values(array_filter(
+            $normalized,
+            static function (array $file): bool {
+                return (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+            }
+        ));
         if (!$normalized) {
             return ['ok' => true, 'attachments' => [], 'errors' => []];
         }

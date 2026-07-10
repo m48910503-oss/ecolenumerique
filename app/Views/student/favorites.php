@@ -227,7 +227,7 @@ $studentWelcomeActionIcon = 'search';
 
                       <div class="flex flex-wrap items-end gap-2">
                         <div>
-                          <p class="text-[0.9rem] font-semibold text-slate-900 dark:text-slate-100"><?php echo e($priceLabel); ?></p>
+                          <p class="app-price text-[0.9rem] font-semibold<?php echo $promoActive ? ' app-price--promo' : ''; ?>"><?php echo e($priceLabel); ?></p>
                           <?php if ($promoActive): ?>
                             <p class="student-card__meta line-through"><?php echo e($basePriceLabel); ?></p>
                           <?php endif; ?>

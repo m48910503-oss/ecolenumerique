@@ -10,6 +10,22 @@
   var lessonFileSeq = 0;
   var autosaveReady = false;
   var autosaveTimer = null;
+  var thumbObjectUrl = "";
+  var lastSavedCoverSignature = "";
+  var draftPrompt = {
+    enabled: false,
+    root: null,
+    meta: null,
+    form: null,
+    continueBtn: null,
+    newBtn: null,
+    backBtn: null,
+    restoreLocalBtn: null,
+    choicePanel: null,
+    listPanel: null,
+    view: "choice",
+    pending: null
+  };
   var stepRouteMap = {
     1: "presentation",
     2: "presentation-form",
@@ -64,6 +80,29 @@
   function numberValue(value, fallback) {
     var parsed = parseInt(String(value || ""), 10);
     return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  function countLabel(count, singular, plural) {
+    if (count <= 0) {
+      return "Aucun " + singular;
+    }
+    return String(count) + " " + (count === 1 ? singular : (plural || (singular + "s")));
+  }
+
+  function revokeThumbObjectUrl() {
+    if (!thumbObjectUrl || !window.URL || !window.URL.revokeObjectURL) return;
+    window.URL.revokeObjectURL(thumbObjectUrl);
+    thumbObjectUrl = "";
+  }
+
+  function fileSignature(file) {
+    if (!file) return "";
+    return [
+      clean(file.name),
+      String(file.size || 0),
+      String(file.lastModified || 0),
+      clean(file.type)
+    ].join("::");
   }
 
   function stepSlug(step) {
@@ -184,7 +223,7 @@
       title: "",
       description: "",
       items: [
-        { type: "video", title: "", description: "", resource: "", duration_min: 15 }
+        { type: "video", title: "", description: "", resource: "", duration_min: 0 }
       ]
     };
   }
@@ -193,7 +232,7 @@
     return {
       title: "",
       description: "",
-      items: [{ type: "video", title: "", description: "", resource: "", duration_min: 15 }]
+      items: [{ type: "video", title: "", description: "", resource: "", duration_min: 0 }]
     };
   }
 
@@ -316,7 +355,8 @@
     var resource = item && item.resource ? item.resource : "";
     var descriptionText = clean(item && item.description);
     var description = escapeHtml(item && item.description ? item.description : "");
-    var duration = numberValue(item && item.duration_min, type === "appointment" ? 60 : (type === "video" ? 15 : 0));
+    var duration = numberValue(item && item.duration_min, type === "appointment" ? 60 : 0);
+    var durationValue = duration > 0 ? String(duration) : "";
     var fileKey = clean(item && item.file_key) || makeLessonFileKey();
     var fileName = clean(item && item.file_name) || (type === "document" ? displayNameFromResource(resource) : "");
 
@@ -350,8 +390,8 @@
               '</select>' +
             '</label>' +
             '<label class="course-builder-field course-builder-field--duration' + (type === "appointment" ? " hidden" : "") + '">' +
-              '<span>Durée</span>' +
-              '<input type="number" min="0" value="' + String(duration) + '" class="lesson-duration course-builder-input" placeholder="15">' +
+              '<span>Durée *</span>' +
+              '<input type="number" min="1" required value="' + durationValue + '" class="lesson-duration course-builder-input" placeholder="15">' +
             '</label>' +
           '</div>' +
           '<div class="lesson-dynamic course-builder-dynamic">' + lessonDynamicHtml(type, resource, item && item.mode, fileKey, fileName) + '</div>' +
@@ -367,7 +407,7 @@
     if (!lesson) return;
     var title = clean(q(".lesson-title", lesson) && q(".lesson-title", lesson).value);
     var type = q(".lesson-type-select", lesson) ? q(".lesson-type-select", lesson).value : "video";
-    var duration = Math.max(0, numberValue(q(".lesson-duration", lesson) && q(".lesson-duration", lesson).value, type === "appointment" ? 60 : (type === "video" ? 15 : 0)));
+    var duration = Math.max(0, numberValue(q(".lesson-duration", lesson) && q(".lesson-duration", lesson).value, type === "appointment" ? 60 : 0));
     var summaryTitle = q(".lesson-summary-title", lesson);
     var summarySubtitle = q(".lesson-summary-subtitle", lesson);
     var typePill = q(".lesson-type-pill", lesson);
@@ -407,6 +447,7 @@
   function toggleLesson(launcher) {
     var lesson = launcher && launcher.closest(".lesson-item");
     if (!lesson) return;
+    lesson.removeAttribute("data-auto-collapsed");
     setLessonCollapsed(lesson, !lesson.classList.contains("is-collapsed"), false);
   }
 
@@ -418,9 +459,7 @@
       setLessonCollapsed(lesson, false, false);
       return;
     }
-    if (lesson.getAttribute("data-auto-collapsed") !== "1") {
-      setLessonCollapsed(lesson, true, true);
-    }
+    lesson.removeAttribute("data-auto-collapsed");
   }
 
   function moduleHtml(module) {
@@ -481,11 +520,11 @@
     var totalMinutes = 0;
     var isComplete = clean(q(".module-title", module) && q(".module-title", module).value) !== "" && lessonCount > 0;
 
-    lessons.forEach(function (lesson, lessonIndex) {
-      var type = q(".lesson-type-select", lesson) ? q(".lesson-type-select", lesson).value : "video";
-      var title = clean(q(".lesson-title", lesson) && q(".lesson-title", lesson).value);
-      var resource = clean(q(".lesson-resource", lesson) && q(".lesson-resource", lesson).value);
-      var duration = Math.max(0, numberValue(q(".lesson-duration", lesson) && q(".lesson-duration", lesson).value, 0));
+      lessons.forEach(function (lesson, lessonIndex) {
+        var type = q(".lesson-type-select", lesson) ? q(".lesson-type-select", lesson).value : "video";
+        var title = clean(q(".lesson-title", lesson) && q(".lesson-title", lesson).value);
+        var resource = clean(q(".lesson-resource", lesson) && q(".lesson-resource", lesson).value);
+        var duration = Math.max(0, numberValue(q(".lesson-duration", lesson) && q(".lesson-duration", lesson).value, 0));
       var fileInput = q(".lesson-file-input", lesson);
       var hasUploadedDocument = fileInput && fileInput.files && fileInput.files.length;
       var hasExistingDocument = uploadedResourceLooksValid(resource);
@@ -496,8 +535,13 @@
       if (title === "") {
         lessonComplete = false;
       }
-      if (type === "video" && (!youtubeUrlLooksValid(resource) || duration < 1)) {
+      if (type !== "appointment" && duration < 1) {
         lessonComplete = false;
+      }
+      if (type === "video") {
+        if (!youtubeUrlLooksValid(resource)) {
+          lessonComplete = false;
+        }
       }
       if (type === "document" && !hasUploadedDocument && !hasExistingDocument) {
         lessonComplete = false;
@@ -541,12 +585,21 @@
     if (message) message.classList.toggle("hidden", !empty);
   }
 
+  function qcmOptionLabel(index) {
+    var value = Math.max(0, numberValue(index, 0));
+    if (value < 26) {
+      return String.fromCharCode(97 + value);
+    }
+    return String(value + 1);
+  }
+
   function optionRowHtml(option, index, optionInputType, group, hasCorrect) {
+    var optionLabel = qcmOptionLabel(index);
     return '' +
       '<div class="option-row course-builder-option">' +
-        '<span class="option-number course-builder-option-number">' + String(index + 1) + '</span>' +
+        '<span class="option-number course-builder-option-number">' + optionLabel + '</span>' +
         '<input type="' + optionInputType + '" name="' + group + '" class="course-builder-option-check"' + ((option.correct || (!hasCorrect && index === 0)) ? " checked" : "") + '>' +
-        '<input type="text" value="' + escapeHtml(option.text || "") + '" class="option-text course-builder-option-input" placeholder="Proposition ' + String(index + 1) + '">' +
+        '<input type="text" value="' + escapeHtml(option.text || "") + '" class="option-text course-builder-option-input" placeholder="Proposition ' + optionLabel + '">' +
         '<button type="button" data-remove-option class="course-builder-mini-action course-builder-mini-action--danger" aria-label="Supprimer la proposition"><i class="fa-solid fa-xmark"></i></button>' +
       '</div>';
   }
@@ -638,6 +691,87 @@
     });
   }
 
+  function lessonHasEditableData(lesson) {
+    if (!lesson || typeof lesson !== "object") return false;
+
+    var title = clean(q(".lesson-title", lesson) && q(".lesson-title", lesson).value);
+    var description = clean(q(".lesson-description", lesson) && q(".lesson-description", lesson).value);
+    var resource = clean(q(".lesson-resource", lesson) && q(".lesson-resource", lesson).value);
+    var duration = Math.max(0, numberValue(q(".lesson-duration", lesson) && q(".lesson-duration", lesson).value, 0));
+    var fileInput = q(".lesson-file-input", lesson);
+    var type = clean(q(".lesson-type-select", lesson) && q(".lesson-type-select", lesson).value) || clean(lesson.getAttribute("data-lesson-type"));
+
+    if (title !== "" || description !== "" || resource !== "" || duration > 0) {
+      return true;
+    }
+
+    if (fileInput && fileInput.files && fileInput.files.length) {
+      return true;
+    }
+
+    return type !== "" && type !== "video";
+  }
+
+  function moduleHasEditableData(module) {
+    if (!module || typeof module !== "object") return false;
+
+    if (clean(q(".module-title", module) && q(".module-title", module).value) !== "") {
+      return true;
+    }
+    if (clean(q(".module-description", module) && q(".module-description", module).value) !== "") {
+      return true;
+    }
+
+    return qa(".lesson-item", module).some(lessonHasEditableData);
+  }
+
+  function countMeaningfulModules() {
+    return qa("#modules-container .module-item").filter(moduleHasEditableData).length;
+  }
+
+  function countMeaningfulExams() {
+    return qa("#exams-container .exam-item").filter(examHasEditableData).length;
+  }
+
+  function phaseProgressInfo(phase) {
+    if (phase === 1) {
+      var presentationComplete = !blockingIssueForStep(2);
+      return {
+        complete: presentationComplete,
+        label: presentationComplete ? "Prêt" : "À faire"
+      };
+    }
+
+    if (phase === 2) {
+      var commercialComplete = !blockingIssueForStep(4);
+      return {
+        complete: commercialComplete,
+        label: commercialComplete ? "Prêt" : "À faire"
+      };
+    }
+
+    if (phase === 3) {
+      var moduleCount = countMeaningfulModules();
+      return {
+        complete: moduleCount > 0 && !blockingIssueForStep(6),
+        label: moduleCount > 0 ? countLabel(moduleCount, "module", "modules") : "À faire"
+      };
+    }
+
+    if (phase === 4) {
+      var examCount = countMeaningfulExams();
+      return {
+        complete: examCount > 0 && !blockingIssueForStep(8),
+        label: examCount > 0 ? countLabel(examCount, "examen", "examens") : "À faire"
+      };
+    }
+
+    return {
+      complete: false,
+      label: "À faire"
+    };
+  }
+
   function qcmQuestionHasData(question) {
     if (!question || typeof question !== "object") return false;
     if (clean(question.text) !== "") return true;
@@ -703,7 +837,7 @@
               '<input type="number" min="0" value="' + String(numberValue(exam.duration_min, type === "qcm" ? 45 : 0)) + '" class="exam-duration course-builder-exam-input" placeholder="45">' +
             '</label>' +
             '<label class="course-builder-exam-field">' +
-              '<span>Score min (%)</span>' +
+              '<span>Note minimale (%)</span>' +
               '<input type="number" min="0" max="100" value="' + String(numberValue(exam.min_score, 50)) + '" class="exam-min-score course-builder-exam-input" placeholder="50">' +
             '</label>' +
           '</div>' +
@@ -898,9 +1032,9 @@
         qa(".option-row", question).forEach(function (option, optionIndex) {
           var optionNumber = q(".option-number", option);
           var optionText = q(".option-text", option);
-          var visibleOptionNumber = String(optionIndex + 1);
-          if (optionNumber) optionNumber.textContent = visibleOptionNumber;
-          if (optionText) optionText.setAttribute("placeholder", "Proposition " + visibleOptionNumber);
+          var visibleOptionLabel = qcmOptionLabel(optionIndex);
+          if (optionNumber) optionNumber.textContent = visibleOptionLabel;
+          if (optionText) optionText.setAttribute("placeholder", "Proposition " + visibleOptionLabel);
         });
       });
     });
@@ -921,6 +1055,201 @@
     var message = q("#no-exam-message");
     if (message) message.classList.toggle("hidden", !empty);
   }
+
+  function qcmImportStatusNode(exam) {
+    return q("[data-qcm-import-status]", exam);
+  }
+
+  function setQcmImportStatus(exam, message, tone) {
+    var status = qcmImportStatusNode(exam);
+    if (!status) return;
+    status.textContent = message || "";
+    status.classList.remove("is-ok", "is-error");
+    if (tone === "ok") {
+      status.classList.add("is-ok");
+    } else if (tone === "error") {
+      status.classList.add("is-error");
+    }
+  }
+
+  function splitCsvLine(line, delimiter) {
+    var result = [];
+    var curr = "";
+    var inQuotes = false;
+    for (var i = 0; i < line.length; i++) {
+      var c = line[i];
+      if (c === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          curr += '"';
+          i += 1;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (c === delimiter && !inQuotes) {
+        result.push(curr.trim());
+        curr = "";
+      } else {
+        curr += c;
+      }
+    }
+    result.push(curr.trim());
+    return result;
+  }
+
+  async function readQcmImportText(file) {
+    if (!file) return "";
+    var fileName = String(file.name || "").toLowerCase();
+    var isExcel = fileName.endsWith(".xlsx") || fileName.endsWith(".xls");
+    if (!isExcel) {
+      return file.text();
+    }
+    if (typeof window.XLSX === "undefined" || !window.XLSX?.utils?.sheet_to_csv) {
+      throw new Error("excel_lib_missing");
+    }
+    var buffer = await file.arrayBuffer();
+    var workbook = window.XLSX.read(buffer, { type: "array" });
+    var firstSheet = workbook && workbook.SheetNames && workbook.SheetNames[0];
+    if (!firstSheet || !workbook.Sheets || !workbook.Sheets[firstSheet]) {
+      return "";
+    }
+    return window.XLSX.utils.sheet_to_csv(workbook.Sheets[firstSheet], {
+      FS: ";",
+      RS: "\n",
+      blankrows: false
+    });
+  }
+
+  function importQcmCsvText(exam, text) {
+    if (!exam || clean(text) === "") return 0;
+
+    var lines = String(text).replace(/^\uFEFF/, "").replace(/\r/g, "").split("\n").filter(function (line) {
+      return clean(line) !== "";
+    });
+    if (!lines.length) return 0;
+
+    var delimiter = lines[0].indexOf(";") !== -1 ? ";" : ",";
+    var headers = splitCsvLine(lines[0], delimiter).map(function (header) {
+      return clean(header).toLowerCase();
+    });
+    var idx = function (name) {
+      return headers.indexOf(name);
+    };
+
+    var hQuestion = idx("question");
+    if (hQuestion < 0) return 0;
+
+    var hVariant = idx("variant");
+    var hType = idx("type");
+    var hCorrect = idx("correct");
+    var optionIndexes = ["option_a", "option_b", "option_c", "option_d", "option_e", "option_f"].map(idx).filter(function (value) {
+      return value >= 0;
+    });
+    var defaultTargets = ["1", "2", "3"];
+    var variantMap = { a: "1", b: "2", c: "3", 1: "1", 2: "2", 3: "3" };
+    var imported = 0;
+    var firstImportedVariant = "";
+
+    for (var i = 1; i < lines.length; i += 1) {
+      var cols = splitCsvLine(lines[i], delimiter);
+      var questionText = clean(cols[hQuestion] || "");
+      if (questionText === "") continue;
+
+      var typeRaw = clean(hType >= 0 ? cols[hType] : "single") || "single";
+      var qType = ["single", "multiple", "text"].indexOf(typeRaw.toLowerCase()) !== -1 ? typeRaw.toLowerCase() : "single";
+      var variantRaw = clean(hVariant >= 0 ? cols[hVariant] : "");
+      var lowerVariant = variantRaw.toLowerCase();
+      var targetVariants = defaultTargets.slice();
+
+      if (["1", "2", "3"].indexOf(variantRaw) !== -1) {
+        targetVariants = [variantRaw];
+      } else if (variantMap[lowerVariant]) {
+        targetVariants = [variantMap[lowerVariant]];
+      } else if (["all", "a+b+c", "a,b,c", "a|b|c", "abc", "123"].indexOf(lowerVariant) !== -1) {
+        targetVariants = defaultTargets.slice();
+      }
+
+      var options = [];
+      optionIndexes.forEach(function (optionIndex) {
+        var optionText = clean(cols[optionIndex] || "");
+        if (optionText !== "") {
+          options.push({ text: optionText, correct: false });
+        }
+      });
+      if (qType !== "text" && options.length < 2) {
+        continue;
+      }
+
+      var correctRaw = clean(hCorrect >= 0 ? cols[hCorrect] : "");
+      if (correctRaw !== "" && qType !== "text") {
+        correctRaw.toUpperCase().split(/[|,; ]+/).filter(Boolean).forEach(function (token) {
+          var numeric = parseInt(token, 10);
+          var optionIndex = -1;
+          if (Number.isFinite(numeric)) {
+            optionIndex = numeric - 1;
+          } else if (/^[A-F]$/.test(token)) {
+            optionIndex = token.charCodeAt(0) - 65;
+          }
+          if (optionIndex >= 0 && optionIndex < options.length) {
+            options[optionIndex].correct = true;
+          }
+        });
+      }
+      if (qType !== "text" && !options.some(function (option) { return !!option.correct; })) {
+        options[0].correct = true;
+      }
+
+      targetVariants.forEach(function (variant) {
+        var version = q('.qcm-version[data-version="' + String(variant) + '"]', exam);
+        var container = version ? q(".questions-container", version) : null;
+        if (!container) return;
+        if (firstImportedVariant === "") {
+          firstImportedVariant = String(variant);
+        }
+        container.insertAdjacentHTML("beforeend", questionHtml({ text: questionText, type: qType, options: options }, qa(".question-item", container).length));
+        imported += 1;
+      });
+    }
+
+    if (imported > 0) {
+      renumberQuestions(exam);
+      if (firstImportedVariant !== "") {
+        setActiveQcmVersion(exam, firstImportedVariant);
+      }
+      serializeBuilders();
+    }
+
+    return imported;
+  }
+
+  window.importQcmFile = async function (button) {
+    var exam = button && button.closest(".exam-item");
+    if (!exam) return 0;
+    var input = q("[data-qcm-import-input]", exam);
+    var file = input && input.files && input.files.length ? input.files[0] : null;
+    if (!file) {
+      setQcmImportStatus(exam, "Choisissez un fichier CSV ou Excel avant l'import.", "error");
+      return 0;
+    }
+
+    try {
+      var text = await readQcmImportText(file);
+      var count = importQcmCsvText(exam, text);
+      if (count > 0) {
+        setQcmImportStatus(exam, String(count) + " question(s) importée(s).", "ok");
+        showToast("Import QCM terminé.", "info");
+        return count;
+      }
+      setQcmImportStatus(exam, "Aucune question importée. Vérifiez les colonnes du fichier.", "error");
+      return 0;
+    } catch (err) {
+      if (err && err.message === "excel_lib_missing") {
+        setQcmImportStatus(exam, "Import Excel indisponible (librairie manquante).", "error");
+        return 0;
+      }
+      setQcmImportStatus(exam, "Échec d'import. Réessayez avec un CSV valide.", "error");
+      return 0;
+    }
+  };
 
   function renderModules(modules) {
     var container = q("#modules-container");
@@ -970,7 +1299,7 @@
           resource = "";
         }
         var lessonDescription = clean(descriptionInput && descriptionInput.value);
-        var durationMin = Math.max(0, numberValue(durationInput && durationInput.value, type === "meeting" ? 60 : (type === "video" ? 15 : 0)));
+        var durationMin = Math.max(0, numberValue(durationInput && durationInput.value, type === "meeting" ? 60 : 0));
         var mode = modeInput && modeInput.value === "onsite" ? "onsite" : "online";
         if (type === "meeting" && durationMin < 1) {
           durationMin = 60;
@@ -1084,6 +1413,7 @@
   function serializeBuilders() {
     serializeContent();
     serializeExams();
+    updateStepButtons();
     if (autosaveReady) {
       scheduleLocalDraftSave();
     }
@@ -1139,30 +1469,32 @@
     [1, 2, 3, 4].forEach(function (phase) {
       var button = q("#stepBtn" + phase);
       if (!button) return;
-      var bubble = q("span:first-child", button);
+      var progress = phaseProgressInfo(phase);
+      var complete = progress.complete;
+      var stateLabel = progress.label;
+      var state = q(".course-builder-workflow__step-state", button);
       var active = phase === activePhase;
-      button.classList.toggle("bg-primary-600", active);
-      button.classList.toggle("text-white", active);
-      button.classList.toggle("shadow-lg", active);
-      button.classList.toggle("shadow-primary-500/25", active);
-      button.classList.toggle("bg-white", !active);
-      button.classList.toggle("text-slate-600", !active);
-      button.classList.toggle("border", !active);
-      button.classList.toggle("border-slate-200", !active);
-      if (bubble) {
-        bubble.classList.toggle("bg-white", active);
-        bubble.classList.toggle("text-primary-600", active);
-        bubble.classList.toggle("bg-slate-100", !active);
-        bubble.classList.toggle("text-slate-500", !active);
-      }
+      button.setAttribute("data-step-complete", complete ? "1" : "0");
+      button.classList.toggle("course-builder-workflow__step--complete", complete);
+      button.classList.toggle("course-builder-workflow__step--pending", !complete);
+      button.classList.toggle("is-active", active);
+      if (active) button.setAttribute("aria-current", "step");
+      else button.removeAttribute("aria-current");
+      if (state) state.textContent = stateLabel;
     });
 
     qa(".course-side-roadmap__item[data-step-target]").forEach(function (button) {
       var step = numberValue(button.getAttribute("data-step-target"), 1);
-      var active = phaseFromStep(step) === activePhase;
+      var phase = phaseFromStep(step);
+      var progress = phaseProgressInfo(phase);
+      var complete = progress.complete;
+      var stateLabel = progress.label;
+      var state = q(".course-side-roadmap__copy small", button);
+      var active = phase === activePhase;
       button.classList.toggle("is-active", active);
       if (active) button.setAttribute("aria-current", "step");
       else button.removeAttribute("aria-current");
+      if (state) state.textContent = stateLabel;
     });
   }
 
@@ -1359,9 +1691,6 @@
             if (!youtubeUrlLooksValid(resource.value)) {
               return { step: 6, element: resource, message: "Le lien YouTube de la " + label + " est invalide." };
             }
-            if (numberValue(duration && duration.value, 0) < 1) {
-              return { step: 6, element: duration, message: "Renseignez une durée valide pour la " + label + "." };
-            }
           }
           if (type === "document" && !(fileInput && fileInput.files && fileInput.files.length) && !uploadedResourceLooksValid(resource && resource.value)) {
             return {
@@ -1369,6 +1698,9 @@
               element: q(".course-builder-file-drop", lesson) || fileInput,
               message: "Ajoutez le fichier document/exercice de la " + label + "."
             };
+          }
+          if (type !== "appointment" && numberValue(duration && duration.value, 0) < 1) {
+            return { step: 6, element: duration, message: "Renseignez une durée valide pour la " + label + "." };
           }
         }
       }
@@ -1558,15 +1890,14 @@
     var durationField = q(".course-builder-field--duration", lesson);
     var fileKey = clean(lesson.getAttribute("data-file-key")) || makeLessonFileKey();
     var previousType = lesson.getAttribute("data-lesson-type") || "video";
-    var previousDefault = previousType === "appointment" ? 60 : (previousType === "video" ? 15 : 0);
-    var nextDefault = select.value === "appointment" ? 60 : (select.value === "video" ? 15 : 0);
+    var previousDefault = previousType === "appointment" ? 60 : 0;
     var currentDuration = numberValue(duration && duration.value, previousDefault);
     lesson.setAttribute("data-lesson-type", select.value);
     lesson.setAttribute("data-file-key", fileKey);
     if (dynamic) dynamic.innerHTML = lessonDynamicHtml(select.value, "", "", fileKey, "");
     if (durationField) durationField.classList.toggle("hidden", select.value === "appointment");
     if (duration && (clean(duration.value) === "" || currentDuration === previousDefault)) {
-      duration.value = String(nextDefault);
+      duration.value = select.value === "appointment" ? "60" : "";
     }
     updateModuleSummary(lesson.closest(".module-item"));
     serializeBuilders();
@@ -1735,17 +2066,14 @@
   function syncReferralToggleUi() {
     var field = q("#referral_override");
     var toggle = q("#referral-toggle");
-    var dot = q("#ref-dot");
     var status = q("#ref-status");
     var enabled = clean(field && field.value) === "1";
 
     if (toggle) {
-      toggle.classList.toggle("bg-primary-600", enabled);
-      toggle.classList.toggle("bg-slate-300", !enabled);
-    }
-    if (dot) {
-      dot.classList.toggle("translate-x-6", enabled);
-      dot.classList.toggle("translate-x-1", !enabled);
+      toggle.classList.toggle("is-active", enabled);
+      toggle.classList.toggle("is-inactive", !enabled);
+      toggle.setAttribute("aria-pressed", enabled ? "true" : "false");
+      toggle.setAttribute("aria-label", enabled ? "Désactiver le parrainage" : "Activer le parrainage");
     }
     if (status) status.textContent = enabled ? "Activé" : "Désactivé";
     syncReferralOptions(enabled);
@@ -1763,6 +2091,9 @@
       return;
     }
 
+    if (l2Toggle && l2Field) {
+      l2Toggle.checked = clean(l2Field.value) === "1";
+    }
     if (l2Field && l2Toggle) {
       l2Field.value = l2Toggle.checked ? "1" : "0";
     }
@@ -1771,17 +2102,14 @@
   window.toggleReferral = function () {
     var field = q("#referral_override");
     var toggle = q("#referral-toggle");
-    var dot = q("#ref-dot");
     var status = q("#ref-status");
     var enabled = !(field && field.value === "1");
     if (field) field.value = enabled ? "1" : "0";
     if (toggle) {
-      toggle.classList.toggle("bg-primary-600", enabled);
-      toggle.classList.toggle("bg-slate-300", !enabled);
-    }
-    if (dot) {
-      dot.classList.toggle("translate-x-6", enabled);
-      dot.classList.toggle("translate-x-1", !enabled);
+      toggle.classList.toggle("is-active", enabled);
+      toggle.classList.toggle("is-inactive", !enabled);
+      toggle.setAttribute("aria-pressed", enabled ? "true" : "false");
+      toggle.setAttribute("aria-label", enabled ? "Désactiver le parrainage" : "Activer le parrainage");
     }
     if (status) status.textContent = enabled ? "Activé" : "Désactivé";
     syncReferralOptions(enabled);
@@ -1796,31 +2124,34 @@
 
   window.handleThumb = function (input) {
     var file = input && input.files && input.files[0];
+    var form = q("[data-course-create-form]");
     if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function (event) {
-      var img = q("#thumb-img");
-      var preview = q("#thumb-preview");
-      var placeholder = q("#thumb-placeholder");
-      if (img) img.src = event.target.result;
-      if (preview) preview.classList.remove("hidden");
-      if (placeholder) placeholder.classList.add("hidden");
-    };
-    reader.readAsDataURL(file);
+    var existing = q("#cover_path_existing");
+    if (existing) existing.value = "";
+    if (form) removeCoverPreviewRecord(localDraftCoverPreviewKey(form));
+    setThumbPreviewFromFile(file);
+    captureCoverPreviewDraft(form, file);
+    updateStepButtons();
+    if (autosaveReady && form) saveLocalDraft(form);
+    else scheduleLocalDraftSave();
   };
 
   window.removeThumb = function () {
+    var form = q("[data-course-create-form]");
     var input = q("#cover_file");
     var existing = q("#cover_path_existing");
-    var img = q("#thumb-img");
-    var preview = q("#thumb-preview");
-    var placeholder = q("#thumb-placeholder");
     if (input) input.value = "";
     if (existing) existing.value = "";
-    if (img) img.removeAttribute("src");
-    if (preview) preview.classList.add("hidden");
-    if (placeholder) placeholder.classList.remove("hidden");
-    scheduleLocalDraftSave();
+    revokeThumbObjectUrl();
+    setThumbPreview("");
+    updateStepButtons();
+    if (form) {
+      lastSavedCoverSignature = "";
+      removeCoverPreviewRecord(localDraftCoverPreviewKey(form));
+      removeCoverDraftFile(localDraftCoverKey(form));
+    }
+    if (autosaveReady && form) saveLocalDraft(form);
+    else scheduleLocalDraftSave();
   };
 
   window.previewCourse = function () {
@@ -1917,6 +2248,11 @@
     return clean(form && form.getAttribute("data-autosave-key"));
   }
 
+  function localDraftCoverKey(form) {
+    var key = localDraftKey(form);
+    return key === "" ? "" : key + ":cover";
+  }
+
   function localStorageRef() {
     try {
       return window.localStorage || null;
@@ -1925,11 +2261,384 @@
     }
   }
 
+  function previewStorageRefs() {
+    var refs = [];
+    try {
+      if (window.sessionStorage) refs.push(window.sessionStorage);
+    } catch (_e) {}
+    try {
+      if (window.localStorage) refs.push(window.localStorage);
+    } catch (_e2) {}
+    return refs;
+  }
+
+  function localDraftCoverPreviewKey(form) {
+    var key = localDraftKey(form);
+    return key === "" ? "" : key + ":cover_preview";
+  }
+
+  function readCoverPreviewRecord(key) {
+    if (key === "") return null;
+    return previewStorageRefs().reduce(function (found, storage) {
+      if (found || !storage) return found;
+      try {
+        var raw = storage.getItem(key);
+        if (!raw) return null;
+        var parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" ? parsed : null;
+      } catch (_e) {
+        return null;
+      }
+    }, null);
+  }
+
+  function writeCoverPreviewRecord(key, record) {
+    if (key === "") return false;
+    var payload = JSON.stringify(record);
+    var refs = previewStorageRefs();
+    for (var i = 0; i < refs.length; i += 1) {
+      try {
+        refs[i].setItem(key, payload);
+        for (var j = 0; j < refs.length; j += 1) {
+          if (j === i) continue;
+          try {
+            refs[j].removeItem(key);
+          } catch (_cleanupError) {
+            // Keep the freshest preview even if one backend cannot be cleaned up.
+          }
+        }
+        return true;
+      } catch (_e) {
+        // Try the next storage backend.
+      }
+    }
+    return false;
+  }
+
+  function removeCoverPreviewRecord(key) {
+    if (key === "") return;
+    previewStorageRefs().forEach(function (storage) {
+      try {
+        storage.removeItem(key);
+      } catch (_e) {
+        // Ignore storage cleanup failures.
+      }
+    });
+  }
+
+  function fileFromDataUrl(dataUrl, name, type, lastModified) {
+    var source = clean(dataUrl);
+    if (source === "" || source.indexOf("data:") !== 0) return null;
+
+    var commaIndex = source.indexOf(",");
+    if (commaIndex === -1) return null;
+
+    var header = source.slice(5, commaIndex);
+    var payload = source.slice(commaIndex + 1);
+    var mime = clean(type || header.replace(/;base64/i, ""));
+
+    try {
+      var binary = /;base64/i.test(header) ? window.atob(payload) : decodeURIComponent(payload);
+      var bytes = new Uint8Array(binary.length);
+      for (var i = 0; i < binary.length; i += 1) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+
+      var blob = new Blob([bytes], { type: mime || "application/octet-stream" });
+      var fileName = clean(name) || "miniature";
+      var modifiedAt = numberValue(lastModified, Date.now());
+
+      if (typeof File === "function") {
+        return new File([blob], fileName, {
+          type: blob.type || mime || "",
+          lastModified: modifiedAt
+        });
+      }
+
+      blob.name = fileName;
+      blob.lastModified = modifiedAt;
+      return blob;
+    } catch (_e) {
+      return null;
+    }
+  }
+
+  function coverDraftDb() {
+    if (!window.indexedDB) return Promise.resolve(null);
+    if (coverDraftDb.cache) return coverDraftDb.cache;
+
+    coverDraftDb.cache = new Promise(function (resolve) {
+      try {
+        var request = window.indexedDB.open("ecole-course-drafts", 1);
+        request.onupgradeneeded = function () {
+          var db = request.result;
+          if (db && !db.objectStoreNames.contains("files")) {
+            db.createObjectStore("files");
+          }
+        };
+        request.onsuccess = function () {
+          resolve(request.result || null);
+        };
+        request.onerror = function () {
+          resolve(null);
+        };
+      } catch (_error) {
+        resolve(null);
+      }
+    });
+
+    return coverDraftDb.cache;
+  }
+
+  function writeCoverDraftFile(key, file) {
+    return coverDraftDb().then(function (db) {
+      return new Promise(function (resolve) {
+        if (!key || !db || !file) {
+          resolve(false);
+          return;
+        }
+
+        try {
+          var transaction = db.transaction("files", "readwrite");
+          transaction.oncomplete = function () { resolve(true); };
+          transaction.onabort = transaction.onerror = function () { resolve(false); };
+          transaction.objectStore("files").put({
+            file: file,
+            name: file.name || "miniature",
+            type: file.type || "",
+            size: file.size || 0,
+            lastModified: file.lastModified || Date.now()
+          }, key);
+        } catch (_error) {
+          resolve(false);
+        }
+      });
+    });
+  }
+
+  function readCoverDraftFile(key) {
+    return coverDraftDb().then(function (db) {
+      return new Promise(function (resolve) {
+        if (!key || !db) {
+          resolve(null);
+          return;
+        }
+
+        try {
+          var transaction = db.transaction("files", "readonly");
+          var request = transaction.objectStore("files").get(key);
+          request.onsuccess = function () {
+            resolve(request.result || null);
+          };
+          request.onerror = function () {
+            resolve(null);
+          };
+        } catch (_error) {
+          resolve(null);
+        }
+      });
+    });
+  }
+
+  function removeCoverDraftFile(key) {
+    return coverDraftDb().then(function (db) {
+      return new Promise(function (resolve) {
+        if (!key || !db) {
+          resolve(false);
+          return;
+        }
+
+        try {
+          var transaction = db.transaction("files", "readwrite");
+          transaction.oncomplete = function () { resolve(true); };
+          transaction.onabort = transaction.onerror = function () { resolve(false); };
+          transaction.objectStore("files").delete(key);
+        } catch (_error) {
+          resolve(false);
+        }
+      });
+    });
+  }
+
+  function coverDraftFileFromRecord(record) {
+    if (!record) return null;
+    var blob = record.file instanceof Blob ? record.file : (record instanceof Blob ? record : null);
+    if (!blob) return null;
+
+    var name = clean(record.name || blob.name || "miniature");
+    var type = clean(record.type || blob.type || "application/octet-stream");
+    var lastModified = numberValue(record.lastModified, Date.now());
+
+    try {
+      if (typeof File === "function") {
+        return new File([blob], name, {
+          type: type,
+          lastModified: lastModified
+        });
+      }
+    } catch (_error) {
+      // Fall back to the raw blob for preview-only restoration.
+    }
+
+    blob.name = name;
+    blob.lastModified = lastModified;
+    return blob;
+  }
+
+  function setThumbPreview(src) {
+    var img = q("#thumb-img");
+    var preview = q("#thumb-preview");
+    var placeholder = q("#thumb-placeholder");
+    var hasSource = clean(src) !== "";
+
+    if (img) {
+      if (hasSource) img.src = src;
+      else img.removeAttribute("src");
+    }
+    if (preview) preview.classList.toggle("hidden", !hasSource);
+    if (placeholder) placeholder.classList.toggle("hidden", hasSource);
+  }
+
+  function setThumbPreviewFromFile(file) {
+    revokeThumbObjectUrl();
+    if (!file) {
+      setThumbPreview("");
+      return;
+    }
+    if (window.URL && window.URL.createObjectURL) {
+      thumbObjectUrl = window.URL.createObjectURL(file);
+      setThumbPreview(thumbObjectUrl);
+      return;
+    }
+    if (typeof FileReader === "function") {
+      var reader = new FileReader();
+      reader.onload = function (event) {
+        setThumbPreview(clean(event && event.target && event.target.result));
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function captureCoverPreviewDraft(form, file) {
+    var key = localDraftCoverPreviewKey(form);
+    if (key === "" || !file || typeof FileReader !== "function") {
+      removeCoverPreviewRecord(key);
+      return;
+    }
+
+    try {
+      var reader = new FileReader();
+      reader.onload = function (event) {
+        var dataUrl = clean(event && event.target && event.target.result);
+        if (dataUrl === "") return;
+        writeCoverPreviewRecord(key, {
+          data_url: dataUrl,
+          name: clean(file.name),
+          type: clean(file.type),
+          size: String(file.size || 0),
+          last_modified: String(file.lastModified || Date.now())
+        });
+      };
+      reader.onerror = function () {
+        removeCoverPreviewRecord(key);
+      };
+      reader.readAsDataURL(file);
+    } catch (_e) {
+      removeCoverPreviewRecord(key);
+    }
+  }
+
+  function assignFileToInput(input, file) {
+    try {
+      if (!input || !file || typeof DataTransfer === "undefined") return false;
+      var transfer = new DataTransfer();
+      transfer.items.add(file);
+      input.files = transfer.files;
+      return !!(input.files && input.files.length);
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  function syncCoverDraftStorage(form) {
+    var key = localDraftCoverKey(form);
+    var input = q("#cover_file", form);
+    var file = input && input.files && input.files.length ? input.files[0] : null;
+    var signature = fileSignature(file);
+
+    if (key === "") return;
+
+    if (!file) {
+      lastSavedCoverSignature = "";
+      removeCoverDraftFile(key);
+      return;
+    }
+
+    if (signature === lastSavedCoverSignature) return;
+
+    lastSavedCoverSignature = signature;
+    writeCoverDraftFile(key, file).then(function (saved) {
+      if (!saved && lastSavedCoverSignature === signature) {
+        lastSavedCoverSignature = "";
+      }
+    });
+  }
+
+  function restoreCoverDraftStorage(form) {
+    var key = localDraftCoverKey(form);
+    var input = q("#cover_file", form);
+    var existing = q("#cover_path_existing", form);
+
+    return readCoverDraftFile(key).then(function (record) {
+      var file = coverDraftFileFromRecord(record);
+      if (!file) return false;
+
+      if (existing) existing.value = "";
+      assignFileToInput(input, file);
+      setThumbPreviewFromFile(file);
+      updateStepButtons();
+      lastSavedCoverSignature = fileSignature(file);
+      return true;
+    });
+  }
+
+  function restoreCoverPreviewStorage(form) {
+    var key = localDraftCoverPreviewKey(form);
+    var input = q("#cover_file", form);
+    var existing = q("#cover_path_existing", form);
+    var record = readCoverPreviewRecord(key);
+    if (!record) return false;
+
+    var dataUrl = clean(record.data_url);
+    if (dataUrl === "") return false;
+
+    var file = fileFromDataUrl(dataUrl, record.name, record.type, record.last_modified);
+    if (existing) existing.value = "";
+
+    if (file) {
+      assignFileToInput(input, file);
+      setThumbPreviewFromFile(file);
+      lastSavedCoverSignature = fileSignature(file);
+      updateStepButtons();
+      return true;
+    }
+
+    setThumbPreview(dataUrl);
+    updateStepButtons();
+    return true;
+  }
+
   function setFieldValue(root, selector, value) {
     var field = q(selector, root);
     if (field && value !== undefined && value !== null) {
       field.value = String(value);
     }
+  }
+
+  function setCheckboxChecked(root, selector, value) {
+    var field = q(selector, root);
+    if (!field) return;
+    field.checked = value === true || clean(value) === "1" || clean(value).toLowerCase() === "true";
   }
 
   function simpleRowValues(containerId) {
@@ -1969,7 +2678,16 @@
 
   function removeLocalDraft(form) {
     var key = localDraftKey(form);
+    var coverKey = localDraftCoverKey(form);
+    var coverPreviewKey = localDraftCoverPreviewKey(form);
     var storage = localStorageRef();
+    if (coverKey !== "") {
+      lastSavedCoverSignature = "";
+      removeCoverDraftFile(coverKey);
+    }
+    if (coverPreviewKey !== "") {
+      removeCoverPreviewRecord(coverPreviewKey);
+    }
     if (key === "" || !storage) return;
     try {
       storage.removeItem(key);
@@ -1978,11 +2696,189 @@
     }
   }
 
+  function focusDraftFallback(form) {
+    var fallback = q("#title", form) || q("#description", form) || q('textarea, select, button, input:not([type="hidden"])', form);
+    if (fallback && typeof fallback.focus === "function") {
+      try {
+        fallback.focus({ preventScroll: true });
+      } catch (_error) {
+        try {
+          fallback.focus();
+        } catch (_fallbackError) {
+          // Ignore focus failures.
+        }
+      }
+      return;
+    }
+
+    if (document.activeElement && typeof document.activeElement.blur === "function") {
+      document.activeElement.blur();
+    }
+  }
+
+  function draftHasMeaningfulContent(draft) {
+    if (!draft || typeof draft !== "object") return false;
+
+    var fields = draft.fields && typeof draft.fields === "object" ? draft.fields : {};
+    var lists = draft.lists && typeof draft.lists === "object" ? draft.lists : {};
+    var content = draft.content && typeof draft.content === "object" ? draft.content : {};
+    var exams = draft.exams && typeof draft.exams === "object" ? draft.exams : {};
+
+    var fieldChecks = [
+      clean(fields.title) !== "",
+      clean(fields.description) !== "",
+      clean(fields.price_xof) !== "",
+      clean(fields.enterprise_price_xof) !== "",
+      clean(fields.enterprise_discount_percent) !== "",
+      clean(fields.category_id) !== "",
+      clean(fields.cover_path_existing) !== "",
+      clean(fields.cover_file_name) !== "",
+      clean(fields.cover_file_type) !== "",
+      clean(fields.cover_file_size) !== "" && clean(fields.cover_file_size) !== "0",
+      clean(fields.referral_override) === "1",
+      clean(fields.referral_l2_enabled) === "1",
+      clean(fields.general_file_clear) === "1",
+      clean(fields.level) !== "" && clean(fields.level) !== "beginner",
+      clean(fields.duration_hours) !== "" && clean(fields.duration_hours) !== "1",
+      clean(fields.enterprise_pricing_mode) !== "" && clean(fields.enterprise_pricing_mode) !== "none"
+    ];
+
+    if (fieldChecks.some(Boolean)) return true;
+    if (asArray(lists.objectives).some(function (value) { return clean(value) !== ""; })) return true;
+    if (asArray(lists.prerequisites).some(function (value) { return clean(value) !== ""; })) return true;
+    if (asArray(lists.equipment).some(function (value) { return clean(value) !== ""; })) return true;
+    if (asArray(content.modules).length > 0) return true;
+    if (asArray(exams.exams).length > 0) return true;
+    return false;
+  }
+
+  function formatDraftSavedAt(savedAt) {
+    var ts = Number(savedAt || 0);
+    if (!isFinite(ts) || ts <= 0) return "";
+
+    try {
+      return new Intl.DateTimeFormat("fr-FR", {
+        dateStyle: "medium",
+        timeStyle: "short"
+      }).format(new Date(ts));
+    } catch (_e) {
+      try {
+        return new Date(ts).toLocaleString("fr-FR");
+      } catch (_e2) {
+        return "";
+      }
+    }
+  }
+
+  function syncDraftPromptView(view) {
+    var nextView = view === "list" ? "list" : "choice";
+    draftPrompt.view = nextView;
+    if (draftPrompt.choicePanel) {
+      draftPrompt.choicePanel.hidden = nextView !== "choice";
+    }
+    if (draftPrompt.listPanel) {
+      draftPrompt.listPanel.hidden = nextView !== "list";
+    }
+  }
+
+  function focusDraftView() {
+    if (!draftPrompt.root) return;
+
+    var target = null;
+    if (draftPrompt.view === "list") {
+      target = q("[data-course-create-draft-list-panel] a[href]", draftPrompt.root)
+        || draftPrompt.restoreLocalBtn
+        || draftPrompt.backBtn;
+    } else {
+      target = draftPrompt.continueBtn || draftPrompt.newBtn;
+    }
+
+    if (!target || typeof target.focus !== "function") return;
+
+    try {
+      target.focus({ preventScroll: true });
+    } catch (_error) {
+      try {
+        target.focus();
+      } catch (_fallbackError) {
+        // Ignore focus failures; the modal must remain usable.
+      }
+    }
+  }
+
+  function hideDraftPrompt() {
+    if (!draftPrompt.root) return;
+    focusDraftFallback(draftPrompt.form);
+    syncDraftPromptView("choice");
+    draftPrompt.root.style.display = "none";
+    draftPrompt.root.hidden = true;
+    document.body.classList.remove("course-builder-modal-open");
+  }
+
+  function showDraftPrompt(form, draft) {
+    if (!draftPrompt.enabled || !draftPrompt.root) return;
+
+    draftPrompt.pending = draft && typeof draft === "object" ? draft : null;
+    if (draftPrompt.meta) {
+      var savedLabel = formatDraftSavedAt(draftPrompt.pending && draftPrompt.pending.saved_at);
+      draftPrompt.meta.textContent = savedLabel !== ""
+        ? "Dernière sauvegarde : " + savedLabel
+        : "Le brouillon local a été conservé sur cet appareil.";
+    }
+
+    draftPrompt.root.hidden = false;
+    draftPrompt.root.style.display = "flex";
+    document.body.classList.add("course-builder-modal-open");
+    if (draftPrompt.meta) {
+      var baseMessage = draftPrompt.pending && draftPrompt.pending.saved_at
+        ? "Dernière sauvegarde locale : " + formatDraftSavedAt(draftPrompt.pending.saved_at) + "."
+        : "Le brouillon local a été conservé sur cet appareil.";
+      draftPrompt.meta.textContent = baseMessage + " Vous pouvez aussi ouvrir un brouillon enregistré ci-dessous.";
+    }
+
+    if (draftPrompt.continueBtn && typeof draftPrompt.continueBtn.focus === "function") {
+      try {
+        draftPrompt.continueBtn.focus({ preventScroll: true });
+      } catch (_error) {
+        try {
+          draftPrompt.continueBtn.focus();
+        } catch (_fallbackError) {
+          // Ignore focus failures; the modal must remain usable.
+        }
+      }
+    }
+  }
+
+  function restoreDraftIntoForm(form, draft) {
+    var localDraft = draft && typeof draft === "object" ? draft : readLocalDraft(form);
+    if (!localDraft) {
+      return { restored: false, step: 1 };
+    }
+
+    autosaveReady = false;
+    var restored = restoreLocalDraft(form, localDraft);
+    var contentPayload = parsePayload(q("#content_payload", form), { modules: [] });
+    var examsPayload = parsePayload(q("#exams_payload", form), { exams: [] });
+
+    renderModules(asArray(contentPayload.modules));
+    renderExams(asArray(examsPayload.exams));
+    syncEnterprisePricing();
+    syncReferralToggleUi();
+    updatePedagogyCount(true);
+    showStep(restored.step || 1, false, "replace");
+    serializeBuilders();
+    autosaveReady = true;
+
+    return restored;
+  }
+
   function collectLocalDraft(form) {
     serializeContent();
     serializeExams();
+    var coverInput = q("#cover_file", form);
+    var coverFile = coverInput && coverInput.files && coverInput.files.length ? coverInput.files[0] : null;
     return {
-      version: 1,
+      version: 2,
       saved_at: Date.now(),
       step: currentStep,
       fields: {
@@ -1994,8 +2890,13 @@
         enterprise_discount_percent: q("#enterprise_discount_percent", form) ? q("#enterprise_discount_percent", form).value : "",
         category_id: q("#category_id", form) ? q("#category_id", form).value : "",
         cover_path_existing: q("#cover_path_existing", form) ? q("#cover_path_existing", form).value : "",
+        has_cover_file: coverFile ? "1" : "0",
+        cover_file_name: coverFile ? clean(coverFile.name) : "",
+        cover_file_type: coverFile ? clean(coverFile.type) : "",
+        cover_file_size: coverFile ? String(coverFile.size || 0) : "0",
         referral_override: q("#referral_override", form) ? q("#referral_override", form).value : "0",
         referral_l2_enabled: q("#referral_l2_enabled", form) ? q("#referral_l2_enabled", form).value : "0",
+        general_file_clear: q('input[name="general_file_clear"]', form) && q('input[name="general_file_clear"]', form).checked ? "1" : "0",
         level: q("#level", form) ? q("#level", form).value : "beginner",
         duration_hours: q("#duration_hours", form) ? q("#duration_hours", form).value : "1"
       },
@@ -2018,6 +2919,7 @@
     } catch (_e) {
       // Ignore quota/storage failures; server-side draft remains available.
     }
+    syncCoverDraftStorage(form);
   }
 
   function scheduleLocalDraftSave() {
@@ -2030,16 +2932,16 @@
     }, 300);
   }
 
-  function restoreLocalDraft(form) {
+  function restoreLocalDraft(form, draft) {
     if (form.getAttribute("data-autosave-clear") === "1") {
       removeLocalDraft(form);
       return { restored: false, step: 1 };
     }
 
-    var draft = readLocalDraft(form);
-    if (!draft) return { restored: false, step: 1 };
+    var localDraft = draft && typeof draft === "object" ? draft : readLocalDraft(form);
+    if (!localDraft) return { restored: false, step: 1 };
 
-    var fields = draft.fields && typeof draft.fields === "object" ? draft.fields : {};
+    var fields = localDraft.fields && typeof localDraft.fields === "object" ? localDraft.fields : {};
     setFieldValue(form, "#title", fields.title);
     setFieldValue(form, "#description", fields.description);
     setFieldValue(form, "#price_xof", fields.price_xof);
@@ -2050,24 +2952,36 @@
     setFieldValue(form, "#cover_path_existing", fields.cover_path_existing);
     setFieldValue(form, "#referral_override", fields.referral_override);
     setFieldValue(form, "#referral_l2_enabled", fields.referral_l2_enabled);
+    setCheckboxChecked(form, "#referral-l2-toggle", fields.referral_l2_enabled);
+    setCheckboxChecked(form, 'input[name="general_file_clear"]', fields.general_file_clear);
     setFieldValue(form, "#level", fields.level);
     setFieldValue(form, "#duration_hours", fields.duration_hours);
 
-    var lists = draft.lists && typeof draft.lists === "object" ? draft.lists : {};
+    var lists = localDraft.lists && typeof localDraft.lists === "object" ? localDraft.lists : {};
     setSimpleRows("objectives-container", "objectives", "Objectif", asArray(lists.objectives));
     setSimpleRows("prerequisites-container", "prerequisites", "Prérequis", asArray(lists.prerequisites));
     setSimpleRows("equipment-container", "equipment", "Équipement", asArray(lists.equipment));
 
-    if (draft.content && typeof draft.content === "object" && q("#content_payload", form)) {
-      q("#content_payload", form).value = JSON.stringify(draft.content);
+    if (localDraft.content && typeof localDraft.content === "object" && q("#content_payload", form)) {
+      q("#content_payload", form).value = JSON.stringify(localDraft.content);
     }
-    if (draft.exams && typeof draft.exams === "object" && q("#exams_payload", form)) {
-      q("#exams_payload", form).value = JSON.stringify(draft.exams);
+    if (localDraft.exams && typeof localDraft.exams === "object" && q("#exams_payload", form)) {
+      q("#exams_payload", form).value = JSON.stringify(localDraft.exams);
+    }
+
+    if (clean(fields.has_cover_file) === "1") {
+      if (!restoreCoverPreviewStorage(form)) {
+        restoreCoverDraftStorage(form);
+      }
+    } else {
+      lastSavedCoverSignature = "";
+      removeCoverPreviewRecord(localDraftCoverPreviewKey(form));
+      removeCoverDraftFile(localDraftCoverKey(form));
     }
 
     return {
       restored: true,
-      step: Math.max(1, Math.min(totalSteps, numberValue(draft.step, 1)))
+      step: Math.max(1, Math.min(totalSteps, numberValue(localDraft.step, 1)))
     };
   }
 
@@ -2268,8 +3182,18 @@
     var form = q("[data-course-create-form]");
     if (!form) return;
 
-    var localDraft = restoreLocalDraft(form);
     var requestedStep = requestedStepFromUrl();
+    draftPrompt.enabled = clean(form.getAttribute("data-course-create-draft-prompt")) === "1";
+    draftPrompt.root = q("#course-create-draft-modal");
+    draftPrompt.meta = q("[data-course-create-draft-meta]", draftPrompt.root);
+    draftPrompt.form = form;
+    draftPrompt.continueBtn = q("#course-create-continue-draft-btn", draftPrompt.root);
+    draftPrompt.newBtn = q("#course-create-new-course-btn", draftPrompt.root);
+    draftPrompt.backBtn = q("#course-create-back-to-choice-btn", draftPrompt.root);
+    draftPrompt.restoreLocalBtn = q("#course-create-restore-local-draft-btn", draftPrompt.root);
+    draftPrompt.choicePanel = q("[data-course-create-draft-choice-panel]", draftPrompt.root);
+    draftPrompt.listPanel = q("[data-course-create-draft-list-panel]", draftPrompt.root);
+    var pendingDraft = draftPrompt.enabled ? readLocalDraft(form) : null;
     bindCourseCreateEvents(form);
 
     var contentPayload = parsePayload(q("#content_payload", form), { modules: [] });
@@ -2280,12 +3204,83 @@
     serializeBuilders();
     syncEnterprisePricing();
     syncReferralToggleUi();
-    updatePedagogyCount(localDraft.restored);
-    autosaveReady = true;
-    showStep(requestedStep || localDraft.step || 1, false, "replace");
-    if (localDraft.restored) {
-      showToast("Brouillon local restauré. Les fichiers doivent être re-sélectionnés avant publication.", "info");
+    updatePedagogyCount(false);
+    autosaveReady = false;
+    showStep(requestedStep || 1, false, "replace");
+    if (draftPrompt.enabled && pendingDraft) {
+      showDraftPrompt(form, pendingDraft);
+    } else {
+      hideDraftPrompt();
+      draftPrompt.pending = null;
     }
+    autosaveReady = true;
+
+    if (draftPrompt.continueBtn) {
+      draftPrompt.continueBtn.addEventListener("click", function () {
+        syncDraftPromptView("list");
+        focusDraftView();
+        return;
+        var draft = draftPrompt.pending || (draftPrompt.enabled ? readLocalDraft(form) : null);
+        hideDraftPrompt();
+        if (!draft) {
+          draftPrompt.pending = null;
+          autosaveReady = true;
+          return;
+        }
+        draftPrompt.pending = null;
+        autosaveReady = false;
+        restoreDraftIntoForm(form, draft);
+        showToast("Brouillon local restauré. Vérifiez les fichiers avant publication.", "info");
+      });
+    }
+
+    if (draftPrompt.backBtn) {
+      draftPrompt.backBtn.addEventListener("click", function () {
+        syncDraftPromptView("choice");
+        focusDraftView();
+      });
+    }
+
+    if (draftPrompt.restoreLocalBtn) {
+      draftPrompt.restoreLocalBtn.addEventListener("click", function () {
+        var draft = draftPrompt.pending || (draftPrompt.enabled ? readLocalDraft(form) : null);
+        if (!draft) {
+          showToast("Aucun brouillon local disponible.", "error");
+          return;
+        }
+        draftPrompt.pending = null;
+        autosaveReady = false;
+        hideDraftPrompt();
+        restoreDraftIntoForm(form, draft);
+        showToast("Brouillon local restauré. Vérifiez les fichiers avant publication.", "info");
+      });
+    }
+
+    if (draftPrompt.newBtn) {
+      draftPrompt.newBtn.addEventListener("click", function () {
+        removeLocalDraft(form);
+        draftPrompt.pending = null;
+        hideDraftPrompt();
+        autosaveReady = true;
+        showToast("Nouveau cours prêt. Le brouillon local a été supprimé.", "info");
+      });
+    }
+
+    if (draftPrompt.root) {
+      draftPrompt.root.addEventListener("click", function (event) {
+        if (!event || !event.target || !event.target.closest) return;
+        if (event.target.closest("[data-course-create-draft-backdrop]")) {
+          hideDraftPrompt();
+        }
+      });
+    }
+
+    document.addEventListener("keydown", function (event) {
+      if (!draftPrompt.root || draftPrompt.root.hidden) return;
+      if (event.key === "Escape") {
+        hideDraftPrompt();
+      }
+    });
 
     window.addEventListener("popstate", function () {
       var stepFromUrl = requestedStepFromUrl();
@@ -2308,6 +3303,7 @@
         if (event.target.closest("#modules-container")) updateModuleSummaries();
         serializeBuilders();
       }
+      updateStepButtons();
       scheduleLocalDraftSave();
     });
     form.addEventListener("change", function (event) {
@@ -2356,7 +3352,6 @@
         showToast("Choisissez soit un prix entreprise, soit une réduction.", "error");
       }
     });
-    scheduleLocalDraftSave();
   });
 
 })();

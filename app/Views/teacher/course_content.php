@@ -56,6 +56,7 @@ $teacherTopSubtitle = 'Espace enseignant';
 $courseTitle = trim((string) ($course['title'] ?? 'Cours'));
 $courseStatus = trim((string) ($course['status'] ?? 'draft'));
 $courseStatusLabel = trim((string) ($statusLabels[$courseStatus] ?? ucfirst($courseStatus)));
+$teacherDashboardUrl = site_url('teacher/dashboard');
 $courseStatusTone = match ($courseStatus) {
     'approved' => 'emerald',
     'submitted' => 'amber',
@@ -328,6 +329,10 @@ foreach ($workflowSteps as $workflowStep) {
                                 </div>
                             </div>
                             <div class="mt-6 flex flex-wrap items-center gap-3">
+                                <a href="<?php echo e($teacherDashboardUrl); ?>" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100">
+                                    <i class="fas fa-arrow-left"></i>
+                                    Retour au tableau de bord
+                                </a>
                                 <a href="<?php echo e($teacherPreviewUrl); ?>" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-100">
                                     <i class="fas fa-eye"></i>
                                     Previsualiser
@@ -357,7 +362,7 @@ foreach ($workflowSteps as $workflowStep) {
                             </article>
                             <article class="course-builder-kpi-card">
                                 <p class="course-builder-kpi-card__label">Publication</p>
-                                <p class="course-builder-kpi-card__value"><?php echo e($coursePriceLabel); ?></p>
+                                <p class="course-builder-kpi-card__value app-price"><?php echo e($coursePriceLabel); ?></p>
                                 <p class="course-builder-kpi-card__hint"><?php echo e($courseLevelLabel); ?> · <?php echo e($coverUrl !== '' ? 'miniature OK' : 'miniature manquante'); ?></p>
                             </article>
                             <article class="course-builder-kpi-card">
@@ -1310,7 +1315,7 @@ foreach ($workflowSteps as $workflowStep) {
                                                 class="mt-2 block w-full rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-600 file:mr-4 file:rounded-xl file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:border-blue-300"
                                                 <?php echo $isLocked ? 'disabled' : ''; ?>
                                             >
-                                            <p class="mt-2 text-xs text-slate-500">Format recommande 16:9, maximum 5 Mo.</p>
+                                            <p class="mt-2 text-xs text-slate-500">Format impose 16:10, minimum 1200 x 750 px, maximum 5 Mo.</p>
                                         </div>
                                         <div>
                                             <label for="course_cover_alt" class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Texte alternatif</label>
@@ -1502,7 +1507,7 @@ foreach ($workflowSteps as $workflowStep) {
                                 <section class="space-y-4">
                                     <article class="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
                                         <p class="text-xs uppercase tracking-[0.16em] text-slate-500">Prix public actuel</p>
-                                        <p class="mt-3 text-2xl font-bold text-slate-950"><?php echo e($coursePriceLabel); ?></p>
+                                        <p class="mt-3 text-2xl font-bold app-price"><?php echo e($coursePriceLabel); ?></p>
                                         <p class="mt-2 text-sm leading-7 text-slate-600">Le tarif visible sur la fiche du cours.</p>
                                     </article>
                                     <article class="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
@@ -1686,7 +1691,7 @@ foreach ($workflowSteps as $workflowStep) {
                                             </div>
                                             <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                                                 <p class="text-xs uppercase tracking-[0.16em] text-slate-500">Tarif</p>
-                                                <p class="mt-1 font-bold text-slate-950"><?php echo e($coursePriceLabel); ?></p>
+                                                <p class="mt-1 font-bold app-price"><?php echo e($coursePriceLabel); ?></p>
                                             </div>
                                         </div>
                                     </div>

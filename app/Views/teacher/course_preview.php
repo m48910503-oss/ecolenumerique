@@ -504,7 +504,7 @@ $showSupportFab = true;
                                     </div>
                                     <div class="rounded-2xl bg-slate-50 p-3 dark:bg-slate-950/55">
                                         <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400">Prix</p>
-                                        <p class="mt-1 text-sm font-black text-slate-900 dark:text-white"><?php echo e($formatMoney($coursePrice)); ?></p>
+                                        <p class="mt-1 text-sm font-black app-price"><?php echo e($formatMoney($coursePrice)); ?></p>
                                     </div>
                                 </div>
                                 <div class="mt-4">

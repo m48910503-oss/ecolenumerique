@@ -570,12 +570,12 @@ if ($courseShareUrl === '') {
 
             <div class="course-hero-meta flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-300">
               <?php if ($ratingCount > 0): ?>
-                <div class="flex items-center gap-2 text-yellow-300">
+                <div class="app-rating-stars flex items-center gap-2 text-yellow-300">
                   <?php
                   $heroRating = max(0.0, min(5.0, $avgRating));
                   for ($star = 1; $star <= 5; $star++):
                   ?>
-                    <i class="<?php echo e($heroRating >= $star ? 'fas' : ($heroRating >= ($star - 0.5) ? 'fas fa-star-half-alt' : 'far fa-star')); ?>"></i>
+                    <i class="<?php echo e($heroRating >= $star ? 'fas fa-star' : ($heroRating >= ($star - 0.5) ? 'fas fa-star-half-alt' : 'far fa-star')); ?>"></i>
                   <?php endfor; ?>
                   <span class="font-semibold text-white/90"><?php echo e($ratingAverageLabel); ?></span>
                 </div>
@@ -1314,7 +1314,10 @@ if ($courseShareUrl === '') {
                         ? format_duration_minutes_hm($relatedDurationMin, true)
                         : 'Durée non définie';
                     $relatedPrice = max(0, (int) ($relatedCourse['price_xof'] ?? 0));
+                    $relatedPriceBase = max(0, (int) ($relatedCourse['price_base'] ?? $relatedCourse['base_price_xof'] ?? $relatedPrice));
+                    $relatedPromoActive = !empty($relatedCourse['promo_active'] ?? $relatedCourse['promoActive'] ?? false) && $relatedPriceBase > $relatedPrice;
                     $relatedPriceLabel = $relatedPrice > 0 ? view_format_money_xof($relatedPrice) : 'Gratuit';
+                    $relatedPriceClass = 'app-price font-extrabold' . ($relatedPromoActive ? ' app-price--promo' : '');
                     ?>
                     <a href="<?php echo e($relatedUrl); ?>" class="course-related-card group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800">
                       <div class="relative aspect-[16/9] overflow-hidden bg-gray-100 dark:bg-gray-900">
@@ -1341,7 +1344,7 @@ if ($courseShareUrl === '') {
                               <span class="font-medium text-gray-500 dark:text-gray-400">· <?php echo e(view_pluralize($relatedRatingCount, 'avis', 'avis')); ?></span>
                             <?php endif; ?>
                           </span>
-                          <span class="font-extrabold text-gray-900 dark:text-white"><?php echo e($relatedPriceLabel); ?></span>
+                          <span class="<?php echo e($relatedPriceClass); ?>"><?php echo e($relatedPriceLabel); ?></span>
                         </div>
                         <p class="text-xs text-gray-500 dark:text-gray-400"><?php echo e($relatedEnrollments > 0 ? view_pluralize($relatedEnrollments, 'apprenant', 'apprenants') : 'Aucun apprenant publié'); ?></p>
                       </div>
@@ -1459,7 +1462,7 @@ if ($courseShareUrl === '') {
                           <h4 class="font-bold text-gray-900 dark:text-white"><?php echo e($reviewName); ?></h4>
                           <span class="text-xs text-gray-500 dark:text-gray-400"><?php echo e(view_format_date_label($review['created_at'] ?? null)); ?></span>
                         </div>
-                        <div class="flex items-center gap-0.5 text-yellow-400 text-sm my-1">
+                        <div class="app-rating-stars flex items-center gap-0.5 text-yellow-400 text-sm my-1">
                           <?php for ($star = 1; $star <= 5; $star++): ?>
                             <i class="<?php echo e($reviewRating >= $star ? 'fas' : 'far'); ?> fa-star"></i>
                           <?php endfor; ?>
@@ -1546,7 +1549,7 @@ if ($courseShareUrl === '') {
                   <span class="text-2xl font-extrabold text-gray-900 dark:text-white"><?php echo e((string) $progressPercent); ?>%</span>
                   <span class="mt-1 block text-sm font-medium text-primary-600 dark:text-primary-400">Accès complet au cours</span>
                 <?php else: ?>
-                  <span class="text-2xl font-extrabold text-gray-900 dark:text-white"><?php echo e(view_format_money_xof($priceFinal)); ?></span>
+                  <span class="app-price text-2xl font-extrabold<?php echo $promoActive ? ' app-price--promo' : ''; ?>"><?php echo e(view_format_money_xof($priceFinal)); ?></span>
                   <?php if ($priceBase > $priceFinal): ?>
                     <span class="ml-2 text-lg text-gray-400 line-through"><?php echo e(view_format_money_xof($priceBase)); ?></span>
                   <?php endif; ?>

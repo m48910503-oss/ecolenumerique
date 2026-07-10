@@ -97,6 +97,11 @@ final class CertificateService extends Service
             $issuedLabel = $timestamp ? date('d/m/Y', $timestamp) : $issuedAt;
         }
 
+        $hoursLabel = '';
+        if (is_numeric($cert['duration_hours'] ?? null) && function_exists('format_duration_hours_hm')) {
+            $hoursLabel = format_duration_hours_hm((float) $cert['duration_hours']);
+        }
+
         $verifyUrl = $this->absUrl('certificate?code=' . urlencode((string) ($cert['code'] ?? '')));
         $qrVerifyUrl = $verifyUrl;
         if (!in_array($format, ['html', 'pdf'], true)) {
@@ -124,6 +129,7 @@ final class CertificateService extends Service
                 'teacherSignatureUrl' => $teacherSignatureUrl,
                 'dgSignatureUrl' => $dgSignatureUrl,
                 'issuedLabel' => $issuedLabel,
+                'hoursLabel' => $hoursLabel,
                 'verifyUrl' => $verifyUrl,
                 'qrVerifyUrl' => $qrVerifyUrl,
                 'exportFormat' => $format,

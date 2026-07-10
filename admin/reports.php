@@ -25,6 +25,7 @@ if (!in_array($filter, $allowedFilters, true)) {
 }
 $filterCourse = (int) ($_GET['course_id'] ?? 0);
 $filterTeacher = (int) ($_GET['teacher_id'] ?? 0);
+$searchTerm = trim((string) ($_GET['q'] ?? ''));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_csrf_token();
@@ -136,6 +137,10 @@ if ($filterCourse > 0) {
 if ($filterTeacher > 0) {
     $clauses[] = 'c.teacher_id = :fteacher';
     $params[':fteacher'] = $filterTeacher;
+}
+if ($searchTerm !== '') {
+    $clauses[] = '(c.title LIKE :search OR u.first_name LIKE :search OR u.last_name LIKE :search OR u.email LIKE :search OR r.reason LIKE :search OR COALESCE(r.admin_note, \'\') LIKE :search)';
+    $params[':search'] = '%' . $searchTerm . '%';
 }
 if ($clauses) {
     $sql .= ' WHERE ' . implode(' AND ', $clauses);

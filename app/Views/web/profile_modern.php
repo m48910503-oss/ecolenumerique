@@ -95,7 +95,8 @@ $deleteAccountPanelOpen = $profilePostedAction === 'DELETE_ACCOUNT';
     <?php endif; ?>
     <script src="<?php echo e(site_url('assets/js/sidebar_toggle.js')); ?>" defer></script>
     <script src="<?php echo e($profileShellJsUrl); ?>" defer></script>
-    <script src="<?php echo e(site_url('assets/js/profile_form.js')); ?>" defer></script>
+    <script src="<?php echo e(site_url('assets/js/signature_image.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/signature_image.js') ?: time()))); ?>" defer></script>
+    <script src="<?php echo e(site_url('assets/js/profile_form.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/profile_form.js') ?: time()))); ?>" defer></script>
     <script src="<?php echo e(site_url('assets/js/togglePassword.js')); ?>" defer></script>
     <script src="<?php echo e(site_url('assets/js/profile_modern.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/profile_modern.js') ?: time()))); ?>" defer></script>
 <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
@@ -359,13 +360,14 @@ $deleteAccountPanelOpen = $profilePostedAction === 'DELETE_ACCOUNT';
                                         <div>
                                             <p class="text-[11px] uppercase tracking-[0.28em] text-gray-500 dark:text-gray-400">Signature</p>
                                             <h3 class="profile-section-title mt-1 text-lg font-bold text-gray-900 dark:text-white"><i class="fas fa-pen-nib" aria-hidden="true"></i> Signature enseignant</h3>
-                                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Utilis&eacute;e automatiquement sur les certificats.</p>
+                                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Utilis&eacute;e automatiquement sur les certificats. La capture sera recadr&eacute;e en PNG transparent 800 &times; 240 px.</p>
                                         </div>
                                     </div>
 
                                     <div class="mt-5 flex flex-col gap-4 lg:flex-row lg:items-start">
-                                        <div class="relative w-full max-w-xs overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+                                        <div class="relative flex h-24 w-full max-w-xs items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
                                             <img id="signature_preview" src="<?php echo e($signatureUrl); ?>" alt="Signature enseignant" class="h-24 w-full object-contain<?php echo $signatureUrl !== '' ? '' : ' hidden'; ?>">
+                                            <span id="signature_placeholder" class="<?php echo $signatureUrl !== '' ? 'hidden ' : ''; ?>text-xs font-semibold text-gray-400">Aucune signature</span>
                                         </div>
                                         <div class="min-w-0 flex-1">
                                             <p class="text-sm font-semibold text-gray-900 dark:text-white">Fichier signature</p>
@@ -382,7 +384,7 @@ $deleteAccountPanelOpen = $profilePostedAction === 'DELETE_ACCOUNT';
                                                     </button>
                                                     <span>Max <?php echo e((string) $signatureMaxMb); ?> Mo</span>
                                                 </div>
-                                                <input class="sr-only" type="file" id="signature_file" name="signature_file" accept=".jpg,.jpeg,.png,.webp" data-max-mb="<?php echo e((string) $signatureMaxMb); ?>" data-upload-feedback="signature_feedback" data-upload-name="signature_filename" data-upload-preview="signature_preview">
+                                                <input class="sr-only" type="file" id="signature_file" name="signature_file" accept=".jpg,.jpeg,.png,.webp" data-max-mb="<?php echo e((string) $signatureMaxMb); ?>" data-upload-feedback="signature_feedback" data-upload-name="signature_filename" data-upload-preview="signature_preview" data-upload-placeholder="signature_placeholder" data-signature-normalize="1" data-signature-source-max-mb="10">
                                             </div>
 
                                             <?php if ($signatureUrl !== ''): ?>

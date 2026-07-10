@@ -476,6 +476,7 @@ $initialCatalogCourses = array_slice($catalogCourses, 0, 12);
 $catalogJsUrl = site_url('assets/js/web_catalogue.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/web_catalogue.js') ?: time()));
 $webThemeJsUrl = site_url('assets/js/web_theme.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/web_theme.js') ?: time()));
 $webMarketingJsUrl = site_url('assets/js/web-marketing.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/web-marketing.js') ?: time()));
+$supportModalJsUrl = site_url('assets/js/support_modal.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/support_modal.js') ?: time()));
 $tailwindThemeBootstrapJsUrl = site_url('assets/js/tailwind_theme_bootstrap.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/tailwind_theme_bootstrap.js') ?: time()));
 $recentCatalogThreshold = time() - (45 * 86400);
 
@@ -590,6 +591,7 @@ $resolveLevelBadgeClass = static function (string $levelKey): string {
   <script src="<?php echo e($webThemeJsUrl); ?>" defer></script>
   <script src="<?php echo e($webMarketingJsUrl); ?>" defer></script>
   <script src="<?php echo e($catalogJsUrl); ?>" defer></script>
+  <script src="<?php echo e($supportModalJsUrl); ?>" defer></script>
   <style>
     * { transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
     body[data-view="web/catalogue"] {
@@ -618,57 +620,446 @@ $resolveLevelBadgeClass = static function (string $levelKey): string {
       background: rgba(2, 6, 23, 0.84);
       box-shadow: 0 18px 40px -34px rgba(0, 0, 0, 0.8);
     }
+    #coursesGrid {
+      grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+      gap: 1.15rem;
+    }
     .catalog-course-card {
-      min-height: 34rem;
+      position: relative;
+      display: flex;
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      border-radius: 1.5rem;
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 18px 34px -24px rgba(15, 23, 42, 0.28);
+      transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
     }
-    .catalog-card__cover {
+    .catalog-course-card:hover,
+    .catalog-course-card:focus-within {
+      transform: translateY(-4px);
+      border-color: rgba(37, 99, 235, 0.18);
+      box-shadow: 0 24px 42px -28px rgba(15, 23, 42, 0.34);
+    }
+    .catalog-course-card__media {
+      position: relative;
       aspect-ratio: 16 / 9;
-      background: #e2e8f0;
-    }
-    html.dark .catalog-card__cover {
-      background: #020617;
-    }
-    .catalog-card__cover::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-      pointer-events: none;
+      overflow: hidden;
       background:
-        linear-gradient(180deg, rgba(15, 23, 42, 0.18) 0%, rgba(15, 23, 42, 0) 42%, rgba(15, 23, 42, 0.16) 100%);
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.3), transparent 42%),
+        linear-gradient(140deg, rgba(37, 99, 235, 0.12), rgba(15, 118, 110, 0.12), rgba(180, 83, 9, 0.12));
     }
-    .catalog-card__cover-img {
-      height: 100%;
+    html.dark .catalog-course-card {
+      border-color: rgba(55, 65, 81, 0.88);
+      background: rgba(17, 24, 39, 0.96);
+      box-shadow: 0 18px 34px -24px rgba(0, 0, 0, 0.42);
+    }
+    html.dark .catalog-course-card:hover,
+    html.dark .catalog-course-card:focus-within {
+      border-color: rgba(96, 165, 250, 0.28);
+      box-shadow: 0 24px 42px -28px rgba(0, 0, 0, 0.52);
+    }
+    html.dark .catalog-course-card__media {
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 42%),
+        linear-gradient(140deg, rgba(59, 130, 246, 0.12), rgba(6, 182, 212, 0.1), rgba(15, 23, 42, 0.16));
+    }
+    .catalog-course-card__media-link {
+      display: block;
       width: 100%;
+      height: 100%;
+    }
+    .catalog-course-card__media-img {
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       object-position: center;
+      transition: transform 0.5s ease;
     }
-    .catalog-card__hover-preview {
+    .catalog-course-card:hover .catalog-course-card__media-img,
+    .catalog-course-card:focus-within .catalog-course-card__media-img {
+      transform: scale(1.06);
+      filter: brightness(0.42) saturate(0.85);
+    }
+    .catalog-course-card__favorite {
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: center;
+      width: 2.25rem;
+      height: 2.25rem;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.94);
+      color: #8b5cf6;
+      box-shadow: 0 12px 26px -18px rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+      transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+      opacity: 0.9;
+    }
+    .catalog-course-card__favorite:hover,
+    .catalog-course-card__favorite:focus-visible {
+      border-color: rgba(139, 92, 246, 0.34);
+      color: #7c3aed;
+      opacity: 1;
+      transform: translateY(-1px);
+    }
+    .catalog-course-card__favorite.is-active {
+      border-color: rgba(139, 92, 246, 0.3);
+      background: rgba(243, 232, 255, 0.98);
+      color: #7c3aed;
+      opacity: 1;
+    }
+    .catalog-course-card__hover-overlay {
       position: absolute;
       inset: 0;
-      z-index: 4;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.18) 0%, rgba(15, 23, 42, 0.88) 100%);
+      backdrop-filter: blur(12px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+    }
+    .catalog-course-card:hover .catalog-course-card__hover-overlay,
+    .catalog-course-card:focus-within .catalog-course-card__hover-overlay {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .catalog-course-card__hover-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.95rem 1.35rem;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: #fff;
+      font-size: 0.92rem;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      text-decoration: none;
+      box-shadow: 0 20px 42px -24px rgba(37, 99, 235, 0.78);
+      transform: translateY(8px) scale(0.98);
+      transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
+      pointer-events: auto;
+    }
+    .catalog-course-card:hover .catalog-course-card__hover-button,
+    .catalog-course-card:focus-within .catalog-course-card__hover-button {
+      transform: translateY(0) scale(1);
+    }
+    .catalog-course-card__hover-button:hover,
+    .catalog-course-card__hover-button:focus-visible {
+      filter: brightness(1.04);
+      outline: none;
+      box-shadow: 0 24px 48px -26px rgba(37, 99, 235, 0.82);
+    }
+    html.dark .catalog-course-card__hover-overlay {
+      background: linear-gradient(180deg, rgba(2, 6, 23, 0.22) 0%, rgba(2, 6, 23, 0.92) 100%);
+    }
+    .catalog-course-category-badge {
+      position: absolute;
+      top: 0.75rem;
+      left: 0.75rem;
+      z-index: 20;
+      display: inline-flex;
+      max-width: calc(100% - 5rem);
+      align-items: center;
+      overflow: hidden;
+      padding: 0.42rem 0.8rem;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      border-radius: 9999px;
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.96) 0%, rgba(14, 165, 233, 0.96) 100%);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      line-height: 1;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      box-shadow: 0 16px 30px -20px rgba(37, 99, 235, 0.82);
+      backdrop-filter: blur(10px);
+      pointer-events: none;
+    }
+    .catalog-course-duration-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      white-space: nowrap;
+      padding: 0.42rem 0.8rem;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.94);
+      color: #c2410c;
+      font-size: 0.78rem;
+      font-weight: 800;
+      line-height: 1;
+      box-shadow: 0 14px 28px -20px rgba(15, 23, 42, 0.32);
+      backdrop-filter: blur(10px);
+    }
+    html.dark .catalog-course-duration-badge {
+      border-color: rgba(253, 186, 116, 0.28);
+      background: rgba(15, 23, 42, 0.92);
+      color: #fdba74;
+      box-shadow: 0 16px 32px -20px rgba(0, 0, 0, 0.45);
+    }
+    .catalog-course-badge {
+      position: absolute;
+      top: 0.75rem;
+      left: 0.75rem;
+      z-index: 20;
+      display: inline-flex;
+      max-width: calc(100% - 5rem);
+      flex-direction: column;
+      align-items: flex-start;
+      overflow: hidden;
+      padding: 0.42rem 0.8rem;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 9999px;
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.95) 0%, rgba(14, 165, 233, 0.95) 100%);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      text-transform: uppercase;
+      white-space: nowrap;
+      box-shadow: 0 16px 30px -20px rgba(37, 99, 235, 0.8);
+      backdrop-filter: blur(10px);
+      pointer-events: none;
+    }
+    .catalog-course-badge__meta {
+      margin-top: 0.2rem;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      line-height: 1;
+      text-transform: none;
+      color: rgba(255, 255, 255, 0.86);
+    }
+    html.dark .catalog-course-card__favorite {
+      border-color: rgba(71, 85, 105, 0.72);
+      background: rgba(15, 23, 42, 0.86);
+      color: #c4b5fd;
+    }
+    html.dark .catalog-course-card__favorite:hover,
+    html.dark .catalog-course-card__favorite:focus-visible {
+      border-color: rgba(167, 139, 250, 0.4);
+      color: #ddd6fe;
+    }
+    html.dark .catalog-course-card__favorite.is-active {
+      border-color: rgba(167, 139, 250, 0.45);
+      background: rgba(49, 46, 129, 0.42);
+      color: #ddd6fe;
+    }
+    .catalog-course-card__body {
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
-      gap: 0.55rem;
-      padding: 0.9rem;
+      gap: 0.85rem;
+      min-width: 0;
+      padding: 1rem 1rem 1.05rem;
+    }
+    .catalog-course-card__author {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      min-width: 0;
+      color: #2563eb;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+    html.dark .catalog-course-card__author {
+      color: #e2e8f0;
+    }
+    .catalog-course-card__author-icon {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 999px;
+      background: rgba(239, 246, 255, 0.95);
+      color: #2563eb;
+      box-shadow: 0 10px 22px -18px rgba(37, 99, 235, 0.45);
+    }
+    html.dark .catalog-course-card__author-icon {
+      background: rgba(37, 99, 235, 0.14);
+      color: #93c5fd;
+      box-shadow: 0 10px 22px -18px rgba(37, 99, 235, 0.35);
+    }
+    .catalog-course-card__author-icon i {
+      color: inherit;
+      line-height: 1;
+    }
+    .catalog-course-card__author-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #1d4ed8;
+      font-weight: 700;
+    }
+    html.dark .catalog-course-card__author-name {
+      color: #f8fafc;
+    }
+    .catalog-course-card__title {
+      margin: 0;
+      color: #0f172a;
+      font-size: 1.08rem;
+      font-weight: 800;
+      line-height: 1.28;
+      letter-spacing: -0.02em;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+    html.dark .catalog-course-card__title {
+      color: #f8fafc;
+    }
+    .catalog-course-card__title-link {
+      color: inherit;
+      text-decoration: none;
+    }
+    .catalog-course-card__rating {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem 0.5rem;
+      min-height: 1.25rem;
+      color: #64748b;
+      font-size: 0.84rem;
+      font-weight: 600;
+    }
+    html.dark .catalog-course-card__rating {
+      color: #cbd5e1;
+    }
+    .catalog-course-card__rating-stars {
+      display: inline-flex;
+      gap: 0.1rem;
+      line-height: 1;
+    }
+    .catalog-course-card__rating-stars .fas {
+      color: #f59e0b;
+    }
+    .catalog-course-card__rating-stars .far {
+      color: rgba(245, 158, 11, 0.34);
+    }
+    html.dark .catalog-course-card__rating-stars .fas {
+      color: #fbbf24;
+    }
+    html.dark .catalog-course-card__rating-stars .far {
+      color: rgba(251, 191, 36, 0.34);
+    }
+    .catalog-course-card__rating-value {
+      color: #0f172a;
+      font-weight: 800;
+    }
+    html.dark .catalog-course-card__rating-value {
+      color: #f8fafc;
+    }
+    .catalog-course-card__footer {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 0.9rem;
+      margin-top: auto;
+      padding-top: 0.9rem;
+      border-top: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    html.dark .catalog-course-card__footer {
+      border-top-color: rgba(55, 65, 81, 0.92);
+    }
+    .catalog-course-card__pricing {
+      display: grid;
+      gap: 0.14rem;
+      min-width: 0;
+    }
+    .catalog-course-card__price-label {
+      color: #94a3b8;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .catalog-course-card__price {
+      color: #ea580c;
+      font-size: 1.08rem;
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+    html.dark .catalog-course-card__price,
+    html[data-theme="dark"] .catalog-course-card__price {
+      color: #fdba74;
+    }
+    .catalog-course-card__price.app-price--promo {
+      color: #dc2626;
+    }
+    html.dark .catalog-course-card__price.app-price--promo,
+    html[data-theme="dark"] .catalog-course-card__price.app-price--promo {
+      color: #fca5a5;
+    }
+    .catalog-course-card__base-price {
+      color: #94a3b8;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-decoration: line-through;
+    }
+    .catalog-course-card__cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 8.2rem;
+      min-height: 2.8rem;
+      padding: 0.75rem 1rem;
+      border-radius: 0.95rem;
+      border: 0;
+      appearance: none;
+      cursor: pointer;
+      gap: 0.5rem;
       color: #ffffff;
-      background: linear-gradient(180deg, rgba(15, 23, 42, 0.24), rgba(15, 23, 42, 0.92));
-      opacity: 0;
-      transform: translateY(10px);
-      pointer-events: none;
-      transition: opacity 0.22s ease, transform 0.22s ease;
+      font-size: 0.88rem;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
     }
-    @media (hover: hover) and (pointer: fine) {
-      .catalog-course-card:hover .catalog-card__hover-preview,
-      .catalog-course-card:focus-within .catalog-card__hover-preview {
-        opacity: 1;
-        transform: translateY(0);
+    .catalog-course-card__cta i {
+      color: inherit;
+      flex: 0 0 auto;
+      font-size: 0.96em;
+      line-height: 1;
+    }
+    .catalog-course-card__cta:hover,
+    .catalog-course-card__cta:focus-visible {
+      transform: translateY(-1px);
+      filter: brightness(1.02);
+    }
+    .catalog-course-card__cta--primary {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      box-shadow: 0 16px 30px -20px rgba(37, 99, 235, 0.7);
+    }
+    .catalog-course-card__cta--success {
+      background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+      box-shadow: 0 16px 30px -20px rgba(22, 163, 74, 0.72);
+    }
+    @media (max-width: 640px) {
+      #coursesGrid {
+        grid-template-columns: 1fr;
       }
-    }
-    @media (hover: none) {
-      .catalog-card__hover-preview {
-        display: none;
+      .catalog-course-card__body {
+        padding: 0.95rem 0.95rem 1rem;
+      }
+      .catalog-course-card__cta {
+        min-width: 7.6rem;
+        padding-inline: 0.85rem;
       }
     }
     .gradient-text {
@@ -798,8 +1189,46 @@ $resolveLevelBadgeClass = static function (string $levelKey): string {
     }
     @media (max-width: 640px) {
       .catalog-results-toolbar {
-        top: 4.55rem;
+        position: static;
+        top: auto;
+        margin-bottom: 0.85rem;
+        padding: 0.65rem;
         border-radius: 14px;
+        box-shadow: 0 12px 28px -26px rgba(15, 23, 42, 0.35);
+      }
+      .catalog-results-toolbar > .flex {
+        gap: 0.5rem;
+      }
+      .catalog-results-toolbar .filter-scroll {
+        gap: 0.35rem;
+        padding-bottom: 0;
+      }
+      .catalog-results-toolbar .filter-scroll::-webkit-scrollbar {
+        height: 3px;
+      }
+      .catalog-results-toolbar [data-filter-toggle],
+      .catalog-results-toolbar [data-quick-filter] {
+        min-height: 2.25rem;
+        padding: 0.45rem 0.75rem;
+        font-size: 0.75rem;
+        line-height: 1.1;
+      }
+      .catalog-results-toolbar #sortSelect {
+        min-height: 2.25rem;
+        padding: 0.4rem 0.65rem;
+        font-size: 0.75rem;
+      }
+      .catalog-results-toolbar #resultCount {
+        font-size: 0.75rem;
+        line-height: 1.25rem;
+      }
+      .catalog-results-toolbar #catalogTotalCount {
+        padding: 0.3rem 0.65rem;
+        font-size: 0.72rem;
+      }
+      .catalog-results-toolbar #activeFiltersChips {
+        margin-top: 0.5rem;
+        gap: 0.35rem;
       }
       .catalog-course-card {
         min-height: auto;
@@ -814,9 +1243,9 @@ $resolveLevelBadgeClass = static function (string $levelKey): string {
         inset: 0;
         z-index: 60;
         display: none !important;
-        align-items: flex-end;
-        padding: 1rem;
-        pointer-events: none;
+        align-items: stretch;
+        padding: 0.75rem;
+        pointer-events: auto;
       }
       body.catalog-filter-open .catalog-filter-shell {
         display: flex !important;
@@ -831,11 +1260,21 @@ $resolveLevelBadgeClass = static function (string $levelKey): string {
       .catalog-filter-shell #filterContainer {
         position: relative;
         width: 100%;
-        max-height: min(78vh, 42rem);
+        height: 100%;
+        max-height: none;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         pointer-events: auto;
-        border-radius: 1.25rem 1.25rem 0 0;
+        border-radius: 1.25rem;
         box-shadow: 0 -24px 60px -32px rgba(15, 23, 42, 0.55);
+      }
+    }
+    @media (max-width: 639px) {
+      .catalog-filter-shell {
+        padding: 0.5rem;
+      }
+      .catalog-filter-shell #filterContainer {
+        border-radius: 1rem;
       }
     }
     @media (max-width: 639px) {
@@ -861,6 +1300,7 @@ $resolveLevelBadgeClass = static function (string $levelKey): string {
   data-view="web/catalogue"
   data-compact-filters="<?php echo $compactCatalogFilters ? '1' : '0'; ?>"
   data-cart-api="<?php echo e(site_url('api/cart')); ?>"
+  data-checkout-url="<?php echo e(site_url('checkout')); ?>"
   data-favorites-api="<?php echo e(site_url('api/course_favorites')); ?>"
   data-login-url="<?php echo e($loginUrl); ?>"
   data-is-authenticated="<?php echo $isLoggedIn ? '1' : '0'; ?>"
@@ -928,11 +1368,21 @@ $resolveLevelBadgeClass = static function (string $levelKey): string {
             </div>
 
             <div id="filterContainer" class="hidden rounded-[20px] border border-gray-200 bg-white p-5 shadow-[0_14px_40px_-18px_rgba(15,23,42,0.2)] dark:border-gray-800 dark:bg-gray-900<?php echo $compactCatalogFilters ? '' : ' lg:block'; ?>">
-              <div class="mb-7 flex items-center justify-between">
+              <div class="mb-7 flex items-center justify-between gap-3">
                 <h2 class="text-[1.15rem] font-bold text-gray-900 dark:text-white">
                   <i class="fas fa-sliders-h mr-2 text-blue-500"></i>Filtres
                 </h2>
-                <button id="resetFiltersBtn" type="button" class="text-sm font-medium text-blue-600 transition hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200">Réinitialiser</button>
+                <div class="flex items-center gap-2">
+                  <button id="resetFiltersBtn" type="button" class="text-sm font-medium text-blue-600 transition hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200">Réinitialiser</button>
+                  <button
+                    type="button"
+                    data-filter-close
+                    class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:border-blue-300 hover:text-blue-600 lg:hidden dark:border-gray-700 dark:bg-gray-950 dark:text-gray-300 dark:hover:border-blue-400 dark:hover:text-blue-300"
+                    aria-label="Fermer les filtres"
+                  >
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                  </button>
+                </div>
               </div>
 
               <div class="mb-7">
@@ -1118,8 +1568,8 @@ $resolveLevelBadgeClass = static function (string $levelKey): string {
             <div id="activeFiltersChips" class="mt-3 hidden flex flex-wrap gap-2"></div>
             </div>
 
-            <div id="coursesGrid" class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-              <?php foreach ($initialCatalogCourses as $course): ?>
+            <div id="coursesGrid" class="grid gap-5">
+              <?php foreach ($initialCatalogCourses as $course): ?><?php if (false): ?>
                 <?php
                 $courseBadge = $resolveCatalogBadge($course);
                 $courseTrust = $resolveCatalogTrust($course);
@@ -1129,7 +1579,8 @@ $resolveLevelBadgeClass = static function (string $levelKey): string {
                 $courseBasePriceLabel = trim((string) ($course['basePriceLabel'] ?? ''));
                 $coursePromoDiscountLabel = trim((string) ($course['promoDiscountLabel'] ?? ''));
                 $coursePriceHint = trim((string) ($course['priceHint'] ?? 'Accès immédiat'));
-                $courseHasPromo = !empty($course['promoActive']) && $coursePromoDiscountLabel !== '';
+                $coursePromoBadgeLabel = $coursePromoDiscountLabel !== '' ? $coursePromoDiscountLabel : 'Promotion';
+                $courseHasPromo = !empty($course['promoActive']) && (($courseBasePriceLabel !== '' && $courseBasePriceLabel !== $coursePriceLabel) || (string) ($course['promoEndAt'] ?? '') !== '' || $coursePromoDiscountLabel !== '');
                 $courseHasCoupon = !$courseHasPromo && !empty($course['couponAvailable']);
                 $courseFormatLabel = trim((string) ($course['formatLabel'] ?? ''));
                 $courseFormatIcon = trim((string) ($course['formatIcon'] ?? 'fa-video'));
@@ -1152,10 +1603,10 @@ $resolveLevelBadgeClass = static function (string $levelKey): string {
                     </a>
                     <?php if ((string) ($courseBadge['label'] ?? '') !== ''): ?>
                       <?php $courseBadgeMeta = trim((string) ($courseBadge['meta'] ?? '')); ?>
-                      <span class="absolute left-3 top-3 z-[5] inline-flex max-w-[calc(100%-4rem)] flex-col items-start rounded-full px-2.5 py-1.5 backdrop-blur-sm <?php echo e((string) ($courseBadge['class'] ?? 'bg-black/65 text-white')); ?>">
-                        <span class="text-[10px] font-semibold uppercase tracking-[0.18em] leading-none"><?php echo e((string) ($courseBadge['label'] ?? '')); ?></span>
+                      <span class="catalog-course-badge">
+                        <span><?php echo e((string) ($courseBadge['label'] ?? '')); ?></span>
                         <?php if ($courseBadgeMeta !== ''): ?>
-                          <span class="mt-0.5 text-[9px] font-medium normal-case tracking-[0.04em] leading-none text-white/80"><?php echo e($courseBadgeMeta); ?></span>
+                          <span class="catalog-course-badge__meta"><?php echo e($courseBadgeMeta); ?></span>
                         <?php endif; ?>
                       </span>
                     <?php endif; ?>
@@ -1206,7 +1657,7 @@ $resolveLevelBadgeClass = static function (string $levelKey): string {
                         </h3>
                         <div class="mt-2 flex flex-wrap items-center gap-2">
                           <div class="inline-flex max-w-full items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-50 to-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 dark:from-blue-500/10 dark:to-cyan-500/10 dark:text-blue-200">
-                            <i class="fas fa-chalkboard-user text-[10px]" aria-hidden="true"></i>
+                            <i class="fas fa-chalkboard-teacher text-[10px]" aria-hidden="true"></i>
                             <span class="truncate" title="<?php echo e((string) ($course['teacher'] ?? 'Formateur')); ?>"><?php echo e((string) ($course['teacher'] ?? 'Formateur')); ?></span>
                           </div>
                         </div>
@@ -1247,7 +1698,7 @@ $resolveLevelBadgeClass = static function (string $levelKey): string {
                         <div class="min-w-0">
                           <p class="text-[9px] font-semibold uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">Prix</p>
                           <div class="mt-0.5 flex flex-wrap items-baseline gap-1.5">
-                            <div class="whitespace-nowrap text-base font-bold text-gray-900 dark:text-white"><?php echo e((string) ($course['priceLabel'] ?? 'Gratuit')); ?></div>
+                            <div class="whitespace-nowrap text-base font-bold app-price"><?php echo e((string) ($course['priceLabel'] ?? 'Gratuit')); ?></div>
                             <?php if ($courseBasePriceLabel !== ''): ?>
                               <div class="whitespace-nowrap text-[11px] font-medium text-gray-400 line-through<?php echo $courseHasPromo ? ' text-rose-400 dark:text-rose-200/80' : ''; ?>"><?php echo e($courseBasePriceLabel); ?></div>
                             <?php endif; ?>
@@ -1257,15 +1708,15 @@ $resolveLevelBadgeClass = static function (string $levelKey): string {
                         <?php if ($courseHasPromo || $courseHasCoupon): ?>
                           <div class="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
                             <?php if ($courseHasPromo): ?>
-                              <span class="inline-flex items-center rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-600 dark:bg-rose-500/15 dark:text-rose-200">
+                              <span class="inline-flex items-center whitespace-nowrap rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-600 dark:bg-rose-500/15 dark:text-rose-200">
                                 <?php echo e($coursePromoDiscountLabel); ?>
                               </span>
                               <?php if ((string) ($course['promoEndAt'] ?? '') !== ''): ?>
-                                <span class="inline-flex items-center rounded-full bg-white px-1.5 py-0.5 text-[10px] font-semibold text-rose-600 shadow-sm dark:bg-white/10 dark:text-rose-100" data-promo-countdown="<?php echo e((string) ($course['promoEndAt'] ?? '')); ?>">Fin dans --</span>
+                                <span class="inline-flex items-center whitespace-nowrap rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-sm dark:bg-red-500 dark:text-white" data-promo-countdown="<?php echo e((string) ($course['promoEndAt'] ?? '')); ?>">Fin dans --</span>
                               <?php endif; ?>
                             <?php elseif ($courseHasCoupon): ?>
-                              <span class="inline-flex items-center rounded-full bg-cyan-100 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-200">
-                                Coupon disponible
+                              <span class="inline-flex items-center whitespace-nowrap rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-200">
+                                Code promo dispo
                               </span>
                             <?php endif; ?>
                           </div>
@@ -1290,6 +1741,176 @@ $resolveLevelBadgeClass = static function (string $levelKey): string {
                           <i class="fas <?php echo e($coursePrimaryActionIcon); ?>" aria-hidden="true"></i>
                         </a>
                       </div>
+                    </div>
+                  </div>
+                </article>
+              <?php endif; ?>
+              <?php
+              $serverRating = max(0.0, min(5.0, (float) ($course['rating'] ?? 0)));
+              $ratingFullStars = (int) floor($serverRating);
+              $ratingFraction = $serverRating - $ratingFullStars;
+              $ratingHasHalfStar = $ratingFraction >= 0.25 && $ratingFraction < 0.75;
+              if ($ratingFraction >= 0.75) {
+                  $ratingFullStars++;
+                  $ratingHasHalfStar = false;
+              }
+              $ratingFullStars = min(5, $ratingFullStars);
+              $ratingEmptyStars = max(0, 5 - $ratingFullStars - ($ratingHasHalfStar ? 1 : 0));
+              $courseId = (int) ($course['id'] ?? 0);
+              $courseTitle = trim((string) ($course['title'] ?? 'Cours'));
+              $courseDetailsUrl = trim((string) ($course['url'] ?? $catalogueUrl));
+              $coursePrice = max(0, (int) ($course['price'] ?? 0));
+              $courseInCart = !empty($course['isInCart']);
+              $courseCheckoutUrl = site_url('checkout');
+              $courseCtaLabel = $coursePrice > 0 ? ($courseInCart ? 'Accéder au panier' : 'Ajouter au panier') : 'Commencer';
+              $courseCtaTone = $coursePrice > 0 ? ($courseInCart ? 'success' : 'primary') : 'primary';
+              $courseCtaIconClass = $coursePrice > 0 ? ($courseInCart ? 'fa-arrow-right' : 'fa-cart-shopping') : 'fa-circle-play';
+              $courseTeacher = trim((string) ($course['teacher'] ?? 'Formateur'));
+              $coursePriceLabel = trim((string) ($course['priceLabel'] ?? ($coursePrice > 0 ? $publicFormatMoney($coursePrice) : 'Gratuit')));
+              $courseBasePriceLabel = trim((string) ($course['basePriceLabel'] ?? ''));
+              $courseCategory = trim((string) ($course['category'] ?? 'Formation'));
+              $courseDurationLabel = trim((string) ($course['durationLabel'] ?? ''));
+              $courseEnrolledCount = max(0, (int) ($course['enrolledCount'] ?? 0));
+              $coursePriceHint = trim((string) ($course['priceHint'] ?? 'Accès immédiat'));
+              $courseFavoriteLabel = !empty($course['isFavorite']) ? 'Retirer des favoris' : 'Ajouter aux favoris';
+              $coursePromoDiscountLabel = trim((string) ($course['promoDiscountLabel'] ?? ''));
+              $coursePromoBadgeLabel = $coursePromoDiscountLabel !== '' ? $coursePromoDiscountLabel : 'Promotion';
+              $courseHasPromo = !empty($course['promoActive']) && (($courseBasePriceLabel !== '' && $courseBasePriceLabel !== $coursePriceLabel) || (string) ($course['promoEndAt'] ?? '') !== '' || $coursePromoDiscountLabel !== '');
+              $courseHasCoupon = !$courseHasPromo && !empty($course['couponAvailable']);
+              $coursePriceClass = 'catalog-course-card__price app-price' . ($courseHasPromo ? ' app-price--promo' : '');
+              ?>
+                <article class="catalog-course-card hover-lift group flex h-full flex-col">
+                  <div class="catalog-course-card__media">
+                    <a href="<?php echo e($courseDetailsUrl); ?>" class="catalog-course-card__media-link">
+                      <img
+                        src="<?php echo e((string) ($course['image'] ?? '')); ?>"
+                        alt="<?php echo e($courseTitle); ?>"
+                        class="catalog-course-card__media-img"
+                        loading="lazy"
+                        decoding="async"
+                      >
+                    </a>
+                    <?php if ($courseCategory !== ''): ?>
+                      <span class="catalog-course-category-badge">
+                        <?php echo e($courseCategory); ?>
+                      </span>
+                    <?php endif; ?>
+                    <button
+                      type="button"
+                      class="catalog-course-card__favorite<?php echo !empty($course['isFavorite']) ? ' is-active' : ''; ?>"
+                      data-course-action="favorite"
+                      data-course-id="<?php echo e((string) $courseId); ?>"
+                      aria-label="<?php echo e($courseFavoriteLabel); ?>"
+                      aria-pressed="<?php echo !empty($course['isFavorite']) ? 'true' : 'false'; ?>"
+                    >
+                      <i class="<?php echo !empty($course['isFavorite']) ? 'fas' : 'far'; ?> fa-heart" aria-hidden="true"></i>
+                    </button>
+                    <?php if ($courseDurationLabel !== ''): ?>
+                      <div class="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/55 via-slate-950/5 to-transparent px-4 pb-4 pt-8">
+                        <div class="flex justify-end">
+                          <span class="catalog-course-duration-badge">
+                            <i class="far fa-clock text-[10px]" aria-hidden="true"></i>
+                            <?php echo e($courseDurationLabel); ?>
+                          </span>
+                        </div>
+                      </div>
+                    <?php endif; ?>
+                  </div>
+
+                  <div class="catalog-course-card__body">
+                    <div class="catalog-course-card__author">
+                      <span class="catalog-course-card__author-icon" aria-hidden="true">
+                        <i class="fas fa-chalkboard-teacher text-xs" aria-hidden="true"></i>
+                      </span>
+                      <span class="catalog-course-card__author-name" title="<?php echo e($courseTeacher); ?>"><?php echo e($courseTeacher); ?></span>
+                    </div>
+
+                    <h3 class="catalog-course-card__title">
+                      <a href="<?php echo e($courseDetailsUrl); ?>" class="catalog-course-card__title-link"><?php echo e($courseTitle); ?></a>
+                    </h3>
+
+                    <div class="catalog-course-card__rating">
+                      <?php if ((int) ($course['ratingCount'] ?? 0) > 0): ?>
+                        <span class="catalog-course-card__rating-stars" aria-hidden="true">
+                          <?php for ($starIndex = 0; $starIndex < $ratingFullStars; $starIndex++): ?>
+                            <i class="fas fa-star"></i>
+                          <?php endfor; ?>
+                          <?php if ($ratingHasHalfStar): ?>
+                            <i class="fas fa-star-half-alt"></i>
+                          <?php endif; ?>
+                          <?php for ($starIndex = 0; $starIndex < $ratingEmptyStars; $starIndex++): ?>
+                            <i class="far fa-star"></i>
+                          <?php endfor; ?>
+                        </span>
+                        <span class="catalog-course-card__rating-value"><?php echo e(number_format($serverRating, 1, '.', '')); ?></span>
+                        <span><?php echo e(view_pluralize((int) ($course['ratingCount'] ?? 0), 'Avis', 'Avis')); ?></span>
+                      <?php else: ?>
+                        <span class="catalog-course-card__rating-stars" aria-hidden="true">
+                          <?php for ($starIndex = 0; $starIndex < 5; $starIndex++): ?>
+                            <i class="far fa-star"></i>
+                          <?php endfor; ?>
+                        </span>
+                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-1 text-[0.72rem] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200">
+                          <i class="fas fa-sparkles" aria-hidden="true"></i>
+                          <span>Nouveau</span>
+                        </span>
+                        <?php if ($courseEnrolledCount > 0): ?>
+                          <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[0.72rem] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200">
+                            <i class="fas fa-users text-[10px]" aria-hidden="true"></i>
+                            <span><?php echo e(view_pluralize($courseEnrolledCount, 'inscrit', 'inscrits')); ?></span>
+                          </span>
+                        <?php endif; ?>
+                      <?php endif; ?>
+                    </div>
+
+                    <div class="catalog-course-card__footer">
+                      <div class="catalog-course-card__pricing">
+                        <span class="catalog-course-card__price-label">Prix</span>
+                        <strong class="<?php echo e($coursePriceClass); ?>"><?php echo e($coursePriceLabel); ?></strong>
+                        <?php if ($courseBasePriceLabel !== '' && $courseBasePriceLabel !== $coursePriceLabel): ?>
+                          <span class="catalog-course-card__base-price"><?php echo e($courseBasePriceLabel); ?></span>
+                        <?php endif; ?>
+                        <span class="text-[0.78rem] font-medium text-slate-500 dark:text-slate-400"><?php echo e($coursePriceHint !== '' ? $coursePriceHint : 'Accès immédiat'); ?></span>
+                        <?php if ($courseHasPromo || $courseHasCoupon): ?>
+                          <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                            <?php if ($courseHasPromo): ?>
+                              <span class="inline-flex items-center whitespace-nowrap rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-600 dark:bg-rose-500/15 dark:text-rose-200">
+                                <?php echo e($coursePromoBadgeLabel); ?>
+                              </span>
+                              <?php if ((string) ($course['promoEndAt'] ?? '') !== ''): ?>
+                                <span class="inline-flex items-center whitespace-nowrap rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-sm dark:bg-red-500 dark:text-white" data-promo-countdown="<?php echo e((string) ($course['promoEndAt'] ?? '')); ?>">Fin dans --</span>
+                              <?php endif; ?>
+                            <?php elseif ($courseHasCoupon): ?>
+                              <span class="inline-flex items-center whitespace-nowrap rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-200">
+                                Code promo dispo
+                              </span>
+                            <?php endif; ?>
+                          </div>
+                        <?php endif; ?>
+                      </div>
+                      <?php if ($coursePrice > 0 && !$courseInCart): ?>
+                        <button
+                          type="button"
+                          class="catalog-course-card__cta catalog-course-card__cta--<?php echo e($courseCtaTone); ?>"
+                          data-course-action="cart"
+                          data-course-id="<?php echo e((string) $courseId); ?>"
+                          aria-label="<?php echo e($courseCtaLabel); ?>"
+                          aria-pressed="false"
+                        >
+                          <i class="fas <?php echo e($courseCtaIconClass); ?>" aria-hidden="true"></i>
+                          <span><?php echo e($courseCtaLabel); ?></span>
+                        </button>
+                      <?php elseif ($coursePrice > 0): ?>
+                        <a href="<?php echo e($courseCheckoutUrl); ?>" class="catalog-course-card__cta catalog-course-card__cta--<?php echo e($courseCtaTone); ?>">
+                          <i class="fas <?php echo e($courseCtaIconClass); ?>" aria-hidden="true"></i>
+                          <span><?php echo e($courseCtaLabel); ?></span>
+                        </a>
+                      <?php else: ?>
+                        <a href="<?php echo e($courseDetailsUrl); ?>" class="catalog-course-card__cta catalog-course-card__cta--<?php echo e($courseCtaTone); ?>">
+                          <i class="fas <?php echo e($courseCtaIconClass); ?>" aria-hidden="true"></i>
+                          <span><?php echo e($courseCtaLabel); ?></span>
+                        </a>
+                      <?php endif; ?>
                     </div>
                   </div>
                 </article>
@@ -1330,15 +1951,16 @@ $resolveLevelBadgeClass = static function (string $levelKey): string {
   <?php require __DIR__ . '/_public_footer_home.php'; ?>
 
   <div class="fixed bottom-4 right-4 z-40 flex flex-col items-end gap-2 sm:bottom-5 sm:right-5 sm:gap-3">
-    <a
-      href="<?php echo e($supportUrl); ?>"
+    <button
+      type="button"
       class="pointer-events-none inline-flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-white opacity-0 shadow-[0_18px_35px_-15px_rgba(37,99,235,0.9)] transition hover:bg-blue-700 sm:pointer-events-auto sm:h-12 sm:w-12 sm:opacity-100"
       data-support-fab
+      data-support-url="<?php echo e($supportUrl); ?>"
       aria-label="Assistance"
       title="Assistance"
     >
       <i class="fas fa-headset" aria-hidden="true"></i>
-    </a>
+    </button>
     <button
       type="button"
       class="pointer-events-none inline-flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-white opacity-0 shadow-[0_18px_35px_-15px_rgba(37,99,235,0.9)] transition duration-200 hover:bg-blue-700 dark:bg-blue-500 dark:text-white dark:hover:bg-blue-600 sm:h-12 sm:w-12"

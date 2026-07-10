@@ -42,8 +42,8 @@ $cardStyle = $cardAnimation !== '' ? ' style="--mk-delay:' . e($cardAnimation) .
 
         <div class="mk-course-card__body">
             <div class="mk-course-card__signals">
-                <span class="mk-course-card__signal"><?php echo e((string) ($courseCard['ratingMeta'] ?? 'Nouveau cours')); ?></span>
-                <span class="mk-course-card__signal"><?php echo e((string) ($courseCard['durationLabel'] ?? 'À votre rythme')); ?></span>
+                <span class="mk-course-card__signal<?php echo ((int) ($courseCard['ratingCount'] ?? 0) === 0) ? ' mk-course-card__signal--new' : ''; ?>"><?php echo e((string) ($courseCard['ratingMeta'] ?? 'Nouveau')); ?></span>
+                <span class="mk-course-card__signal mk-course-card__signal--duration"><?php echo e((string) ($courseCard['durationLabel'] ?? 'À votre rythme')); ?></span>
             </div>
 
             <div class="mk-course-card__content">
@@ -59,7 +59,7 @@ $cardStyle = $cardAnimation !== '' ? ' style="--mk-delay:' . e($cardAnimation) .
             <div class="mk-course-card__footer">
                 <div class="mk-course-card__pricing">
                     <span class="mk-course-card__price-label"><?php echo e((string) ($courseCard['priceHint'] ?? 'Paiement unique')); ?></span>
-                    <strong class="mk-course-card__price"><?php echo e((string) ($courseCard['priceLabel'] ?? 'Gratuit')); ?></strong>
+                    <strong class="mk-course-card__price app-price<?php echo !empty($courseCard['promoActive']) ? ' app-price--promo' : ''; ?>"><?php echo e((string) ($courseCard['priceLabel'] ?? 'Gratuit')); ?></strong>
                 </div>
                 <span class="mk-course-card__cta">
                     <?php echo e($cardContext === 'home' ? 'Voir le détail' : (string) ($courseCard['ctaLabel'] ?? 'Découvrir')); ?>

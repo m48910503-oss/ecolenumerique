@@ -41,7 +41,7 @@
     if (!course.promoActive || !course.promoEndAt) {
       return "";
     }
-    return '<span class="inline-flex items-center rounded-full bg-white/80 px-2 py-1 text-[11px] font-semibold text-rose-600 dark:bg-white/10 dark:text-rose-100" data-promo-countdown="'
+    return '<span class="inline-flex items-center whitespace-nowrap rounded-full bg-red-600 px-2 py-1 text-[11px] font-semibold text-white shadow-sm dark:bg-red-500 dark:text-white" data-promo-countdown="'
       + escapeHtml(course.promoEndAt)
       + '">Fin dans --</span>';
   }
@@ -295,12 +295,12 @@
       return "";
     }
 
-    return '<span class="absolute left-3 top-3 z-[5] inline-flex max-w-[calc(100%-4rem)] flex-col items-start rounded-full bg-black/70 px-2.5 py-1.5 text-white backdrop-blur-sm">'
-      + '<span class="text-[10px] font-semibold uppercase leading-none tracking-[0.18em]">'
+    return '<span class="catalog-course-badge">'
+      + '<span>'
       + escapeHtml(label)
       + '</span>'
       + (meta
-        ? '<span class="mt-0.5 text-[9px] font-medium normal-case leading-none tracking-[0.04em] text-white/80">'
+        ? '<span class="catalog-course-badge__meta">'
           + escapeHtml(meta)
           + '</span>'
         : "")
@@ -365,27 +365,32 @@
 
   function renderPricingSection(course) {
     const meta = [];
-    const hasPromo = !!course.promoActive && !!course.promoDiscountLabel;
-    const hasCoupon = !hasPromo && !!course.couponAvailable;
     const basePriceLabel = String(course.basePriceLabel || "");
+    const priceLabel = String(course.priceLabel || "Gratuit");
+    const promoLabel = String(course.promoDiscountLabel || "Promotion");
+    const hasPromo = !!course.promoActive && ((basePriceLabel && basePriceLabel !== priceLabel) || !!course.promoEndAt || !!course.promoDiscountLabel);
+    const hasCoupon = !hasPromo && !!course.couponAvailable;
     const priceHint = String(course.priceHint || "Accès immédiat");
+    const priceClass = hasPromo
+      ? "whitespace-nowrap text-base font-bold app-price app-price--promo"
+      : "whitespace-nowrap text-base font-bold app-price";
 
     if (hasPromo) {
       meta.push(
-        '<span class="inline-flex shrink-0 items-center rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-600 dark:bg-rose-500/15 dark:text-rose-200">'
-        + escapeHtml(course.promoDiscountLabel)
+        '<span class="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-600 dark:bg-rose-500/15 dark:text-rose-200">'
+        + escapeHtml(promoLabel)
         + "</span>"
       );
       if (course.promoEndAt) {
         meta.push(
-          '<span class="inline-flex shrink-0 items-center rounded-full bg-white px-1.5 py-0.5 text-[10px] font-semibold text-rose-600 shadow-sm dark:bg-white/10 dark:text-rose-100" data-promo-countdown="'
+          '<span class="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-sm dark:bg-red-500 dark:text-white" data-promo-countdown="'
           + escapeHtml(course.promoEndAt)
           + '">Fin dans --</span>'
         );
       }
     } else if (hasCoupon) {
       meta.push(
-        '<span class="inline-flex items-center rounded-full bg-cyan-100 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-200">Coupon disponible</span>'
+        '<span class="inline-flex items-center whitespace-nowrap rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-200">Code promo dispo</span>'
       );
     }
 
@@ -394,7 +399,7 @@
       + '<div class="min-w-0">'
       + '<p class="text-[9px] font-semibold uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">Prix</p>'
       + '<div class="mt-0.5 flex flex-wrap items-baseline gap-1.5">'
-      + '<div class="whitespace-nowrap text-base font-bold text-gray-900 dark:text-white">' + escapeHtml(course.priceLabel || "Gratuit") + "</div>"
+      + '<div class="' + priceClass + '">' + escapeHtml(course.priceLabel || "Gratuit") + "</div>"
       + (basePriceLabel
         ? '<div class="whitespace-nowrap text-[11px] font-medium text-gray-400 line-through' + (hasPromo ? " text-rose-400 dark:text-rose-200/80" : "") + '">' + escapeHtml(basePriceLabel) + "</div>"
         : "")
@@ -478,6 +483,17 @@
       + '</div>';
   }
 
+  function renderHoverOverlay(detailsUrl) {
+    const safeUrl = escapeHtml(String(detailsUrl || "#"));
+
+    return '<div class="catalog-course-card__hover-overlay">'
+      + '<a href="' + safeUrl + '" class="catalog-course-card__hover-button">'
+      + '<i class="fas fa-arrow-right" aria-hidden="true"></i>'
+      + '<span>Voir détails</span>'
+      + '</a>'
+      + '</div>';
+  }
+
   function renderLevelBadge(level, label) {
     let toneClasses = "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200";
     if (level === "debutant") {
@@ -511,7 +527,7 @@
   function buildFeaturedProofs(course) {
     const proofs = [];
     proofs.push({ icon: "fa-signal", label: course.levelLabel || "Tous niveaux" });
-    proofs.push({ icon: "fa-clock", label: course.durationLabel || "À votre rythme" });
+    proofs.push({ icon: "fa-clock", label: course.durationLabel || "À votre rythme", tone: "duration" });
 
     const enrolledCount = Number(course.enrolledCount || course.students || 0);
     if (enrolledCount > 0) {
@@ -539,11 +555,12 @@
     const pricingSectionHtml = renderPricingSection(course);
     const ratingCount = Number(course.ratingCount || 0);
     const ratingValue = Number(course.rating || 0);
+    const enrolledCount = Number(course.enrolledCount || course.students || 0);
     const trust = resolveCourseTrust(course);
     const ctaLabel = "Voir le cours";
     const ctaIconClass = "fa-arrow-right";
     const durationMetaHtml = course.durationLabel
-      ? '<span class="inline-flex items-center gap-1 text-gray-500 dark:text-gray-300"><i class="fas fa-clock text-[10px]" aria-hidden="true"></i><span>'
+      ? '<span class="catalog-course-duration-badge"><i class="fas fa-clock" aria-hidden="true"></i><span>'
         + escapeHtml(course.durationLabel)
         + "</span></span>"
       : "";
@@ -558,29 +575,31 @@
           + '<span>'
           + escapeHtml(String(ratingCount))
           + ' avis</span>'
-        : '<span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-1 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200">'
-          + '<i class="fas '
-          + escapeHtml(trust.icon || "fa-sparkles")
-          + '" aria-hidden="true"></i><span>'
-          + escapeHtml(trust.label || "Nouveau cours")
-          + '</span></span>'
-          + '<span class="inline-flex items-center gap-1 text-gray-500 dark:text-gray-300">'
-          + '<i class="fas fa-bolt text-[10px]" aria-hidden="true"></i><span>'
-          + escapeHtml(trust.meta || "Disponible maintenant")
-          + '</span></span>')
+        : '<span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2 py-1 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200">'
+          + '<i class="fas fa-sparkles" aria-hidden="true"></i><span>Nouveau</span></span>'
+          + (enrolledCount > 0
+            ? '<span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200">'
+              + '<i class="fas fa-users text-[10px]" aria-hidden="true"></i><span>'
+              + escapeHtml(formatCountLabel(enrolledCount, "inscrit", "inscrits"))
+              + '</span></span>'
+            : '<span class="inline-flex items-center gap-1 text-gray-500 dark:text-gray-300">'
+              + '<i class="fas fa-bolt text-[10px]" aria-hidden="true"></i><span>'
+              + escapeHtml(trust.meta || "Disponible maintenant")
+              + '</span></span>'))
       + (durationMetaHtml ? durationMetaHtml : "")
       + '</div>';
     const detailsUrl = course.url || "#";
     const favoriteButton = renderActionButton("favorite", course);
     const cartButton = renderActionButton("cart", course);
+    const categoryLabel = String(course.category || "Formation");
 
     return '<article class="catalog-course-card hover-lift group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_18px_34px_-24px_rgba(15,23,42,0.28)] dark:border-gray-800 dark:bg-gray-900">'
       + '<div class="catalog-card__cover relative overflow-hidden">'
       + '<a href="' + escapeHtml(detailsUrl) + '" class="block h-full w-full">'
       + '<img src="' + escapeHtml(course.image || "") + '" alt="' + escapeHtml(course.title || "Cours") + '" class="catalog-card__cover-img transition duration-500 group-hover:scale-105" loading="lazy" decoding="async">'
       + "</a>"
+      + (categoryLabel ? '<span class="catalog-course-category-badge">' + escapeHtml(categoryLabel) + '</span>' : "")
       + renderBadge(course)
-      + renderCoursePreview(course)
       + favoriteButton
       + "</div>"
       + '<div class="flex flex-1 flex-col p-4">'
@@ -588,7 +607,7 @@
       + '<div class="min-w-0 flex-1">'
       + '<h3 class="line-clamp-2 min-h-[2.5rem] text-base font-bold leading-tight text-gray-900 dark:text-white"><a href="' + escapeHtml(detailsUrl) + '" class="transition hover:text-blue-600 dark:hover:text-blue-300">' + escapeHtml(course.title || "Cours") + "</a></h3>"
       + '<div class="mt-2 flex flex-wrap items-center gap-2">'
-      + '<div class="inline-flex max-w-full items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-50 to-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 dark:from-blue-500/10 dark:to-cyan-500/10 dark:text-blue-200"><i class="fas fa-chalkboard-user text-[10px]"></i><span class="truncate">' + escapeHtml(course.teacher || "Formateur") + "</span></div>"
+      + '<div class="inline-flex max-w-full items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-50 to-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 dark:from-blue-500/10 dark:to-cyan-500/10 dark:text-blue-200"><i class="fas fa-chalkboard-teacher text-[10px]" aria-hidden="true"></i><span class="truncate">' + escapeHtml(course.teacher || "Formateur") + "</span></div>"
       + "</div>"
       + "</div>"
       + renderLevelBadge(course.level, course.levelLabel)
@@ -600,6 +619,106 @@
       + '<a href="' + escapeHtml(detailsUrl) + '" class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700" title="' + escapeHtml(ctaLabel) + '" aria-label="' + escapeHtml(ctaLabel) + '">'
       + '<span>' + escapeHtml(ctaLabel) + "</span>"
       + '<i class="fas ' + ctaIconClass + '" aria-hidden="true"></i></a>'
+      + "</div>"
+      + "</div>"
+      + renderHoverOverlay(detailsUrl)
+      + "</article>";
+  }
+
+  function renderCompactCourseCard(course) {
+    const ratingCount = Number(course.ratingCount || 0);
+    const ratingValue = Number(course.rating || 0);
+    const detailsUrl = String(course.url || "#");
+    const priceRaw = Number(course.price || 0);
+    const inCart = isCourseInCart(course);
+    const ctaLabel = priceRaw > 0 ? (inCart ? "Accéder au panier" : "Ajouter au panier") : "Commencer";
+    const ctaTone = priceRaw > 0 ? (inCart ? "success" : "primary") : "primary";
+    const ctaIconClass = priceRaw > 0 ? (inCart ? "fa-arrow-right" : "fa-cart-shopping") : "fa-circle-play";
+    const teacherLabel = String(course.teacher || "Formateur");
+    const title = String(course.title || "Cours");
+    const categoryLabel = String(course.category || "Formation");
+    const priceLabel = String(course.priceLabel || (priceRaw > 0 ? Number(priceRaw).toLocaleString("fr-FR") + " FCFA" : "Gratuit"));
+    const basePriceLabel = String(course.basePriceLabel || "");
+    const priceHint = String(course.priceHint || "Accès immédiat");
+    const durationLabel = String(course.durationLabel || "");
+    const enrolledCount = Number(course.enrolledCount || course.students || 0);
+    const promoLabel = String(course.promoDiscountLabel || "Promotion");
+    const hasPromo = priceRaw > 0 && !!course.promoActive && ((basePriceLabel && basePriceLabel !== priceLabel) || !!course.promoEndAt || !!course.promoDiscountLabel);
+    const hasCoupon = !hasPromo && !!course.couponAvailable;
+    const priceClass = hasPromo
+      ? "catalog-course-card__price app-price app-price--promo"
+      : "catalog-course-card__price app-price";
+    const favoriteActive = isCourseFavorite(course);
+    const favoriteLabel = favoriteActive ? "Retirer des favoris" : "Ajouter aux favoris";
+    const favoriteButton = '<button type="button" class="catalog-course-card__favorite' + (favoriteActive ? " is-active" : "") + '" data-course-action="favorite" data-course-id="' + escapeHtml(String(course.id || "")) + '" aria-label="' + escapeHtml(favoriteLabel) + '" aria-pressed="' + (favoriteActive ? "true" : "false") + '">'
+      + renderActionIcon("favorite", favoriteActive)
+      + "</button>";
+    const starsHtml = ratingCount > 0
+      ? formatStars(ratingValue)
+      : '<i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>';
+
+    return '<article class="catalog-course-card hover-lift group flex h-full flex-col">'
+      + '<div class="catalog-course-card__media">'
+      + '<a href="' + escapeHtml(detailsUrl) + '" class="catalog-course-card__media-link">'
+      + '<img src="' + escapeHtml(String(course.image || "")) + '" alt="' + escapeHtml(title) + '" class="catalog-course-card__media-img" loading="lazy" decoding="async">'
+      + "</a>"
+      + (categoryLabel
+        ? '<span class="catalog-course-category-badge">' + escapeHtml(categoryLabel) + '</span>'
+        : "")
+      + (durationLabel
+        ? '<div class="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/55 via-slate-950/5 to-transparent px-3 pb-3 pt-8"><div class="flex justify-end"><span class="catalog-course-duration-badge"><i class="far fa-clock text-[10px]" aria-hidden="true"></i>' + escapeHtml(durationLabel) + "</span></div></div>"
+        : "")
+      + renderHoverOverlay(detailsUrl)
+      + "</div>"
+      + '<div class="catalog-course-card__body">'
+      + '<div class="mb-3 flex min-h-[5.45rem] items-start justify-between gap-3">'
+      + '<div class="min-w-0 flex-1">'
+      + '<div class="catalog-course-card__author">'
+      + '<span class="catalog-course-card__author-icon" aria-hidden="true"><i class="fas fa-chalkboard-teacher text-xs" aria-hidden="true"></i></span>'
+      + '<span class="catalog-course-card__author-name" title="' + escapeHtml(teacherLabel) + '">' + escapeHtml(teacherLabel) + "</span>"
+      + "</div>"
+      + '<h3 class="catalog-course-card__title"><a href="' + escapeHtml(detailsUrl) + '" class="catalog-course-card__title-link">' + escapeHtml(title) + "</a></h3>"
+      + "</div>"
+      + '<div class="flex shrink-0 flex-col items-end gap-2">'
+      + favoriteButton
+      + renderLevelBadge(course.level, course.levelLabel)
+      + "</div>"
+      + "</div>"
+      + '<div class="catalog-course-card__rating">'
+      + (ratingCount > 0
+        ? '<span class="catalog-course-card__rating-stars" aria-hidden="true">' + starsHtml + '</span><span class="catalog-course-card__rating-value">' + escapeHtml(ratingValue.toFixed(1)) + '</span><span>' + escapeHtml(String(ratingCount)) + ' Avis</span>'
+        : '<span class="catalog-course-card__rating-stars" aria-hidden="true">' + starsHtml + '</span>'
+          + '<span class="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-emerald-100 px-2 py-1 text-[0.72rem] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200">'
+          + '<i class="fas fa-sparkles" aria-hidden="true"></i><span>Nouveau</span></span>'
+          + (enrolledCount > 0
+            ? '<span class="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-emerald-50 px-2 py-1 text-[0.72rem] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200">'
+              + '<i class="fas fa-users text-[10px]" aria-hidden="true"></i><span>'
+              + escapeHtml(formatCountLabel(enrolledCount, "inscrit", "inscrits"))
+              + '</span></span>'
+            : ""))
+      + "</div>"
+      + '<div class="catalog-course-card__footer">'
+      + '<div class="catalog-course-card__pricing">'
+      + '<span class="catalog-course-card__price-label">Prix</span>'
+      + '<strong class="' + priceClass + '">' + escapeHtml(priceLabel) + "</strong>"
+      + (basePriceLabel && basePriceLabel !== priceLabel ? '<span class="catalog-course-card__base-price">' + escapeHtml(basePriceLabel) + "</span>" : "")
+      + '<span class="text-[0.78rem] font-medium text-slate-500 dark:text-slate-400">' + escapeHtml(priceHint || "Accès immédiat") + "</span>"
+      + ((hasPromo || hasCoupon)
+        ? '<div class="mt-1 flex flex-wrap items-center gap-1.5">'
+          + (hasPromo
+            ? '<span class="inline-flex items-center whitespace-nowrap rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-600 dark:bg-rose-500/15 dark:text-rose-200">' + escapeHtml(promoLabel) + '</span>'
+              + (course.promoEndAt
+                ? '<span class="inline-flex items-center whitespace-nowrap rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-sm dark:bg-red-500 dark:text-white" data-promo-countdown="' + escapeHtml(course.promoEndAt) + '">Fin dans --</span>'
+                : "")
+            : '<span class="inline-flex items-center whitespace-nowrap rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-200">Code promo dispo</span>')
+          + '</div>'
+        : "")
+      + "</div>"
+      + (priceRaw > 0
+        ? (inCart
+          ? '<a href="' + escapeHtml(checkoutUrl) + '" class="catalog-course-card__cta catalog-course-card__cta--' + ctaTone + '"><i class="fas ' + ctaIconClass + '" aria-hidden="true"></i><span>' + escapeHtml(ctaLabel) + '</span></a>'
+          : '<button type="button" class="catalog-course-card__cta catalog-course-card__cta--' + ctaTone + '" data-course-action="cart" data-course-id="' + escapeHtml(String(course.id || "")) + '" aria-label="' + escapeHtml(ctaLabel) + '" aria-pressed="false"><i class="fas ' + ctaIconClass + '" aria-hidden="true"></i><span>' + escapeHtml(ctaLabel) + '</span></button>')
+        : '<a href="' + escapeHtml(detailsUrl) + '" class="catalog-course-card__cta catalog-course-card__cta--' + ctaTone + '"><i class="fas ' + ctaIconClass + '" aria-hidden="true"></i><span>' + escapeHtml(ctaLabel) + '</span></a>')
       + "</div>"
       + "</div>"
       + "</article>";
@@ -621,6 +740,7 @@
   const filterContainer = document.getElementById("filterContainer");
   const filterPanel = document.getElementById("catalogFilterPanel");
   const filterToggleButtons = Array.from(document.querySelectorAll("[data-filter-toggle]"));
+  const filterCloseButtons = Array.from(document.querySelectorAll("[data-filter-close]"));
   const chipsRow = document.getElementById("activeFiltersChips");
   const quickFilterButtons = Array.from(document.querySelectorAll("[data-quick-filter]"));
   const categoryCheckboxes = Array.from(document.querySelectorAll(".category-filter"));
@@ -633,6 +753,7 @@
   const compactCatalogFilters = body ? body.dataset.compactFilters === "1" : false;
   const csrfToken = (document.querySelector('meta[name="csrf-token"]') || {}).content || "";
   const cartApiUrl = body ? (body.dataset.cartApi || "") : "";
+  const checkoutUrl = body ? (body.dataset.checkoutUrl || "/checkout") : "/checkout";
   const favoritesApiUrl = body ? (body.dataset.favoritesApi || "") : "";
   const loginUrl = body ? (body.dataset.loginUrl || "") : "";
   const isAuthenticated = body ? body.dataset.isAuthenticated === "1" : false;
@@ -746,6 +867,34 @@
     priceRadios.forEach(function (radio) {
       radio.checked = radio.value === priceFilter;
     });
+  }
+
+  function applyInitialFiltersFromUrl() {
+    const params = new URLSearchParams(window.location.search || "");
+    const initialQuery = String(params.get("q") || "").trim();
+    if (initialQuery !== "") {
+      searchInput.value = initialQuery;
+      searchQuery = initialQuery;
+    }
+
+    const rawCategoryValues = params.getAll("category");
+    rawCategoryValues.forEach(function (rawValue) {
+      String(rawValue || "")
+        .split(",")
+        .map(function (value) {
+          return value.trim();
+        })
+        .filter(function (value) {
+          return value !== "";
+        })
+        .forEach(function (value) {
+          activeCategories.add(value);
+        });
+    });
+
+    syncFilterInputs();
+    searchQuery = String(searchInput.value || "").trim();
+    syncSearchClearButton();
   }
 
   function applyQuickFilter(button) {
@@ -871,6 +1020,8 @@
     featuredDescription.textContent = String(course.description || "");
     featuredTeacher.textContent = String(course.teacher || "Formateur");
     featuredPrice.textContent = String(course.priceLabel || "Gratuit");
+    featuredPrice.classList.add("app-price");
+    featuredPrice.classList.toggle("app-price--promo", !!course.promoActive);
 
     if (course.basePriceLabel) {
       featuredBasePrice.textContent = String(course.basePriceLabel);
@@ -891,12 +1042,16 @@
 
     const badgeLabel = resolveBadgeLabel(course);
     featuredProofs.innerHTML = (badgeLabel
-      ? '<span class="rounded-full bg-white/10 px-2.5 py-1 backdrop-blur-sm">' + escapeHtml(badgeLabel) + "</span>"
+      ? '<span class="rounded-full px-2.5 py-1 backdrop-blur-sm' + (badgeLabel === "Nouveau" ? ' bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200' : ' bg-white/10') + '">' + escapeHtml(badgeLabel) + "</span>"
       : "")
       + proofs.map(function (proof) {
-        return '<span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-2.5 py-1 backdrop-blur-sm"><i class="fas '
+        const isDurationProof = proof && proof.tone === "duration";
+        return '<span class="inline-flex items-center gap-2 rounded-full px-2.5 py-1 backdrop-blur-sm'
+          + (isDurationProof ? ' bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-200' : ' bg-white/10')
+          + '"><i class="fas '
           + escapeHtml(proof.icon || "fa-circle")
-          + ' text-blue-200"></i>'
+          + (isDurationProof ? ' text-red-600 dark:text-red-200' : ' text-blue-200')
+          + '"></i>'
           + escapeHtml(proof.label || "")
           + "</span>";
       }).join("");
@@ -937,6 +1092,11 @@
     if (body) {
       body.classList.toggle("catalog-filter-open", !!isOpen && window.innerWidth < 1024);
     }
+  }
+
+  function closeMobileFilters() {
+    setFilterContainerState(false);
+    setFilterToggleState(false);
   }
 
   function syncRatingStars() {
@@ -1167,7 +1327,7 @@
       return;
     }
 
-    grid.innerHTML = visibleCourses.map(renderCourseCard).join("");
+    grid.innerHTML = visibleCourses.map(renderCompactCourseCard).join("");
     resultCount.innerHTML = 'Affichage de <span class="font-semibold text-gray-900 dark:text-white">' + visibleCourses.length + "</span> cours sur " + totalItems;
     renderPagination(totalItems);
     refreshPromoCountdowns();
@@ -1304,8 +1464,8 @@
           throw new Error("cart_request_failed");
         }
         updateCourseState(courseId, { isInCart: action === "add" ? 1 : 0 });
-        updateVisibleCourseButtons(courseId);
         updateCartIndicators(Object.prototype.hasOwnProperty.call(result.data, "count") ? result.data.count : null);
+        renderCourses();
         showCatalogToast(action === "add" ? "Formation ajoutée au panier." : "Formation retirée du panier.", "success");
       })
       .catch(function () {
@@ -1572,13 +1732,18 @@
     });
   });
 
+  filterCloseButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      closeMobileFilters();
+    });
+  });
+
   if (filterPanel instanceof HTMLElement) {
     filterPanel.addEventListener("click", function (event) {
       if (window.innerWidth >= 1024 || event.target !== filterPanel) {
         return;
       }
-      setFilterContainerState(false);
-      setFilterToggleState(false);
+      closeMobileFilters();
     });
   }
 
@@ -1648,6 +1813,7 @@
   syncRatingStars();
   syncMobileFilters();
   syncScrollTopButton();
+  applyInitialFiltersFromUrl();
   if (activeObjectiveKey !== "") {
     setActiveShortcutState(activeObjectiveKey);
     renderFeaturedRecommendation(

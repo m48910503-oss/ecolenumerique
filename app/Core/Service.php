@@ -123,6 +123,86 @@ abstract class Service
         return false;
     }
 
+    /**
+     * Validate a course cover upload before it is stored.
+     *
+     * @param array<string,mixed> $file
+     * @param array<int,string> $errors
+     * @return array{mime:string,extension:string,width:int,height:int}|null
+     */
+    protected function validateCourseCoverUpload(array $file, array &$errors): ?array
+    {
+        $tmpName = (string) ($file['tmp_name'] ?? '');
+        if ($tmpName === '' || !is_file($tmpName)) {
+            $errors[] = 'Fichier de miniature invalide.';
+            return null;
+        }
+
+        $maxBytes = 5 * 1024 * 1024;
+        $size = (int) ($file['size'] ?? 0);
+        if ($size > $maxBytes) {
+            $errors[] = 'La miniature depasse 5 Mo.';
+            return null;
+        }
+
+        $mime = $this->detectUploadMimeType($tmpName, (string) ($file['type'] ?? ''));
+        $allowedMimes = [
+            'image/jpeg' => 'jpg',
+            'image/jpg' => 'jpg',
+            'image/pjpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+        ];
+        if (!isset($allowedMimes[$mime])) {
+            $errors[] = 'La miniature doit etre un JPG, PNG ou WebP.';
+            return null;
+        }
+
+        $dimensions = @getimagesize($tmpName);
+        $width = is_array($dimensions) ? (int) ($dimensions[0] ?? 0) : 0;
+        $height = is_array($dimensions) ? (int) ($dimensions[1] ?? 0) : 0;
+        if ($width <= 0 || $height <= 0) {
+            $errors[] = 'Dimensions de miniature invalides.';
+            return null;
+        }
+        if ($width < 1200 || $height < 750) {
+            $errors[] = 'La miniature doit mesurer au moins 1200 x 750 px.';
+            return null;
+        }
+        if (($width * 10) !== ($height * 16)) {
+            $errors[] = 'La miniature doit respecter le format paysage 16:10.';
+            return null;
+        }
+
+        return [
+            'mime' => $mime,
+            'extension' => $allowedMimes[$mime],
+            'width' => $width,
+            'height' => $height,
+        ];
+    }
+
+    protected function detectUploadMimeType(string $tmpPath, string $fallbackMime): string
+    {
+        if (function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            if ($finfo) {
+                $detected = finfo_file($finfo, $tmpPath);
+                finfo_close($finfo);
+                if (is_string($detected) && $detected !== '') {
+                    return strtolower(trim($detected));
+                }
+            }
+        }
+
+        $fallbackMime = strtolower(trim($fallbackMime));
+        if ($fallbackMime !== '') {
+            return $fallbackMime;
+        }
+
+        return 'application/octet-stream';
+    }
+
     protected function pdo(): PDO
     {
         return $this->resolvePdo();

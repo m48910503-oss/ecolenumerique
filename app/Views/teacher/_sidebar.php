@@ -86,7 +86,7 @@ if ($teacherDashboardShell !== false) {
     }
     ?>
     <aside id="teacher-dashboard-sidebar" class="teacher-dashboard-sidebar js-sidebar fixed inset-y-0 -left-full z-40 flex h-screen w-72 flex-col overflow-y-auto border-r border-gray-200 bg-white shadow-soft transition-[left] duration-200 dark:border-gray-700 dark:bg-gray-800 md:left-0">
-    <div class="p-6 flex items-center gap-3 border-b border-gray-100 dark:border-gray-700">
+    <div class="flex items-center gap-2 border-b border-gray-100 px-4 py-4 dark:border-gray-700 sm:gap-3 sm:px-5">
         <?php if (!empty($siteLogoUrl)): ?>
             <img src="<?php echo e((string) $siteLogoUrl); ?>" alt="Logo École Numérique" class="h-9 w-9 shrink-0 rounded-xl object-cover shadow-md">
         <?php else: ?>
@@ -94,13 +94,13 @@ if ($teacherDashboardShell !== false) {
                 <i class="fas fa-chalkboard-teacher"></i>
             </span>
         <?php endif; ?>
-        <span class="whitespace-nowrap text-xl font-bold text-gray-900 dark:text-white">École <span class="text-primary-600 dark:text-primary-400">Numérique</span></span>
-        <button type="button" class="md:hidden ml-auto rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" data-close-sidebar aria-label="Fermer le menu">
-            <span aria-hidden="true">&times;</span>
+        <span class="whitespace-nowrap text-xl font-bold text-gray-900 dark:text-white"><?php echo site_brand_name_html('École Numérique'); ?></span>
+        <button type="button" class="app-shell-sidebar__close ml-auto md:hidden" data-close-sidebar aria-label="Fermer le menu">
+            <span class="app-shell-sidebar__close-mark" aria-hidden="true">&#x2715;</span>
         </button>
     </div>
 
-        <div class="p-5 border-b border-gray-100 dark:border-gray-700">
+        <div class="border-b border-gray-100 px-4 py-4 dark:border-gray-700 sm:px-5">
             <div class="flex items-center gap-3">
                 <?php if ($teacherAvatarUrl !== ''): ?>
                     <img
@@ -129,7 +129,7 @@ if ($teacherDashboardShell !== false) {
             </div>
         </div>
 
-        <nav class="flex-1 px-4 py-5 space-y-5 overflow-y-auto">
+        <nav class="flex-1 min-h-0 space-y-5 overflow-y-auto overscroll-contain px-4 py-5 sm:px-5">
             <?php if ($teacherDashboardPrimaryItems !== []): ?>
                 <div class="space-y-2">
                     <p class="px-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-gray-400 dark:text-gray-500">Action principale</p>
@@ -141,9 +141,17 @@ if ($teacherDashboardShell !== false) {
                             $itemIcon = (string) ($item['icon'] ?? 'circle');
                             $itemActive = $isTeacherNavActive($itemKey);
                         ?>
-                        <a href="<?php echo e($itemUrl); ?>" class="flex items-center gap-3 px-4 py-3 rounded-xl <?php echo $itemActive ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'; ?> transition" aria-label="<?php echo e($itemLabel); ?>" title="<?php echo e($itemLabel); ?>" <?php echo $itemActive ? 'aria-current="page"' : ''; ?>>
-                            <i class="<?php echo e($teacherDashboardIconClass($itemIcon)); ?> w-5" aria-hidden="true"></i>
-                            <span class="truncate"><?php echo e($itemLabel); ?></span>
+                        <a
+                            href="<?php echo e($itemUrl); ?>"
+                            class="flex items-center gap-3 rounded-2xl border border-primary-100 bg-primary-50/80 px-4 py-3 text-primary-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] transition hover:border-primary-200 hover:bg-primary-100/80 dark:border-primary-500/20 dark:bg-primary-500/10 dark:text-primary-200 dark:hover:border-primary-400/30 dark:hover:bg-primary-500/15 <?php echo $itemActive ? 'ring-2 ring-primary-500/15' : ''; ?>"
+                            aria-label="<?php echo e($itemLabel); ?>"
+                            title="<?php echo e($itemLabel); ?>"
+                            <?php echo $itemActive ? 'aria-current="page"' : ''; ?>
+                        >
+                            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white shadow-sm dark:bg-primary-500 dark:text-white">
+                                <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg($itemIcon); ?></span>
+                            </span>
+                            <span class="min-w-0 flex-1 truncate text-sm font-semibold"><?php echo e($itemLabel); ?></span>
                         </a>
                     <?php endforeach; ?>
                 </div>
@@ -196,14 +204,14 @@ if ($teacherDashboardShell !== false) {
             <?php endforeach; ?>
         </nav>
 
-        <div class="p-4 border-t border-gray-100 dark:border-gray-700">
-            <button id="theme-toggle-sidebar" type="button" data-theme-toggle="1" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition" aria-label="Basculer le thème" aria-pressed="false">
-                <i class="fas fa-moon dark:hidden w-5"></i>
-                <i class="fas fa-sun hidden dark:inline w-5"></i>
+        <div class="border-t border-gray-100 px-4 py-4 dark:border-gray-700 sm:px-5">
+            <button id="theme-toggle-sidebar" type="button" data-theme-toggle="1" class="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-gray-600 transition hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700" aria-label="Basculer le thème" aria-pressed="false">
+                <i class="fas fa-moon w-5 dark:hidden" aria-hidden="true"></i>
+                <i class="fas fa-sun hidden w-5 dark:inline" aria-hidden="true"></i>
                 <span>Mode sombre</span>
             </button>
-            <a href="<?php echo e(site_url('logout')); ?>" class="flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition mt-1">
-                <i class="fas fa-sign-out-alt w-5"></i>
+            <a href="<?php echo e(site_url('logout')); ?>" class="mt-1 flex items-center gap-3 rounded-xl px-4 py-3 text-red-500 transition hover:bg-red-50 dark:hover:bg-red-900/20">
+                <i class="fas fa-sign-out-alt w-5" aria-hidden="true"></i>
                 <span>Déconnexion</span>
             </a>
         </div>
@@ -260,8 +268,8 @@ $teacherMenuGroups[] = [
             <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg('panel-left-close'); ?></span>
             <span class="sr-only">R&eacute;duire la barre lat&eacute;rale</span>
         </button>
-        <button type="button" class="app-shell-burger ml-auto md:hidden" data-close-sidebar aria-label="Fermer le menu">
-            &times;
+        <button type="button" class="app-shell-sidebar__close ml-auto md:hidden" data-close-sidebar aria-label="Fermer le menu">
+            <span class="app-shell-sidebar__close-mark" aria-hidden="true">&#x2715;</span>
         </button>
     </div>
 

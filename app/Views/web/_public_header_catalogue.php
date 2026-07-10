@@ -62,7 +62,7 @@ $publicHeaderMobileTeacherClass = $isTeacherPublicPage
         <?php endif; ?>
         <span class="flex min-w-0 flex-col leading-tight">
           <span class="truncate text-base font-bold tracking-tight text-gray-900 dark:text-white sm:text-xl">
-            <?php echo e($platformName); ?>
+            <?php echo site_brand_name_html($platformName); ?>
           </span>
           <span class="truncate text-[11px] font-medium text-gray-500 dark:text-gray-400">
             <?php echo e($platformSubtitle); ?>
@@ -84,8 +84,8 @@ $publicHeaderMobileTeacherClass = $isTeacherPublicPage
           data-web-theme-toggle
           class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:border-blue-300 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-blue-400 dark:hover:text-blue-300 sm:h-11 sm:w-11"
         >
-          <i class="fas fa-moon text-base" data-theme-icon-dark aria-hidden="true"></i>
-          <i class="fas fa-sun hidden text-base" data-theme-icon-light aria-hidden="true"></i>
+          <span class="inline-flex h-5 w-5 items-center justify-center" data-theme-icon-dark aria-hidden="true"><?php echo dashboard_icon_svg('theme-moon', 'class="h-5 w-5"'); ?></span>
+          <span class="inline-flex h-5 w-5 items-center justify-center" data-theme-icon-light aria-hidden="true" hidden><?php echo dashboard_icon_svg('theme-sun', 'class="h-5 w-5"'); ?></span>
           <span class="sr-only">Changer le thème</span>
         </button>
         <?php if ($isLoggedIn): ?>
@@ -162,7 +162,7 @@ $publicHeaderMobileTeacherClass = $isTeacherPublicPage
               <i class="fas fa-graduation-cap"></i>
             </span>
           <?php endif; ?>
-          <h2 class="public-mobile-panel__title"><?php echo e($platformName); ?></h2>
+          <h2 class="public-mobile-panel__title"><?php echo site_brand_name_html($platformName); ?></h2>
         </div>
       </div>
       <button type="button" class="public-mobile-panel__close" data-public-nav-close aria-label="Fermer le menu">
