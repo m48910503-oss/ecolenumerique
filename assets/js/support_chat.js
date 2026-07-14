@@ -744,11 +744,11 @@
     topRow.className = 'support-conv-top-row flex items-center justify-between gap-2';
 
     const title = document.createElement('div');
-    title.className = 'support-conv-title text-sm font-semibold text-slate-800 truncate';
+    title.className = 'support-conv-title text-sm font-semibold truncate';
     title.textContent = conv.subject || 'Demande support';
 
     const time = document.createElement('div');
-    time.className = 'support-conv-time text-[10px] text-slate-400';
+    time.className = 'support-conv-time text-[10px]';
     time.textContent = formatConversationTime(conv.last_message_at);
 
     topRow.appendChild(title);
@@ -758,7 +758,7 @@
     previewRow.className = 'support-conv-preview-row mt-1 flex items-center justify-between gap-2';
 
     const preview = document.createElement('div');
-    preview.className = 'support-conv-preview text-xs text-slate-500 truncate';
+    preview.className = 'support-conv-preview text-xs truncate';
     preview.textContent = conv.last_message_body || '...';
 
     const unread =
@@ -783,7 +783,7 @@
     applyStatusPill(status, conv.status || '', 'Ouvert');
 
     const owner = document.createElement('span');
-    owner.className = 'support-conv-owner text-slate-400';
+    owner.className = 'support-conv-owner';
     owner.textContent = displayName;
 
     statusRow.appendChild(status);
