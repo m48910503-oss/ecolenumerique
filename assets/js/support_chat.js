@@ -588,11 +588,11 @@
 
     paginationEl.innerHTML =
       '<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">'
-        + '<p class="text-sm text-gray-500 dark:text-gray-400">Affichage ' + startItem + ' Ã  ' + endItem + ' sur ' + totalItems + ' ticket(s)</p>'
+        + '<p class="text-sm text-gray-500 dark:text-gray-400">Affichage ' + startItem + ' à ' + endItem + ' sur ' + totalItems + ' ticket(s)</p>'
         + '<div class="flex flex-wrap items-center gap-2">'
           + '<button type="button" data-support-conv-page-action="prev" class="inline-flex h-10 items-center justify-center rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-600 transition hover:border-primary-300 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-45 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-primary-500/60 dark:hover:text-primary-200"'
           + (currentPage <= 1 ? ' disabled' : '')
-          + '>PrÃ©cÃ©dent</button>'
+          + '>Précédent</button>'
           + pageButtons.join('')
           + '<button type="button" data-support-conv-page-action="next" class="inline-flex h-10 items-center justify-center rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-600 transition hover:border-primary-300 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-45 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-primary-500/60 dark:hover:text-primary-200"'
           + (currentPage >= totalPages ? ' disabled' : '')

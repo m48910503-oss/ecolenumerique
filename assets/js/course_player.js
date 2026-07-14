@@ -10,7 +10,7 @@
   const REQUIRED_RATIO = 0.85;
   const AUTO_MARK = true;
   const LOCK_MESSAGE =
-    'Regardez au moins 85 % de la vidÃ©o avant de passer Ã  la suite ou de la marquer comme vue.';
+    'Regardez au moins 85 % de la vidéo avant de passer à la suite ou de la marquer comme vue.';
   const PLAY_FALLBACK_DELAY = 1200;
   const YT_STATE_LABELS = {
     '-1': 'UNSTARTED',
@@ -271,12 +271,12 @@
     const title = $('#player-title');
     const btnMark = $('#btn-mark');
     const markLabel = btnMark ? btnMark.querySelector('[data-mark-label]') : null;
-    const lessonTitle = item.dataset.lessonTitle || 'LeÃ§on';
+    const lessonTitle = item.dataset.lessonTitle || 'Leçon';
     const chapterPos = item.dataset.chapterPos || '';
     const lessonPos = item.dataset.lessonPos || '';
     const parts = [];
     if (chapterPos) parts.push('Chapitre ' + chapterPos);
-    if (lessonPos) parts.push('LeÃ§on ' + lessonPos);
+    if (lessonPos) parts.push('Leçon ' + lessonPos);
     const label = (parts.length ? parts.join(' - ') + ' : ' : '') + lessonTitle;
 
     if (meta) meta.textContent = label;
@@ -1064,7 +1064,7 @@
         if (target.requestFullscreen) target.requestFullscreen();
         else if (target.webkitRequestFullscreen) target.webkitRequestFullscreen();
         else if (target.msRequestFullscreen) target.msRequestFullscreen();
-        else notify('Plein Ã©cran non disponible sur cet appareil.', 'warning');
+        else notify('Plein écran non disponible sur cet appareil.', 'warning');
       });
     }
 

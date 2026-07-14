@@ -555,7 +555,7 @@
       }
       if (state.category !== "" && categorySelect instanceof HTMLSelectElement) {
         const option = categorySelect.selectedOptions[0];
-        active.push({ key: "category", label: `CatÃ©gorie : ${option ? option.textContent.replace(/\s+\(\d+\)$/, "") : state.category}` });
+        active.push({ key: "category", label: `Catégorie : ${option ? option.textContent.replace(/\s+\(\d+\)$/, "") : state.category}` });
       }
       if (state.level !== "" && levelSelect instanceof HTMLSelectElement) {
         const option = levelSelect.selectedOptions[0];
@@ -566,11 +566,11 @@
       }
       if (state.duration !== "") {
         const durationLabelMap = {
-          short: "DurÃ©e : moins de 3 h",
-          medium: "DurÃ©e : entre 3 h et 8 h",
-          long: "DurÃ©e : plus de 8 h",
+          short: "Durée : moins de 3 h",
+          medium: "Durée : entre 3 h et 8 h",
+          long: "Durée : plus de 8 h",
         };
-        active.push({ key: "duration", label: durationLabelMap[state.duration] || `DurÃ©e : ${state.duration}` });
+        active.push({ key: "duration", label: durationLabelMap[state.duration] || `Durée : ${state.duration}` });
       }
 
       return active;
