@@ -911,9 +911,167 @@ final class View
         }
 
         $html = self::repairUiText($html);
+        $html = self::emphasizeSiteBrandName($html);
         $html = self::repairBrokenInlinePercentStyles($html);
 
         return $html;
+    }
+
+    private static function emphasizeSiteBrandName(string $html): string
+    {
+        $targets = self::siteBrandNameTargets();
+        if ($targets === []) {
+            return $html;
+        }
+
+        $parts = preg_split('/(<[^>]*>)/', $html, -1, PREG_SPLIT_DELIM_CAPTURE);
+        if (!is_array($parts)) {
+            return $html;
+        }
+
+        $skipTags = array_fill_keys([
+            'script',
+            'style',
+            'title',
+            'textarea',
+            'select',
+            'option',
+            'pre',
+            'code',
+            'kbd',
+            'samp',
+            'svg',
+            'math',
+        ], true);
+        $boldTags = array_fill_keys(['strong', 'b'], true);
+        $voidTags = array_fill_keys([
+            'area',
+            'base',
+            'br',
+            'col',
+            'embed',
+            'hr',
+            'img',
+            'input',
+            'link',
+            'meta',
+            'param',
+            'source',
+            'track',
+            'wbr',
+        ], true);
+
+        $skipDepth = 0;
+        $boldDepth = 0;
+        $result = '';
+
+        foreach ($parts as $part) {
+            if ($part === '') {
+                continue;
+            }
+
+            if ($part[0] === '<') {
+                if (preg_match('/^<\s*\/\s*([a-zA-Z][\w:-]*)/', $part, $matches) === 1) {
+                    $tagName = strtolower((string) $matches[1]);
+                    if (isset($skipTags[$tagName]) && $skipDepth > 0) {
+                        $skipDepth--;
+                    }
+                    if (isset($boldTags[$tagName]) && $boldDepth > 0) {
+                        $boldDepth--;
+                    }
+                } elseif (preg_match('/^<\s*([a-zA-Z][\w:-]*)\b/', $part, $matches) === 1) {
+                    $tagName = strtolower((string) $matches[1]);
+                    $isSelfClosing = isset($voidTags[$tagName]) || str_ends_with(rtrim($part), '/>');
+                    if (!$isSelfClosing) {
+                        if (isset($skipTags[$tagName])) {
+                            $skipDepth++;
+                        }
+                        if (isset($boldTags[$tagName])) {
+                            $boldDepth++;
+                        }
+                    }
+                }
+
+                $result .= $part;
+                continue;
+            }
+
+            $result .= ($skipDepth > 0 || $boldDepth > 0)
+                ? $part
+                : self::emphasizeSiteBrandNameText($part, $targets);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function siteBrandNameTargets(): array
+    {
+        static $targets = null;
+        if (is_array($targets)) {
+            return $targets;
+        }
+
+        $names = [];
+        if (\function_exists('platform_setting_get')) {
+            try {
+                $names[] = \platform_setting_get('site_name', '');
+            } catch (\Throwable $e) {
+                // Rendering must not depend on settings storage being reachable.
+            }
+        }
+        if (\defined('APP_FROM_NAME')) {
+            $names[] = (string) APP_FROM_NAME;
+        }
+        $names[] = 'École Numérique';
+        $names[] = 'Ecole Numérique';
+        $names[] = 'Ecole Numerique';
+        $names[] = 'ÉcoleNumérique';
+        $names[] = 'EcoleNumérique';
+        $names[] = 'EcoleNumerique';
+
+        $targets = [];
+        foreach ($names as $name) {
+            $name = trim((string) $name);
+            if ($name === '') {
+                continue;
+            }
+
+            foreach ([htmlspecialchars($name, ENT_QUOTES, 'UTF-8'), htmlentities($name, ENT_QUOTES, 'UTF-8')] as $target) {
+                if ($target !== '') {
+                    $targets[$target] = true;
+                }
+            }
+        }
+
+        $targets = array_keys($targets);
+        usort($targets, static fn(string $a, string $b): int => strlen($b) <=> strlen($a));
+
+        return $targets;
+    }
+
+    /**
+     * @param list<string> $targets
+     */
+    private static function emphasizeSiteBrandNameText(string $text, array $targets): string
+    {
+        if ($text === '' || trim($text) === '') {
+            return $text;
+        }
+
+        $pattern = '/(' . implode('|', array_map(
+            static fn(string $target): string => preg_quote($target, '/'),
+            $targets
+        )) . ')/';
+        $result = preg_replace_callback(
+            $pattern,
+            static fn(array $matches): string => '<strong class="site-brand-name">' . (string) $matches[0] . '</strong>',
+            $text
+        );
+
+        return is_string($result) ? $result : $text;
     }
 
     private static function repairMojibake(string $html): string

@@ -39,8 +39,8 @@ $assetUrl = static function (string $relativePath): string {
 
     <div class="fixed bottom-5 right-5 z-50 flex">
         <button id="theme-toggle" data-theme-toggle class="bg-white dark:bg-gray-800 shadow-lg rounded-full w-11 h-11 flex items-center justify-center text-gray-700 dark:text-yellow-300 hover:scale-105 transition" type="button" aria-label="Changer le thème" aria-pressed="false">
-            <i data-theme-icon-light class="fas fa-moon text-xl"></i>
-            <i data-theme-icon-dark class="fas fa-sun text-xl hidden"></i>
+            <i class="fas fa-moon text-xl" data-theme-icon-dark aria-hidden="true"></i>
+            <i class="fas fa-sun hidden text-xl" data-theme-icon-light aria-hidden="true"></i>
         </button>
     </div>
 

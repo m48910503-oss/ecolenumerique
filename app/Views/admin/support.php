@@ -66,7 +66,7 @@ $adminPageScripts = ['support_chat.js'];
                 data-initial-conv="<?php echo e((string) $initialConv); ?>"
             >
                 <section class="grid gap-6 xl:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]">
-                    <aside class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border border-gray-100 dark:border-gray-700">
+                    <aside class="support-conv-panel bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-card border border-gray-100 dark:border-gray-700">
                         <div class="flex items-start justify-between gap-3">
                             <div>
                                 <h3 class="text-lg font-bold text-gray-900 dark:text-white">
@@ -81,9 +81,9 @@ $adminPageScripts = ['support_chat.js'];
                             <label for="support-search" class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                                 <i class="fas fa-search mr-1"></i>Recherche
                             </label>
-                            <div class="relative">
+                            <div class="relative support-search-field">
                                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                                <input id="support-search" type="text" value="<?php echo e($supportSearchQuery); ?>" placeholder="Sujet, nom ou mot-clé" class="support-input w-full rounded-xl border bg-gray-50 py-3 pl-10 pr-3 text-sm dark:bg-gray-900/60">
+                                <input id="support-search" type="text" value="<?php echo e($supportSearchQuery); ?>" placeholder="Sujet, nom ou mot-clé" class="support-search-input support-input w-full rounded-xl border bg-gray-50 py-3 pl-11 pr-3 text-sm dark:bg-gray-900/60">
                             </div>
                         </div>
 
@@ -113,12 +113,17 @@ $adminPageScripts = ['support_chat.js'];
                         </div>
 
                         <div id="support-conv-list" class="support-admin-conversation-list mt-5 space-y-2"></div>
+                        <div id="support-conv-pagination" class="mt-4 hidden"></div>
                     </aside>
 
-                    <section class="bg-white dark:bg-gray-800 rounded-2xl shadow-card border border-gray-100 dark:border-gray-700 overflow-hidden flex min-h-[42rem] flex-col">
+                    <section class="support-thread-panel bg-white dark:bg-gray-800 rounded-2xl shadow-card border border-gray-100 dark:border-gray-700 overflow-hidden flex min-h-[42rem] flex-col">
                         <div class="border-b border-gray-100 p-5 dark:border-gray-700">
                             <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                                <div class="flex min-w-0 items-center gap-3">
+                                <div class="flex min-w-0 flex-wrap items-center gap-3">
+                                    <a id="support-mobile-back" href="<?php echo e(site_url('admin/support')); ?>" class="support-mobile-back-btn support-chip-btn hidden items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold md:hidden">
+                                        <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                                        Historique
+                                    </a>
                                     <div id="support-active-avatar" class="support-avatar h-12 w-12 rounded-full text-sm">SP</div>
                                     <div class="min-w-0">
                                         <h3 id="support-active-title" class="truncate text-lg font-bold text-gray-900 dark:text-white">Conversation support</h3>
@@ -127,7 +132,7 @@ $adminPageScripts = ['support_chat.js'];
                                     </div>
                                 </div>
 
-                                <div class="flex flex-wrap gap-2">
+                                <div class="support-thread-actions flex flex-wrap gap-2">
                                     <button id="support-assign-btn" type="button" class="support-chip-btn inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold">
                                         <i class="fas fa-user-check" aria-hidden="true"></i>
                                         Prendre
@@ -144,7 +149,7 @@ $adminPageScripts = ['support_chat.js'];
                             </div>
                         </div>
 
-                        <div class="grid gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
+                        <div class="support-thread-grid grid gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
                             <div class="min-w-0">
                                 <div id="support-empty" class="support-empty-card rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center dark:border-gray-700 dark:bg-gray-900/40">
                                     <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
@@ -171,11 +176,11 @@ $adminPageScripts = ['support_chat.js'];
                                 <h4 id="support-detail-title" class="mt-4 text-base font-bold text-gray-900 dark:text-white">Aucune conversation active</h4>
                                 <p id="support-detail-preview" class="mt-2 text-sm text-gray-500 dark:text-gray-400">Le résumé du ticket apparaît ici.</p>
                                 <div class="mt-5 space-y-3 text-sm">
-                                    <div class="flex items-center justify-between gap-3">
+                                    <div class="support-thread-summary-row flex items-center justify-between gap-3">
                                         <span class="text-gray-500 dark:text-gray-400"><i class="fas fa-user mr-2"></i>Utilisateur</span>
                                         <span id="support-detail-owner" class="min-w-0 truncate font-semibold text-gray-900 dark:text-white">Support</span>
                                     </div>
-                                    <div class="flex items-center justify-between gap-3">
+                                    <div class="support-thread-summary-row flex items-center justify-between gap-3">
                                         <span class="text-gray-500 dark:text-gray-400"><i class="fas fa-clock mr-2"></i>Activité</span>
                                         <span id="support-detail-updated" class="font-semibold text-gray-900 dark:text-white">Aucune</span>
                                     </div>
@@ -183,7 +188,7 @@ $adminPageScripts = ['support_chat.js'];
                             </aside>
                         </div>
 
-                        <div class="mt-auto border-t border-gray-100 p-5 dark:border-gray-700">
+                        <div class="support-thread-composer mt-auto border-t border-gray-100 p-5 dark:border-gray-700">
                             <div id="support-status" class="support-status text-sm"></div>
                             <form id="support-message-form" class="mt-3 hidden space-y-3" method="post" action="<?php echo e(site_url('api/support_messages')); ?>" enctype="multipart/form-data">
                                 <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
@@ -194,7 +199,7 @@ $adminPageScripts = ['support_chat.js'];
                                 </label>
                                 <textarea id="support-reply" name="body" rows="3" placeholder="Répondez avec des informations précises..." class="support-input w-full resize-none rounded-xl border bg-gray-50 px-4 py-3 text-sm dark:bg-gray-900/60"></textarea>
 
-                                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div class="support-thread-composer-actions flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <label class="support-file-btn inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-bold">
                                         <i class="fas fa-paperclip" aria-hidden="true"></i>
                                         Joindre un fichier

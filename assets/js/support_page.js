@@ -10,6 +10,7 @@
   }
 
   const basePath = body.dataset.basePath || '';
+  const supportSpace = body.dataset.supportSpace || '';
   const currentUserId = Number.parseInt(body.dataset.userId || '0', 10) || 0;
   const initialConv = Number.parseInt(body.dataset.initialConv || '0', 10) || 0;
   const csrfToken =
@@ -658,10 +659,15 @@
       return;
     }
 
+    const isGuestSpace = supportSpace === 'guest';
+    const placeholderText = isGuestSpace
+      ? 'Ecrivez votre premiere demande ici. Ajoutez votre nom et votre email pour faciliter le suivi.'
+      : 'Selectionnez un ticket ou envoyez un premier message pour ouvrir une nouvelle conversation.';
+
     chatMessagesEl.innerHTML = `
       <div class="flex justify-start">
         <div class="max-w-[80%] px-4 py-2 text-sm chat-bubble-received">
-          Sélectionnez un ticket ou envoyez un premier message pour ouvrir une nouvelle conversation.
+          ${escapeHtml(placeholderText)}
         </div>
       </div>
     `;
@@ -676,7 +682,10 @@
 
     if (chatMetaEl instanceof HTMLElement) {
       if (!activeConversation) {
-        chatMetaEl.textContent = 'Sélectionnez un ticket ou démarrez un nouveau message.';
+        chatMetaEl.textContent =
+          supportSpace === 'guest'
+            ? 'Chat visiteur. Ecrivez votre message pour ouvrir la conversation.'
+            : 'Sélectionnez un ticket ou démarrez un nouveau message.';
       } else {
         const meta = getTicketMeta(activeConversation);
         chatMetaEl.textContent = `${displaySubject(activeConversation)} · ${meta.statusLabel}`;
@@ -686,6 +695,8 @@
     if (chatInput instanceof HTMLInputElement) {
       chatInput.placeholder = activeConversation
         ? 'Répondre à ce ticket...'
+        : supportSpace === 'guest'
+        ? 'Décrivez votre besoin...'
         : 'Écrivez votre message...';
     }
 
@@ -730,7 +741,10 @@
 
   function renderMessage(message) {
     const wrapper = document.createElement('div');
-    const isSelf = Number(message.sender_id || 0) === currentUserId;
+    const isSelf =
+      typeof message.is_self === 'boolean'
+        ? message.is_self
+        : Number(message.sender_id || 0) === currentUserId;
     wrapper.className = `flex ${isSelf ? 'justify-end' : 'justify-start'}`;
 
     const bubble = document.createElement('div');

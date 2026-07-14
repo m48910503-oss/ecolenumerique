@@ -2,8 +2,8 @@
 $publicPage = '';
 $publicBrandSubtitle = 'Des formations numeriques claires, utiles et accessibles.';
 $publicHeaderMetaLabel = $isLoggedIn ? 'Compte connecte' : 'Deja membre ?';
-$publicHeaderSecondaryLabel = $isLoggedIn ? 'Mon profil' : 'Se connecter';
-$publicHeaderSecondaryUrl = $isLoggedIn ? site_url('profile') : site_url('login');
+$publicHeaderSecondaryLabel = $isLoggedIn ? 'Tableau de bord' : 'Se connecter';
+$publicHeaderSecondaryUrl = $isLoggedIn ? (string) ($dashboardUrl ?? site_url('student/dashboard')) : site_url('login');
 $publicHeaderPrimaryLabel = $isLoggedIn ? 'Acceder a mon espace' : 'Creer un compte';
 $publicHeaderPrimaryUrl = $isLoggedIn ? (string) ($dashboardUrl ?? site_url('student/dashboard')) : site_url('register');
 $publicFooterNote = "Si un lien ne fonctionne plus, revenez au catalogue ou a l'accueil pour retrouver un parcours disponible.";

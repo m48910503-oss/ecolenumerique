@@ -7,6 +7,7 @@ use App\Core\Service;
 
 use App\Models\ApiSupportModel;
 use App\Services\Admin\AdminAccessService;
+use App\Services\Support\SupportGuestContextService;
 use App\Services\Support\SupportAccessService;
 use App\Services\Support\SupportStorageService;
 
@@ -36,29 +37,32 @@ final class SupportService extends Service
 
     private ApiSupportModel $model;
     private SupportAccessService $access;
+    private SupportGuestContextService $guestContext;
     private SupportStorageService $storage;
     private bool $debug;
 
     public function __construct(
         ApiSupportModel $model,
         ?SupportAccessService $access = null,
+        ?SupportGuestContextService $guestContext = null,
         ?SupportStorageService $storage = null
     )
     {
         $this->model = $model;
         $this->access = $access ?? new SupportAccessService();
+        $this->guestContext = $guestContext ?? new SupportGuestContextService();
         $this->storage = $storage ?? new SupportStorageService();
         $baseUrl = defined('APP_BASE_URL') ? (string) APP_BASE_URL : '';
         $this->debug = strpos($baseUrl, 'localhost') !== false
             || strpos($baseUrl, '127.0.0.1') !== false;
     }
 
-    public function handleConversations(array $user, string $method, array $query, array $data, array $files): array
+    public function handleConversations(?array $user, array $guestContext, string $method, array $query, array $data, array $files): array
     {
         $isStaff = $this->resolveStaffAccess($user);
 
         if ($method === 'GET') {
-            return $this->listConversations($user, $isStaff, $query);
+            return $this->listConversations($user, $guestContext, $isStaff, $query);
         }
         if ($method !== 'POST') {
             return ['status' => 405, 'payload' => ['ok' => false, 'error' => 'method']];
@@ -66,7 +70,7 @@ final class SupportService extends Service
 
         $action = (string) ($data['action'] ?? 'create');
         if ($action === 'create') {
-            return $this->createConversation($user, $data, $files);
+            return $this->createConversation($user, $guestContext, $data, $files);
         }
 
         if (!$isStaff) {
@@ -95,7 +99,7 @@ final class SupportService extends Service
         return ['status' => 400, 'payload' => ['ok' => false, 'error' => 'bad_action']];
     }
 
-    public function handleMessages(array $user, string $method, array $query, array $data, array $files): array
+    public function handleMessages(?array $user, array $guestContext, string $method, array $query, array $data, array $files): array
     {
         $isStaff = $this->resolveStaffAccess($user);
 
@@ -105,7 +109,7 @@ final class SupportService extends Service
             if ($conversationId < 1) {
                 return ['status' => 400, 'payload' => ['ok' => false, 'error' => 'missing_conversation']];
             }
-            return $this->listMessages($user, $isStaff, $conversationId, $sinceId);
+            return $this->listMessages($user, $guestContext, $isStaff, $conversationId, $sinceId);
         }
 
         if ($method !== 'POST') {
@@ -117,12 +121,15 @@ final class SupportService extends Service
         if ($conversationId < 1) {
             return ['status' => 400, 'payload' => ['ok' => false, 'error' => 'missing_conversation']];
         }
+        if (!$user) {
+            $this->guestContext->updateFromRequest($data);
+        }
 
         $conversation = $this->model->findConversationById($conversationId);
         if (!$conversation) {
             return ['status' => 404, 'payload' => ['ok' => false, 'error' => 'not_found']];
         }
-        if (!$isStaff && (int) ($conversation['created_by'] ?? 0) !== (int) ($user['id'] ?? 0)) {
+        if (!$this->canAccessConversation($conversation, $user, $guestContext, $isStaff)) {
             return ['status' => 403, 'payload' => ['ok' => false, 'error' => 'forbidden']];
         }
 
@@ -141,7 +148,8 @@ final class SupportService extends Service
         try {
             $this->model->beginTransaction();
 
-            $messageId = $this->model->insertMessage($conversationId, (int) $user['id'], $body);
+            $senderId = (int) ($user['id'] ?? 0);
+            $messageId = $this->model->insertMessage($conversationId, $senderId > 0 ? $senderId : null, $body);
             $this->model->insertAttachments($messageId, $upload['attachments']);
 
             $newStatus = $isStaff ? 'waiting_user' : 'waiting_support';
@@ -154,7 +162,9 @@ final class SupportService extends Service
                 $newStatus,
                 $assignedTo ? (int) $assignedTo : null
             );
-            $this->model->upsertConversationRead($conversationId, (int) $user['id'], $messageId);
+            if ($senderId > 0) {
+                $this->model->upsertConversationRead($conversationId, $senderId, $messageId);
+            }
 
             $this->model->commit();
         } catch (\Throwable $e) {
@@ -187,7 +197,7 @@ final class SupportService extends Service
         return ['status' => 200, 'payload' => ['ok' => true, 'message_id' => $messageId]];
     }
 
-    private function listConversations(array $user, bool $isStaff, array $query): array
+    private function listConversations(?array $user, array $guestContext, bool $isStaff, array $query): array
     {
         $scope = (string) ($query['scope'] ?? 'mine');
         $status = trim((string) ($query['status'] ?? ''));
@@ -199,12 +209,13 @@ final class SupportService extends Service
 
         try {
             $rows = $this->model->listConversations(
-                (int) $user['id'],
+                (int) ($user['id'] ?? 0),
                 $isStaff,
                 $scope,
                 $status,
                 $assigned,
-                $limit
+                $limit,
+                $user ? null : (string) ($guestContext['viewer_key'] ?? '')
             );
         } catch (\Throwable $e) {
             $payload = ['ok' => false, 'error' => 'db'];
@@ -218,6 +229,12 @@ final class SupportService extends Service
         foreach ($rows as $row) {
             $id = (int) ($row['id'] ?? 0);
             $creatorName = trim((string) ($row['creator_first'] ?? '') . ' ' . (string) ($row['creator_last'] ?? ''));
+            if ($creatorName === '') {
+                $creatorName = trim((string) ($row['guest_name'] ?? ''));
+            }
+            if ($creatorName === '') {
+                $creatorName = 'Visiteur';
+            }
             $assignedName = trim((string) ($row['assigned_first'] ?? '') . ' ' . (string) ($row['assigned_last'] ?? ''));
             $category = $this->resolveCategory(
                 (string) ($row['category'] ?? ''),
@@ -236,6 +253,8 @@ final class SupportService extends Service
                 'category_label' => self::CATEGORY_LABELS[$category] ?? self::CATEGORY_LABELS['other'],
                 'created_by' => (int) ($row['created_by'] ?? 0),
                 'created_by_name' => $creatorName !== '' ? $creatorName : 'Utilisateur',
+                'guest_name' => (string) ($row['guest_name'] ?? ''),
+                'guest_email' => (string) ($row['guest_email'] ?? ''),
                 'assigned_to' => $row['assigned_to'] !== null ? (int) $row['assigned_to'] : null,
                 'assigned_to_name' => $assignedName,
                 'last_message_at' => (string) ($row['last_message_at'] ?? ''),
@@ -250,11 +269,22 @@ final class SupportService extends Service
         return ['status' => 200, 'payload' => ['ok' => true, 'conversations' => $conversations]];
     }
 
-    private function createConversation(array $user, array $data, array $files): array
+    private function createConversation(?array $user, array $guestContext, array $data, array $files): array
     {
         $subject = trim((string) ($data['subject'] ?? ''));
         $body = trim((string) ($data['body'] ?? ''));
         $category = $this->resolveCategory((string) ($data['category'] ?? ''), $subject, $body);
+
+        if (!$user) {
+            $guestName = $this->guestContext->sanitizeName((string) ($data['guest_name'] ?? ($guestContext['guest_name'] ?? '')));
+            $guestEmailRaw = trim((string) ($data['guest_email'] ?? ($guestContext['guest_email'] ?? '')));
+            $guestEmail = $this->guestContext->sanitizeEmail($guestEmailRaw);
+            if ($guestEmailRaw !== '' && $guestEmail === '') {
+                return ['status' => 422, 'payload' => ['ok' => false, 'error' => 'invalid_guest_email']];
+            }
+            $this->guestContext->setProfile($guestName, $guestEmail);
+            $guestContext = $this->guestContext->ensure();
+        }
 
         $upload = $this->storage->handleUploads($files['attachments'] ?? null, 5 * 1024 * 1024);
         if (!$upload['ok']) {
@@ -282,14 +312,19 @@ final class SupportService extends Service
             $this->model->beginTransaction();
 
             $conversationId = $this->model->insertConversation(
-                (int) $user['id'],
+                $user ? (int) $user['id'] : null,
                 $subject,
                 'waiting_support',
-                $category
+                $category,
+                $user ? null : (string) ($guestContext['viewer_key'] ?? ''),
+                $user ? null : (string) ($guestContext['guest_name'] ?? ''),
+                $user ? null : (string) ($guestContext['guest_email'] ?? '')
             );
-            $messageId = $this->model->insertMessage($conversationId, (int) $user['id'], $body);
+            $messageId = $this->model->insertMessage($conversationId, $user ? (int) $user['id'] : null, $body);
             $this->model->insertAttachments($messageId, $upload['attachments']);
-            $this->model->upsertConversationRead($conversationId, (int) $user['id'], $messageId);
+            if ($user) {
+                $this->model->upsertConversationRead($conversationId, (int) $user['id'], $messageId);
+            }
 
             $this->model->commit();
         } catch (\Throwable $e) {
@@ -300,9 +335,10 @@ final class SupportService extends Service
             return $this->buildDbError($e);
         }
 
+        $currentUserId = (int) ($user['id'] ?? 0);
         $staffIds = array_values(array_filter(
             $this->model->listStaffIds(),
-            static fn(int $staffId): bool => $staffId !== (int) $user['id']
+            static fn(int $staffId): bool => $staffId !== $currentUserId
         ));
         foreach ($staffIds as $staffId) {
             $this->safeCreateNotification(
@@ -313,19 +349,23 @@ final class SupportService extends Service
             );
         }
 
+        if (!$user) {
+            $this->guestContext->setActiveConversationId($conversationId);
+        }
+
         return [
             'status' => 200,
             'payload' => ['ok' => true, 'conversation_id' => $conversationId, 'message_id' => $messageId],
         ];
     }
 
-    private function listMessages(array $user, bool $isStaff, int $conversationId, int $sinceId): array
+    private function listMessages(?array $user, array $guestContext, bool $isStaff, int $conversationId, int $sinceId): array
     {
         $conversation = $this->model->findConversationById($conversationId);
         if (!$conversation) {
             return ['status' => 404, 'payload' => ['ok' => false, 'error' => 'not_found']];
         }
-        if (!$isStaff && (int) ($conversation['created_by'] ?? 0) !== (int) ($user['id'] ?? 0)) {
+        if (!$this->canAccessConversation($conversation, $user, $guestContext, $isStaff)) {
             return ['status' => 403, 'payload' => ['ok' => false, 'error' => 'forbidden']];
         }
 
@@ -359,21 +399,41 @@ final class SupportService extends Service
 
         $payloadMessages = [];
         $lastMessageId = 0;
+        $isGuestConversation = empty($conversation['created_by']) && trim((string) ($conversation['viewer_key'] ?? '')) !== '';
+        $guestKey = $this->guestContext->viewerKey();
+        $userId = (int) ($user['id'] ?? 0);
         foreach ($messages as $message) {
             $messageId = (int) ($message['id'] ?? 0);
             $lastMessageId = max($lastMessageId, $messageId);
             $senderName = trim((string) ($message['first_name'] ?? '') . ' ' . (string) ($message['last_name'] ?? ''));
+            if ($senderName === '') {
+                $senderName = trim((string) ($message['guest_name'] ?? ''));
+            }
+            if ($senderName === '') {
+                $senderName = trim((string) ($conversation['guest_name'] ?? ''));
+            }
+            if ($senderName === '') {
+                $senderName = 'Utilisateur';
+            }
+            $senderId = (int) ($message['sender_id'] ?? 0);
+            $isSelf = false;
+            if ($userId > 0) {
+                $isSelf = $senderId > 0 && $senderId === $userId;
+            } elseif ($isGuestConversation) {
+                $isSelf = $senderId < 1 && hash_equals($guestKey, (string) ($conversation['viewer_key'] ?? ''));
+            }
             $payloadMessages[] = [
                 'id' => $messageId,
-                'sender_id' => (int) ($message['sender_id'] ?? 0),
+                'sender_id' => $senderId,
                 'sender_name' => $senderName !== '' ? $senderName : 'Utilisateur',
                 'body' => (string) ($message['body'] ?? ''),
                 'created_at' => (string) ($message['created_at'] ?? ''),
+                'is_self' => $isSelf,
                 'attachments' => $attachmentsByMessage[$messageId] ?? [],
             ];
         }
 
-        if ($lastMessageId > 0) {
+        if ($lastMessageId > 0 && !empty($user) && (int) ($user['id'] ?? 0) > 0) {
             try {
                 $this->model->upsertConversationRead(
                     $conversationId,
@@ -388,6 +448,9 @@ final class SupportService extends Service
                 }
             }
         }
+        if ($isGuestConversation) {
+            $this->guestContext->setActiveConversationId($conversationId);
+        }
 
         return [
             'status' => 200,
@@ -399,8 +462,31 @@ final class SupportService extends Service
         ];
     }
 
-    private function resolveStaffAccess(array $user): bool
+    private function canAccessConversation(array $conversation, ?array $user, array $guestContext, bool $isStaff): bool
     {
+        if ($isStaff) {
+            return true;
+        }
+
+        $userId = (int) ($user['id'] ?? 0);
+        if ($userId > 0) {
+            return $userId === (int) ($conversation['created_by'] ?? 0);
+        }
+
+        $conversationKey = trim((string) ($conversation['viewer_key'] ?? ''));
+        $guestKey = trim((string) ($guestContext['viewer_key'] ?? ''));
+        if ($conversationKey === '' || $guestKey === '') {
+            return false;
+        }
+
+        return hash_equals($guestKey, $conversationKey);
+    }
+
+    private function resolveStaffAccess(?array $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
         $roles = $this->access->rolesFromUser($user);
         $isStaff = $this->access->isStaff($roles);
 

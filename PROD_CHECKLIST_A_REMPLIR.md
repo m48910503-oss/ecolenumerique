@@ -73,6 +73,7 @@ php -r "echo password_hash('MotDePasseFortIci', PASSWORD_DEFAULT), PHP_EOL;"
 ```txt
 APP_ENV=production
 ADMIN_BOOTSTRAP_REGISTER=0
+ADMIN_REGISTER_SECRET=________________________
 APP_KEY=________________________
 APP_SCHEMA_ENFORCE=1
 APP_SUPPORT_STORAGE_DIR=________________________

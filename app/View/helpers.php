@@ -542,7 +542,7 @@ if (!function_exists('dashboard_icon_fa_class')) {
 
 if (!function_exists('site_brand_name_html')) {
     /**
-     * Render the site brand name and highlight the "Numerique" word.
+     * Render visible site-name occurrences with full-name emphasis.
      */
     function site_brand_name_html(string $name, string $accentClass = 'text-blue-600 dark:text-blue-400'): string
     {
@@ -556,6 +556,80 @@ if (!function_exists('site_brand_name_html')) {
         $escapedAccentClass = $accentClass !== ''
             ? htmlspecialchars($accentClass, ENT_QUOTES, 'UTF-8')
             : 'text-blue-600 dark:text-blue-400';
+
+        $renderBrandInnerHtml = static function (string $value) use ($escapedAccentClass): string {
+            $html = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+
+            foreach (['Numérique', 'numérique', 'Numerique', 'numerique'] as $accentWord) {
+                if (!str_contains($value, $accentWord)) {
+                    continue;
+                }
+
+                $escapedAccentWord = htmlspecialchars($accentWord, ENT_QUOTES, 'UTF-8');
+                $replacement = '<span class="' . $escapedAccentClass . '">' . $escapedAccentWord . '</span>';
+
+                return str_replace($escapedAccentWord, $replacement, $html);
+            }
+
+            return $html;
+        };
+
+        static $knownBrandNames = null;
+        if ($knownBrandNames === null) {
+            $knownBrandNames = [];
+            if (function_exists('platform_setting_get')) {
+                try {
+                    $knownBrandNames[] = platform_setting_get('site_name', '');
+                } catch (Throwable $e) {
+                    // Keep brand rendering available even if settings storage is unreachable.
+                }
+            }
+            if (defined('APP_FROM_NAME')) {
+                $knownBrandNames[] = (string) APP_FROM_NAME;
+            }
+            $knownBrandNames[] = 'École Numérique';
+            $knownBrandNames[] = 'Ecole Numérique';
+            $knownBrandNames[] = 'Ecole Numerique';
+            $knownBrandNames[] = 'ÉcoleNumérique';
+            $knownBrandNames[] = 'EcoleNumérique';
+            $knownBrandNames[] = 'EcoleNumerique';
+
+            $knownBrandNames = array_values(array_unique(array_filter(array_map(
+                static fn($value): string => trim((string) $value),
+                $knownBrandNames
+            ))));
+            usort($knownBrandNames, static fn(string $a, string $b): int => strlen($b) <=> strlen($a));
+        }
+
+        $targetHtmlByEscapedValue = [];
+        foreach ($knownBrandNames as $brandName) {
+            if (!str_contains($name, $brandName)) {
+                continue;
+            }
+
+            $targetHtmlByEscapedValue[htmlspecialchars($brandName, ENT_QUOTES, 'UTF-8')] = $brandName;
+        }
+
+        if ($targetHtmlByEscapedValue !== []) {
+            $pattern = '/(' . implode('|', array_map(
+                static fn(string $target): string => preg_quote($target, '/'),
+                array_keys($targetHtmlByEscapedValue)
+            )) . ')/u';
+
+            $result = preg_replace_callback(
+                $pattern,
+                static function (array $matches) use ($renderBrandInnerHtml): string {
+                    $brandName = htmlspecialchars_decode((string) $matches[0], ENT_QUOTES);
+
+                    return '<strong class="site-brand-name">' . $renderBrandInnerHtml($brandName) . '</strong>';
+                },
+                $escapedName
+            );
+
+            if (is_string($result)) {
+                return $result;
+            }
+        }
 
         foreach (['Numérique', 'numérique', 'Numerique', 'numerique'] as $accentWord) {
             if (!str_contains($name, $accentWord)) {

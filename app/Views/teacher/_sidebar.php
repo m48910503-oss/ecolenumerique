@@ -206,9 +206,10 @@ if ($teacherDashboardShell !== false) {
 
         <div class="border-t border-gray-100 px-4 py-4 dark:border-gray-700 sm:px-5">
             <button id="theme-toggle-sidebar" type="button" data-theme-toggle="1" class="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-gray-600 transition hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700" aria-label="Basculer le thème" aria-pressed="false">
-                <i class="fas fa-moon w-5 dark:hidden" aria-hidden="true"></i>
-                <i class="fas fa-sun hidden w-5 dark:inline" aria-hidden="true"></i>
-                <span>Mode sombre</span>
+                <i class="fas fa-moon w-5" data-theme-icon-dark aria-hidden="true"></i>
+                <i class="fas fa-sun hidden w-5" data-theme-icon-light aria-hidden="true"></i>
+                <span class="dark:hidden">Mode sombre</span>
+                <span class="hidden dark:inline" hidden>Mode clair</span>
             </button>
             <a href="<?php echo e(site_url('logout')); ?>" class="mt-1 flex items-center gap-3 rounded-xl px-4 py-3 text-red-500 transition hover:bg-red-50 dark:hover:bg-red-900/20">
                 <i class="fas fa-sign-out-alt w-5" aria-hidden="true"></i>

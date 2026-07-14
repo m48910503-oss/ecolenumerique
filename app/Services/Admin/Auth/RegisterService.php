@@ -19,20 +19,15 @@ final class RegisterService extends Service
      * @param array<string,mixed> $post
      * @return array{redirectTo:?string,view:array<string,mixed>}
      */
-    public function handle(string $method, array $post): array
+    public function handle(string $method, array $post, string $registerToken = ''): array
     {
         $errors = [];
-        $successMessage = (string) $this->flashGet('success', '');
         $old = [
             'first_name' => '',
             'last_name' => '',
             'email' => '',
         ];
-        $bootstrapEnabled = getenv('ADMIN_BOOTSTRAP_REGISTER') === '1'
-            && function_exists('is_local_environment')
-            && is_local_environment();
-
-        if (!$bootstrapEnabled) {
+        if (!admin_register_access_allowed($registerToken)) {
             $errors[] = "L'inscription administrateur est desactivee.";
         }
 
@@ -84,7 +79,7 @@ final class RegisterService extends Service
                         ['admin']
                     );
                     $this->model->commit();
-                    $successMessage = 'Compte administrateur créé. Vous pouvez maintenant vous connecter.';
+                    $this->flashSet('success', 'Compte administrateur créé. Vous pouvez maintenant vous connecter.');
                 } catch (\Throwable $e) {
                     if ($this->model->inTransaction()) {
                         $this->model->rollBack();
@@ -93,10 +88,9 @@ final class RegisterService extends Service
                 }
             }
 
-            if ($errors === [] && $successMessage !== '') {
-                $this->flashSet('success', $successMessage);
+            if ($errors === []) {
                 return [
-                    'redirectTo' => $this->siteUrl('admin/register'),
+                    'redirectTo' => $this->siteUrl('admin/login'),
                     'view' => [],
                 ];
             }
@@ -106,7 +100,6 @@ final class RegisterService extends Service
             'redirectTo' => null,
             'view' => [
                 'errors' => $errors,
-                'successMessage' => $successMessage,
                 'old' => $old,
             ],
         ];

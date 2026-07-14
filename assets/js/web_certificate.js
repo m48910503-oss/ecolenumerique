@@ -1,5 +1,6 @@
 (function () {
   const qrTargets = Array.from(document.querySelectorAll("[data-certificate-qr]"));
+  const printButtons = Array.from(document.querySelectorAll("[data-certificate-print]"));
 
   function renderQrCodes() {
     if (typeof qrcode !== "function") return;
@@ -33,4 +34,11 @@
 
   window.addEventListener("load", renderQrCodes);
   window.addEventListener("beforeprint", renderQrCodes);
+
+  printButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      renderQrCodes();
+      window.print();
+    });
+  });
 })();

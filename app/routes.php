@@ -179,6 +179,7 @@ $routes = [
     'api/fedapay_webhook' => ApiFedapayWebhookController::class,
 
     'admin/login' => AdminLoginController::class,
+    'admin/register' => AdminRegisterController::class,
     'admin/secondary_login' => AdminSecondaryLoginController::class,
     'admin/dashboard' => AdminDashboardController::class,
     'admin/statistics' => AdminStatisticsController::class,
@@ -244,9 +245,5 @@ $routes = [
     'teacher/withdrawals/retraits' => WithdrawalsController::class,
     'teacher/promotions' => PromotionsController::class,
 ];
-
-if (getenv('ADMIN_BOOTSTRAP_REGISTER') === '1' && function_exists('is_local_environment') && is_local_environment()) {
-    $routes['admin/register'] = AdminRegisterController::class;
-}
 
 return $routes;

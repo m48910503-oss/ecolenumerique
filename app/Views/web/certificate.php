@@ -122,10 +122,9 @@ $certificateHostLabel = $publicHost;
                 <a
                     href="<?php echo e($pdfUrl); ?>"
                     class="cert-action cert-action--primary"
-                    data-certificate-pdf-download
                     data-certificate-filename="certificat-<?php echo e(strtolower($certificateCode)); ?>.pdf"
                 >PDF</a>
-                <button type="button" onclick="window.print()" class="cert-action">Imprimer</button>
+                <button type="button" class="cert-action" data-certificate-print>Imprimer</button>
             </nav>
         </header>
 

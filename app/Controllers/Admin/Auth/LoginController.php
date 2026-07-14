@@ -12,6 +12,7 @@ final class LoginController extends Controller
     public function __invoke(): void
     {
         $siteLogoUrl = $this->siteLogoUrl();
+        $successMessage = (string) $this->flashGet('success', '');
 
         if ($this->isAuthenticated()) {
             header('Location: ' . $this->siteUrl('admin/dashboard'));
@@ -36,7 +37,10 @@ final class LoginController extends Controller
         }
 
         $this->render('admin/auth/login', array_merge(
-            ['siteLogoUrl' => $siteLogoUrl],
+            [
+                'siteLogoUrl' => $siteLogoUrl,
+                'successMessage' => $successMessage,
+            ],
             is_array($result['view'] ?? null) ? $result['view'] : []
         ));
     }

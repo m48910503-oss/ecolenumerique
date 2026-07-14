@@ -44,6 +44,7 @@ $adminTopActions = [
 ];
 $adminPageScripts = [
     'assets/vendor/qrcode-generator/qrcode.js',
+    'assets/vendor/html2pdf/html2pdf.bundle.min.js',
     'admin_certificate_preview.js',
     'certificate_pdf_download.js',
 ];
@@ -57,7 +58,6 @@ $adminPageScripts = [
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
     <?php require __DIR__ . '/_head_assets.php'; ?>
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/public-teacher-scale.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/public-teacher-scale.css') ?: time()))); ?>">
     <link rel="stylesheet" href="<?php echo e(site_url('assets/css/certificate-model.css?v=' . (@filemtime(__DIR__ . '/../../../assets/css/certificate-model.css') ?: time()))); ?>">
@@ -85,7 +85,7 @@ $adminPageScripts = [
                             </h3>
                         </div>
                         <div class="admin-certificate-toolbar">
-                            <details class="admin-certificate-download-menu" data-certificate-download-menu data-certificate-download-base="<?php echo e(site_url('admin/certificate_preview')); ?>">
+                            <details class="admin-certificate-download-menu" data-certificate-download-menu data-certificate-download-base="<?php echo e(site_url('admin/certificate_preview')); ?>" data-certificate-print-url="<?php echo e((string) ($certificatePrintUrl ?? '')); ?>">
                                 <summary class="admin-certificate-download" aria-haspopup="menu">
                                     <i class="fas fa-download" aria-hidden="true"></i>
                                     Télécharger

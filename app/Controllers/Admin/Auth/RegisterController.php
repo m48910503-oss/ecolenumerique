@@ -12,10 +12,8 @@ final class RegisterController extends Controller
     public function __invoke(): void
     {
         $siteLogoUrl = $this->siteLogoUrl();
-        $bootstrapEnabled = getenv('ADMIN_BOOTSTRAP_REGISTER') === '1'
-            && function_exists('is_local_environment')
-            && is_local_environment();
-        if (!$bootstrapEnabled) {
+        $registerToken = trim((string) ($_POST['token'] ?? ($_GET['token'] ?? '')));
+        if (!admin_register_access_allowed($registerToken)) {
             http_response_code(404);
             $this->render('web/public_error', $this->publicErrorViewData(
                 'Page indisponible',
@@ -33,7 +31,8 @@ final class RegisterController extends Controller
         $service = new RegisterService(new AdminRegisterModel($pdo));
         $result = $service->handle(
             (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'),
-            $_POST
+            $_POST,
+            $registerToken
         );
 
         if (!empty($result['redirectTo'])) {
@@ -42,7 +41,10 @@ final class RegisterController extends Controller
         }
 
         $this->render('admin/auth/register', array_merge(
-            ['siteLogoUrl' => $siteLogoUrl],
+            [
+                'siteLogoUrl' => $siteLogoUrl,
+                'registerToken' => $registerToken,
+            ],
             is_array($result['view'] ?? null) ? $result['view'] : []
         ));
     }

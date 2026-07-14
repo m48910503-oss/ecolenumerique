@@ -1327,8 +1327,8 @@ $profileSecondaryButtonClass = 'profile-modern-button profile-modern-button--sec
                 </div>
                 <div class="flex items-center gap-2">
                     <button type="button" id="theme-toggle" data-web-theme-toggle class="profile-topbar__theme inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white" aria-label="Changer le thème">
-                        <span class="app-icon" data-theme-icon-dark aria-hidden="true"><?php echo dashboard_icon_svg('moon'); ?></span>
-                        <span class="app-icon" data-theme-icon-light aria-hidden="true"><?php echo dashboard_icon_svg('sun'); ?></span>
+                        <i class="fas fa-moon text-base" data-theme-icon-dark aria-hidden="true"></i>
+                        <i class="fas fa-sun hidden text-base" data-theme-icon-light aria-hidden="true"></i>
                     </button>
                     <button type="button" onclick="window.print()" class="profile-topbar__print hidden sm:inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-blue-300 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:text-white">
                         <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg('printer'); ?></span>

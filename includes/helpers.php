@@ -102,6 +102,66 @@ if (!function_exists('abs_url')) {
     }
 }
 
+if (!function_exists('admin_register_secret_token')) {
+    function admin_register_secret_token(): string
+    {
+        if (defined('APP_ADMIN_REGISTER_SECRET')) {
+            return trim((string) APP_ADMIN_REGISTER_SECRET);
+        }
+
+        return trim((string) getenv('ADMIN_REGISTER_SECRET'));
+    }
+}
+
+if (!function_exists('admin_register_bootstrap_enabled')) {
+    function admin_register_bootstrap_enabled(): bool
+    {
+        return getenv('ADMIN_BOOTSTRAP_REGISTER') === '1'
+            && function_exists('is_local_environment')
+            && is_local_environment();
+    }
+}
+
+if (!function_exists('admin_register_access_allowed')) {
+    function admin_register_access_allowed(string $token = ''): bool
+    {
+        if (admin_register_bootstrap_enabled()) {
+            return true;
+        }
+
+        $expected = admin_register_secret_token();
+        $provided = trim($token);
+        if ($expected === '' || $provided === '') {
+            return false;
+        }
+
+        return hash_equals($expected, $provided);
+    }
+}
+
+if (!function_exists('admin_register_secret_link')) {
+    function admin_register_secret_link(string $token = ''): string
+    {
+        $resolvedToken = trim($token);
+        if ($resolvedToken === '') {
+            $resolvedToken = admin_register_secret_token();
+        }
+        if ($resolvedToken === '') {
+            return '';
+        }
+
+        $path = 'admin/register?token=' . urlencode($resolvedToken);
+        if (defined('APP_BASE_URL') && APP_BASE_URL !== '') {
+            return abs_url($path);
+        }
+        if (defined('BASE_PATH')) {
+            return site_url($path);
+        }
+
+        return '/' . ltrim($path, '/');
+    }
+}
+
 if (!function_exists('mail_sanitize_header_value')) {
     function mail_sanitize_header_value(string $value): string
     {

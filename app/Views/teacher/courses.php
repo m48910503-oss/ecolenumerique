@@ -836,37 +836,6 @@ $formatRating = static function (float $value): string {
                                                 <span><?php echo e($archiveLabel); ?></span>
                                             </button>
                                         </form>
-                                        <details class="teacher-course-card-menu relative">
-                                            <summary class="teacher-course-card-menu__trigger" aria-label="Autres actions" title="Autres actions">
-                                                <span class="app-icon" aria-hidden="true"><?php echo dashboard_icon_svg('more-vertical'); ?></span>
-                                            </summary>
-                                            <div class="teacher-course-card-menu__panel" role="menu">
-                                                <?php if ($secondaryUrl !== ''): ?>
-                                                    <a href="<?php echo e($secondaryUrl); ?>" class="teacher-course-card-menu__item" role="menuitem">
-                                                        <i class="fas fa-<?php echo e($secondaryIcon); ?>" aria-hidden="true"></i>
-                                                        <span><?php echo e($secondaryLabel); ?></span>
-                                                    </a>
-                                                <?php endif; ?>
-                                                <form method="post" action="<?php echo e(site_url('teacher/courses')); ?>" class="teacher-course-card-menu__form">
-                                                    <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
-                                                    <input type="hidden" name="action" value="<?php echo e($archiveAction); ?>">
-                                                    <input type="hidden" name="course_id" value="<?php echo e((string) $courseId); ?>">
-                                                    <input type="hidden" name="list_query" value="<?php echo e($listQuery); ?>">
-                                                    <button
-                                                        type="submit"
-                                                        class="teacher-course-card-menu__item teacher-course-card-menu__item--danger"
-                                                        data-confirm-action="form"
-                                                        data-confirm-title="<?php echo e($archiveTitle); ?>"
-                                                        data-confirm-message="<?php echo e($archiveMessage); ?>"
-                                                        data-confirm-label="<?php echo e($archiveLabel); ?>"
-                                                        data-confirm-variant="<?php echo e($archiveVariant); ?>"
-                                                    >
-                                                        <i class="fas <?php echo e($workflow === 'archived' ? 'fa-undo-alt' : 'fa-trash-alt'); ?>" aria-hidden="true"></i>
-                                                        <span><?php echo e($archiveLabel); ?></span>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </details>
                                     </div>
                                 </div>
                             </article>

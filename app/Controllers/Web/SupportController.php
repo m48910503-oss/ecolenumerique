@@ -6,6 +6,7 @@ namespace App\Controllers\Web;
 use App\Core\Controller;
 use App\Models\StudentDashboardModel;
 use App\Services\Shared\DashboardBadgeService;
+use App\Services\Support\SupportGuestContextService;
 use App\Services\Web\SupportService;
 
 final class SupportController extends Controller
@@ -14,6 +15,30 @@ final class SupportController extends Controller
     {
         /** @var \PDO $pdo */
         $pdo = $this->pdo();
+
+        $user = $this->currentUser();
+        if (!$user) {
+            $guestContext = new SupportGuestContextService();
+            $guest = $guestContext->ensure();
+            $support = new SupportService();
+            $pageData = $support->buildPageData([], $_GET);
+            $initialConv = (int) ($guest['active_conversation_id'] ?? 0);
+            if ($initialConv < 1) {
+                $initialConv = (int) ($pageData['initialConversation'] ?? 0);
+            }
+
+            $this->render('web/support_public', [
+                'basePath' => $pageData['basePath'],
+                'initialConv' => $initialConv,
+                'guestProfile' => [
+                    'name' => (string) ($guest['guest_name'] ?? ''),
+                    'email' => (string) ($guest['guest_email'] ?? ''),
+                ],
+                'loginUrl' => $this->siteUrl('login?return=' . urlencode($this->siteUrl('support'))),
+                'siteLogoUrl' => $this->siteLogoUrl(),
+            ]);
+            return;
+        }
 
         $user = $this->requireAuth(true, $this->siteUrl('support'));
         $service = new SupportService();

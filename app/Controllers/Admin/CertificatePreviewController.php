@@ -7,7 +7,7 @@ use App\Core\Controller;
 use App\Models\SharedPlatformSettingsModel;
 use App\Services\Admin\AdminAccessService;
 use App\Services\Shared\PlatformSettingsService;
-use App\Services\Web\ReceiptPdfDocumentBuilder;
+use App\Services\Web\CertificatePdfBuilder;
 
 final class CertificatePreviewController extends Controller
 {
@@ -84,39 +84,15 @@ final class CertificatePreviewController extends Controller
             'dgName' => $dgName !== '' ? $dgName : 'Directeur général',
             'dgSignatureUrl' => $dgSignatureUrl,
             'sampleCertificate' => $sampleCertificate,
+            'certificatePrintUrl' => $this->certificatePreviewRenderUrl(),
         ];
 
         $exportFormat = strtolower(trim((string) ($_GET['export'] ?? '')));
         if ($exportFormat === 'pdf') {
             $filenameBase = $this->certificateExportFilename((string) $sampleCertificate['code']);
-            $pdfHtml = $this->injectAbsoluteBaseHref($this->renderViewToString('web/certificate', $this->buildPdfCertificateViewData(
-                $siteName,
-                $siteTagline,
-                $siteDescription,
-                $supportEmail,
-                $supportPhone,
-                $supportWhatsapp,
-                $siteAddress,
-                $footerText,
-                $dgName,
-                $dgSignatureUrl,
-                $siteLogoUrl,
-                $sampleCertificate
-            )));
-            $pdfBinary = (new ReceiptPdfDocumentBuilder())->buildFromHtml($pdfHtml);
-            if (is_string($pdfBinary) && $pdfBinary !== '') {
-                header('Content-Type: application/pdf');
-                header('Content-Disposition: attachment; filename="' . $filenameBase . '.pdf"');
-                header('Content-Length: ' . strlen($pdfBinary));
-                header('X-Content-Type-Options: nosniff');
-                echo $pdfBinary;
-                return;
-            }
-
-            $html = $this->injectAbsoluteBaseHref($this->renderViewToString('admin/certificate_preview_export', $viewData + [
-                'injectGlobalAssets' => false,
-            ]));
-            $pdfBinary = (new ReceiptPdfDocumentBuilder())->buildFromHtml($html);
+            $renderUrl = $this->certificatePreviewRenderUrl();
+            $fallbackDocument = $this->buildFallbackDocument($viewData);
+            $pdfBinary = (new CertificatePdfBuilder())->buildFromUrl($renderUrl, $fallbackDocument);
             if (is_string($pdfBinary) && $pdfBinary !== '') {
                 header('Content-Type: application/pdf');
                 header('Content-Disposition: attachment; filename="' . $filenameBase . '.pdf"');
@@ -224,9 +200,61 @@ final class CertificatePreviewController extends Controller
         ];
     }
 
+    /**
+     * @param array<string,mixed> $viewData
+     * @return array<string,mixed>
+     */
+    private function buildFallbackDocument(array $viewData): array
+    {
+        $sampleCertificate = is_array($viewData['sampleCertificate'] ?? null) ? $viewData['sampleCertificate'] : [];
+        $siteName = trim((string) ($viewData['siteName'] ?? 'Ecole Numerique'));
+        $brandSubtitle = trim((string) ($viewData['siteTagline'] ?? ''));
+        if ($brandSubtitle === '') {
+            $brandSubtitle = trim((string) ($viewData['siteDescription'] ?? ''));
+        }
+        $supportLine = trim(implode(' - ', array_values(array_filter([
+            trim((string) ($viewData['supportEmail'] ?? '')) !== '' ? trim((string) ($viewData['supportEmail'] ?? '')) : null,
+            trim((string) ($viewData['supportPhone'] ?? '')) !== '' ? trim((string) ($viewData['supportPhone'] ?? '')) : null,
+            trim((string) ($viewData['supportWhatsapp'] ?? '')) !== '' ? trim((string) ($viewData['supportWhatsapp'] ?? '')) : null,
+        ], static fn ($value): bool => is_string($value) && trim($value) !== ''))));
+        $footerNote = trim((string) ($viewData['footerText'] ?? ''));
+        if ($footerNote === '') {
+            $footerNote = trim((string) ($viewData['siteAddress'] ?? ''));
+        }
+
+        return [
+            'siteName' => $siteName !== '' ? $siteName : 'Ecole Numerique',
+            'brandSubtitle' => $brandSubtitle,
+            'title' => 'Certificat de reussite',
+            'note' => 'Version de secours generee cote serveur.',
+            'code' => trim((string) ($sampleCertificate['code'] ?? 'CERT-DEMO-2026-0001')),
+            'recipient' => trim((string) ($sampleCertificate['studentName'] ?? 'Etudiant')),
+            'courseTitle' => trim((string) ($sampleCertificate['courseTitle'] ?? 'Cours')),
+            'examTitle' => trim((string) ($sampleCertificate['examTitle'] ?? 'Examen')),
+            'scoreLabel' => trim((string) ($sampleCertificate['score'] ?? '')),
+            'hoursLabel' => trim((string) ($sampleCertificate['hours'] ?? '')),
+            'issuedLabel' => trim((string) ($sampleCertificate['issuedLabel'] ?? 'n/c')),
+            'teacherName' => trim((string) ($sampleCertificate['teacherName'] ?? 'Formateur')),
+            'directorName' => trim((string) ($viewData['dgName'] ?? 'Direction generale')),
+            'verifyUrl' => trim((string) ($sampleCertificate['verifyUrl'] ?? '')),
+            'supportLine' => $supportLine,
+            'footerNote' => $footerNote,
+        ];
+    }
+
     private function certificatePreviewRenderExpires(): int
     {
-        return time() + 120;
+        return time() + 3600;
+    }
+
+    private function certificatePreviewRenderUrl(): string
+    {
+        $expires = $this->certificatePreviewRenderExpires();
+
+        return $this->absUrl('admin/certificate_preview?render=export&expires='
+            . $expires
+            . '&token='
+            . rawurlencode($this->certificatePreviewRenderToken($expires)));
     }
 
     private function certificatePreviewRenderToken(int $expires): string

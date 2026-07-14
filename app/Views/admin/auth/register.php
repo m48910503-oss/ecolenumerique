@@ -6,6 +6,7 @@ $renderPanelHeader = $auth['renderPanelHeader'];
 $renderAside = $auth['renderAside'];
 $renderPage = $auth['renderPage'];
 $authIconClasses = 'h-5 w-5';
+$registerToken = trim((string) ($registerToken ?? ''));
  
 ob_start();
 ?>
@@ -51,6 +52,7 @@ echo $renderFlash('warning', [
 ?>
 <form method="post" action="<?php echo e(site_url('admin/register')); ?>" class="auth-form-v2 auth-form-v2--stack" data-auth-form>
     <input type="hidden" name="_csrf" value="<?php echo e(view_csrf_token()); ?>">
+    <input type="hidden" name="token" value="<?php echo e($registerToken); ?>">
 
     <div class="auth-form-v2__grid auth-form-v2__grid--2">
         <div class="auth-form-v2__field" data-auth-field>

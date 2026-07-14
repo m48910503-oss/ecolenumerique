@@ -11,7 +11,7 @@ final class WebSupportDownloadModel extends Model
     {
         $stmt = $this->pdo->prepare(
             'SELECT a.id, a.file_path, a.original_name, a.mime, a.size,
-                    m.conversation_id, c.created_by
+                    m.conversation_id, c.created_by, c.viewer_key, c.guest_name
              FROM support_message_attachments a
              JOIN support_messages m ON m.id = a.message_id
              JOIN support_conversations c ON c.id = m.conversation_id
@@ -23,4 +23,3 @@ final class WebSupportDownloadModel extends Model
         return $row ?: null;
     }
 }
-

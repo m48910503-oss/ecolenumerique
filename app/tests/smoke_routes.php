@@ -58,6 +58,7 @@ $requiredRoutes = [
     'company/seats',
     'company/teams',
     'admin/dashboard',
+    'admin/register',
     'admin/statistics',
     'admin/secondary_login',
     'admin/secondary_admins',

@@ -56,8 +56,8 @@ if ($teacherDashboardShell !== false) {
                 class="teacher-dashboard-theme-toggle inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:border-blue-300 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-blue-400 dark:hover:text-blue-300 sm:h-11 sm:w-11"
                 aria-label="Basculer le thème"
             >
-                <i class="fas fa-moon text-base dark:hidden" aria-hidden="true"></i>
-                <i class="fas fa-sun hidden text-base dark:inline" aria-hidden="true"></i>
+                <i class="fas fa-moon text-base" data-theme-icon-dark aria-hidden="true"></i>
+                <i class="fas fa-sun hidden text-base" data-theme-icon-light aria-hidden="true"></i>
             </button>
             <a
                 href="<?php echo e($notificationsUrl); ?>"

@@ -127,7 +127,7 @@ $adminNavSections = $hasAdminAccess ? [
             <?php endif; ?>
         </div>
         <div class="app-shell-sidebar__brand-copy">
-            <p class="app-shell-brand-title">École <span>Numérique</span></p>
+            <p class="app-shell-brand-title"><?php echo site_brand_name_html('École Numérique'); ?></p>
             <p class="app-shell-brand-meta">Espace admin</p>
         </div>
         <button
@@ -143,8 +143,8 @@ $adminNavSections = $hasAdminAccess ? [
         >
             <i class="fas fa-bars" aria-hidden="true"></i>
         </button>
-        <button type="button" class="app-shell-burger ml-auto md:hidden" data-close-sidebar aria-label="Fermer le menu">
-            <i class="fas fa-times" aria-hidden="true"></i>
+        <button type="button" class="app-shell-sidebar__close ml-auto md:hidden" data-close-sidebar aria-label="Fermer le menu">
+            <span class="app-shell-sidebar__close-mark" aria-hidden="true">&#x2715;</span>
         </button>
     </div>
 

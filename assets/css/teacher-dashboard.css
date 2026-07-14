@@ -4368,8 +4368,29 @@ body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main 
     }
 
     body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-topbar .js-sidebar-toggle,
-    body.app-role-teacher[data-view^="teacher/"] #teacher-dashboard-sidebar [data-close-sidebar] {
+    body.app-role-teacher[data-view^="teacher/"] :is(#teacher-dashboard-sidebar, #teacher-sidebar) [data-close-sidebar] {
         display: inline-flex !important;
+    }
+
+    body.app-role-teacher[data-view^="teacher/"] :is(#teacher-dashboard-sidebar, #teacher-sidebar) [data-close-sidebar] {
+        width: 2.1rem !important;
+        min-width: 2.1rem !important;
+        height: 2.1rem !important;
+        border-color: rgba(220, 38, 38, 0.22) !important;
+        background: rgba(254, 242, 242, 0.98) !important;
+        color: #dc2626 !important;
+        border-radius: 9999px !important;
+        box-shadow: 0 8px 18px -14px rgba(220, 38, 38, 0.45);
+    }
+
+    body.app-role-teacher[data-view^="teacher/"] :is(#teacher-dashboard-sidebar, #teacher-sidebar) [data-close-sidebar]:hover {
+        border-color: rgba(220, 38, 38, 0.34) !important;
+        background: rgba(254, 226, 226, 1) !important;
+        color: #b91c1c !important;
+    }
+
+    body.app-role-teacher[data-view^="teacher/"] :is(#teacher-dashboard-sidebar, #teacher-sidebar) .app-shell-sidebar__close-mark {
+        font-size: 1.05rem !important;
     }
 
     body.app-role-teacher[data-view^="teacher/"] .js-sidebar-backdrop {

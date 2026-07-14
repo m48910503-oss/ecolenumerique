@@ -119,12 +119,29 @@ $publicHeaderMobileTeacherClass = $isTeacherPublicPage
             </a>
           <?php else: ?>
             <a href="<?php echo e($headerLoginUrl); ?>" class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-blue-300 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-blue-400 dark:hover:text-blue-300"><?php echo e($headerLoginLabel); ?></a>
+            <a href="<?php echo e($headerPrimaryUrl); ?>" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-blue-700">
+              <i class="fas <?php echo e($isLoggedIn ? 'fa-table-columns' : 'fa-user-plus'); ?>" aria-hidden="true"></i>
+              <?php echo e($headerPrimaryLabel); ?>
+            </a>
           <?php endif; ?>
-          <a href="<?php echo e($headerPrimaryUrl); ?>" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-blue-700">
-            <i class="fas <?php echo e($isLoggedIn ? 'fa-table-columns' : 'fa-user-plus'); ?>" aria-hidden="true"></i>
-            <?php echo e($headerPrimaryLabel); ?>
-          </a>
         </div>
+        <?php if ($isLoggedIn): ?>
+          <?php
+          $publicUserMenuUser = is_array($user ?? null) ? $user : (is_array($currentUser ?? null) ? $currentUser : []);
+          $publicUserMenuActiveSpace = function_exists('dashboard_resolve_space') ? dashboard_resolve_space($publicUserMenuUser) : null;
+          $publicUserMenuRoleLabel = $publicUserMenuActiveSpace !== null && function_exists('dashboard_space_label')
+              ? dashboard_space_label($publicUserMenuActiveSpace)
+              : ($publicHeaderMetaLabel !== '' ? $publicHeaderMetaLabel : 'Compte connecté');
+          $publicUserMenuShowRoleLine = true;
+          $publicUserMenuShowHeaderPill = false;
+          $publicUserMenuPrimaryLabel = 'Tableau de bord';
+          $publicUserMenuPrimaryUrl = $dashboardUrl;
+          $publicUserMenuPrimaryIcon = 'layout';
+          $publicUserMenuLogoutUrl = $logoutUrl;
+          $publicUserMenuClass = 'ml-0.5';
+          require __DIR__ . '/_public_user_menu.php';
+          ?>
+        <?php endif; ?>
         <button
           type="button"
           class="public-mobile-toggle inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:border-blue-300 hover:text-blue-600 md:hidden dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 sm:h-11 sm:w-11"

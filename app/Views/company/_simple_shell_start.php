@@ -66,7 +66,7 @@ $companyNav = $companySimpleMemberMode ? [
       <span class="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-xl flex items-center justify-center text-white shadow-md">
         <i class="fas fa-building"></i>
       </span>
-      <span class="text-lg font-bold tracking-tight text-gray-900 dark:text-white sm:text-xl">École <span class="text-blue-600 dark:text-blue-400">Numérique</span></span>
+      <span class="text-lg font-bold tracking-tight text-gray-900 dark:text-white sm:text-xl"><?php echo site_brand_name_html('École Numérique'); ?></span>
     </div>
 
     <div class="p-4 sm:p-5 border-b border-gray-100 dark:border-gray-700">

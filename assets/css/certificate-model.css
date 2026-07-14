@@ -234,6 +234,8 @@
 }
 
 .certificate-design__recipient h2 {
+  display: inline-block;
+  max-width: 100%;
   margin: 0.89cqi 0 0;
   color: transparent;
   font-family: "Playfair Display", Georgia, serif;

@@ -40,18 +40,85 @@
   const detailPreview = document.getElementById('support-detail-preview');
   const detailOwner = document.getElementById('support-detail-owner');
   const detailUpdated = document.getElementById('support-detail-updated');
+  const paginationEl = document.getElementById('support-conv-pagination');
+  const mobileBackLink = document.getElementById('support-mobile-back');
   const tabButtons = Array.from(
     document.querySelectorAll('[data-support-tab]')
   );
+  const supportMobileQuery = '(max-width: 767.98px)';
+  const conversationPageSize = 8;
 
   let activeId = null;
   let lastMessageId = 0;
   let pollTimer = null;
   let allConversations = [];
   let userTab = 'open';
+  let conversationPage = 1;
   let loadingConversations = false;
   let loadingMessages = false;
   let lastConversationSyncAt = 0;
+  let mobileSupportMode = 'desktop';
+
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  function isAdminSupportPage() {
+    return document.body && document.body.dataset.view === 'admin/support';
+  }
+
+  function isMobileViewport() {
+    return typeof window.matchMedia === 'function'
+      && window.matchMedia(supportMobileQuery).matches;
+  }
+
+  function getMobileSupportMode() {
+    if (!isAdminSupportPage() || !isMobileViewport()) {
+      return 'desktop';
+    }
+
+    return initialConv > 0 ? 'thread' : 'history';
+  }
+
+  function applyMobileSupportMode() {
+    if (!isAdminSupportPage()) {
+      return;
+    }
+
+    mobileSupportMode = getMobileSupportMode();
+    document.body.classList.toggle('support-mobile-history-view', mobileSupportMode === 'history');
+    document.body.classList.toggle('support-mobile-thread-view', mobileSupportMode === 'thread');
+    document.body.dataset.supportMobileMode = mobileSupportMode;
+
+    if (mobileBackLink instanceof HTMLAnchorElement) {
+      mobileBackLink.href = buildHistoryUrl();
+    }
+  }
+
+  function isMobileHistoryView() {
+    return mobileSupportMode === 'history';
+  }
+
+  function buildConversationUrl(conversationId) {
+    const numericId = Number.parseInt(String(conversationId || '0'), 10) || 0;
+    if (numericId <= 0) {
+      return window.location.href;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('conv', String(numericId));
+    return url.toString();
+  }
+
+  function buildHistoryUrl() {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('conv');
+    return url.toString();
+  }
+
+  function openConversationPage(conversationId) {
+    window.location.assign(buildConversationUrl(conversationId));
+  }
 
   function setStatus(message, kind) {
     if (!statusEl) return;
@@ -483,7 +550,76 @@
     });
   }
 
-  function renderConversationList(keepSelection) {
+  function getVisibleConversations() {
+    return filterConversations();
+  }
+
+  function renderConversationPagination(totalItems, totalPages, currentPage) {
+    if (!(paginationEl instanceof HTMLElement)) {
+      return;
+    }
+
+    if (totalPages <= 1) {
+      paginationEl.innerHTML = '';
+      paginationEl.classList.add('hidden');
+      return;
+    }
+
+    const startItem = ((currentPage - 1) * conversationPageSize) + 1;
+    const endItem = Math.min(totalItems, currentPage * conversationPageSize);
+    const windowStart = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+    const windowEnd = Math.min(totalPages, Math.max(5, currentPage + 2));
+    const pageButtons = [];
+
+    for (let page = windowStart; page <= windowEnd; page += 1) {
+      const isActive = page === currentPage;
+      pageButtons.push(
+        '<button type="button" data-support-conv-page="' + page + '" class="inline-flex h-10 min-w-[2.5rem] items-center justify-center rounded-xl border px-3 text-sm font-semibold transition '
+          + (isActive
+            ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm dark:border-primary-400/50 dark:bg-primary-500/15 dark:text-primary-100'
+            : 'border-gray-200 bg-white text-gray-600 hover:border-primary-300 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-primary-500/60 dark:hover:text-primary-200')
+          + '"'
+          + (isActive ? ' aria-current="page"' : '')
+          + '>'
+          + page
+          + '</button>'
+      );
+    }
+
+    paginationEl.innerHTML =
+      '<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">'
+        + '<p class="text-sm text-gray-500 dark:text-gray-400">Affichage ' + startItem + ' Ã  ' + endItem + ' sur ' + totalItems + ' ticket(s)</p>'
+        + '<div class="flex flex-wrap items-center gap-2">'
+          + '<button type="button" data-support-conv-page-action="prev" class="inline-flex h-10 items-center justify-center rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-600 transition hover:border-primary-300 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-45 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-primary-500/60 dark:hover:text-primary-200"'
+          + (currentPage <= 1 ? ' disabled' : '')
+          + '>PrÃ©cÃ©dent</button>'
+          + pageButtons.join('')
+          + '<button type="button" data-support-conv-page-action="next" class="inline-flex h-10 items-center justify-center rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-600 transition hover:border-primary-300 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-45 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-primary-500/60 dark:hover:text-primary-200"'
+          + (currentPage >= totalPages ? ' disabled' : '')
+          + '>Suivant</button>'
+        + '</div>'
+      + '</div>';
+    paginationEl.classList.remove('hidden');
+  }
+
+  function jumpToConversationPage(conversationId) {
+    const numericId = Number.parseInt(String(conversationId || '0'), 10) || 0;
+    if (numericId <= 0) {
+      return;
+    }
+
+    const visibleConversations = getVisibleConversations();
+    const visibleIndex = visibleConversations.findIndex((conversation) => Number(conversation.id || 0) === numericId);
+    if (visibleIndex < 0) {
+      return;
+    }
+
+    conversationPage = Math.max(1, Math.ceil((visibleIndex + 1) / conversationPageSize));
+  }
+
+  function renderConversationList(keepSelection, options) {
+    const snapToPreferredConversation =
+      !keepSelection && (!options || options.snapToPreferredConversation !== false);
     if (!listEl) return;
     listEl.innerHTML = '';
     if (!allConversations.length) {
@@ -492,9 +628,14 @@
       empty.textContent = 'Aucune conversation pour le moment.';
       listEl.appendChild(empty);
       resetActive();
+      if (paginationEl instanceof HTMLElement) {
+        paginationEl.innerHTML = '';
+        paginationEl.classList.add('hidden');
+      }
       return;
     }
-    const list = filterConversations();
+
+    const list = getVisibleConversations();
     if (!list.length) {
       const empty = document.createElement('div');
       empty.className = 'support-list-empty';
@@ -506,14 +647,45 @@
         empty.textContent = 'Aucun résultat.';
       }
       listEl.appendChild(empty);
-      if (!keepSelection) {
+      if (!keepSelection || isMobileHistoryView()) {
+        resetActive();
+      }
+      if (paginationEl instanceof HTMLElement) {
+        paginationEl.innerHTML = '';
+        paginationEl.classList.add('hidden');
+      }
+      return;
+    }
+
+    const totalPages = Math.max(1, Math.ceil(list.length / conversationPageSize));
+    conversationPage = clamp(conversationPage, 1, totalPages);
+
+    const activeConversation = activeId
+      ? list.find((c) => c.id === activeId)
+      : null;
+    const initialConversation = initialConv
+      ? list.find((c) => c.id === initialConv)
+      : null;
+    const preferredConversation = activeConversation || initialConversation;
+    if (snapToPreferredConversation && preferredConversation) {
+      jumpToConversationPage(preferredConversation.id);
+      conversationPage = clamp(conversationPage, 1, totalPages);
+    }
+
+    const startIndex = (conversationPage - 1) * conversationPageSize;
+    const pageItems = list.slice(startIndex, startIndex + conversationPageSize);
+
+    pageItems.forEach((conv) => listEl.appendChild(renderConversationItem(conv)));
+    renderConversationPagination(list.length, totalPages, conversationPage);
+
+    if (isMobileHistoryView()) {
+      if (activeId !== null) {
         resetActive();
       }
       return;
     }
 
-    list.forEach((conv) => listEl.appendChild(renderConversationItem(conv)));
-    const activeExists = list.some((c) => c.id === activeId);
+    const activeExists = Boolean(activeConversation);
     if (mode === 'user' && keepSelection && activeId === null) {
       return;
     }
@@ -522,8 +694,8 @@
       const targetId =
         initialConv && list.some((c) => c.id === initialConv)
           ? initialConv
-          : list[0].id;
-      selectConversation(targetId, list.find((c) => c.id === targetId));
+          : pageItems[0].id;
+      selectConversation(targetId, list.find((c) => c.id === targetId) || pageItems[0]);
     }
   }
 
@@ -566,10 +738,10 @@
     avatar.textContent = initials;
 
     const content = document.createElement('div');
-    content.className = 'min-w-0 flex-1';
+    content.className = 'support-conv-content min-w-0 flex-1';
 
     const topRow = document.createElement('div');
-    topRow.className = 'flex items-center justify-between gap-2';
+    topRow.className = 'support-conv-top-row flex items-center justify-between gap-2';
 
     const title = document.createElement('div');
     title.className = 'support-conv-title text-sm font-semibold text-slate-800 truncate';
@@ -583,7 +755,7 @@
     topRow.appendChild(time);
 
     const previewRow = document.createElement('div');
-    previewRow.className = 'mt-1 flex items-center justify-between gap-2';
+    previewRow.className = 'support-conv-preview-row mt-1 flex items-center justify-between gap-2';
 
     const preview = document.createElement('div');
     preview.className = 'support-conv-preview text-xs text-slate-500 truncate';
@@ -605,7 +777,7 @@
     }
 
     const statusRow = document.createElement('div');
-    statusRow.className = 'mt-1 flex items-center gap-2 text-[10px]';
+    statusRow.className = 'support-conv-status-row mt-1 flex items-center gap-2 text-[10px]';
 
     const status = document.createElement('span');
     applyStatusPill(status, conv.status || '', 'Ouvert');
@@ -625,6 +797,11 @@
     item.appendChild(content);
 
     item.addEventListener('click', () => {
+      if (isMobileHistoryView()) {
+        openConversationPage(conv.id);
+        return;
+      }
+
       selectConversation(conv.id, conv);
     });
 
@@ -647,6 +824,7 @@
     if (assignedFilter && assignedFilter.value) {
       params.set('assigned', assignedFilter.value);
     }
+    params.set('limit', '500');
     try {
       const data = await fetchJson(
         `${basePath}/api/support_conversations?${params.toString()}`
@@ -795,6 +973,13 @@
   function selectConversation(id, conv) {
     activeId = id;
     lastMessageId = 0;
+    jumpToConversationPage(id);
+
+    if (isMobileHistoryView()) {
+      openConversationPage(id);
+      return;
+    }
+
     if (convInput) convInput.value = String(id);
     const displayName =
       mode === 'staff' ? conv?.created_by_name || 'Utilisateur' : 'Support';
@@ -1123,6 +1308,35 @@
   if (reopenBtn) {
     reopenBtn.addEventListener('click', () => conversationAction('reopen'));
   }
+
+  if (paginationEl instanceof HTMLElement) {
+    paginationEl.addEventListener('click', (event) => {
+      const target = event.target instanceof Element
+        ? event.target.closest('[data-support-conv-page], [data-support-conv-page-action]')
+        : null;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+
+      const pageValue = Number.parseInt(String(target.dataset.supportConvPage || '0'), 10) || 0;
+      if (pageValue > 0) {
+        conversationPage = pageValue;
+      renderConversationList(true, { snapToPreferredConversation: false });
+        return;
+      }
+
+      const action = String(target.dataset.supportConvPageAction || '');
+      if (action === 'prev' && conversationPage > 1) {
+        conversationPage -= 1;
+        renderConversationList(true, { snapToPreferredConversation: false });
+      } else if (action === 'next') {
+        conversationPage += 1;
+        renderConversationList(true, { snapToPreferredConversation: false });
+      }
+    });
+  }
+
+  applyMobileSupportMode();
 
   loadConversations(false, true);
   startPolling();

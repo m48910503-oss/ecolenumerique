@@ -21,6 +21,54 @@
     }
   }
 
+  function themeIcon(isDark) {
+    return isDark
+      ? '<i class="fas fa-sun" aria-hidden="true"></i>'
+      : '<i class="fas fa-moon" aria-hidden="true"></i>';
+  }
+
+  function setThemeNodeVisible(node, visible) {
+    if (!(node instanceof HTMLElement)) {
+      return;
+    }
+
+    node.hidden = !visible;
+    node.classList.toggle('hidden', !visible);
+    node.style.display = visible ? '' : 'none';
+    node.setAttribute('aria-hidden', 'true');
+  }
+
+  function syncThemeButton(button, isDark) {
+    button.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+    button.setAttribute('title', isDark ? 'Passer au mode clair' : 'Passer au mode sombre');
+
+    var darkIcon = button.querySelector('[data-theme-icon-dark]');
+    var lightIcon = button.querySelector('[data-theme-icon-light]');
+    if (darkIcon || lightIcon) {
+      setThemeNodeVisible(darkIcon, !isDark);
+      setThemeNodeVisible(lightIcon, isDark);
+    }
+
+    var label = button.querySelector('[data-theme-label]');
+    if (label) {
+      label.innerHTML = themeIcon(isDark);
+      label.setAttribute('aria-hidden', 'true');
+    }
+
+    toArray(button.children).forEach(function (node) {
+      if (!(node instanceof HTMLElement)) {
+        return;
+      }
+      if (node.classList.contains('dark:hidden')) {
+        setThemeNodeVisible(node, !isDark);
+        return;
+      }
+      if (node.classList.contains('dark:inline')) {
+        setThemeNodeVisible(node, isDark);
+      }
+    });
+  }
+
   function applyTheme(isDark) {
     var html = document.documentElement;
     html.classList.toggle('dark', isDark);
@@ -30,7 +78,7 @@
     setStoredTheme(isDark ? 'dark' : 'light');
 
     toArray(document.querySelectorAll('[data-theme-toggle], #theme-toggle, #theme-toggle-sidebar')).forEach(function (button) {
-      button.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+      syncThemeButton(button, isDark);
     });
   }
 

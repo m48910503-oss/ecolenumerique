@@ -60,22 +60,38 @@ if ($platformSubtitle === '') {
                 </nav>
 
                 <div class="mk-header__actions">
-                    <div class="mk-header__account">
-                        <span class="mk-header__account-label"><?php echo e($publicHeaderMetaLabel); ?></span>
-                        <div class="mk-header__account-links">
-                            <?php if ($isLoggedIn): ?>
-                                <a class="mk-header__account-link" href="<?php echo e($notificationsUrl); ?>">
-                                    <span class="app-icon" aria-hidden="true"><?php echo function_exists('dashboard_icon_svg') ? dashboard_icon_svg('bell') : ''; ?></span>
-                                    <span>Notifications</span>
-                                    <?php if ($totalUnread > 0): ?>
-                                        <span class="mk-count-badge"><?php echo e((string) $totalUnread); ?></span>
-                                    <?php endif; ?>
-                                </a>
+                    <?php if ($isLoggedIn): ?>
+                        <a class="mk-header__account-link" href="<?php echo e($notificationsUrl); ?>">
+                            <span class="app-icon" aria-hidden="true"><?php echo function_exists('dashboard_icon_svg') ? dashboard_icon_svg('bell') : ''; ?></span>
+                            <span>Notifications</span>
+                            <?php if ($totalUnread > 0): ?>
+                                <span class="mk-count-badge"><?php echo e((string) $totalUnread); ?></span>
                             <?php endif; ?>
-                            <a class="mk-header__account-link" href="<?php echo e($publicHeaderSecondaryUrl); ?>"><?php echo e($publicHeaderSecondaryLabel); ?></a>
+                        </a>
+                        <?php
+                        $publicUserMenuUser = is_array($user ?? null) ? $user : (is_array($currentUser ?? null) ? $currentUser : []);
+                        $publicUserMenuActiveSpace = function_exists('dashboard_resolve_space') ? dashboard_resolve_space($publicUserMenuUser) : null;
+                        $publicUserMenuRoleLabel = $publicUserMenuActiveSpace !== null && function_exists('dashboard_space_label')
+                            ? dashboard_space_label($publicUserMenuActiveSpace)
+                            : ($publicHeaderMetaLabel !== '' ? $publicHeaderMetaLabel : 'Compte connecté');
+                        $publicUserMenuShowRoleLine = true;
+                        $publicUserMenuShowHeaderPill = false;
+                        $publicUserMenuPrimaryLabel = 'Tableau de bord';
+                        $publicUserMenuPrimaryUrl = $dashboardUrl;
+                        $publicUserMenuPrimaryIcon = 'layout';
+                        $publicUserMenuLogoutUrl = $logoutUrl;
+                        $publicUserMenuClass = 'ml-0.5';
+                        require __DIR__ . '/_public_user_menu.php';
+                        ?>
+                    <?php else: ?>
+                        <div class="mk-header__account">
+                            <span class="mk-header__account-label"><?php echo e($publicHeaderMetaLabel); ?></span>
+                            <div class="mk-header__account-links">
+                                <a class="mk-header__account-link" href="<?php echo e($publicHeaderSecondaryUrl); ?>"><?php echo e($publicHeaderSecondaryLabel); ?></a>
+                            </div>
                         </div>
-                    </div>
-                    <a class="mk-btn mk-btn--primary" href="<?php echo e($publicHeaderPrimaryUrl); ?>"><?php echo e($publicHeaderPrimaryLabel); ?></a>
+                        <a class="mk-btn mk-btn--primary" href="<?php echo e($publicHeaderPrimaryUrl); ?>"><?php echo e($publicHeaderPrimaryLabel); ?></a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

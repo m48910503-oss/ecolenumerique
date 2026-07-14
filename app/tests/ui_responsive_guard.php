@@ -640,6 +640,31 @@ foreach ($adminViews as $viewName => $viewFile) {
 }
 
 require_snippet(
+    $rootDir . '/app/Views/admin/support.php',
+    'support-conv-pagination',
+    $errors,
+    'Admin support page should expose pagination for the history list'
+);
+require_snippet(
+    $rootDir . '/app/Views/admin/support.php',
+    'support-mobile-back',
+    $errors,
+    'Admin support page should expose the mobile back link for the conversation view'
+);
+require_snippet(
+    $rootDir . '/assets/js/support_chat.js',
+    'support-mobile-history-view',
+    $errors,
+    'Support chat script should support the mobile history-only mode'
+);
+require_snippet(
+    $rootDir . '/assets/css/admin-dashboard.css',
+    'support-mobile-thread-view',
+    $errors,
+    'Admin dashboard stylesheet should support the mobile conversation-only mode'
+);
+
+require_snippet(
     $rootDir . '/app/Views/admin/course_preview.php',
     'data-scroll-top-root="1"',
     $errors,

@@ -26,10 +26,10 @@
 
   function themeIcon(isDark) {
     if (isDark) {
-      return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v2.1M12 18.9V21M4.57 4.57l1.49 1.49M17.94 17.94l1.49 1.49M3 12h2.1M18.9 12H21M4.57 19.43l1.49-1.49M17.94 6.06l1.49-1.49" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 16.2a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4Z" stroke="currentColor" stroke-width="1.8"/></svg>';
+      return '<i class="fas fa-sun" aria-hidden="true"></i>';
     }
 
-    return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.1 14.6A7.2 7.2 0 0 1 9.4 3.9 8.9 8.9 0 1 0 20.1 14.6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+    return '<i class="fas fa-moon" aria-hidden="true"></i>';
   }
 
   function applyTheme(isDark) {

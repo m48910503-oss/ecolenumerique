@@ -42,7 +42,7 @@ $adminTopIcon = $adminTopIconMap[(string) ($adminNavActive ?? '')] ?? 'fa-shield
 ?>
 <header class="admin-dashboard-topbar sticky top-0 z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-700 px-4 py-4 sm:px-6 flex items-center justify-between">
     <div class="flex items-center gap-4 min-w-0">
-        <button type="button" class="js-sidebar-toggle md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700" aria-controls="admin-sidebar" aria-label="Ouvrir le menu" aria-expanded="false">
+        <button type="button" class="js-sidebar-toggle md:hidden inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:border-gray-300 hover:bg-gray-100 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:text-white" aria-controls="admin-sidebar" aria-label="Ouvrir le menu" aria-expanded="false">
             <i class="fas fa-bars"></i>
         </button>
         <h1 class="text-xl font-bold text-gray-900 dark:text-white truncate inline-flex items-center gap-2">

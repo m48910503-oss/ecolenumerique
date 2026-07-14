@@ -14,7 +14,7 @@ final class SupportDownloadController extends Controller
         /** @var \PDO $pdo */
         $pdo = $this->pdo();
 
-        $user = $this->requireAuth(true, $this->siteUrl('support'));
+        $user = $this->currentUser();
         $attachmentId = (int) ($_GET['id'] ?? 0);
 
         $service = new SupportDownloadService(new WebSupportDownloadModel($pdo));

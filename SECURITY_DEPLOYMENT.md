@@ -18,6 +18,7 @@ Set these on the server, outside the repository:
 ```txt
 APP_ENV=production
 ADMIN_BOOTSTRAP_REGISTER=0
+ADMIN_REGISTER_SECRET=________________________
 APP_DRIVE_SERVICE_ACCOUNT_JSON=C:\secrets\google\service-account.json
 APP_DRIVE_OAUTH_TOKEN_PATH=C:\secrets\google\oauth_token.json
 APP_SUPPORT_STORAGE_DIR=C:\xampp\app-private\ecolenumerique\support
@@ -27,6 +28,7 @@ Notes:
 
 - `APP_DRIVE_SERVICE_ACCOUNT_JSON` and `APP_DRIVE_OAUTH_TOKEN_PATH` must point to files outside `htdocs` and outside the repository.
 - `APP_SUPPORT_STORAGE_DIR` should point to a private directory that is not web-accessible.
+- The super-admin registration link becomes `https://votre-domaine/admin/register?token=...` once `ADMIN_REGISTER_SECRET` is set.
 
 ## 3. Filesystem layout
 

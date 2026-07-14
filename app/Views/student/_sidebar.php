@@ -88,7 +88,7 @@ $isProfileComplete = $profileCompletionPct >= 100;
     <button type="button" class="app-shell-sidebar__close ml-auto order-last md:hidden" data-close-sidebar aria-label="Fermer le menu">
       <span class="app-shell-sidebar__close-mark" aria-hidden="true">&#x2715;</span>
     </button>
-    <span class="whitespace-nowrap text-lg font-bold tracking-tight text-gray-900 dark:text-white sm:text-xl">École <span class="text-blue-600 dark:text-blue-400">Numérique</span></span>
+    <span class="whitespace-nowrap text-lg font-bold tracking-tight text-gray-900 dark:text-white sm:text-xl"><?php echo site_brand_name_html('École Numérique'); ?></span>
   </div>
 
   <div class="p-4 sm:p-5 border-b border-gray-100 dark:border-gray-700">
@@ -164,8 +164,8 @@ $isProfileComplete = $profileCompletionPct >= 100;
       </a>
     <?php endif; ?>
     <button id="theme-toggle-sidebar" data-web-theme-toggle data-theme-toggle type="button" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition sm:px-4 sm:py-3" aria-pressed="false">
-      <span class="inline-flex h-5 w-5 items-center justify-center" data-theme-icon-dark aria-hidden="true"><?php echo dashboard_icon_svg('theme-moon'); ?></span>
-      <span class="inline-flex h-5 w-5 items-center justify-center" data-theme-icon-light aria-hidden="true" hidden><?php echo dashboard_icon_svg('theme-sun'); ?></span>
+      <i class="fas fa-moon text-base w-5" data-theme-icon-dark aria-hidden="true"></i>
+      <i class="fas fa-sun hidden text-base w-5" data-theme-icon-light aria-hidden="true"></i>
       <span class="dark:hidden">Mode sombre</span>
       <span class="hidden dark:inline" hidden>Mode clair</span>
     </button>
@@ -191,7 +191,7 @@ $isProfileComplete = $profileCompletionPct >= 100;
                 <?php endif; ?>
             </div>
             <div class="app-shell-sidebar__brand-copy">
-                <p class="app-shell-brand-title">École <span>Numérique</span></p>
+                <p class="app-shell-brand-title"><?php echo site_brand_name_html('École Numérique'); ?></p>
                 <p class="app-shell-brand-meta">Espace étudiant</p>
             </div>
         </div>

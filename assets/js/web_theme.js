@@ -91,8 +91,8 @@
         }
     `;
 
-    const THEME_ICON_LIGHT = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.15"></circle><path d="M12 2.8v2.5"></path><path d="M12 18.7v2.5"></path><path d="M2.8 12h2.5"></path><path d="M18.7 12h2.5"></path></svg>';
-    const THEME_ICON_DARK = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3.6A7.9 7.9 0 1 0 20.4 17a8.7 8.7 0 1 1-5.2-13.4Z"></path></svg>';
+    const THEME_ICON_LIGHT = '<i class="fas fa-sun" aria-hidden="true"></i>';
+    const THEME_ICON_DARK = '<i class="fas fa-moon" aria-hidden="true"></i>';
     const scrollTopState = {
         button: null,
         initialized: false,
@@ -190,6 +190,24 @@
         link.rel = 'stylesheet';
         link.href = `${withBasePath('assets/css/icon-colors.css')}?v=20260618-icon-colors`;
         link.setAttribute('data-app-icon-colors', '1');
+        head.appendChild(link);
+    };
+
+    const ensureIconStylesheet = () => {
+        const head = document.head || document.documentElement;
+        if (!head) {
+            return;
+        }
+
+        const existing = head.querySelector('link[data-app-icons="1"], link[href*="/assets/vendor/fontawesome/all.min.css"], link[href*="assets/vendor/fontawesome/all.min.css"]');
+        if (existing) {
+            return;
+        }
+
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = `${withBasePath('assets/vendor/fontawesome/all.min.css')}?v=20260612-icons`;
+        link.setAttribute('data-app-icons', '1');
         head.appendChild(link);
     };
 
@@ -413,6 +431,7 @@
         syncTheme(false);
         ensureScrollbarStyle();
         ensureScrollTopStyle();
+        ensureIconStylesheet();
         ensureIconColorStylesheet();
         ensureScrollTopButton();
     };

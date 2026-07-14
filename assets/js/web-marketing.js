@@ -2,6 +2,7 @@
   const onReady = () => {
     initPublicAnnouncementBar();
     initPublicHeader();
+    initPublicUserMenus();
     initTextRepair();
     initPromoCountdowns();
     initCatalogue();
@@ -169,6 +170,49 @@
 
     updateToggleVisualState(panel.classList.contains("is-open"));
     panel.setAttribute("aria-hidden", panel.classList.contains("is-open") ? "false" : "true");
+  }
+
+  function initPublicUserMenus() {
+    const menus = Array.from(document.querySelectorAll("[data-public-user-menu]")).filter(
+      (node) => node instanceof HTMLElement && node.tagName === "DETAILS"
+    );
+
+    if (menus.length === 0) {
+      return;
+    }
+
+    const closeOpenMenus = () => {
+      menus.forEach((menu) => {
+        if (menu.open) {
+          menu.open = false;
+        }
+      });
+    };
+
+    document.addEventListener("click", (event) => {
+      if (menus.every((menu) => !menu.open)) {
+        return;
+      }
+
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (menus.some((menu) => menu.contains(target))) {
+        return;
+      }
+
+      closeOpenMenus();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      closeOpenMenus();
+    });
   }
 
   function initPublicAnnouncementBar() {

@@ -10,6 +10,7 @@ final class ApiSupportModel extends Model
     /** @var array<string,int|null> */
     private array $autoIncrementCache = [];
     private ?bool $hasConversationCategoryColumn = null;
+    private ?bool $hasGuestSupportColumns = null;
 
     public function beginTransaction(): void
     {
@@ -45,17 +46,25 @@ final class ApiSupportModel extends Model
         string $scope,
         string $status,
         string $assigned,
-        int $limit
+        int $limit,
+        ?string $viewerKey = null
     ): array {
-        $params = [
-            ':uid_read' => $userId,
-            ':uid_unread' => $userId,
-        ];
+        $params = [];
         $where = [];
+        $viewerKey = trim((string) $viewerKey);
+        $guestMode = $userId < 1 && $viewerKey !== '';
+        if ($guestMode && !$this->hasGuestSupportColumns()) {
+            return [];
+        }
 
         if (!$isStaff || $scope !== 'all') {
-            $where[] = 'c.created_by = :uid_owner';
-            $params[':uid_owner'] = $userId;
+            if ($guestMode) {
+                $where[] = 'c.viewer_key = :viewer_key';
+                $params[':viewer_key'] = $viewerKey;
+            } else {
+                $where[] = 'c.created_by = :uid_owner';
+                $params[':uid_owner'] = $userId;
+            }
         }
         if ($status !== '') {
             $where[] = 'c.status = :status';
@@ -71,6 +80,13 @@ final class ApiSupportModel extends Model
         }
         $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
 
+        $unreadSql = $guestMode
+            ? '0 AS unread_count'
+            : '(SELECT COUNT(*) FROM support_messages m
+                    WHERE m.conversation_id = c.id
+                      AND m.id > COALESCE(r.last_read_message_id, 0)
+                      AND m.sender_id <> :uid_unread) AS unread_count';
+
         $sql = "SELECT
                 c.*,
                 u.first_name AS creator_first,
@@ -79,15 +95,18 @@ final class ApiSupportModel extends Model
                 a.last_name AS assigned_last,
                 (SELECT m.id FROM support_messages m WHERE m.conversation_id = c.id ORDER BY m.id DESC LIMIT 1) AS last_message_id,
                 (SELECT m.body FROM support_messages m WHERE m.conversation_id = c.id ORDER BY m.id DESC LIMIT 1) AS last_message_body,
-                (SELECT COUNT(*) FROM support_messages m
-                    WHERE m.conversation_id = c.id
-                      AND m.id > COALESCE(r.last_read_message_id, 0)
-                      AND m.sender_id <> :uid_unread) AS unread_count
+                {$unreadSql}
             FROM support_conversations c
-            JOIN users u ON u.id = c.created_by
-            LEFT JOIN users a ON a.id = c.assigned_to
-            LEFT JOIN support_conversation_reads r ON r.conversation_id = c.id AND r.user_id = :uid_read
-            {$whereSql}
+            LEFT JOIN users u ON u.id = c.created_by
+            LEFT JOIN users a ON a.id = c.assigned_to";
+
+        if (!$guestMode) {
+            $sql .= ' LEFT JOIN support_conversation_reads r ON r.conversation_id = c.id AND r.user_id = :uid_read';
+            $params[':uid_read'] = $userId;
+            $params[':uid_unread'] = $userId;
+        }
+
+        $sql .= " {$whereSql}
             ORDER BY c.last_message_at DESC
             LIMIT {$limit}";
 
@@ -97,13 +116,19 @@ final class ApiSupportModel extends Model
     }
 
     public function insertConversation(
-        int $createdBy,
+        ?int $createdBy,
         string $subject,
         string $status,
-        string $category = 'other'
+        string $category = 'other',
+        ?string $viewerKey = null,
+        ?string $guestName = null,
+        ?string $guestEmail = null
     ): int
     {
         $table = 'support_conversations';
+        if ($createdBy === null && !$this->hasGuestSupportColumns()) {
+            throw new \RuntimeException('Guest support schema is missing.');
+        }
         $id = $this->generatePrimaryId($table);
         $usesAutoIncrement = $this->usesAutoIncrement($table);
 
@@ -121,9 +146,37 @@ final class ApiSupportModel extends Model
             $params[':category'] = $category;
         }
 
+        if ($createdBy === null) {
+            $viewerKey = trim((string) $viewerKey);
+            $guestName = trim((string) $guestName);
+            $guestEmail = trim((string) $guestEmail);
+            if ($viewerKey === '') {
+                throw new \RuntimeException('Guest viewer key is missing.');
+            }
+
+            $columns[] = 'viewer_key';
+            $values[] = ':viewer_key';
+            $params[':viewer_key'] = $viewerKey;
+
+            if ($guestName === '') {
+                $guestName = 'Visiteur';
+            }
+            $columns[] = 'guest_name';
+            $values[] = ':guest_name';
+            $params[':guest_name'] = $guestName;
+
+            if ($guestEmail !== '') {
+                $columns[] = 'guest_email';
+                $values[] = ':guest_email';
+                $params[':guest_email'] = $guestEmail;
+            }
+        }
+
         $columns[] = 'last_message_at';
         $values[] = 'NOW()';
         $columns[] = 'created_at';
+        $values[] = 'NOW()';
+        $columns[] = 'updated_at';
         $values[] = 'NOW()';
 
         if (!$usesAutoIncrement) {
@@ -146,7 +199,7 @@ final class ApiSupportModel extends Model
         return $id;
     }
 
-    public function insertMessage(int $conversationId, int $senderId, string $body): int
+    public function insertMessage(int $conversationId, ?int $senderId, string $body): int
     {
         $table = 'support_messages';
         $id = $this->generatePrimaryId($table);
@@ -292,9 +345,10 @@ final class ApiSupportModel extends Model
     {
         if ($sinceId > 0) {
             $stmt = $this->pdo->prepare(
-                'SELECT m.id, m.sender_id, m.body, m.created_at, u.first_name, u.last_name
+                'SELECT m.id, m.sender_id, m.body, m.created_at, u.first_name, u.last_name, c.viewer_key, c.guest_name
                  FROM support_messages m
-                 JOIN users u ON u.id = m.sender_id
+                 LEFT JOIN users u ON u.id = m.sender_id
+                 JOIN support_conversations c ON c.id = m.conversation_id
                  WHERE m.conversation_id = :cid AND m.id > :since
                  ORDER BY m.id ASC
                  LIMIT 200'
@@ -307,11 +361,12 @@ final class ApiSupportModel extends Model
         }
 
         $stmt = $this->pdo->prepare(
-            'SELECT t.id, t.sender_id, t.body, t.created_at, t.first_name, t.last_name
+            'SELECT t.id, t.sender_id, t.body, t.created_at, t.first_name, t.last_name, t.viewer_key, t.guest_name
              FROM (
-                SELECT m.id, m.sender_id, m.body, m.created_at, u.first_name, u.last_name
+                SELECT m.id, m.sender_id, m.body, m.created_at, u.first_name, u.last_name, c.viewer_key, c.guest_name
                 FROM support_messages m
-                JOIN users u ON u.id = m.sender_id
+                LEFT JOIN users u ON u.id = m.sender_id
+                JOIN support_conversations c ON c.id = m.conversation_id
                 WHERE m.conversation_id = :cid
                 ORDER BY m.id DESC
                 LIMIT 200
@@ -428,11 +483,26 @@ final class ApiSupportModel extends Model
             return $this->autoIncrementCache[$table] === 1;
         }
 
-        $stmt = $this->pdo->prepare('SHOW CREATE TABLE `' . $table . '`');
-        $stmt->execute();
-        $row = $stmt->fetch();
-        $createSql = strtolower((string) ($row['Create Table'] ?? $row['create table'] ?? ''));
-        $usesAutoIncrement = str_contains($createSql, 'auto_increment');
+        $driver = (string) $this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'sqlite') {
+            $stmt = $this->pdo->prepare(
+                "SELECT sql
+                 FROM sqlite_master
+                 WHERE type IN ('table', 'view')
+                   AND name = :table
+                 LIMIT 1"
+            );
+            $stmt->execute([':table' => $table]);
+            $row = $stmt->fetch();
+            $createSql = strtolower((string) ($row['sql'] ?? ''));
+            $usesAutoIncrement = str_contains($createSql, 'autoincrement');
+        } else {
+            $stmt = $this->pdo->prepare('SHOW CREATE TABLE `' . $table . '`');
+            $stmt->execute();
+            $row = $stmt->fetch();
+            $createSql = strtolower((string) ($row['Create Table'] ?? $row['create table'] ?? ''));
+            $usesAutoIncrement = str_contains($createSql, 'auto_increment');
+        }
         $this->autoIncrementCache[$table] = $usesAutoIncrement ? 1 : 0;
 
         return $usesAutoIncrement;
@@ -451,6 +521,24 @@ final class ApiSupportModel extends Model
         }
 
         return $this->hasConversationCategoryColumn;
+    }
+
+    private function hasGuestSupportColumns(): bool
+    {
+        if ($this->hasGuestSupportColumns !== null) {
+            return $this->hasGuestSupportColumns;
+        }
+
+        try {
+            $this->hasGuestSupportColumns =
+                $this->columnExists('support_conversations', 'viewer_key')
+                && $this->columnExists('support_conversations', 'guest_name')
+                && $this->columnExists('support_conversations', 'guest_email');
+        } catch (\Throwable $e) {
+            $this->hasGuestSupportColumns = false;
+        }
+
+        return $this->hasGuestSupportColumns;
     }
 
     private function generatePrimaryId(string $table): int

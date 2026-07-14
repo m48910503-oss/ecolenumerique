@@ -75,6 +75,7 @@ define('APP_BASE_URL', rtrim($config['app']['base_url'] ?? '', '/'));
 define('APP_FROM_EMAIL', $config['app']['from_email'] ?? 'no-reply@example.test');
 define('APP_FROM_NAME', $config['app']['from_name'] ?? 'Application');
 define('APP_ERROR_LOG_PATH', $config['app']['error_log_path'] ?? (__DIR__ . '/../storage/logs/application-error.log'));
+define('APP_ADMIN_REGISTER_SECRET', trim((string) getenv('ADMIN_REGISTER_SECRET')));
 define('APP_MAIL_DRIVER', $config['mail']['driver'] ?? 'smtp');
 define('APP_MAIL_LOG_PATH', $config['mail']['log_path'] ?? (__DIR__ . '/../storage/mail.log'));
 define('APP_MAIL_SMTP_HOST', $config['mail']['smtp']['host'] ?? '');

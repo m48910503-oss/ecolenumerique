@@ -4715,6 +4715,34 @@ body.app-role-student[data-view^="student/"] :is(.student-dashboard-main, .stude
   }
 }
 
+@media (max-width: 767px) {
+  body.app-role-student[data-view^="student/"] :is(.student-shell-sidebar, .student-dashboard-sidebar, #student-sidebar, #company-sidebar) [data-close-sidebar] {
+    display: inline-flex !important;
+    width: 2.1rem !important;
+    min-width: 2.1rem !important;
+    height: 2.1rem !important;
+    align-items: center;
+    justify-content: center;
+    padding: 0 !important;
+    border: 1px solid rgba(220, 38, 38, 0.22) !important;
+    border-radius: 9999px !important;
+    background: rgba(254, 242, 242, 0.98) !important;
+    color: #dc2626 !important;
+    box-shadow: 0 8px 18px -14px rgba(220, 38, 38, 0.45);
+  }
+
+  body.app-role-student[data-view^="student/"] :is(.student-shell-sidebar, .student-dashboard-sidebar, #student-sidebar, #company-sidebar) [data-close-sidebar]:hover {
+    border-color: rgba(220, 38, 38, 0.34) !important;
+    background: rgba(254, 226, 226, 1) !important;
+    color: #b91c1c !important;
+  }
+
+  body.app-role-student[data-view^="student/"] :is(.student-shell-sidebar, .student-dashboard-sidebar, #student-sidebar, #company-sidebar) [data-close-sidebar] :is(i, .app-shell-sidebar__close-mark) {
+    font-size: 1.05rem !important;
+    line-height: 1 !important;
+  }
+}
+
 body.app-role-student[data-view^="student/"] :is(.student-dashboard-topbar, .student-shell-toolbar, .app-shell-toolbar) {
   min-height: 3.6rem !important;
   height: 3.6rem !important;
@@ -5869,6 +5897,21 @@ body.app-role-student[data-view^="student/"] #student-sidebar .app-shell-brand-t
 body.app-role-student.student-dashboard-page #student-sidebar .app-shell-brand-title {
   font-size: 1.05rem !important;
   line-height: 1.25rem !important;
+}
+
+@media (max-width: 767px) {
+  body.app-role-student[data-view^="student/"] #student-sidebar .app-shell-sidebar__brand {
+    position: relative !important;
+    padding-right: 3.1rem !important;
+  }
+
+  body.app-role-student[data-view^="student/"] #student-sidebar .app-shell-sidebar__close {
+    position: absolute !important;
+    top: 0.72rem !important;
+    right: 0.72rem !important;
+    margin-left: 0 !important;
+    z-index: 2;
+  }
 }
 
 body.app-role-student[data-view^="student/"] #student-sidebar .app-shell-sidebar__profile,

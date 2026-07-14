@@ -58,6 +58,13 @@
   }
 
   function buildPrintUrl() {
+    if (downloadMenu) {
+      const signedPrintUrl = (downloadMenu.getAttribute("data-certificate-print-url") || "").trim();
+      if (signedPrintUrl) {
+        return signedPrintUrl;
+      }
+    }
+
     const url = new URL(window.location.href);
     url.searchParams.delete("export");
     url.searchParams.delete("inline");

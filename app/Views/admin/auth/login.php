@@ -6,6 +6,7 @@ $renderPanelHeader = $auth['renderPanelHeader'];
 $renderAside = $auth['renderAside'];
 $renderPage = $auth['renderPage'];
 $authIconClasses = 'h-5 w-5';
+$successMessage = trim((string) ($successMessage ?? ''));
 
 ob_start(); 
 ?>
@@ -33,6 +34,13 @@ if (!empty($errors)) {
     echo $renderFlash('danger', array_map(static fn ($error): string => (string) $error, $errors), [
         'title' => 'Connexion impossible',
         'role' => 'alert',
+    ]);
+}
+
+if ($successMessage !== '') {
+    echo $renderFlash('success', [$successMessage], [
+        'title' => 'Confirmation',
+        'role' => 'status',
     ]);
 }
 ?>

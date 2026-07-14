@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers\Api;
 
 use App\Models\ApiSupportModel;
+use App\Services\Support\SupportGuestContextService;
 use App\Services\Api\SupportService;
 
 final class SupportMessagesController extends ApiController
@@ -14,10 +15,7 @@ final class SupportMessagesController extends ApiController
         $pdo = $this->pdo();
 
         $user = $this->currentUser();
-        if (!$user) {
-            $this->json(401, ['ok' => false, 'error' => 'auth']);
-            return;
-        }
+        $guestContext = (new SupportGuestContextService())->ensure();
 
         $method = (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET');
         $data = [];
@@ -32,6 +30,7 @@ final class SupportMessagesController extends ApiController
         $service = new SupportService(new ApiSupportModel($pdo));
         $result = $service->handleMessages(
             $user,
+            $guestContext,
             $method,
             $_GET,
             $data,

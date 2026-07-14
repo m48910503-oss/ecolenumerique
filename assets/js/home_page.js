@@ -72,6 +72,7 @@
     var label = picker ? picker.querySelector("[data-home-category-label]") : null;
     var input = picker ? picker.querySelector("[data-home-category-input]") : null;
     var options = picker ? Array.prototype.slice.call(picker.querySelectorAll("[data-home-category-option]")) : [];
+    var section = picker ? picker.closest(".home-search-section") : null;
 
     if (!(picker instanceof HTMLElement) || !(trigger instanceof HTMLButtonElement) || !(menu instanceof HTMLElement) || !(label instanceof HTMLElement) || !(input instanceof HTMLInputElement) || !options.length) {
       return;
@@ -79,6 +80,24 @@
 
     var isOpen = false;
     var focusTimer = 0;
+
+    function clearSectionSpace() {
+      if (section instanceof HTMLElement) {
+        section.style.removeProperty("--home-category-menu-space");
+      }
+    }
+
+    function syncSectionSpace() {
+      if (!(section instanceof HTMLElement) || !isOpen) {
+        return;
+      }
+
+      var sectionRect = section.getBoundingClientRect();
+      var menuRect = menu.getBoundingClientRect();
+      var overflow = Math.max(0, Math.ceil(menuRect.bottom - sectionRect.bottom));
+
+      section.style.setProperty("--home-category-menu-space", Math.max(16, overflow + 16) + "px");
+    }
 
     function getOptionValue(option) {
       return option ? String(option.getAttribute("data-category-value") || "") : "";
@@ -125,7 +144,11 @@
       }
       isOpen = false;
       picker.classList.remove("is-open");
+      if (section instanceof HTMLElement) {
+        section.classList.remove("is-category-open");
+      }
       menu.hidden = true;
+      clearSectionSpace();
       trigger.setAttribute("aria-expanded", "false");
     }
 
@@ -134,9 +157,18 @@
         return;
       }
       isOpen = true;
+      if (section instanceof HTMLElement) {
+        section.style.setProperty("--home-category-menu-space", "16px");
+        section.classList.add("is-category-open");
+      }
       picker.classList.add("is-open");
       menu.hidden = false;
       trigger.setAttribute("aria-expanded", "true");
+      if (typeof window.requestAnimationFrame === "function") {
+        window.requestAnimationFrame(syncSectionSpace);
+      } else {
+        window.setTimeout(syncSectionSpace, 0);
+      }
 
       var activeOption = getSelectedOption(input.value || "");
       if (activeOption && typeof activeOption.focus === "function") {

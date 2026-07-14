@@ -507,8 +507,8 @@
      * Met à jour le texte et l'état aria des boutons de bascule.
      * @param {'dark'|'light'} theme
      */
-    const THEME_ICON_LIGHT = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2"></path><path d="M12 21v2"></path><path d="m4.22 4.22 1.42 1.42"></path><path d="m18.36 18.36 1.42 1.42"></path><path d="M1 12h2"></path><path d="M21 12h2"></path><path d="m4.22 19.78 1.42-1.42"></path><path d="m18.36 5.64 1.42-1.42"></path></svg>';
-    const THEME_ICON_DARK = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.4A8.5 8.5 0 1 1 11.6 3a7 7 0 1 0 9.4 9.4Z"></path></svg>';
+    const THEME_ICON_LIGHT = '<i class="fas fa-sun" aria-hidden="true"></i>';
+    const THEME_ICON_DARK = '<i class="fas fa-moon" aria-hidden="true"></i>';
 
     const updateButtons = (theme) => {
         const isDark = theme === 'dark';
@@ -516,16 +516,54 @@
         const pressed = isDark ? 'true' : 'false';
         const icon = isDark ? THEME_ICON_LIGHT : THEME_ICON_DARK;
 
+        const setVisible = (node, visible) => {
+            if (!(node instanceof HTMLElement)) return;
+            node.hidden = !visible;
+            node.classList.toggle('hidden', !visible);
+            node.style.display = visible ? '' : 'none';
+            node.setAttribute('aria-hidden', 'true');
+        };
+
         document.querySelectorAll('[data-theme-toggle], #theme-toggle').forEach((btn) => {
+            const darkIconNode = btn.querySelector('[data-theme-icon-dark]');
+            const lightIconNode = btn.querySelector('[data-theme-icon-light]');
+            const legacyThemeIconNodes = Array.from(btn.children).filter((node) => {
+                if (!(node instanceof HTMLElement)) return false;
+                return node.classList.contains('dark:hidden') || node.classList.contains('dark:inline');
+            });
+            const hasLegacyThemeIcons = legacyThemeIconNodes.some((node) => node.classList.contains('dark:hidden')) &&
+                legacyThemeIconNodes.some((node) => node.classList.contains('dark:inline'));
             let iconNode = btn.querySelector('[data-theme-label]');
-            if (!iconNode) {
-                iconNode = document.createElement('span');
-                iconNode.setAttribute('data-theme-label', '');
-                btn.replaceChildren(iconNode);
+
+            if (darkIconNode || lightIconNode) {
+                setVisible(darkIconNode, !isDark);
+                setVisible(lightIconNode, isDark);
+            } else {
+                if (!iconNode && !hasLegacyThemeIcons) {
+                    iconNode = document.createElement('span');
+                    iconNode.setAttribute('data-theme-label', '');
+                    iconNode.setAttribute('aria-hidden', 'true');
+                    iconNode.className = 'inline-flex h-5 w-5 items-center justify-center';
+                    btn.prepend(iconNode);
+                }
+
+                if (iconNode instanceof HTMLElement) {
+                    iconNode.innerHTML = icon;
+                    iconNode.setAttribute('aria-hidden', 'true');
+                    setVisible(iconNode, true);
+                }
             }
 
-            iconNode.innerHTML = icon;
-            iconNode.setAttribute('aria-hidden', 'true');
+            legacyThemeIconNodes.forEach((node) => {
+                if (!(node instanceof HTMLElement)) return;
+                if (node.classList.contains('dark:hidden')) {
+                    setVisible(node, !isDark);
+                    return;
+                }
+                if (node.classList.contains('dark:inline')) {
+                    setVisible(node, isDark);
+                }
+            });
 
             btn.classList.add('app-theme-toggle-icon');
             btn.setAttribute('aria-label', label);
@@ -567,7 +605,7 @@
     window.toggleTheme = () => {
         const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
         setTheme(next, true);
-        document.querySelectorAll('[data-theme-label] svg').forEach((icon) => {
+        document.querySelectorAll('[data-theme-label] svg, [data-theme-label] i, [data-theme-icon-dark]:not([hidden]), [data-theme-icon-light]:not([hidden])').forEach((icon) => {
             icon.classList.add('animate-scale-in');
             setTimeout(() => icon.classList.remove('animate-scale-in'), 300);
         });
