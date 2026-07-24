@@ -1137,7 +1137,8 @@
         if (S.submitting) return;
         var submitter = e.submitter || null;
         var isCategoryProposal = !!(submitter && submitter.name === "category_action" && submitter.value === "propose");
-        if (!isCategoryProposal) {
+        var isDraftSave = !!(submitter && submitter.name === "submit_action" && submitter.value === "draft");
+        if (!isCategoryProposal && !isDraftSave) {
           validateAll();
           if (!validateRequiredLists()) return;
           if (!form.checkValidity()) return;

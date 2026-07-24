@@ -114,17 +114,31 @@ final class CourseCreateService extends Service
         if ($method === 'POST') {
             $submitAction = (string) ($post['submit_action'] ?? 'draft');
             $requiresCategoryForSubmission = $submitAction === 'submit';
+            $draftTitle = 'Brouillon sans titre';
+            $draftDescription = 'Brouillon en cours.';
 
             if ($title === '') {
-                $errors[] = 'Le titre est obligatoire.';
+                if ($requiresCategoryForSubmission) {
+                    $errors[] = 'Le titre est obligatoire.';
+                } else {
+                    $title = $draftTitle;
+                }
             }
             if ($description === '') {
-                $errors[] = 'La description est obligatoire.';
+                if ($requiresCategoryForSubmission) {
+                    $errors[] = 'La description est obligatoire.';
+                } else {
+                    $description = $draftDescription;
+                }
             }
 
             $allowedLevels = ['beginner', 'intermediate', 'advanced'];
             if (!in_array($level, $allowedLevels, true)) {
-                $errors[] = 'Niveau invalide.';
+                if ($requiresCategoryForSubmission) {
+                    $errors[] = 'Niveau invalide.';
+                } else {
+                    $level = 'beginner';
+                }
             }
 
             $categoryIdInt = null;
@@ -137,27 +151,45 @@ final class CourseCreateService extends Service
             } else {
                 $categoryIdInt = (int) $categoryId;
                 if (!$this->courses->categoryExists($categoryIdInt)) {
-                    $errors[] = 'Categorie inconnue.';
+                    if ($requiresCategoryForSubmission) {
+                        $errors[] = 'Categorie inconnue.';
+                    } else {
+                        $categoryIdInt = null;
+                    }
                 } 
             }
 
             $durationValue = null;
             if ($durationHours === '') {
-                $errors[] = 'La duree est obligatoire.';
+                if ($requiresCategoryForSubmission) {
+                    $errors[] = 'La duree est obligatoire.';
+                }
             } else {
                 $durationValue = (float) $durationHours;
                 if ($durationValue <= 0) {
-                    $errors[] = 'La duree doit etre positive.';
+                    if ($requiresCategoryForSubmission) {
+                        $errors[] = 'La duree doit etre positive.';
+                    } else {
+                        $durationValue = null;
+                    }
                 }
             }
 
             $priceValue = null;
             $priceRaw = trim($priceXof);
             if ($priceRaw === '') {
-                $errors[] = 'Le prix est obligatoire.';
+                if ($requiresCategoryForSubmission) {
+                    $errors[] = 'Le prix est obligatoire.';
+                } else {
+                    $priceValue = 0;
+                }
             } else {
                 if (preg_match('/^\d+$/', $priceRaw) !== 1) {
-                    $errors[] = 'Le prix doit etre un entier positif ou nul.';
+                    if ($requiresCategoryForSubmission) {
+                        $errors[] = 'Le prix doit etre un entier positif ou nul.';
+                    } else {
+                        $priceValue = 0;
+                    }
                 } else {
                     $priceValue = (int) $priceRaw;
                 }
@@ -275,7 +307,9 @@ final class CourseCreateService extends Service
                 $generalFileShouldUpload = true;
             }
             if ($generalFileErrors !== []) {
-                $errors = array_merge($errors, $generalFileErrors);
+                if ($requiresCategoryForSubmission) {
+                    $errors = array_merge($errors, $generalFileErrors);
+                }
             }
 
             $coverPath = $coverPathExisting !== '' ? $coverPathExisting : null;
@@ -299,12 +333,12 @@ final class CourseCreateService extends Service
                             $coverPathExisting = $coverPath;
                         }
                     }
-                } else {
+                } elseif ($requiresCategoryForSubmission) {
                     $errors[] = 'Erreur d upload de la miniature.';
                 }
             }
 
-            if ($coverPath === null && !$coverProvided) {
+            if ($coverPath === null && !$coverProvided && $requiresCategoryForSubmission) {
                 $errors[] = 'La miniature est obligatoire.';
             }
             if ($previousCoverPath && $previousCoverPath !== $coverPath) {
@@ -610,6 +644,23 @@ final class CourseCreateService extends Service
         if ($method === 'POST') {
             $submitAction = (string) ($post['submit_action'] ?? 'draft');
             $requiresCategoryForSubmission = $submitAction === 'submit';
+            $isDraftSave = $submitAction === 'draft';
+            $storedTitle = trim((string) ($course['title'] ?? ''));
+            $storedDescription = trim((string) ($course['description'] ?? ''));
+            $storedLevel = (string) ($course['level'] ?? 'beginner');
+            $storedDurationHours = isset($course['duration_hours']) && $course['duration_hours'] !== ''
+                ? (float) $course['duration_hours']
+                : null;
+            $storedPriceXof = isset($course['price_xof']) ? (int) $course['price_xof'] : 0;
+            $storedEnterprisePriceXof = isset($course['enterprise_price_xof']) && $course['enterprise_price_xof'] !== null
+                ? (string) $course['enterprise_price_xof']
+                : '';
+            $storedEnterpriseDiscountPercent = isset($course['enterprise_discount_percent']) && $course['enterprise_discount_percent'] !== null
+                ? (string) $course['enterprise_discount_percent']
+                : '';
+            $storedCategoryId = isset($course['category_id']) && $course['category_id'] !== null
+                ? (int) $course['category_id']
+                : null;
 
             if ($isLocked) {
                 $errors[] = 'Cours verrouille (soumis) : modifications non autorisees.';
@@ -628,6 +679,8 @@ final class CourseCreateService extends Service
             if ($categoryId === '') {
                 if ($requiresCategoryForSubmission) {
                     $errors[] = 'Une categorie valide est obligatoire avant la soumission.';
+                } elseif ($storedCategoryId !== null) {
+                    $categoryIdInt = $storedCategoryId;
                 }
             } elseif ($categoryId === 'other') {
                 $categoryIdInt = null;
@@ -712,6 +765,41 @@ final class CourseCreateService extends Service
             }
             if ($coverPath === null && !$coverProvided) {
                 $errors[] = 'La miniature est obligatoire.';
+            }
+
+            if ($isDraftSave) {
+                if ($title === '') {
+                    $title = $storedTitle !== '' ? $storedTitle : 'Brouillon sans titre';
+                }
+                if ($description === '') {
+                    $description = $storedDescription !== '' ? $storedDescription : 'Brouillon en cours.';
+                }
+                if (!in_array($level, ['beginner', 'intermediate', 'advanced'], true)) {
+                    $level = in_array($storedLevel, ['beginner', 'intermediate', 'advanced'], true) ? $storedLevel : 'beginner';
+                }
+                if ($categoryId !== '' && $categoryId !== 'other' && $categoryIdInt !== null && !$this->courses->categoryExists($categoryIdInt)) {
+                    $categoryIdInt = $storedCategoryId;
+                } elseif (($categoryId === '' || $categoryId === 'other') && $storedCategoryId !== null) {
+                    $categoryIdInt = $storedCategoryId;
+                }
+                if ($durationValue === null || $durationValue <= 0) {
+                    $durationValue = $storedDurationHours;
+                }
+                if ($priceValue === null) {
+                    $priceValue = $storedPriceXof;
+                }
+                if (($enterprisePriceValue === null || $enterprisePriceValue < 1) && $storedEnterprisePriceXof !== '') {
+                    $enterprisePriceValue = (int) $storedEnterprisePriceXof;
+                }
+                if (($enterpriseDiscountValue === null || $enterpriseDiscountValue <= 0 || $enterpriseDiscountValue > 100) && $storedEnterpriseDiscountPercent !== '') {
+                    $enterpriseDiscountValue = (float) $storedEnterpriseDiscountPercent;
+                }
+                if ($coverPath === null && $coverPathExisting !== '') {
+                    $coverPath = $coverPathExisting;
+                }
+                if (!$isLocked) {
+                    $errors = [];
+                }
             }
 
             $generalFile = $files['general_file'] ?? null;

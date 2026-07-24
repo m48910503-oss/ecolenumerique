@@ -277,6 +277,8 @@ if ($courseCoverPath !== '') {
 
     <script src="<?php echo e(site_url('assets/js/course_content.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/course_content.js') ?: time()))); ?>" defer></script>
 
+    <script src="<?php echo e(site_url('assets/js/course_complete_builder.js?v=' . (@filemtime(__DIR__ . '/../../../assets/js/course_complete_builder.js') ?: time()))); ?>" defer></script>
+
     <script src="<?php echo e(site_url('assets/js/referral_toggle.js')); ?>" defer></script>
 
     <script src="<?php echo e(site_url('assets/js/sidebar_toggle.js')); ?>" defer></script>
@@ -2360,6 +2362,14 @@ if ($courseCoverPath !== '') {
 
             </a>
 
+            <button type="button" data-preview-course class="course-content-action app-btn-soft">
+
+                <span class="app-icon" aria-hidden="true"><i class="far fa-eye"></i></span>
+
+                Aper&ccedil;u complet
+
+            </button>
+
             <?php if (in_array($courseStatus, ['draft', 'rejected'], true)): ?>
 
                 <form method="post" class="course-content-action-form">
@@ -2635,6 +2645,170 @@ if ($courseCoverPath !== '') {
     </div>
 
 
+
+    <div id="course-preview-modal" hidden role="dialog" aria-modal="true" aria-labelledby="course-preview-modal-title" aria-describedby="course-preview-modal-desc" class="fixed inset-0 z-[95] flex items-start justify-center overflow-y-auto px-4 py-6" style="z-index: 95; display: none;">
+        <div class="absolute inset-0 bg-slate-950/75 backdrop-blur-sm" data-course-preview-backdrop aria-hidden="true"></div>
+        <div class="relative z-20 my-0 w-full max-w-7xl min-h-[calc(100vh-2rem)] overflow-visible rounded-[2rem] border border-slate-200 bg-white shadow-2xl pointer-events-auto dark:border-slate-700 dark:bg-gray-900">
+            <div class="sticky top-0 z-30 flex flex-col border-b border-slate-200 bg-white/95 px-5 py-5 backdrop-blur-sm sm:px-6 dark:border-slate-800 dark:bg-gray-900/95 lg:flex-row lg:items-start lg:justify-between lg:gap-4">
+                <div class="min-w-0">
+                    <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-sky-600 dark:text-sky-300">Aperçu complet</p>
+                    <h2 id="course-preview-modal-title" class="mt-1 text-2xl font-black text-slate-900 dark:text-white">Prévisualisation du cours</h2>
+                    <p id="course-preview-modal-desc" class="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">Voici une vue d’ensemble du cours tel qu’il sera perçu à l’étape actuelle. Les éléments incomplets restent visibles pour que vous puissiez les corriger avant publication.</p>
+                </div>
+                <div class="mt-4 flex flex-wrap items-center gap-2 lg:mt-0">
+                    <button type="button" data-preview-publish class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700">
+                        <i class="fas fa-rocket"></i> Publier
+                    </button>
+                    <button type="button" data-course-preview-close class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+                        <i class="fas fa-xmark"></i> Fermer
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-5 sm:p-6">
+                <div data-course-preview-alert class="mb-4 hidden rounded-2xl border border-amber-200 bg-amber-50/90 p-4 text-sm text-amber-900 shadow-sm dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-100">
+                    <div class="flex items-start gap-3">
+                        <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200" aria-hidden="true">
+                            <i class="fas fa-triangle-exclamation"></i>
+                        </span>
+                        <div class="min-w-0">
+                            <p class="font-semibold" data-course-preview-alert-title>Quelques éléments sont encore à compléter</p>
+                            <p class="mt-1 text-sm leading-6 text-amber-900/80 dark:text-amber-100/80" data-course-preview-alert-message></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4 grid gap-3 md:grid-cols-2">
+                    <article class="rounded-[1.35rem] border border-violet-200 bg-violet-50/90 p-4 shadow-sm dark:border-violet-500/20 dark:bg-violet-500/10">
+                        <p class="text-xs font-bold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-200">Contenu du cours</p>
+                        <p class="mt-2 text-lg font-black text-violet-950 dark:text-violet-50" data-course-preview-content-summary>Structure à afficher</p>
+                        <p class="mt-1 text-sm text-violet-900/80 dark:text-violet-100/80">Modules, leçons et progression du parcours.</p>
+                    </article>
+                    <article class="rounded-[1.35rem] border border-rose-200 bg-rose-50/90 p-4 shadow-sm dark:border-rose-500/20 dark:bg-rose-500/10">
+                        <p class="text-xs font-bold uppercase tracking-[0.16em] text-rose-600 dark:text-rose-200">Examen</p>
+                        <p class="mt-2 text-lg font-black text-rose-950 dark:text-rose-50" data-course-preview-exam-summary>Évaluation à afficher</p>
+                        <p class="mt-1 text-sm text-rose-900/80 dark:text-rose-100/80">Format, durée et niveau de contrôle final.</p>
+                    </article>
+                </div>
+
+                <div class="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
+                    <section class="space-y-4">
+                        <article class="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-50 shadow-sm dark:border-slate-800 dark:bg-slate-950/40">
+                            <div class="relative">
+                                <img id="course-preview-cover" class="h-64 w-full object-cover sm:h-72" src="<?php echo e($courseCoverUrl !== '' ? $courseCoverUrl : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='); ?>" alt="Aperçu miniature du cours" <?php echo $courseCoverUrl !== '' ? '' : 'data-course-preview-cover-empty="1"'; ?>>
+                                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/10 to-transparent"></div>
+                                <div class="absolute left-4 right-4 top-4 flex flex-wrap gap-2">
+                                    <span class="rounded-full bg-white/95 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-700 shadow-sm dark:bg-slate-900/90 dark:text-slate-200" data-course-preview-status>Brouillon</span>
+                                    <span class="rounded-full bg-sky-500/90 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white shadow-sm" data-course-preview-stage>Vue globale</span>
+                                </div>
+                                <div class="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-100/80">Ce que verra l’apprenant</p>
+                                    <p id="course-preview-modal-subtitle" class="mt-1 text-lg font-black text-white sm:text-xl">Miniature du cours</p>
+                                </div>
+                            </div>
+                            <div class="space-y-4 p-4 sm:p-5">
+                                <div>
+                                    <p id="course-preview-title" class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Titre du cours</p>
+                                    <p id="course-preview-description" class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">La description du cours apparaîtra ici.</p>
+                                </div>
+
+                                <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                                    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+                                        <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Catégorie</p>
+                                        <p id="course-preview-category" class="mt-2 text-sm font-semibold text-slate-900 dark:text-white">Non catégorisé</p>
+                                    </article>
+                                    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+                                        <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Niveau</p>
+                                        <p id="course-preview-level" class="mt-2 text-sm font-semibold text-slate-900 dark:text-white">Débutant</p>
+                                    </article>
+                                    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+                                        <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Durée</p>
+                                        <p id="course-preview-duration" class="mt-2 text-sm font-semibold text-slate-900 dark:text-white">0 min</p>
+                                    </article>
+                                    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+                                        <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Prix</p>
+                                        <p id="course-preview-price" class="mt-2 text-sm font-semibold text-slate-900 dark:text-white">Gratuit</p>
+                                    </article>
+                                </div>
+
+                                <article class="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div>
+                                            <p class="text-xs font-bold uppercase tracking-[0.16em] text-fuchsia-500 dark:text-fuchsia-300">Tarification entreprise</p>
+                                            <p id="course-preview-enterprise" class="mt-1 text-sm font-semibold text-slate-900 dark:text-white">Aucune offre dédiée</p>
+                                        </div>
+                                        <span class="rounded-full bg-fuchsia-100 px-3 py-1 text-[11px] font-bold text-fuchsia-700 dark:bg-fuchsia-500/15 dark:text-fuchsia-200">Optionnel</span>
+                                    </div>
+                                </article>
+                            </div>
+                        </article>
+
+                        <div class="grid gap-4 lg:grid-cols-3">
+                            <article class="rounded-[1.5rem] border border-blue-200 bg-blue-50/90 p-4 shadow-sm dark:border-blue-500/20 dark:bg-blue-500/10">
+                                <div class="flex items-center justify-between gap-3">
+                                    <p class="text-sm font-semibold text-blue-900 dark:text-blue-100">Objectifs</p>
+                                    <span class="rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-blue-700 dark:bg-slate-900/80 dark:text-blue-100" data-course-preview-objectives-count>0</span>
+                                </div>
+                                <ul id="course-preview-objectives" class="mt-3 space-y-2 text-sm text-blue-950/90 dark:text-blue-50"></ul>
+                            </article>
+                            <article class="rounded-[1.5rem] border border-amber-200 bg-amber-50/90 p-4 shadow-sm dark:border-amber-500/20 dark:bg-amber-500/10">
+                                <div class="flex items-center justify-between gap-3">
+                                    <p class="text-sm font-semibold text-amber-900 dark:text-amber-100">Prérequis</p>
+                                    <span class="rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:bg-slate-900/80 dark:text-amber-100" data-course-preview-prerequisites-count>0</span>
+                                </div>
+                                <ul id="course-preview-prerequisites" class="mt-3 space-y-2 text-sm text-amber-950/90 dark:text-amber-50"></ul>
+                            </article>
+                            <article class="rounded-[1.5rem] border border-teal-200 bg-teal-50/90 p-4 shadow-sm dark:border-teal-500/20 dark:bg-teal-500/10">
+                                <div class="flex items-center justify-between gap-3">
+                                    <p class="text-sm font-semibold text-teal-900 dark:text-teal-100">Équipement</p>
+                                    <span class="rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-teal-700 dark:bg-slate-900/80 dark:text-teal-100" data-course-preview-equipment-count>0</span>
+                                </div>
+                                <ul id="course-preview-equipment" class="mt-3 space-y-2 text-sm text-teal-950/90 dark:text-teal-50"></ul>
+                            </article>
+                        </div>
+                    </section>
+
+                    <aside class="space-y-4">
+                        <article class="rounded-[1.5rem] border border-violet-200 bg-violet-50/80 p-4 shadow-sm dark:border-violet-500/20 dark:bg-violet-500/10">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <p class="text-xs font-bold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-200">Contenu</p>
+                                    <h3 class="mt-1 text-base font-black text-violet-950 dark:text-violet-50">Modules & leçons</h3>
+                                </div>
+                                <span class="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-violet-700 shadow-sm dark:bg-violet-500/15 dark:text-violet-100" data-course-preview-module-count>0 module</span>
+                            </div>
+                            <div id="course-preview-modules" class="mt-4 space-y-3"></div>
+                        </article>
+
+                        <article class="rounded-[1.5rem] border border-rose-200 bg-rose-50/80 p-4 shadow-sm dark:border-rose-500/20 dark:bg-rose-500/10">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <p class="text-xs font-bold uppercase tracking-[0.16em] text-rose-600 dark:text-rose-200">Évaluation</p>
+                                    <h3 class="mt-1 text-base font-black text-rose-950 dark:text-rose-50">Contrôle final</h3>
+                                </div>
+                                <span class="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-rose-700 shadow-sm dark:bg-rose-500/15 dark:text-rose-100" data-course-preview-exam-count>0 évaluation</span>
+                            </div>
+                            <div id="course-preview-exams" class="mt-4 space-y-3"></div>
+                        </article>
+
+                        <article class="rounded-[1.5rem] border border-cyan-200 bg-gradient-to-br from-cyan-50 to-sky-50 p-4 shadow-sm dark:border-cyan-500/20 dark:from-cyan-500/10 dark:to-slate-900/80">
+                            <p class="text-xs font-bold uppercase tracking-[0.16em] text-cyan-600 dark:text-cyan-200">Repères rapides</p>
+                            <div class="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+                                <div class="rounded-2xl border border-slate-200 bg-white/90 p-3 text-sm text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-200">
+                                    <span class="block text-[11px] font-bold uppercase tracking-[0.16em] text-cyan-500 dark:text-cyan-300">Ressource générale</span>
+                                    <span id="course-preview-general-resource" class="mt-1 block font-semibold text-slate-900 dark:text-white">Aucune ressource générale</span>
+                                </div>
+                                <div class="rounded-2xl border border-slate-200 bg-white/90 p-3 text-sm text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-200">
+                                    <span class="block text-[11px] font-bold uppercase tracking-[0.16em] text-cyan-500 dark:text-cyan-300">État</span>
+                                    <span id="course-preview-readiness" class="mt-1 block font-semibold text-slate-900 dark:text-white">En cours de préparation</span>
+                                </div>
+                            </div>
+                        </article>
+                    </aside>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div id="edit-chapter-modal" class="course-edit-modal fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/75 p-4" aria-hidden="true" data-course-modal inert>
 
@@ -2953,5 +3127,3 @@ if ($courseCoverPath !== '') {
 </body>
 
 </html>
-
-

@@ -1586,6 +1586,369 @@
     return true;
   }
 
+  function selectedOptionText(select, fallback) {
+    if (!select) return fallback;
+    var option = select.options && select.selectedIndex >= 0 ? select.options[select.selectedIndex] : null;
+    var label = clean(option && (option.textContent || option.label || option.value));
+    return label !== "" ? label : fallback;
+  }
+
+  function formatDurationPreview(value) {
+    var hours = Number(String(value || "").replace(",", "."));
+    if (!isFinite(hours) || hours <= 0) return "0 min";
+    var totalMinutes = Math.max(1, Math.round(hours * 60));
+    var durationHours = Math.floor(totalMinutes / 60);
+    var durationMinutes = totalMinutes % 60;
+    if (durationHours <= 0) return String(totalMinutes) + " min";
+    return durationMinutes > 0
+      ? durationHours + " h " + String(durationMinutes).padStart(2, "0") + " min"
+      : durationHours + " h";
+  }
+
+  function formatPricePreview(value) {
+    var amount = Number(String(value || "").replace(",", "."));
+    if (!isFinite(amount) || amount <= 0) return "Gratuit";
+    try {
+      return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(amount) + " F CFA";
+    } catch (_error) {
+      return String(Math.round(amount)) + " F CFA";
+    }
+  }
+
+  function previewAlertMessages() {
+    var messages = [];
+    var seen = {};
+
+    [2, 4, 6, 8].forEach(function (step) {
+      var issue = blockingIssueForStep(step);
+      if (issue && issue.message && !seen[issue.message]) {
+        seen[issue.message] = true;
+        messages.push(issue.message);
+      }
+    });
+
+    if (!hasSimpleValue("objectives-container")) {
+      var objectiveMessage = "Ajoutez au moins un objectif pedagogique.";
+      if (!seen[objectiveMessage]) {
+        seen[objectiveMessage] = true;
+        messages.push(objectiveMessage);
+      }
+    }
+
+    return messages;
+  }
+
+  function previewCoverSource() {
+    var cover = q("#cover-preview");
+    if (cover) {
+      return clean(cover.getAttribute("src") || cover.src);
+    }
+    var thumb = q("#thumb-img");
+    if (thumb) {
+      return clean(thumb.getAttribute("src") || thumb.src);
+    }
+    return "";
+  }
+
+  function previewModuleTypeLabel(type) {
+    var normalized = clean(type).toLowerCase();
+    if (normalized === "document") return "Document";
+    if (normalized === "appointment" || normalized === "meeting") return "Rendez-vous";
+    if (normalized === "exam") return "Evaluation";
+    return "Video";
+  }
+
+  function previewExamTypeLabel(type) {
+    var normalized = clean(type).toLowerCase();
+    if (normalized === "drive" || normalized === "document") return "Document";
+    if (normalized === "meeting" || normalized === "appointment") return "Rendez-vous";
+    return "QCM";
+  }
+
+  function previewQuestionCount(exam) {
+    if (!exam || typeof exam !== "object") return 0;
+    var versions = exam.versions && typeof exam.versions === "object" ? exam.versions : {};
+    return Object.keys(versions).reduce(function (total, key) {
+      return total + (Array.isArray(versions[key]) ? versions[key].length : 0);
+    }, 0);
+  }
+
+  function renderPreviewList(items, emptyLabel, toneClass) {
+    var tone = clean(toneClass);
+    if (!items.length) {
+      return '<li class="rounded-2xl border border-dashed border-slate-200 bg-white/80 px-3 py-3 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-400">' + escapeHtml(emptyLabel) + '</li>';
+    }
+    return items.slice(0, 4).map(function (item) {
+      return '<li class="flex items-start gap-3 rounded-2xl border border-white/70 bg-white/90 px-3 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">' +
+        '<span class="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full ' + tone + ' text-white"><i class="fas fa-check text-[10px]"></i></span>' +
+        '<span class="min-w-0 text-sm leading-6 text-slate-700 dark:text-slate-200">' + escapeHtml(item) + '</span>' +
+      '</li>';
+    }).join("");
+  }
+
+  function renderPreviewModules(modules) {
+    if (!modules.length) {
+      return '<article class="rounded-2xl border border-dashed border-slate-200 bg-white/80 p-4 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-400">Aucun module n\'est encore ajoute.</article>';
+    }
+
+    return modules.slice(0, 4).map(function (module, index) {
+      var title = clean(module && module.title) || "Module " + String(index + 1);
+      var description = clean(module && module.description);
+      var items = Array.isArray(module && module.items) ? module.items : [];
+      var itemCount = items.length;
+      var itemMarkup = items.slice(0, 3).map(function (item) {
+        var itemTitle = clean(item && item.title) || "Lecon sans titre";
+        var itemType = previewModuleTypeLabel(item && item.type);
+        var duration = Number(String((item && item.duration_min) || 0).replace(",", "."));
+        var durationLabel = duration > 0 ? String(Math.round(duration)) + " min" : "Duree a definir";
+        return '<li class="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-200">' +
+          '<div class="min-w-0"><p class="font-semibold text-slate-900 dark:text-white">' + escapeHtml(itemTitle) + '</p><p class="text-xs text-slate-500 dark:text-slate-400">' + escapeHtml(itemType) + '</p></div>' +
+          '<span class="shrink-0 text-xs font-semibold text-slate-500 dark:text-slate-400">' + escapeHtml(durationLabel) + '</span>' +
+        '</li>';
+      }).join("");
+
+      if (itemCount > 3) {
+        itemMarkup += '<li class="rounded-2xl border border-dashed border-slate-200 bg-white/70 px-3 py-2 text-xs font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-400">+' + escapeHtml(String(itemCount - 3)) + " autre(s) element(s)</li>";
+      }
+
+      return '<article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">' +
+        '<div class="flex items-start justify-between gap-3">' +
+          '<div class="min-w-0">' +
+            '<p class="text-base font-black text-slate-900 dark:text-white">' + escapeHtml(title) + '</p>' +
+            (description !== "" ? '<p class="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">' + escapeHtml(description) + '</p>' : '<p class="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">Aucune description ajoutee.</p>') +
+          '</div>' +
+          '<span class="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">' + escapeHtml(String(itemCount)) + " lecon" + (itemCount > 1 ? "s" : "") + '</span>' +
+        '</div>' +
+        '<ul class="mt-3 space-y-2">' + itemMarkup + '</ul>' +
+      '</article>';
+    }).join("");
+  }
+
+  function renderPreviewExams(exams) {
+    if (!exams.length) {
+      return '<article class="rounded-2xl border border-dashed border-slate-200 bg-white/80 p-4 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-400">Aucune evaluation n\'est encore definie.</article>';
+    }
+
+    return exams.slice(0, 2).map(function (exam, index) {
+      var title = clean(exam && exam.title) || "Evaluation finale";
+      var type = previewExamTypeLabel(exam && exam.type);
+      var duration = Number(String((exam && exam.duration_min) || 0).replace(",", "."));
+      var minScore = Number(String((exam && exam.min_score) || 0).replace(",", "."));
+      var versionCount = Number(exam && exam.version_count || Object.keys(exam && exam.versions ? exam.versions : {}).length || 0);
+      var questionCount = previewQuestionCount(exam);
+      var subject = clean(exam && exam.subject);
+      var subjectFileName = clean(exam && exam.subject_file_name);
+      var meta = [];
+      if (duration > 0) meta.push(String(Math.round(duration)) + " min");
+      if (minScore > 0) meta.push(String(Math.round(minScore)) + "% min.");
+      if (versionCount > 0) meta.push(String(versionCount) + " version" + (versionCount > 1 ? "s" : ""));
+      if (questionCount > 0) meta.push(String(questionCount) + " question" + (questionCount > 1 ? "s" : ""));
+      if (subject !== "") meta.push(subject);
+      if (subjectFileName !== "") meta.push(subjectFileName);
+
+      return '<article class="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/40">' +
+        '<div class="flex items-start justify-between gap-3">' +
+          '<div class="min-w-0">' +
+            '<p class="text-base font-black text-slate-900 dark:text-white">' + escapeHtml(title) + '</p>' +
+            '<p class="mt-1 text-sm font-semibold text-sky-600 dark:text-sky-300">' + escapeHtml(type) + '</p>' +
+          '</div>' +
+          '<span class="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-slate-600 shadow-sm dark:bg-slate-900 dark:text-slate-300">#' + escapeHtml(String(index + 1)) + '</span>' +
+        '</div>' +
+        '<div class="mt-3 flex flex-wrap gap-2">' + meta.slice(0, 5).map(function (entry) {
+          return '<span class="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">' + escapeHtml(entry) + '</span>';
+        }).join("") + '</div>' +
+      '</article>';
+    }).join("");
+  }
+
+  function renderPreviewModal() {
+    var modal = q("#course-preview-modal");
+    if (!modal) return false;
+
+    serializeBuilders();
+
+    var form = q("[data-course-create-form]");
+    if (!form) return false;
+
+    var coverSrc = previewCoverSource();
+    var title = clean(q("#title", form) && q("#title", form).value);
+    var description = clean(q("#description", form) && q("#description", form).value);
+    var category = selectedOptionText(q("#category_id", form), "Non categorise");
+    var level = selectedOptionText(q("#level", form), "Debutant");
+    var durationRaw = clean(q("#duration_hours", form) && q("#duration_hours", form).value);
+    var priceRaw = clean(q("#price_xof", form) && q("#price_xof", form).value);
+    var duration = durationRaw !== "" ? formatDurationPreview(durationRaw) : "Non defini";
+    var price = priceRaw !== "" ? formatPricePreview(priceRaw) : "Non defini";
+    var enterpriseMode = q("#enterprise_pricing_mode", form) ? q("#enterprise_pricing_mode", form).value : "none";
+    var enterprisePriceRaw = clean(q("#enterprise_price_xof", form) && q("#enterprise_price_xof", form).value);
+    var enterprisePrice = enterprisePriceRaw !== "" ? formatPricePreview(enterprisePriceRaw) : "Non defini";
+    var enterpriseDiscount = clean(q("#enterprise_discount_percent", form) && q("#enterprise_discount_percent", form).value);
+    var generalFileInput = q("#general_file", form);
+    var generalFile = generalFileInput && generalFileInput.files && generalFileInput.files.length ? generalFileInput.files[0] : null;
+    var objectives = simpleRowValues("objectives-container");
+    var prerequisites = simpleRowValues("prerequisites-container");
+    var equipment = simpleRowValues("equipment-container");
+    var contentPayload = parsePayload(q("#content_payload", form), { modules: [] });
+    var examsPayload = parsePayload(q("#exams_payload", form), { exams: [] });
+    var modules = asArray(contentPayload.modules);
+    var exams = asArray(examsPayload.exams);
+    var issues = previewAlertMessages();
+    var readinessText = issues.length ? "A completer avant publication" : "Pret a publier";
+    var enterpriseText = "Aucune offre dediee";
+
+    if (enterpriseMode === "price") {
+      enterpriseText = "Prix entreprise fixe a " + enterprisePrice;
+    } else if (enterpriseMode === "discount") {
+      enterpriseText = "Reduction entreprise de " + (enterpriseDiscount !== "" ? enterpriseDiscount + "%" : "0%") + " sur le tarif public";
+    }
+
+    var alertBox = q("[data-course-preview-alert]", modal);
+    var alertMessage = q("[data-course-preview-alert-message]", modal);
+    var alertTitle = q("[data-course-preview-alert-title]", modal);
+    var statusEl = q("[data-course-preview-status]", modal);
+    var stageEl = q("[data-course-preview-stage]", modal);
+    var subtitleEl = q("#course-preview-modal-subtitle", modal);
+    var titleEl = q("#course-preview-title", modal);
+    var descriptionEl = q("#course-preview-description", modal);
+    var categoryEl = q("#course-preview-category", modal);
+    var levelEl = q("#course-preview-level", modal);
+    var durationEl = q("#course-preview-duration", modal);
+    var priceEl = q("#course-preview-price", modal);
+    var enterpriseEl = q("#course-preview-enterprise", modal);
+    var objectivesEl = q("#course-preview-objectives", modal);
+    var prerequisitesEl = q("#course-preview-prerequisites", modal);
+    var equipmentEl = q("#course-preview-equipment", modal);
+    var modulesEl = q("#course-preview-modules", modal);
+    var examsEl = q("#course-preview-exams", modal);
+    var generalEl = q("#course-preview-general-resource", modal);
+    var readinessEl = q("#course-preview-readiness", modal);
+    var contentSummaryEl = q("[data-course-preview-content-summary]", modal);
+    var examSummaryEl = q("[data-course-preview-exam-summary]", modal);
+    var moduleCountEl = q("[data-course-preview-module-count]", modal);
+    var examCountEl = q("[data-course-preview-exam-count]", modal);
+    var objectiveCountEl = q("[data-course-preview-objectives-count]", modal);
+    var prerequisiteCountEl = q("[data-course-preview-prerequisites-count]", modal);
+    var equipmentCountEl = q("[data-course-preview-equipment-count]", modal);
+    var coverEl = q("#course-preview-cover", modal);
+
+    if (coverEl) {
+      if (coverSrc !== "") {
+        coverEl.src = coverSrc;
+        coverEl.hidden = false;
+        coverEl.removeAttribute("data-course-preview-cover-empty");
+      } else {
+        coverEl.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+        coverEl.hidden = false;
+        coverEl.setAttribute("data-course-preview-cover-empty", "1");
+      }
+    }
+
+    if (statusEl) statusEl.textContent = "Brouillon";
+    if (stageEl) stageEl.textContent = readinessText;
+    if (subtitleEl) subtitleEl.textContent = title !== "" ? title : "Titre du cours";
+    if (titleEl) titleEl.textContent = title !== "" ? title : "Titre du cours";
+    if (descriptionEl) descriptionEl.textContent = description !== "" ? description : "La description du cours apparaîtra ici.";
+    if (categoryEl) categoryEl.textContent = category !== "" ? category : "Non categorise";
+    if (levelEl) levelEl.textContent = level !== "" ? level : "Debutant";
+    if (durationEl) durationEl.textContent = duration;
+    if (priceEl) priceEl.textContent = price;
+    if (enterpriseEl) enterpriseEl.textContent = enterpriseText;
+    if (objectivesEl) objectivesEl.innerHTML = renderPreviewList(objectives, "Aucun objectif ajoute pour l’instant.", "bg-blue-500");
+    if (prerequisitesEl) prerequisitesEl.innerHTML = renderPreviewList(prerequisites, "Aucun prerequis ajoute pour l’instant.", "bg-amber-500");
+    if (equipmentEl) equipmentEl.innerHTML = renderPreviewList(equipment, "Aucun equipement ajoute pour l’instant.", "bg-teal-500");
+    if (modulesEl) modulesEl.innerHTML = renderPreviewModules(modules);
+    if (examsEl) examsEl.innerHTML = renderPreviewExams(exams);
+    if (generalEl) {
+      if (generalFile) {
+        generalEl.textContent = "Fichier en attente d'envoi : " + clean(generalFile.name);
+      } else if (q('input[name="general_file_clear"]', form) && q('input[name="general_file_clear"]', form).checked) {
+        generalEl.textContent = "La ressource generale sera supprimee";
+      } else {
+        generalEl.textContent = "Aucune action sur la ressource generale";
+      }
+    }
+    if (readinessEl) readinessEl.textContent = readinessText;
+    if (contentSummaryEl) {
+      var lessonTotal = modules.reduce(function (total, module) {
+        return total + (Array.isArray(module && module.items) ? module.items.length : 0);
+      }, 0);
+      contentSummaryEl.textContent = modules.length > 0
+        ? countLabel(modules.length, "module", "modules") + " · " + countLabel(lessonTotal, "leçon", "leçons")
+        : "Aucun module pour l’instant";
+    }
+    if (examSummaryEl) {
+      var questionTotal = exams.reduce(function (total, exam) {
+        return total + previewQuestionCount(exam);
+      }, 0);
+      examSummaryEl.textContent = exams.length > 0
+        ? countLabel(exams.length, "examen", "examens") + " · " + countLabel(questionTotal, "question", "questions")
+        : "Aucun examen pour l’instant";
+    }
+    if (moduleCountEl) moduleCountEl.textContent = countLabel(modules.length, "module", "modules");
+    if (examCountEl) examCountEl.textContent = countLabel(exams.length, "evaluation", "evaluations");
+    if (objectiveCountEl) objectiveCountEl.textContent = String(objectives.length);
+    if (prerequisiteCountEl) prerequisiteCountEl.textContent = String(prerequisites.length);
+    if (equipmentCountEl) equipmentCountEl.textContent = String(equipment.length);
+
+    if (alertBox && alertTitle && alertMessage) {
+      alertBox.hidden = false;
+      if (issues.length) {
+        alertTitle.textContent = "Quelques elements restent a completer";
+        alertMessage.textContent = issues.slice(0, 3).join(" ");
+      } else {
+        alertTitle.textContent = "Le cours peut etre publie";
+        alertMessage.textContent = "L’aperçu montre un cours coherent avec les informations deja renseignees.";
+      }
+    }
+
+    return true;
+  }
+
+  function openPreviewModal() {
+    var modal = q("#course-preview-modal");
+    if (!modal) return false;
+    modal.hidden = false;
+    modal.style.display = "flex";
+    document.body.classList.add("course-builder-modal-open");
+
+    var closeBtn = q("[data-course-preview-close]", modal) || q("[data-preview-publish]", modal);
+    if (closeBtn && typeof closeBtn.focus === "function") {
+      window.setTimeout(function () {
+        try {
+          closeBtn.focus({ preventScroll: true });
+        } catch (_error) {
+          try {
+            closeBtn.focus();
+          } catch (_fallbackError) {
+            // Ignore focus failures.
+          }
+        }
+      }, 0);
+    }
+    return true;
+  }
+
+  function closePreviewModal() {
+    var modal = q("#course-preview-modal");
+    if (!modal) return false;
+    modal.style.display = "none";
+    modal.hidden = true;
+    document.body.classList.remove("course-builder-modal-open");
+    var trigger = q("[data-preview-course]");
+    if (trigger && typeof trigger.focus === "function") {
+      try {
+        trigger.focus({ preventScroll: true });
+      } catch (_error) {
+        try {
+          trigger.focus();
+        } catch (_fallbackError) {
+          // Ignore focus failures.
+        }
+      }
+    }
+    return true;
+  }
+
   function youtubeUrlLooksValid(value) {
     var raw = clean(value);
     if (raw === "") return false;
@@ -2155,13 +2518,11 @@
   };
 
   window.previewCourse = function () {
-    serializeBuilders();
-    var issue = firstBlockingIssue();
-    if (issue) {
-      showBlockingIssue(issue);
+    if (!renderPreviewModal()) {
+      showToast("L’aperçu complet n’est pas disponible sur cette page.", "error");
       return;
     }
-    showToast("Le brouillon est cohérent pour un enregistrement.", "info");
+    openPreviewModal();
   };
 
   window.publishCourse = function () {
@@ -3275,7 +3636,37 @@
       });
     }
 
+    var previewModal = q("#course-preview-modal");
+    var previewBackdrop = previewModal ? q("[data-course-preview-backdrop]", previewModal) : null;
+    var previewCloseBtn = previewModal ? q("[data-course-preview-close]", previewModal) : null;
+    var previewPublishBtn = previewModal ? q("[data-preview-publish]", previewModal) : null;
+
+    if (previewBackdrop) {
+      previewBackdrop.addEventListener("click", closePreviewModal);
+    }
+    if (previewCloseBtn) {
+      previewCloseBtn.addEventListener("click", closePreviewModal);
+    }
+    if (previewPublishBtn) {
+      previewPublishBtn.addEventListener("click", function () {
+        closePreviewModal();
+        window.publishCourse();
+      });
+    }
+    if (previewModal) {
+      previewModal.addEventListener("click", function (event) {
+        if (!event || !event.target || !event.target.closest) return;
+        if (event.target.closest("[data-course-preview-backdrop]")) {
+          closePreviewModal();
+        }
+      });
+    }
+
     document.addEventListener("keydown", function (event) {
+      if (previewModal && !previewModal.hidden && event.key === "Escape") {
+        closePreviewModal();
+        return;
+      }
       if (!draftPrompt.root || draftPrompt.root.hidden) return;
       if (event.key === "Escape") {
         hideDraftPrompt();
