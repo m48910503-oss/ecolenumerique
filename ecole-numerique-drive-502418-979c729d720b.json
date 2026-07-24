@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "ecole-numerique-drive-502418",
+  "private_key_id": "979c729d720b50bfc61b8f2db88119ca70fa8b73",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC/HbvGJIiOS2yk\nr6PbdNy0bSaO1jfmDrY3ujUpP+9J3DLiOCUSvyO7CFHc3x41YPvE65jaS7UIerwe\nvM7NIdcDQlK9++DeO8x8AwLMwPoBKjG41eRlKd0DiU59VfGI7QmNoAOjEOhi0izU\n/U/5ZD6M+dcXzTnAjTyT1k5d6MCnb8CiaFA1kwO/kdlhgNU47xy8EdtMyHUGajGe\nbfMh4BzaVEJ2LfIEUjadYCUVMxd5J0RjPbYTNwTup0RgrjcMSU7XixkhV3FDUJVa\nZTk15WuMIe6Vlgz0x2kgDuUyzY8i02CK5wpKPubbXQJPobpc54zIiz5jGHABK61K\nh3EcUxHBAgMBAAECggEALQOH0qeQMlO5hyCHa40e3rBGwKXcDKeya3XER67zYWYn\n5fhrYvr6I3dWMLuslc39/ueu3NuwDAs8e9DktJQf3HimnHDTCgTzqNHcuvVI7TVO\n+MYIQXuWvtp8TjEL7sBF28GwmZvF4GC4hoITcB4YTYQbEVQZIi0h84AqfRvxJH5Z\nSRnfjfbv/UKGT+DfwIyU9sHOsaOYiVbhee7FWuRb/XiWnO++74kld1UmVelxRNFy\nz/K7fsgWiAwwivYY+BIE2RQXeE6u8VUdDp6T8KfONLj8dAKNEdeYKFbt02fGTT+U\nyVrqf2n9CpswLE+x66A+JI8hPuxxqcogec3E0khLMQKBgQDwEN5kdPDmBSjn/81M\n6BkYvvJkmDYznVZfBQwDMeQDGogHBTSUCrXpK9fgJVn77qWjuniMzMmuc9mHita3\nWk6O/2x2p9/FkK+QjQMlAVxO2NrKR3gXZlQqF5EWn98wM0ZdnNQZg/Ch2v+wXdMl\nILHCMuKtUxJ6gX4wIQ93B4C8HwKBgQDLzR/mtqQj5PUfg2orFi/yBaJ1QU2xG96B\nliC9Bz26Uv4//k1aiZBHVRiYExPUp3OA7SOz5bZrxaeVT8tcKxBcSQMYWevGf4wm\nG80bUO7C74bOpU1fjwlFRSPQ7GUnl7ABH5FAV5QuxKf4mFGQeFfcJqc1vzHufwSN\nv2wxAjp2HwKBgE6zaQUL5VGzTVbJYJee22NmbfaWg+Zl5UPfVrHRcEuoLgIHLdZ+\nsGZRrkLYW+igswK7Bfw6wr+DUUQDOyL+4xQ0Hm3D2TNenH/KCsbd7FIY+5km1vLs\n5Bisgy8kmDmoBaB44nu+6mtVbU93YtogHsZogjGKM1ugCitjGzvNZOHHAoGAfrVX\nwi+HubFeHWutFIDE6mpKaTBix1yWaGcYj63y2OdEoDDRkxq4E0F6+wHRcINzspK9\ngdmuIy9OU+y6eOFlWJskS32Ms2sVjZP3X6Zf697UJ6JqiqD5mJG2BO0UrxsGGIyx\n2BkbTkCCVnMNMw8/QObfSvFGcAuUnzSGZaoHAu0CgYEAtnys/J7nT6dUxyrDNfPP\nJvY1HtHbDrPiJvtsy2eiKGlMvlINk6fM0eE51o2+gQctzTGiD9wo48FQMu7oyizD\nt/vFurJCGKn5bKa3A6v4OdePNalqjLJvI0LJiE53fZsPmadljEN1XolJXIkTRjrU\ncbN7SrtNeZFC/E6yZOxzylY=\n-----END PRIVATE KEY-----\n",
+  "client_email": "drive-uploader@ecole-numerique-drive-502418.iam.gserviceaccount.com",
+  "client_id": "108530428726449553470",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/drive-uploader%40ecole-numerique-drive-502418.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

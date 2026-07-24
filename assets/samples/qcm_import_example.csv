@@ -1,0 +1,5 @@
+question,type,variant,option_a,option_b,option_c,correct
+Quelle est la capitale du Benin?,single,A,Porto-Novo,Cotonou,Parakou,A
+2+2=?,single,B,3,4,5,B
+Couleurs primaires?,multiple,C,Rouge,Vert,Bleu,A|C
+Expliquez la photosynthese,text,A,,,,

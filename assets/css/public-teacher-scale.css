@@ -1,0 +1,1551 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+@import url("./icon-colors.css");
+
+:root {
+  --app-font-title: "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --app-font-display: var(--app-font-title);
+  --app-font-section: var(--app-font-title);
+  --app-font-ui: var(--app-font-title);
+  --app-font-sans: var(--app-font-title);
+  --app-font-body: var(--app-font-title);
+  --app-font-serif: "Times New Roman", Times, Georgia, serif;
+  --app-font-accent: var(--app-font-serif);
+  --app-font-mono: "IBM Plex Mono", "Cascadia Code", Consolas, monospace;
+  --app-font-numeric: var(--app-font-mono);
+}
+
+html[data-view] {
+  font-size: 14.5px;
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+body[data-view] {
+  overflow-x: hidden;
+}
+
+body[data-view^="web/"],
+body[data-view^="auth/"],
+body.app-auth-page {
+  font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif) !important;
+}
+
+body[data-view^="web/"] :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  a,
+  button,
+  label,
+  input,
+  select,
+  textarea,
+  summary,
+  small,
+  strong,
+  b,
+  span,
+  li,
+  th,
+  td,
+  dd,
+  dt,
+  figcaption
+),
+body[data-view^="auth/"] :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  a,
+  button,
+  label,
+  input,
+  select,
+  textarea,
+  summary,
+  small,
+  strong,
+  b,
+  span,
+  li,
+  th,
+  td,
+  dd,
+  dt,
+  figcaption
+),
+body.app-auth-page :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  a,
+  button,
+  label,
+  input,
+  select,
+  textarea,
+  summary,
+  small,
+  strong,
+  b,
+  span,
+  li,
+  th,
+  td,
+  dd,
+  dt,
+  figcaption
+) {
+  font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif) !important;
+}
+
+body[data-view^="web/"] :is(.font-display, h1, h2, h3, h4, h5, h6),
+body[data-view^="auth/"] :is(.font-display, h1, h2, h3, h4, h5, h6),
+body.app-auth-page :is(.font-display, h1, h2, h3, h4, h5, h6) {
+  font-family: var(--app-font-title, "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif) !important;
+}
+
+body[data-view^="web/"] :is(.font-mono, .font-numeric, code, kbd, samp, pre, [class*="tabular-nums"]),
+body[data-view^="auth/"] :is(.font-mono, .font-numeric, code, kbd, samp, pre, [class*="tabular-nums"]),
+body.app-auth-page :is(.font-mono, .font-numeric, code, kbd, samp, pre, [class*="tabular-nums"]) {
+  font-family: var(--app-font-numeric, "IBM Plex Mono", "Cascadia Code", Consolas, monospace) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.public-mobile-toggle.is-open {
+  border-color: rgba(37, 99, 235, 0.45);
+  background: rgba(37, 99, 235, 0.08);
+  color: #2563eb;
+}
+
+.public-mobile-toggle__box {
+  display: inline-grid;
+  gap: 0.22rem;
+}
+
+.public-mobile-toggle__box span {
+  display: block;
+  width: 1rem;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  transition: transform 0.2s ease, opacity 0.2s ease, width 0.2s ease;
+}
+
+.public-mobile-toggle.is-open .public-mobile-toggle__box span:nth-child(1) {
+  transform: translateY(5px) rotate(45deg);
+}
+
+.public-mobile-toggle.is-open .public-mobile-toggle__box span:nth-child(2) {
+  opacity: 0;
+  width: 0;
+}
+
+.public-mobile-toggle.is-open .public-mobile-toggle__box span:nth-child(3) {
+  transform: translateY(-5px) rotate(-45deg);
+}
+
+body.public-nav-open,
+html.public-nav-open {
+  overflow: hidden;
+}
+
+.public-mobile-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 0.75rem;
+  pointer-events: none;
+  visibility: hidden;
+  transition: visibility 0s linear 0.24s;
+}
+
+.public-mobile-panel.is-open {
+  pointer-events: auto;
+  visibility: visible;
+  transition: visibility 0s;
+}
+
+.public-mobile-panel__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(2, 6, 23, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  opacity: 0;
+  transition: opacity 0.24s ease;
+}
+
+.public-mobile-panel.is-open .public-mobile-panel__backdrop {
+  opacity: 1;
+}
+
+.public-mobile-panel__sheet {
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  width: min(100%, 26.5rem);
+  max-height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 30px 60px -24px rgba(15, 23, 42, 0.42);
+  transform: translateX(1rem);
+  opacity: 0;
+  transition: transform 0.24s ease, opacity 0.24s ease, box-shadow 0.24s ease;
+}
+
+.public-mobile-panel.is-open .public-mobile-panel__sheet {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.public-mobile-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.25rem;
+}
+
+.public-mobile-panel__eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.public-mobile-panel__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.public-mobile-panel__brand-logo {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.65rem;
+  object-fit: cover;
+  box-shadow: 0 8px 18px -10px rgba(15, 23, 42, 0.45);
+}
+
+.public-mobile-panel__brand-logo--fallback {
+  background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  color: #ffffff;
+  font-size: 0.82rem;
+}
+
+.public-mobile-panel__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #0f172a;
+}
+
+.public-mobile-panel__close {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 0.9rem;
+  background: rgba(248, 250, 252, 0.9);
+  color: #334155;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.public-mobile-panel__close:hover {
+  border-color: rgba(59, 130, 246, 0.35);
+  background: rgba(239, 246, 255, 0.95);
+  color: #2563eb;
+}
+
+.public-mobile-panel__close:focus-visible,
+.public-mobile-panel__link:focus-visible,
+.public-mobile-panel__action:focus-visible,
+.public-mobile-panel__backdrop:focus-visible,
+.public-mobile-toggle:focus-visible,
+[data-web-theme-toggle]:focus-visible,
+.public-mobile-header-notification:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.7);
+  outline-offset: 2px;
+}
+
+.public-mobile-panel__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.public-mobile-panel__section-label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.public-mobile-panel__nav,
+.public-mobile-panel__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.public-mobile-panel__link,
+.public-mobile-panel__action {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  min-height: 3.4rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 1rem;
+  background: rgba(248, 250, 252, 0.92);
+  color: #0f172a;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.public-mobile-panel__action {
+  cursor: pointer;
+}
+
+.public-mobile-panel__link:hover,
+.public-mobile-panel__action:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(239, 246, 255, 0.96);
+  color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.public-mobile-panel__link-icon,
+.public-mobile-panel__action-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.8rem;
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+  font-size: 1rem;
+}
+
+.public-mobile-panel__link-text,
+.public-mobile-panel__action-text {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.public-mobile-panel__link-chevron {
+  margin-left: auto;
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+.public-mobile-panel__link[aria-current="page"] {
+  border-color: rgba(59, 130, 246, 0.35);
+  background: rgba(59, 130, 246, 0.09);
+  color: #1d4ed8;
+}
+
+.public-mobile-panel__link[aria-current="page"] .public-mobile-panel__link-icon {
+  background: rgba(59, 130, 246, 0.16);
+  color: #1d4ed8;
+}
+
+.public-mobile-panel__action--soft {
+  justify-content: flex-start;
+}
+
+.public-mobile-panel__action--primary {
+  justify-content: flex-start;
+  border-color: transparent;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+  box-shadow: 0 18px 34px -18px rgba(37, 99, 235, 0.6);
+}
+
+.public-mobile-panel__action--primary:hover {
+  border-color: transparent;
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  color: #ffffff;
+  box-shadow: 0 22px 40px -20px rgba(37, 99, 235, 0.72);
+}
+
+.public-mobile-panel__action--primary .public-mobile-panel__action-icon {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+.public-mobile-panel__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.public-mobile-panel__badge--primary {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.public-mobile-panel__badge--danger {
+  background: #f43f5e;
+  color: #ffffff;
+}
+
+html.dark .public-mobile-panel__backdrop,
+html[data-theme="dark"] .public-mobile-panel__backdrop {
+  background: rgba(2, 6, 23, 0.72);
+}
+
+html.dark .public-mobile-panel__sheet,
+html[data-theme="dark"] .public-mobile-panel__sheet {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.96);
+  box-shadow: 0 30px 60px -24px rgba(0, 0, 0, 0.72);
+}
+
+html.dark .public-mobile-panel__eyebrow,
+html[data-theme="dark"] .public-mobile-panel__eyebrow,
+html.dark .public-mobile-panel__section-label,
+html[data-theme="dark"] .public-mobile-panel__section-label {
+  color: #94a3b8;
+}
+
+html.dark .public-mobile-panel__title,
+html[data-theme="dark"] .public-mobile-panel__title,
+html.dark .public-mobile-panel__close,
+html[data-theme="dark"] .public-mobile-panel__close,
+html.dark .public-mobile-panel__link,
+html[data-theme="dark"] .public-mobile-panel__link,
+html.dark .public-mobile-panel__action,
+html[data-theme="dark"] .public-mobile-panel__action {
+  color: #e2e8f0;
+}
+
+html.dark .public-mobile-panel__close,
+html[data-theme="dark"] .public-mobile-panel__close,
+html.dark .public-mobile-panel__link,
+html[data-theme="dark"] .public-mobile-panel__link,
+html.dark .public-mobile-panel__action,
+html[data-theme="dark"] .public-mobile-panel__action {
+  border-color: rgba(148, 163, 184, 0.16);
+  background: rgba(15, 23, 42, 0.9);
+}
+
+html.dark .public-mobile-panel__close:hover,
+html[data-theme="dark"] .public-mobile-panel__close:hover,
+html.dark .public-mobile-panel__link:hover,
+html[data-theme="dark"] .public-mobile-panel__link:hover,
+html.dark .public-mobile-panel__action:hover,
+html[data-theme="dark"] .public-mobile-panel__action:hover {
+  border-color: rgba(96, 165, 250, 0.34);
+  background: rgba(30, 41, 59, 0.96);
+  color: #bfdbfe;
+}
+
+html.dark .public-mobile-panel__link-icon,
+html[data-theme="dark"] .public-mobile-panel__link-icon,
+html.dark .public-mobile-panel__action-icon,
+html[data-theme="dark"] .public-mobile-panel__action-icon {
+  background: rgba(96, 165, 250, 0.16);
+  color: #bfdbfe;
+}
+
+html.dark .public-mobile-panel__link-chevron,
+html[data-theme="dark"] .public-mobile-panel__link-chevron {
+  color: #64748b;
+}
+
+html.dark .public-mobile-panel__link[aria-current="page"],
+html[data-theme="dark"] .public-mobile-panel__link[aria-current="page"] {
+  border-color: rgba(59, 130, 246, 0.32);
+  background: rgba(59, 130, 246, 0.18);
+  color: #bfdbfe;
+}
+
+html.dark .public-mobile-panel__link[aria-current="page"] .public-mobile-panel__link-icon,
+html[data-theme="dark"] .public-mobile-panel__link[aria-current="page"] .public-mobile-panel__link-icon {
+  background: rgba(96, 165, 250, 0.2);
+  color: #bfdbfe;
+}
+
+html.dark .public-mobile-panel__action--soft,
+html[data-theme="dark"] .public-mobile-panel__action--soft {
+  background: rgba(15, 23, 42, 0.88);
+}
+
+html.dark .public-mobile-panel__action--primary,
+html[data-theme="dark"] .public-mobile-panel__action--primary {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+}
+
+html.dark .public-mobile-panel__badge--primary,
+html[data-theme="dark"] .public-mobile-panel__badge--primary {
+  background: #3b82f6;
+}
+
+html.dark .public-mobile-panel__badge--danger,
+html[data-theme="dark"] .public-mobile-panel__badge--danger {
+  background: #fb7185;
+}
+
+@media (min-width: 981px) {
+  .public-mobile-toggle,
+  .public-mobile-panel {
+    display: none !important;
+  }
+}
+
+@media (max-width: 980px) {
+  .public-desktop-nav,
+  .public-desktop-actions {
+    display: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  html[data-view] {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body[data-view] h1,
+  body[data-view] .text-4xl {
+    font-size: clamp(1.35rem, 5.6vw, 1.65rem) !important;
+    line-height: 1.12;
+  }
+
+  body[data-view] h2,
+  body[data-view] .text-3xl {
+    font-size: clamp(1.1rem, 4.8vw, 1.35rem) !important;
+    line-height: 1.18;
+  }
+
+  body[data-view] h3,
+  body[data-view] .text-2xl {
+    font-size: clamp(1rem, 4.2vw, 1.15rem) !important;
+    line-height: 1.22;
+  }
+
+  body[data-view] .text-xl {
+    font-size: clamp(0.98rem, 4vw, 1.1rem) !important;
+    line-height: 1.22;
+  }
+
+  body[data-view] .text-lg {
+    font-size: clamp(0.95rem, 3.8vw, 1.05rem) !important;
+    line-height: 1.24;
+  }
+
+  body[data-view] input,
+  body[data-view] select,
+  body[data-view] textarea,
+  body[data-view] button {
+    font-size: 16px;
+  }
+
+  body[data-view] :is(
+    .student-dashboard-topbar,
+    .teacher-dashboard-topbar,
+    .admin-dashboard-topbar,
+    .course-topbar,
+    .profile-topbar,
+    .auth-suite__panel-header,
+    .mk-header__bar
+  ) {
+    min-height: 3.85rem;
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+  }
+
+  body[data-view="web/course_watch"] header.sticky > div {
+    padding-top: 0.55rem;
+    padding-bottom: 0.55rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  body[data-view="web/certificate"] .cert-toolbar {
+    padding-top: 0.85rem;
+    padding-bottom: 0.85rem;
+    padding-left: 0.95rem;
+    padding-right: 0.95rem;
+  }
+
+  body[data-view="web/certificate"] .cert-toolbar__actions {
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  body[data-view="web/home"] header .container > div:first-child,
+  body[data-view="web/catalogue"] header .container > div:first-child,
+  body[data-view="web/checkout"] header .container > div:first-child,
+  body[data-view="teacher/apply"] header .container > div:first-child,
+  body[data-view="web/course_details"] header .container > div:first-child {
+    min-height: 3.85rem;
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+  }
+
+  body[data-view="web/home"] header .container > div:first-child a > img,
+  body[data-view="web/catalogue"] header .container > div:first-child a > img,
+  body[data-view="web/checkout"] header .container > div:first-child a > img,
+  body[data-view="teacher/apply"] header .container > div:first-child a > img,
+  body[data-view="web/course_details"] header .container > div:first-child a > img,
+  body[data-view="web/home"] header .container > div:first-child a > span.flex:not(.min-w-0),
+  body[data-view="web/catalogue"] header .container > div:first-child a > span.flex:not(.min-w-0),
+  body[data-view="web/checkout"] header .container > div:first-child a > span.flex:not(.min-w-0),
+  body[data-view="teacher/apply"] header .container > div:first-child a > span.flex:not(.min-w-0),
+  body[data-view="web/course_details"] header .container > div:first-child a > span.flex:not(.min-w-0) {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  body[data-view^="web/"] header .container > div:first-child a > span.flex.min-w-0.flex-col > span:last-child,
+  body[data-view="teacher/apply"] header .container > div:first-child a > span.flex.min-w-0.flex-col > span:last-child {
+    display: none;
+  }
+
+  .public-mobile-panel {
+    padding: 0.4rem;
+  }
+
+  .public-mobile-panel__sheet {
+    width: min(100%, 20rem);
+    max-height: calc(100dvh - 0.8rem);
+    border-radius: 1rem;
+    padding: 0.7rem;
+    gap: 0.7rem;
+  }
+
+  .public-mobile-panel__head {
+    padding-bottom: 0;
+  }
+
+  .public-mobile-panel__brand {
+    gap: 0.5rem;
+  }
+
+  .public-mobile-panel__brand-logo {
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 0.6rem;
+  }
+
+  .public-mobile-panel__title {
+    font-size: 0.98rem;
+  }
+
+  .public-mobile-panel__section {
+    gap: 0.5rem;
+  }
+
+  .public-mobile-panel__nav,
+  .public-mobile-panel__actions {
+    gap: 0.4rem;
+  }
+
+  .public-mobile-panel__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .public-mobile-panel__link,
+  .public-mobile-panel__action {
+    min-height: 2.7rem;
+    padding: 0.68rem 0.75rem;
+  }
+
+  .public-mobile-panel__link-icon,
+  .public-mobile-panel__action-icon {
+    width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 0.65rem;
+  }
+
+  .public-mobile-panel__action-text {
+    font-size: 0.78rem;
+    line-height: 1.15;
+  }
+
+  .public-mobile-panel__action--primary {
+    min-width: 0;
+  }
+}
+
+/* Public, web and authentication pages share the same lighter typography rhythm. */
+html[data-view^="web/"],
+html[data-view^="auth/"] {
+  font-size: 14px !important;
+}
+
+body[data-view^="web/"],
+body[data-view^="auth/"],
+body.app-auth-page {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+body[data-view^="web/"] :is(.font-semibold, [class*="font-semibold"], strong, b),
+body[data-view^="auth/"] :is(.font-semibold, [class*="font-semibold"], strong, b),
+body.app-auth-page :is(.font-semibold, [class*="font-semibold"], strong, b) {
+  font-weight: 560 !important;
+}
+
+body[data-view^="web/"] :is(.font-bold, [class*="font-bold"]),
+body[data-view^="auth/"] :is(.font-bold, [class*="font-bold"]),
+body.app-auth-page :is(.font-bold, [class*="font-bold"]) {
+  font-weight: 600 !important;
+}
+
+body[data-view^="web/"] :is(.font-extrabold, .font-black, [class*="font-extrabold"], [class*="font-black"]),
+body[data-view^="auth/"] :is(.font-extrabold, .font-black, [class*="font-extrabold"], [class*="font-black"]),
+body.app-auth-page :is(.font-extrabold, .font-black, [class*="font-extrabold"], [class*="font-black"]) {
+  font-weight: 650 !important;
+}
+
+body[data-view^="web/"] :is(h1, .text-7xl, .text-6xl, .text-5xl, .mk-hero__title, .mk-catalog-hero__title) {
+  font-size: clamp(1.65rem, 3.8vw, 2.75rem) !important;
+  font-weight: 650 !important;
+  line-height: 1.08 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="web/"] :is(h2, .text-4xl, .mk-section__title, .mk-hero-panel__title) {
+  font-size: clamp(1.2rem, 2.4vw, 1.8rem) !important;
+  font-weight: 650 !important;
+  line-height: 1.16 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="web/"] :is(h3, .text-3xl) {
+  font-size: clamp(1.05rem, 1.8vw, 1.35rem) !important;
+  font-weight: 600 !important;
+  line-height: 1.22 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="web/"] :is(h4, .text-2xl, .mk-course-card__title, .mk-feature-card h3) {
+  font-size: 1.08rem !important;
+  font-weight: 600 !important;
+  line-height: 1.28 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="web/"] .text-xl {
+  font-size: 1rem !important;
+  line-height: 1.32 !important;
+}
+
+body[data-view^="web/"] .text-lg {
+  font-size: 0.92rem !important;
+  line-height: 1.42 !important;
+}
+
+body[data-view^="web/"] :is(
+  .mk-announcement__title,
+  .mk-announcement__link,
+  .mk-brand__title,
+  .mk-header__link,
+  .mk-header__account-link,
+  .mk-header__account-label,
+  .mk-hero-panel__label,
+  .mk-toolbar__eyebrow,
+  .mk-filter-panel__eyebrow,
+  .mk-hero-panel__meta,
+  .mk-feature-card__index,
+  .mk-feature-card h3,
+  .mk-proof-card h3,
+  .mk-testimonial-card__author,
+  .mk-story-list__meta,
+  .mk-course-card__fallback-kicker,
+  .mk-course-card__signal,
+  .mk-course-card__title,
+  .mk-course-card__meta,
+  .mk-course-card__price-label,
+  .mk-course-card__cta
+) {
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="web/"] :is(.mk-hero__description, .mk-catalog-hero__description, .mk-section__description) {
+  font-size: 0.94rem !important;
+  line-height: 1.55 !important;
+  font-weight: 400 !important;
+}
+
+body[data-view^="web/"] :is(.mk-proof-strip__item strong, .mk-proof-card strong, .mk-course-card__price, .mk-course-card__fallback strong) {
+  font-size: clamp(1.08rem, 1.65vw, 1.45rem) !important;
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="web/"] .mk-proof-strip__item span {
+  font-size: 0.78rem !important;
+  font-weight: 560 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="web/"] :is(p, li, label, a, button, input, select, textarea, summary, td, th)[class~="text-sm"],
+body[data-view^="auth/"] :is(p, li, label, a, button, input, select, textarea, summary, td, th)[class~="text-sm"],
+body.app-auth-page :is(p, li, label, a, button, input, select, textarea, summary, td, th)[class~="text-sm"] {
+  font-size: 0.84rem !important;
+  line-height: 1.45 !important;
+}
+
+.app-price {
+  color: #ea580c;
+}
+
+html.dark .app-price,
+html[data-theme="dark"] .app-price {
+  color: #fdba74;
+}
+
+.app-price--promo {
+  color: #dc2626;
+}
+
+html.dark .app-price--promo,
+html[data-theme="dark"] .app-price--promo {
+  color: #fca5a5;
+}
+
+body[data-view^="web/"] :is(p, span, li, label, a, button, th)[class*="uppercase"],
+body[data-view^="auth/"] :is(p, span, li, label, a, button, th)[class*="uppercase"],
+body.app-auth-page :is(p, span, li, label, a, button, th)[class*="uppercase"],
+body.app-auth-page :is(.auth-suite__eyebrow, .auth-form-v2__section-kicker, .auth-form-v2__divider) {
+  font-size: 0.68rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.1em !important;
+  line-height: 1.25 !important;
+}
+
+body[data-view^="web/"] table :is(th, td, strong, b, .font-medium, .font-semibold, .font-bold),
+body[data-view^="auth/"] table :is(th, td, strong, b, .font-medium, .font-semibold, .font-bold),
+body.app-auth-page table :is(th, td, strong, b, .font-medium, .font-semibold, .font-bold) {
+  font-weight: 430 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="web/"] table th,
+body[data-view^="auth/"] table th,
+body.app-auth-page table th {
+  font-size: 0.78rem !important;
+  font-weight: 520 !important;
+  text-transform: none !important;
+}
+
+body[data-view^="web/"] table td,
+body[data-view^="auth/"] table td,
+body.app-auth-page table td {
+  font-size: 0.84rem !important;
+  line-height: 1.45 !important;
+}
+
+body[data-view^="web/"] :is(.rounded-full, .badge, [class*="badge"], [class*="pill"]),
+body[data-view^="auth/"] :is(.rounded-full, .badge, [class*="badge"], [class*="pill"]),
+body.app-auth-page :is(.rounded-full, .badge, [class*="badge"], [class*="pill"]) {
+  font-weight: 560 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="web/"] :is(.btn, button, a[class*="btn"], .mk-btn, .public-mobile-panel__link),
+body[data-view^="auth/"] :is(.btn, button, a[class*="btn"]),
+body.app-auth-page :is(.btn, button, a[class*="btn"], .auth-form-v2__submit, .auth-form-v2__secondary-action, .auth-form-v2__ghost-button) {
+  font-weight: 580 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="auth/"] :is(h1, .text-4xl, .text-3xl),
+body.app-auth-page :is(h1, .text-4xl, .text-3xl, .auth-suite__panel-title, .auth-suite__aside-title) {
+  font-size: clamp(1.22rem, 1.8vw, 1.6rem) !important;
+  font-weight: 650 !important;
+  line-height: 1.14 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="auth/"] :is(h2, .text-2xl),
+body.app-auth-page :is(h2, .text-2xl, .auth-form-v2__section-title) {
+  font-size: 1.08rem !important;
+  font-weight: 600 !important;
+  line-height: 1.24 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="auth/"] :is(h3, .text-xl, .text-lg),
+body.app-auth-page :is(h3, .text-xl, .text-lg, .auth-suite__highlight-title, .auth-inline-banner__title, .auth-message__title) {
+  font-size: 0.96rem !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="auth/"] :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]),
+body.app-auth-page :is(input, select, textarea, .auth-form-v2__control):not([type="checkbox"]):not([type="radio"]) {
+  font-size: 0.9rem !important;
+  line-height: 1.45 !important;
+}
+
+body.app-auth-page :is(
+  .auth-suite__panel-subtitle,
+  .auth-suite__aside-text,
+  .auth-suite__highlight-text,
+  .auth-form-v2__hint,
+  .auth-form-v2__meta-note,
+  .auth-form-v2__footer-note,
+  .auth-empty-state-v2__text,
+  .auth-inline-banner__text,
+  .auth-sso-card__text,
+  .auth-form-v2__section-text,
+  .auth-stepper-v2__content small,
+  .auth-choice-v2__text,
+  .auth-strength-v2__status
+) {
+  font-size: 0.88rem !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+}
+
+body[data-view^="auth/"] :is(
+  .auth-step-pill,
+  .auth-choice-card__title,
+  .auth-notice__eyebrow,
+  .auth-notice__title,
+  .auth-form-v2__text-link,
+  .auth-form-v2__footer-note a,
+  .auth-form-v2__hint a,
+  .auth-form-v2__checkbox a,
+  .auth-form-v2__toggle,
+  .auth-choice-v2__title,
+  .auth-form-v2__accordion-trigger,
+  .auth-form-v2__accordion-note,
+  .auth-strength-v2__label,
+  .auth-rules-v2__badge,
+  .auth-stepper-v2__index,
+  .auth-stepper-v2__content strong
+),
+body.app-auth-page :is(
+  .auth-step-pill,
+  .auth-choice-card__title,
+  .auth-notice__eyebrow,
+  .auth-notice__title,
+  .auth-form-v2__text-link,
+  .auth-form-v2__footer-note a,
+  .auth-form-v2__hint a,
+  .auth-form-v2__checkbox a,
+  .auth-form-v2__toggle,
+  .auth-choice-v2__title,
+  .auth-form-v2__accordion-trigger,
+  .auth-form-v2__accordion-note,
+  .auth-strength-v2__label,
+  .auth-rules-v2__badge,
+  .auth-stepper-v2__index,
+  .auth-stepper-v2__content strong,
+  .auth-login-dashboard__logo,
+  .auth-login-dashboard__eyebrow,
+  .auth-login-dashboard__section-label,
+  .auth-login-dashboard__title,
+  .auth-login-dashboard__status,
+  .auth-login-dashboard__summary-title,
+  .auth-login-dashboard__kpi-label,
+  .auth-login-dashboard__worklist-head span,
+  .auth-login-dashboard__task strong
+) {
+  font-weight: 560 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-auth-page :is(.auth-login-dashboard__summary-title, .auth-suite__stat strong, .auth-login-dashboard__kpi strong) {
+  font-size: clamp(1.05rem, 1.65vw, 1.35rem) !important;
+  font-weight: 650 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+}
+
+body[data-view^="auth/"] :is(.auth-notice__message, .auth-notice__list),
+body.app-auth-page :is(.auth-notice__message, .auth-notice__list, .auth-message__text, .auth-message__list) {
+  font-size: 0.86rem !important;
+  line-height: 1.45 !important;
+  font-weight: 400 !important;
+}
+
+@media (max-width: 640px) {
+  body[data-view^="web/"] :is(h1, .text-7xl, .text-6xl, .text-5xl, .mk-hero__title, .mk-catalog-hero__title) {
+    font-size: clamp(1.42rem, 7vw, 2rem) !important;
+  }
+
+  body[data-view^="web/"] :is(h2, .text-4xl, .mk-section__title, .mk-hero-panel__title) {
+    font-size: clamp(1.12rem, 5.2vw, 1.45rem) !important;
+  }
+
+  body[data-view^="web/"] :is(h3, .text-3xl) {
+    font-size: clamp(1rem, 4.2vw, 1.18rem) !important;
+  }
+
+  body[data-view^="auth/"] :is(h1, .text-4xl, .text-3xl),
+  body.app-auth-page :is(h1, .text-4xl, .text-3xl, .auth-suite__panel-title, .auth-suite__aside-title) {
+    font-size: clamp(1.15rem, 6vw, 1.45rem) !important;
+  }
+}
+
+/* Teacher pages use the same typography rhythm as student dashboards. */
+html[data-view^="teacher/"] {
+  font-size: 14.5px !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] {
+  font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(
+  .teacher-dashboard-topbar,
+  .teacher-dashboard-sidebar,
+  #teacher-dashboard-sidebar,
+  .teacher-dashboard-main,
+  .teacher-courses-main,
+  .app-shell-toolbar,
+  .app-shell-sidebar
+) {
+  font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(.font-semibold, .font-bold, .font-extrabold, .font-black, strong, b) {
+  font-weight: 560 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(.btn, button, a[class*="btn"], .dash-btn, .teacher-courses-btn) {
+  font-weight: 580 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(.rounded-full, .badge, [class*="badge"], [class*="pill"]) {
+  font-weight: 560 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] table :is(th, td, strong, b, .font-medium, .font-semibold, .font-bold) {
+  font-weight: 430 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] table th {
+  font-size: 0.78rem !important;
+  text-transform: none !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] table td {
+  font-size: 0.84rem !important;
+  line-height: 1.45 !important;
+}
+
+@media (max-width: 640px) {
+  body.app-role-teacher[data-view^="teacher/"] h1,
+  body.app-role-teacher[data-view^="teacher/"] .text-4xl {
+    font-size: clamp(1.08rem, 1.4vw, 1.45rem) !important;
+    line-height: 1.12 !important;
+  }
+
+  body.app-role-teacher[data-view^="teacher/"] h2,
+  body.app-role-teacher[data-view^="teacher/"] .text-3xl {
+    font-size: clamp(0.98rem, 1.2vw, 1.2rem) !important;
+    line-height: 1.18 !important;
+  }
+
+  body.app-role-teacher[data-view^="teacher/"] h3,
+  body.app-role-teacher[data-view^="teacher/"] .text-2xl {
+    font-size: 0.98rem !important;
+    line-height: 1.22 !important;
+  }
+
+  body.app-role-teacher[data-view^="teacher/"] .text-xl {
+    font-size: 0.94rem !important;
+    line-height: 1.22 !important;
+  }
+
+  body.app-role-teacher[data-view^="teacher/"] .text-lg {
+    font-size: 0.9rem !important;
+    line-height: 1.24 !important;
+  }
+
+  body.app-role-teacher[data-view^="teacher/"] :is(input, select, textarea, button) {
+    font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+    font-size: 0.84rem !important;
+  }
+}
+
+/* Final teacher/student typography parity overrides. */
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-title {
+  font-family: var(--app-font-title, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+  max-width: min(48vw, 36rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.05rem !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] :is(.app-shell-toolbar__eyebrow, .teacher-dashboard-topbar p[class*="uppercase"]) {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.1em !important;
+  line-height: 1.2 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-welcome :is(h1, h2),
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-hero :is(h1, h2) {
+  font-family: var(--app-font-title, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+  font-size: 1.125rem !important;
+  font-weight: 650 !important;
+  line-height: 1.12 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-welcome,
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-hero {
+  min-height: 0 !important;
+  padding: 1.15rem 1.25rem !important;
+  border-radius: 1.15rem !important;
+  background: linear-gradient(100deg, #2563eb 0%, #1d9bd8 56%, #0fb5c8 100%) !important;
+  box-shadow: 0 20px 42px -34px rgba(37, 99, 235, 0.72) !important;
+}
+
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-welcome p:not([class*="uppercase"]),
+body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-hero p:not([class*="uppercase"]) {
+  font-family: var(--app-font-accent, "Times New Roman", Times, serif) !important;
+  font-size: 0.9rem !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill__label {
+  font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+  font-size: 0.84rem !important;
+  font-weight: 400 !important;
+  line-height: 1.45 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill__value {
+  font-family: var(--app-font-title, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+  font-size: 1.45rem !important;
+  font-weight: 650 !important;
+  line-height: 1.1 !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-strip {
+  gap: 1rem !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill {
+  min-height: 5.6rem !important;
+  padding: 0.92rem 1rem !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill :is(p, span) {
+  letter-spacing: 0 !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill__icon {
+  width: 2.35rem !important;
+  height: 2.35rem !important;
+  min-width: 2.35rem !important;
+  border-radius: 0.85rem !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill__icon .app-icon,
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-summary-pill__icon .app-icon > svg {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+}
+
+body.app-role-teacher[data-view="teacher/exams_manage"] .teacher-dashboard-main .exam-filter-tab {
+  font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+  font-size: 0.84rem !important;
+  font-weight: 560 !important;
+  letter-spacing: 0 !important;
+}
+
+@media (min-width: 640px) {
+  body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-title {
+    max-width: min(58vw, 42rem);
+    font-size: 1.125rem !important;
+  }
+
+  body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-welcome :is(h1, h2),
+  body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-main .teacher-dashboard-hero :is(h1, h2) {
+    font-size: 1.25rem !important;
+  }
+}
+
+@media (max-width: 380px) {
+  body.app-role-teacher[data-view^="teacher/"] .teacher-dashboard-title {
+    max-width: 38vw;
+    font-size: 1rem !important;
+  }
+}
+
+/* Compact admin density layer, aligned with the student sizing rhythm. */
+body.app-role-admin:not([data-view="admin/certificate_preview"]) {
+  font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.44;
+  letter-spacing: 0;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .text-4xl,
+  .text-3xl,
+  .text-2xl,
+  .text-xl,
+  .text-lg,
+  .sm\:text-4xl,
+  .sm\:text-3xl,
+  .sm\:text-2xl,
+  .sm\:text-xl,
+  .sm\:text-lg
+) {
+  font-family: var(--app-font-title, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+  letter-spacing: 0 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(h1, .text-4xl, .sm\:text-4xl) {
+  font-size: clamp(1.45rem, 2.4vw, 1.95rem) !important;
+  line-height: 1.12 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(h2, .text-3xl, .sm\:text-3xl) {
+  font-size: clamp(1.28rem, 2.05vw, 1.7rem) !important;
+  line-height: 1.14 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(h3, .text-2xl, .sm\:text-2xl) {
+  font-size: clamp(1.08rem, 1.7vw, 1.35rem) !important;
+  line-height: 1.18 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.text-xl, .sm\:text-xl) {
+  font-size: 1rem !important;
+  line-height: 1.2 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.text-lg, .sm\:text-lg) {
+  font-size: 0.92rem !important;
+  line-height: 1.24 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.font-semibold, .font-bold, .font-extrabold, .font-black, strong, b) {
+  font-weight: 650 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(input, select, textarea, button) {
+  font-family: var(--app-font-body, "Plus Jakarta Sans", "Inter", "Segoe UI", Arial, sans-serif) !important;
+  font-size: 0.84rem !important;
+  line-height: 1.35 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) {
+  min-height: 2.35rem;
+  border-radius: 0.78rem;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(button, .btn, a[class*="btn"], [class*="btn"], .app-btn, .app-btn-primary, .app-btn-soft, .app-shell-button) {
+  min-height: 2.35rem;
+  padding: 0.48rem 0.78rem;
+  border-radius: 0.78rem;
+  font-size: 0.84rem;
+  letter-spacing: 0;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.badge, [class*="badge"], [class*="pill"], .app-status-pill, .app-kpi-badge) {
+  min-height: 1.6rem;
+  padding: 0.18rem 0.46rem;
+  border-radius: 999px;
+  font-size: 0.64rem;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.rounded-2xl, .sm\:rounded-2xl) {
+  border-radius: 1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.rounded-3xl, .sm\:rounded-3xl) {
+  border-radius: 1.15rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.p-6, .sm\:p-6) {
+  padding: 1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.p-5, .sm\:p-5) {
+  padding: 0.9rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.p-4, .sm\:p-4) {
+  padding: 0.8rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.p-8, .sm\:p-8) {
+  padding: 1.05rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.px-6, .sm\:px-6) {
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.py-6, .sm\:py-6) {
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.px-5, .sm\:px-5) {
+  padding-left: 0.9rem !important;
+  padding-right: 0.9rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.py-5, .sm\:py-5) {
+  padding-top: 0.9rem !important;
+  padding-bottom: 0.9rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.px-4, .sm\:px-4) {
+  padding-left: 0.8rem !important;
+  padding-right: 0.8rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.py-4, .sm\:py-4) {
+  padding-top: 0.8rem !important;
+  padding-bottom: 0.8rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.px-8, .sm\:px-8) {
+  padding-left: 1.05rem !important;
+  padding-right: 1.05rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.py-8, .sm\:py-8) {
+  padding-top: 1.05rem !important;
+  padding-bottom: 1.05rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.gap-6, .sm\:gap-6) {
+  gap: 1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.gap-5, .sm\:gap-5) {
+  gap: 0.85rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.gap-4, .sm\:gap-4) {
+  gap: 0.7rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.gap-8, .sm\:gap-8) {
+  gap: 1.1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .space-y-5 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.85rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.7rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .space-y-8 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1.1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.h-12, .sm\:h-12) {
+  height: 2.65rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.w-12, .sm\:w-12) {
+  width: 2.65rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.h-11, .sm\:h-11) {
+  height: 2.45rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.w-11, .sm\:w-11) {
+  width: 2.45rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.h-10, .sm\:h-10) {
+  height: 2.25rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) :is(.w-10, .sm\:w-10) {
+  width: 2.25rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) table :is(th, td) {
+  padding-top: 0.7rem !important;
+  padding-bottom: 0.7rem !important;
+  font-size: 0.82rem !important;
+  line-height: 1.38 !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) table th {
+  font-size: 0.74rem !important;
+  letter-spacing: 0.06em !important;
+  text-transform: none !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-shell-content,
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-shell-dense {
+  gap: 1rem !important;
+}
+
+body.app-role-admin:not([data-view="admin/certificate_preview"]) .admin-shell-content :is(.text-2xl, .sm\:text-2xl, .text-3xl, .sm\:text-3xl) {
+  letter-spacing: 0 !important;
+}
+
+/* Admin courses filter: restore readable widths and contrast. */
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr) auto;
+  gap: 0.8rem;
+  align-items: end;
+}
+
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-field {
+  display: grid;
+  min-width: 0;
+  gap: 0.35rem;
+}
+
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-field > span:first-child {
+  color: var(--app-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-field .relative {
+  min-width: 0;
+}
+
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-field .relative > input,
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-field .relative > select {
+  width: 100%;
+  min-height: 2.8rem;
+  border: 1px solid color-mix(in srgb, var(--app-border) 82%, var(--admin-shell-accent) 18%);
+  border-radius: 0.95rem;
+  background: color-mix(in srgb, var(--app-surface) 94%, var(--admin-shell-accent) 6%);
+  color: var(--app-text) !important;
+  font-size: 0.88rem !important;
+  box-shadow: none;
+}
+
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-field .relative > input::placeholder {
+  color: var(--app-muted) !important;
+  opacity: 1;
+}
+
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-field .relative > i {
+  color: color-mix(in srgb, var(--app-muted) 76%, var(--admin-shell-accent) 24%);
+}
+
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  justify-self: end;
+}
+
+body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-actions .admin-shell-button {
+  min-width: 9rem;
+}
+
+@media (max-width: 1279px) {
+  body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-form {
+    grid-template-columns: 1fr;
+  }
+
+  body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-actions {
+    justify-content: stretch;
+    justify-self: stretch;
+  }
+
+  body.app-role-admin[data-view="admin/courses"] .admin-courses-filter-actions .admin-shell-button {
+    min-width: 0;
+    width: 100%;
+  }
+}

@@ -1,0 +1,410 @@
+body[data-view="teacher/notifications"] {
+    --teacher-notification-toast-top: var(--teacher-topbar-height);
+    --teacher-notification-toast-bg: rgba(255, 255, 255, 0.98);
+    --teacher-notification-toast-border: rgba(148, 163, 184, 0.2);
+    --teacher-notification-toast-color: #0f172a;
+    --teacher-notification-toast-shadow: 0 28px 60px -30px rgba(15, 23, 42, 0.24);
+    --teacher-notification-toast-success-bg: linear-gradient(135deg, rgba(240, 253, 250, 0.98), rgba(236, 254, 255, 0.96));
+    --teacher-notification-toast-success-color: #064e3b;
+    --teacher-notification-toast-icon-bg: rgba(16, 185, 129, 0.12);
+    --teacher-notification-toast-icon-color: #059669;
+    --teacher-notification-toast-bar-bg: rgba(203, 213, 225, 0.58);
+    --teacher-notification-toast-bar-gradient: linear-gradient(90deg, #34d399 0%, #10b981 45%, #059669 100%);
+}
+
+html.dark body[data-view="teacher/notifications"],
+html[data-theme="dark"] body[data-view="teacher/notifications"] {
+    --teacher-notification-toast-bg: rgba(15, 23, 42, 0.96);
+    --teacher-notification-toast-border: rgba(148, 163, 184, 0.2);
+    --teacher-notification-toast-color: #dbeafe;
+    --teacher-notification-toast-shadow: 0 28px 60px -30px rgba(15, 23, 42, 0.72);
+    --teacher-notification-toast-success-bg: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(8, 47, 73, 0.96));
+    --teacher-notification-toast-success-color: #d1fae5;
+    --teacher-notification-toast-icon-bg: rgba(16, 185, 129, 0.16);
+    --teacher-notification-toast-icon-color: #34d399;
+    --teacher-notification-toast-bar-bg: rgba(148, 163, 184, 0.18);
+}
+
+body[data-view="teacher/notifications"] .teacher-notifications-page {
+    display: grid;
+    gap: 1rem;
+}
+
+body[data-view="teacher/notifications"] .teacher-notifications-stats-grid {
+    display: none !important;
+}
+
+body[data-view="teacher/notifications"] .teacher-notifications-panels-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+body[data-view="teacher/notifications"] .teacher-notifications-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+@media (min-width: 1024px) {
+    body[data-view="teacher/notifications"] .teacher-notifications-panels-grid {
+        grid-template-columns: minmax(0, 1.65fr) minmax(320px, 340px);
+    }
+}
+
+body[data-view="teacher/notifications"] .teacher-notifications-panel,
+body[data-view="teacher/notifications"] .teacher-notifications-sidebar {
+    border: 1px solid rgba(226, 232, 240, 0.92);
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 20px 48px -36px rgba(15, 23, 42, 0.26);
+}
+
+html.dark body[data-view="teacher/notifications"] .teacher-notifications-panel,
+html.dark body[data-view="teacher/notifications"] .teacher-notifications-sidebar,
+html[data-theme="dark"] body[data-view="teacher/notifications"] .teacher-notifications-panel,
+html[data-theme="dark"] body[data-view="teacher/notifications"] .teacher-notifications-sidebar {
+    border-color: rgba(71, 85, 105, 0.55);
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.96));
+    color: #e5e7eb;
+    box-shadow: 0 20px 48px -32px rgba(2, 6, 23, 0.78);
+}
+
+body[data-view="teacher/notifications"] .notif-message-body {
+    overflow-wrap: anywhere;
+}
+
+body[data-view="teacher/notifications"] .notif-inline-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    max-width: 100%;
+    margin: 0.25rem 0.25rem 0 0;
+    padding: 0.25rem;
+    border: 1px solid rgba(125, 211, 252, 0.38);
+    border-radius: 999px;
+    background: rgba(14, 165, 233, 0.1);
+    vertical-align: middle;
+}
+
+body[data-view="teacher/notifications"] .notif-body-link,
+body[data-view="teacher/notifications"] .notif-copy-link-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 1.85rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+body[data-view="teacher/notifications"] .notif-body-link {
+    padding: 0.42rem 0.7rem;
+    color: #075985;
+}
+
+body[data-view="teacher/notifications"] .notif-copy-link-btn {
+    padding: 0.42rem 0.7rem;
+    border: 1px solid rgba(14, 165, 233, 0.28);
+    background: #fff;
+    color: #0369a1;
+    cursor: pointer;
+    transition:
+        background 160ms ease,
+        border-color 160ms ease,
+        color 160ms ease;
+}
+
+body[data-view="teacher/notifications"] .notif-copy-link-btn:hover {
+    border-color: rgba(14, 165, 233, 0.45);
+    background: #e0f2fe;
+    color: #075985;
+}
+
+html.dark body[data-view="teacher/notifications"] .notif-inline-link,
+html[data-theme="dark"] body[data-view="teacher/notifications"] .notif-inline-link {
+    border-color: rgba(56, 189, 248, 0.28);
+    background: rgba(14, 165, 233, 0.12);
+}
+
+html.dark body[data-view="teacher/notifications"] .notif-body-link,
+html[data-theme="dark"] body[data-view="teacher/notifications"] .notif-body-link {
+    color: #bae6fd;
+}
+
+html.dark body[data-view="teacher/notifications"] .notif-copy-link-btn,
+html[data-theme="dark"] body[data-view="teacher/notifications"] .notif-copy-link-btn {
+    border-color: rgba(56, 189, 248, 0.24);
+    background: rgba(15, 23, 42, 0.88);
+    color: #bae6fd;
+}
+
+html.dark body[data-view="teacher/notifications"] .notif-copy-link-btn:hover,
+html[data-theme="dark"] body[data-view="teacher/notifications"] .notif-copy-link-btn:hover {
+    background: rgba(14, 165, 233, 0.22);
+    color: #e0f2fe;
+}
+
+body[data-view="teacher/notifications"] .teacher-notification-mark-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 9999px;
+    padding: 0.7rem 1rem;
+    border: 1px solid rgba(59, 130, 246, 0.28);
+    background: rgba(30, 41, 59, 0.9);
+    color: #bfdbfe;
+    box-shadow: 0 12px 24px -18px rgba(37, 99, 235, 0.45);
+    white-space: nowrap;
+}
+
+body[data-view="teacher/notifications"] .teacher-notification-mark-all:hover {
+    background: rgba(15, 23, 42, 0.96);
+    border-color: rgba(96, 165, 250, 0.36);
+}
+
+body[data-view="teacher/notifications"] .teacher-notification-mark-all i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 0.6rem;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+
+@media (min-width: 640px) {
+    body[data-view="teacher/notifications"] .teacher-notification-card {
+        padding: 1.25rem;
+    }
+}
+
+body[data-view="teacher/notifications"] .notification-filter-more > summary,
+body[data-view="teacher/notifications"] .notification-card-menu > summary {
+    list-style: none;
+}
+
+body[data-view="teacher/notifications"] .notification-filter-more > summary::-webkit-details-marker,
+body[data-view="teacher/notifications"] .notification-card-menu > summary::-webkit-details-marker {
+    display: none;
+}
+
+body[data-view="teacher/notifications"] .notification-filter-more[open] > summary,
+body[data-view="teacher/notifications"] .notification-card-menu[open] > summary {
+    border-color: rgba(96, 165, 250, 0.45);
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast {
+    position: fixed;
+    top: calc(var(--teacher-notification-toast-top, 4.5rem) + 0.75rem);
+    left: 50%;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    width: min(42rem, calc(100vw - 1rem));
+    border: 1px solid var(--teacher-notification-toast-border);
+    border-radius: 1.1rem;
+    padding: 0.95rem 1rem;
+    background: var(--teacher-notification-toast-bg);
+    color: var(--teacher-notification-toast-color);
+    box-shadow: var(--teacher-notification-toast-shadow);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    pointer-events: none;
+    overflow: hidden;
+    will-change: transform, opacity;
+    transform: translateX(-50%);
+    animation:
+        teacher-withdrawal-toast-in 180ms ease-out both,
+        teacher-withdrawal-toast-out 220ms ease-in 3200ms forwards;
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast--success {
+    border-color: rgba(52, 211, 153, 0.28);
+    background: var(--teacher-notification-toast-success-bg);
+    color: var(--teacher-notification-toast-success-color);
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast--error {
+    border-color: rgba(248, 113, 113, 0.3);
+    background: linear-gradient(135deg, rgba(254, 242, 242, 0.98), rgba(255, 241, 242, 0.96));
+    color: #7f1d1d;
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast--warning {
+    border-color: rgba(245, 158, 11, 0.28);
+    background: linear-gradient(135deg, rgba(255, 251, 235, 0.98), rgba(254, 243, 199, 0.96));
+    color: #78350f;
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast--info {
+    border-color: rgba(96, 165, 250, 0.28);
+    background: linear-gradient(135deg, rgba(239, 246, 255, 0.98), rgba(224, 242, 254, 0.96));
+    color: #1e3a8a;
+}
+
+html.dark body[data-view="teacher/notifications"] .teacher-withdrawal-toast--error,
+html[data-theme="dark"] body[data-view="teacher/notifications"] .teacher-withdrawal-toast--error {
+    background: linear-gradient(135deg, rgba(24, 28, 47, 0.98), rgba(127, 29, 29, 0.96));
+    color: #fee2e2;
+}
+
+html.dark body[data-view="teacher/notifications"] .teacher-withdrawal-toast--warning,
+html[data-theme="dark"] body[data-view="teacher/notifications"] .teacher-withdrawal-toast--warning {
+    background: linear-gradient(135deg, rgba(24, 28, 47, 0.98), rgba(120, 53, 15, 0.96));
+    color: #fef3c7;
+}
+
+html.dark body[data-view="teacher/notifications"] .teacher-withdrawal-toast--info,
+html[data-theme="dark"] body[data-view="teacher/notifications"] .teacher-withdrawal-toast--info {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 64, 175, 0.96));
+    color: #dbeafe;
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast__copy {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex: 0 0 auto;
+    border-radius: 9999px;
+    background: var(--teacher-notification-toast-icon-bg);
+    color: var(--teacher-notification-toast-icon-color);
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast--error .teacher-withdrawal-toast__icon {
+    background: rgba(239, 68, 68, 0.18);
+    color: #ef4444;
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast--warning .teacher-withdrawal-toast__icon {
+    background: rgba(245, 158, 11, 0.18);
+    color: #d97706;
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast--info .teacher-withdrawal-toast__icon {
+    background: rgba(59, 130, 246, 0.18);
+    color: #2563eb;
+}
+
+html.dark body[data-view="teacher/notifications"] .teacher-withdrawal-toast--error .teacher-withdrawal-toast__icon,
+html[data-theme="dark"] body[data-view="teacher/notifications"] .teacher-withdrawal-toast--error .teacher-withdrawal-toast__icon {
+    color: #fca5a5;
+}
+
+html.dark body[data-view="teacher/notifications"] .teacher-withdrawal-toast--warning .teacher-withdrawal-toast__icon,
+html[data-theme="dark"] body[data-view="teacher/notifications"] .teacher-withdrawal-toast--warning .teacher-withdrawal-toast__icon {
+    color: #fbbf24;
+}
+
+html.dark body[data-view="teacher/notifications"] .teacher-withdrawal-toast--info .teacher-withdrawal-toast__icon,
+html[data-theme="dark"] body[data-view="teacher/notifications"] .teacher-withdrawal-toast--info .teacher-withdrawal-toast__icon {
+    color: #93c5fd;
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast__title {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: inherit;
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast__message,
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast__list {
+    margin-top: 0.3rem;
+    min-width: 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.42;
+    word-break: break-word;
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast__list {
+    padding-left: 1rem;
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast__bar {
+    display: block;
+    width: 100%;
+    height: 3px;
+    border-radius: 9999px;
+    background: var(--teacher-notification-toast-bar-bg);
+    overflow: hidden;
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast__bar::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    transform-origin: left center;
+    background: var(--teacher-notification-toast-bar-gradient);
+    animation: teacher-withdrawal-toast-bar 3200ms linear forwards;
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast--success .teacher-withdrawal-toast__bar::before {
+    background: linear-gradient(90deg, #34d399 0%, #10b981 45%, #059669 100%);
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast--error .teacher-withdrawal-toast__bar::before {
+    background: linear-gradient(90deg, #fda4af 0%, #fb7185 45%, #ef4444 100%);
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast--warning .teacher-withdrawal-toast__bar::before {
+    background: linear-gradient(90deg, #fde68a 0%, #f59e0b 45%, #d97706 100%);
+}
+
+body[data-view="teacher/notifications"] .teacher-withdrawal-toast--info .teacher-withdrawal-toast__bar::before {
+    background: linear-gradient(90deg, #93c5fd 0%, #3b82f6 45%, #1d4ed8 100%);
+}
+
+@media (max-width: 767px) {
+    body[data-view="teacher/notifications"] .teacher-withdrawal-toast {
+        top: calc(var(--teacher-topbar-height, 4rem) + 0.6rem);
+        left: 0.75rem;
+        right: 0.75rem;
+        width: auto;
+        transform: none;
+    }
+}
+
+@keyframes teacher-withdrawal-toast-in {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-0.5rem) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+}
+
+@keyframes teacher-withdrawal-toast-out {
+    to {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-0.25rem) scale(0.98);
+        pointer-events: none;
+    }
+}
+
+@keyframes teacher-withdrawal-toast-bar {
+    from {
+        transform: scaleX(1);
+    }
+    to {
+        transform: scaleX(0);
+    }
+}

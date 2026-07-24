@@ -1,0 +1,176 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Services\Web;
+
+use App\Core\Service;
+
+use App\Models\WebCertificateModel;
+use App\Services\Shared\CertificateOpsService;
+use App\Services\Shared\PlatformSettingsService;
+
+final class CertificateService extends Service
+{
+    private WebCertificateModel $model;
+    private PlatformSettingsService $settings;
+    private CertificateOpsService $certificates;
+
+    public function __construct(
+        WebCertificateModel $model,
+        PlatformSettingsService $settings,
+        CertificateOpsService $certificates
+    )
+    {
+        $this->model = $model;
+        $this->settings = $settings;
+        $this->certificates = $certificates;
+    }
+
+    /**
+     * @return array{httpStatus:?int,abortTitle:?string,abortMessage:?string,view:array<string,mixed>}
+     */
+    public function handle(string $code, string $format = 'html'): array
+    {
+        if ($code === '') {
+            return $this->abort(
+                404,
+                'Certificat introuvable',
+                "Le lien du certificat est incomplet ou le code demandé n'existe pas."
+            );
+        }
+        if (!$this->certificates->hasCertificatesTable()) {
+            return $this->abort(
+                404,
+                'Certificat indisponible',
+                "Le service de vérification des certificats n'est pas disponible pour le moment."
+            );
+        }
+
+        $hasSignatureColumn = $this->certificates->ensureUsersSignatureColumn();
+        $cert = $this->model->findIssuedByCode($code, $hasSignatureColumn);
+        if (!$cert || (string) ($cert['status'] ?? '') !== 'issued') {
+            return $this->abort(
+                404,
+                'Certificat introuvable',
+                "Aucun certificat valide ne correspond à ce code de vérification."
+            );
+        }
+
+        $fullName = trim((string) ($cert['certificate_display_name'] ?? ''));
+        if ($fullName === '') {
+            $fullName = trim((string) ($cert['first_name'] ?? '') . ' ' . (string) ($cert['last_name'] ?? ''));
+        }
+        $teacherName = trim((string) ($cert['teacher_first_name'] ?? '') . ' ' . (string) ($cert['teacher_last_name'] ?? ''));
+        if ($teacherName === '') {
+            $teacherName = 'Formateur';
+        }
+
+        $identity = $this->settings->publicIdentity();
+        $siteName = trim((string) ($identity['siteName'] ?? 'École Numérique'));
+        if ($siteName === '') {
+            $siteName = 'École Numérique';
+        }
+        $siteTagline = trim((string) ($identity['siteTagline'] ?? ''));
+        $siteDescription = trim((string) ($identity['siteDescription'] ?? ''));
+        $supportEmail = trim((string) ($identity['supportEmail'] ?? ''));
+        $supportPhone = trim((string) ($identity['supportPhone'] ?? ''));
+        $supportWhatsapp = trim((string) ($identity['supportWhatsapp'] ?? ''));
+        $siteAddress = trim((string) ($identity['siteAddress'] ?? ''));
+        $footerText = trim((string) ($identity['footerText'] ?? ''));
+        $siteLogoUrl = trim((string) ($identity['siteLogoUrl'] ?? ''));
+        if ($siteLogoUrl === '') {
+            $siteLogoUrl = $this->siteLogoUrl();
+        }
+        $teacherSignaturePath = $hasSignatureColumn ? (string) ($cert['teacher_signature_path'] ?? '') : '';
+        $teacherSignatureUrl = $this->toAssetUrl($teacherSignaturePath);
+        $dgSignaturePath = trim($this->settings->get('platform_dg_signature_path', ''));
+        $dgSignatureUrl = $this->toAssetUrl($dgSignaturePath);
+        $dgName = trim($this->settings->get('platform_dg_name', 'Directeur général'));
+        if ($dgName === '') {
+            $dgName = 'Directeur général';
+        }
+
+        $issuedAt = (string) ($cert['issued_at'] ?? '');
+        $issuedLabel = '';
+        if ($issuedAt !== '') {
+            $timestamp = strtotime($issuedAt);
+            $issuedLabel = $timestamp ? date('d/m/Y', $timestamp) : $issuedAt;
+        }
+
+        $hoursLabel = '';
+        if (is_numeric($cert['duration_hours'] ?? null) && function_exists('format_duration_hours_hm')) {
+            $hoursLabel = format_duration_hours_hm((float) $cert['duration_hours']);
+        }
+
+        $verifyUrl = $this->absUrl('certificate?code=' . urlencode((string) ($cert['code'] ?? '')));
+        $qrVerifyUrl = $verifyUrl;
+        if (!in_array($format, ['html', 'pdf'], true)) {
+            $format = 'html';
+        }
+
+        return [
+            'httpStatus' => null,
+            'abortTitle' => null,
+            'abortMessage' => null,
+            'view' => [
+                'cert' => $cert,
+                'siteName' => $siteName,
+                'siteTagline' => $siteTagline,
+                'siteDescription' => $siteDescription,
+                'supportEmail' => $supportEmail,
+                'supportPhone' => $supportPhone,
+                'supportWhatsapp' => $supportWhatsapp,
+                'siteAddress' => $siteAddress,
+                'footerText' => $footerText,
+                'fullName' => $fullName,
+                'teacherName' => $teacherName,
+                'dgName' => $dgName,
+                'siteLogoUrl' => $siteLogoUrl,
+                'teacherSignatureUrl' => $teacherSignatureUrl,
+                'dgSignatureUrl' => $dgSignatureUrl,
+                'issuedLabel' => $issuedLabel,
+                'hoursLabel' => $hoursLabel,
+                'verifyUrl' => $verifyUrl,
+                'qrVerifyUrl' => $qrVerifyUrl,
+                'exportFormat' => $format,
+                'isPdfExport' => $format === 'pdf',
+            ],
+        ];
+    }
+
+    /**
+     * @return array{httpStatus:int,abortTitle:string,abortMessage:string,view:array<string,mixed>}
+     */
+    private function abort(int $httpStatus, string $title, string $message): array
+    {
+        return [
+            'httpStatus' => $httpStatus,
+            'abortTitle' => $title,
+            'abortMessage' => $message,
+            'view' => [],
+        ];
+    }
+
+    private function toAssetUrl(string $path): string
+    {
+        if ($path === '') {
+            return '';
+        }
+        if (preg_match('/^https?:\\/\\//i', $path) === 1) {
+            return $path;
+        }
+        $relative = ltrim($path, '/');
+        $basePath = defined('BASE_PATH') ? trim((string) BASE_PATH, '/') : '';
+        if ($basePath !== '' && str_starts_with($relative, $basePath . '/')) {
+            $relative = substr($relative, strlen($basePath) + 1);
+        }
+
+        $absolute = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relative);
+        if (is_file($absolute) || str_starts_with($relative, 'storage/uploads/')) {
+            return $this->siteUrl($relative);
+        }
+
+        return '';
+    }
+}
+

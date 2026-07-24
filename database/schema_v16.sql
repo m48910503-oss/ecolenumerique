@@ -1,0 +1,2 @@
+-- Schema v16 : version retiree.
+-- Migration historique conservee pour compatibilite.

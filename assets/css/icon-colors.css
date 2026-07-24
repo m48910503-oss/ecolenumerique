@@ -1,0 +1,754 @@
+/* Global semantic icon palette. Keep selectors low-specificity so local utility classes can still win. */
+:root {
+  --icon-dashboard: #2563eb;
+  --icon-dashboard-soft: rgba(37, 99, 235, 0.12);
+  --icon-dashboard-border: rgba(37, 99, 235, 0.24);
+  --icon-learning: #0891b2;
+  --icon-learning-soft: rgba(8, 145, 178, 0.12);
+  --icon-learning-border: rgba(8, 145, 178, 0.24);
+  --icon-commerce: #059669;
+  --icon-commerce-soft: rgba(5, 150, 105, 0.12);
+  --icon-commerce-border: rgba(5, 150, 105, 0.24);
+  --icon-achievement: #7c3aed;
+  --icon-achievement-soft: rgba(124, 58, 237, 0.12);
+  --icon-achievement-border: rgba(124, 58, 237, 0.24);
+  --icon-warning: #d97706;
+  --icon-warning-soft: rgba(217, 119, 6, 0.13);
+  --icon-warning-border: rgba(217, 119, 6, 0.26);
+  --icon-danger: #dc2626;
+  --icon-danger-soft: rgba(220, 38, 38, 0.12);
+  --icon-danger-border: rgba(220, 38, 38, 0.24);
+  --icon-communication: #db2777;
+  --icon-communication-soft: rgba(219, 39, 119, 0.12);
+  --icon-communication-border: rgba(219, 39, 119, 0.24);
+  --icon-people: #4f46e5;
+  --icon-people-soft: rgba(79, 70, 229, 0.12);
+  --icon-people-border: rgba(79, 70, 229, 0.24);
+  --icon-system: #475569;
+  --icon-system-soft: rgba(71, 85, 105, 0.12);
+  --icon-system-border: rgba(71, 85, 105, 0.22);
+}
+
+html.dark,
+html[data-theme="dark"] {
+  --icon-dashboard: #60a5fa;
+  --icon-dashboard-soft: rgba(96, 165, 250, 0.16);
+  --icon-dashboard-border: rgba(96, 165, 250, 0.28);
+  --icon-learning: #22d3ee;
+  --icon-learning-soft: rgba(34, 211, 238, 0.16);
+  --icon-learning-border: rgba(34, 211, 238, 0.28);
+  --icon-commerce: #34d399;
+  --icon-commerce-soft: rgba(52, 211, 153, 0.16);
+  --icon-commerce-border: rgba(52, 211, 153, 0.28);
+  --icon-achievement: #a78bfa;
+  --icon-achievement-soft: rgba(167, 139, 250, 0.16);
+  --icon-achievement-border: rgba(167, 139, 250, 0.28);
+  --icon-warning: #fbbf24;
+  --icon-warning-soft: rgba(251, 191, 36, 0.17);
+  --icon-warning-border: rgba(251, 191, 36, 0.3);
+  --icon-danger: #f87171;
+  --icon-danger-soft: rgba(248, 113, 113, 0.16);
+  --icon-danger-border: rgba(248, 113, 113, 0.3);
+  --icon-communication: #f472b6;
+  --icon-communication-soft: rgba(244, 114, 182, 0.16);
+  --icon-communication-border: rgba(244, 114, 182, 0.3);
+  --icon-people: #818cf8;
+  --icon-people-soft: rgba(129, 140, 248, 0.16);
+  --icon-people-border: rgba(129, 140, 248, 0.3);
+  --icon-system: #cbd5e1;
+  --icon-system-soft: rgba(203, 213, 225, 0.13);
+  --icon-system-border: rgba(203, 213, 225, 0.24);
+}
+
+:where(svg[data-app-icon], i[class*=" fa-"]) {
+  color: var(--app-icon-color, currentColor);
+}
+
+:where(
+  svg[data-app-icon="layout"],
+  svg[data-app-icon="layout-grid"],
+  svg[data-app-icon="home"],
+  svg[data-app-icon="bar-chart"],
+  svg[data-app-icon="pie-chart"],
+  svg[data-app-icon="trending-up"],
+  i.fa-home,
+  i.fa-th-large,
+  i.fa-chart-line,
+  i.fa-chart-pie,
+  i.fa-chart-bar,
+  i.fa-layer-group,
+  i.fa-sliders-h,
+  i.fa-tachometer-alt,
+  i.fa-table,
+  i.fa-table-columns,
+  i.fa-list,
+  i.fa-list-check,
+  i.fa-tasks,
+  i.fa-project-diagram,
+  i.fa-sitemap,
+  i.fa-compass,
+  i.fa-signal
+) {
+  --app-icon-color: var(--icon-dashboard);
+}
+
+:where(
+  svg[data-app-icon="book"],
+  svg[data-app-icon="book-open"],
+  svg[data-app-icon="graduation-cap"],
+  svg[data-app-icon="user-graduate"],
+  svg[data-app-icon="chalkboard-user"],
+  svg[data-app-icon="video"],
+  svg[data-app-icon="play-circle"],
+  svg[data-app-icon="clipboard-list"],
+  svg[data-app-icon="file-text"],
+  svg[data-app-icon="upload"],
+  svg[data-app-icon="folder"],
+  svg[data-app-icon="layers"],
+  i.fa-book,
+  i.fa-book-open,
+  i.fa-graduation-cap,
+  i.fa-user-graduate,
+  i.fa-chalkboard-teacher,
+  i.fa-video,
+  i.fa-play,
+  i.fa-play-circle,
+  i.fa-circle-play,
+  i.fa-clipboard-list,
+  i.fa-file,
+  i.fa-file-alt,
+  i.fa-file-download,
+  i.fa-upload,
+  i.fa-folder,
+  i.fa-clipboard,
+  i.fa-clipboard-check,
+  i.fa-file-lines,
+  i.fa-file-pdf,
+  i.fa-file-word,
+  i.fa-file-code,
+  i.fa-file-contract,
+  i.fa-file-signature,
+  i.fa-file-export,
+  i.fa-file-circle-check,
+  i.fa-file-arrow-up,
+  i.fa-cloud,
+  i.fa-cloud-upload-alt,
+  i.fa-cloud-arrow-up,
+  i.fa-folder-open,
+  i.fa-folder-plus,
+  i.fa-image,
+  i.fa-camera,
+  i.fa-film,
+  i.fa-desktop,
+  i.fa-laptop,
+  i.fa-mobile-alt,
+  i.fa-mobile-screen-button,
+  i.fa-code,
+  i.fa-terminal,
+  i.fa-keyboard,
+  i.fa-language,
+  i.fa-paint-brush,
+  i.fa-palette,
+  i.fa-magic,
+  i.fa-wand-magic-sparkles
+) {
+  --app-icon-color: var(--icon-learning);
+}
+
+:where(
+  svg[data-app-icon="wallet"],
+  svg[data-app-icon="receipt"],
+  svg[data-app-icon="credit-card"],
+  svg[data-app-icon="ticket"],
+  svg[data-app-icon="coins"],
+  i.fa-wallet,
+  i.fa-receipt,
+  i.fa-credit-card,
+  i.fa-money-bill,
+  i.fa-money-bill-wave,
+  i.fa-shopping-cart,
+  i.fa-cart-shopping,
+  i.fa-cart-plus,
+  i.fa-shopping-bag,
+  i.fa-ticket-alt,
+  i.fa-ticket,
+  i.fa-tag,
+  i.fa-tags,
+  i.fa-percent,
+  i.fa-euro-sign,
+  i.fa-hand-holding-usd,
+  i.fa-coins
+) {
+  --app-icon-color: var(--icon-commerce);
+}
+
+:where(
+  svg[data-app-icon="award"],
+  svg[data-app-icon="star"],
+  svg[data-app-icon="heart"],
+  svg[data-app-icon="gift"],
+  i.fa-award,
+  i.fa-certificate,
+  i.fa-trophy,
+  i.fa-star,
+  i.fa-star-half-alt,
+  i.fa-heart,
+  i.fa-gift,
+  i.fa-crown,
+  i.fa-lightbulb,
+  i.fa-rocket,
+  i.fa-fire,
+  i.fa-bolt,
+  i.fa-sparkles,
+  i.fa-bullseye,
+  i.fa-flag,
+  i.fa-flag-checkered,
+  i.fa-newspaper,
+  i.fa-quote-left
+) {
+  --app-icon-color: var(--icon-achievement);
+}
+
+:where(
+  svg[data-app-icon="alert-triangle"],
+  svg[data-app-icon="alert-circle"],
+  i.fa-exclamation-triangle,
+  i.fa-exclamation-circle,
+  i.fa-triangle-exclamation,
+  i.fa-circle-exclamation
+) {
+  --app-icon-color: var(--icon-warning);
+}
+
+:where(
+  svg[data-app-icon="trash-2"],
+  svg[data-app-icon="x"],
+  i.fa-trash,
+  i.fa-trash-alt,
+  i.fa-trash-can,
+  i.fa-times,
+  i.fa-xmark,
+  i.fa-ban,
+  i.fa-times-circle,
+  i.fa-skull-crossbones,
+  i.fa-user-slash,
+  i.fa-users-slash,
+  i.fa-user-minus,
+  i.fa-video-slash,
+  i.fa-volume-xmark,
+  i.fa-link-slash,
+  i.fa-minus-circle
+) {
+  --app-icon-color: var(--icon-danger);
+}
+
+:where(
+  svg[data-app-icon="bell"],
+  svg[data-app-icon="mail"],
+  svg[data-app-icon="message-circle"],
+  svg[data-app-icon="comment-dots"],
+  svg[data-app-icon="headset"],
+  svg[data-app-icon="lifebuoy"],
+  i.fa-bell,
+  i.fa-bullhorn,
+  i.fa-envelope,
+  i.fa-envelope-open-text,
+  i.fa-mail-bulk,
+  i.fa-inbox,
+  i.fa-comment,
+  i.fa-comment-alt,
+  i.fa-comment-dots,
+  i.fa-comments,
+  i.fa-headset,
+  i.fa-life-ring,
+  i.fa-phone,
+  i.fa-paper-plane,
+  i.fa-paperclip,
+  i.fa-reply,
+  i.fa-share-alt,
+  i.fa-share-square,
+  i.fa-facebook-f,
+  i.fa-twitter,
+  i.fa-linkedin,
+  i.fa-linkedin-in,
+  i.fa-whatsapp,
+  i.fa-youtube
+) {
+  --app-icon-color: var(--icon-communication);
+}
+
+:where(
+  svg[data-app-icon="user"],
+  svg[data-app-icon="users"],
+  svg[data-app-icon="user-plus"],
+  svg[data-app-icon="building"],
+  svg[data-app-icon="briefcase"],
+  i.fa-user,
+  i.fa-user-plus,
+  i.fa-user-check,
+  i.fa-user-shield,
+  i.fa-user-circle,
+  i.fa-user-clock,
+  i.fa-user-edit,
+  i.fa-user-friends,
+  i.fa-user-tag,
+  i.fa-user-tie,
+  i.fa-users,
+  i.fa-users-cog,
+  i.fa-id-badge,
+  i.fa-id-card,
+  i.fa-building,
+  i.fa-city,
+  i.fa-briefcase
+) {
+  --app-icon-color: var(--icon-people);
+}
+
+:where(
+  svg[data-app-icon="shield"],
+  svg[data-app-icon="lock"],
+  svg[data-app-icon="key"],
+  svg[data-app-icon="settings"],
+  svg[data-app-icon="search"],
+  svg[data-app-icon="filter"],
+  svg[data-app-icon="download"],
+  svg[data-app-icon="printer"],
+  svg[data-app-icon="save"],
+  svg[data-app-icon="external-link"],
+  svg[data-app-icon="repeat"],
+  svg[data-app-icon="menu"],
+  svg[data-app-icon="chevron-left"],
+  svg[data-app-icon="chevron-right"],
+  svg[data-app-icon="chevron-down"],
+  svg[data-app-icon="more-vertical"],
+  i.fa-shield-alt,
+  i.fa-lock,
+  i.fa-lock-open,
+  i.fa-key,
+  i.fa-cog,
+  i.fa-cogs,
+  i.fa-search,
+  i.fa-filter,
+  i.fa-sort-amount-down,
+  i.fa-download,
+  i.fa-print,
+  i.fa-save,
+  i.fa-external-link-alt,
+  i.fa-up-right-from-square,
+  i.fa-arrow-up-right-from-square,
+  i.fa-redo-alt,
+  i.fa-sync-alt,
+  i.fa-undo,
+  i.fa-undo-alt,
+  i.fa-rotate-left,
+  i.fa-rotate-right,
+  i.fa-bars,
+  i.fa-chevron-left,
+  i.fa-chevron-right,
+  i.fa-chevron-down,
+  i.fa-chevron-up,
+  i.fa-arrow-left,
+  i.fa-arrow-right,
+  i.fa-arrow-up,
+  i.fa-copy,
+  i.fa-edit,
+  i.fa-pen,
+  i.fa-pen-nib,
+  i.fa-eye,
+  i.fa-eye-slash,
+  i.fa-expand,
+  i.fa-link,
+  i.fa-globe,
+  i.fa-globe-africa,
+  i.fa-map-marker-alt,
+  i.fa-location-dot,
+  i.fa-qrcode,
+  i.fa-database,
+  i.fa-archive,
+  i.fa-history,
+  i.fa-thumbtack,
+  i.fa-pause,
+  i.fa-pause-circle,
+  i.fa-minus,
+  i.fa-toggle-on,
+  i.fa-toolbox,
+  i.fa-tools,
+  i.fa-volume-high,
+  i.fa-weight-hanging,
+  i.fa-right-to-bracket,
+  i.fa-sign-out-alt,
+  i.fa-ellipsis-h,
+  i.fa-ellipsis-v,
+  i.fa-bug,
+  i.fa-robot
+) {
+  --app-icon-color: var(--icon-system);
+}
+
+:where(svg[data-app-icon="check"], svg[data-app-icon="check-circle"], i.fa-check, i.fa-check-circle, i.fa-circle-check, i.fa-check-double) {
+  --app-icon-color: var(--icon-commerce);
+}
+
+:where(svg[data-app-icon="plus-square"], i.fa-plus, i.fa-plus-square, i.fa-user-plus) {
+  --app-icon-color: var(--icon-dashboard);
+}
+
+:is(
+  .app-kpi-card__icon,
+  .admin-dashboard-kpi-icon,
+  .admin-course-stats-kpi__icon,
+  .admin-category-card__icon,
+  .admin-category-stat__icon,
+  .admin-stats-v2-kpi__icon,
+  .admin-finance-kpi__icon,
+  .admin-settings-kpi__icon,
+  .teacher-courses-summary-card__icon,
+  .exam-summary-pill__icon,
+  .course-content-icon,
+  .app-empty-state__icon,
+  .auth-message__icon,
+  .auth-admin-access-card__icon,
+  .app-title-icon
+):has(:where(svg[data-app-icon], i[class*=" fa-"])) {
+  color: var(--app-icon-color, currentColor);
+  background-color: var(--app-icon-soft, transparent);
+  border-color: var(--app-icon-border, transparent);
+}
+
+:is(
+  .app-kpi-card__icon,
+  .admin-dashboard-kpi-icon,
+  .admin-course-stats-kpi__icon,
+  .admin-category-card__icon,
+  .admin-category-stat__icon,
+  .admin-stats-v2-kpi__icon,
+  .admin-finance-kpi__icon,
+  .admin-settings-kpi__icon,
+  .teacher-courses-summary-card__icon,
+  .exam-summary-pill__icon,
+  .course-content-icon,
+  .app-empty-state__icon,
+  .auth-message__icon,
+  .auth-admin-access-card__icon,
+  .app-title-icon
+):has(:where(svg[data-app-icon="layout"], svg[data-app-icon="layout-grid"], svg[data-app-icon="home"], svg[data-app-icon="bar-chart"], svg[data-app-icon="pie-chart"], svg[data-app-icon="trending-up"], i.fa-home, i.fa-th-large, i.fa-chart-line, i.fa-chart-pie, i.fa-chart-bar, i.fa-layer-group, i.fa-sliders-h)) {
+  --app-icon-color: var(--icon-dashboard);
+  --app-icon-soft: var(--icon-dashboard-soft);
+  --app-icon-border: var(--icon-dashboard-border);
+}
+
+:is(
+  .app-kpi-card__icon,
+  .admin-dashboard-kpi-icon,
+  .admin-course-stats-kpi__icon,
+  .admin-category-card__icon,
+  .admin-category-stat__icon,
+  .admin-stats-v2-kpi__icon,
+  .admin-finance-kpi__icon,
+  .admin-settings-kpi__icon,
+  .teacher-courses-summary-card__icon,
+  .exam-summary-pill__icon,
+  .course-content-icon,
+  .app-empty-state__icon,
+  .auth-message__icon,
+  .auth-admin-access-card__icon,
+  .app-title-icon
+):has(:where(svg[data-app-icon="book"], svg[data-app-icon="book-open"], svg[data-app-icon="graduation-cap"], svg[data-app-icon="user-graduate"], svg[data-app-icon="chalkboard-user"], svg[data-app-icon="video"], svg[data-app-icon="play-circle"], svg[data-app-icon="clipboard-list"], svg[data-app-icon="file-text"], svg[data-app-icon="upload"], svg[data-app-icon="folder"], svg[data-app-icon="layers"], i.fa-book, i.fa-book-open, i.fa-graduation-cap, i.fa-user-graduate, i.fa-chalkboard-teacher, i.fa-video, i.fa-play, i.fa-play-circle, i.fa-clipboard-list, i.fa-file, i.fa-file-alt, i.fa-file-download, i.fa-upload, i.fa-folder)) {
+  --app-icon-color: var(--icon-learning);
+  --app-icon-soft: var(--icon-learning-soft);
+  --app-icon-border: var(--icon-learning-border);
+}
+
+:is(
+  .app-kpi-card__icon,
+  .admin-dashboard-kpi-icon,
+  .admin-course-stats-kpi__icon,
+  .admin-category-card__icon,
+  .admin-category-stat__icon,
+  .admin-stats-v2-kpi__icon,
+  .admin-finance-kpi__icon,
+  .admin-settings-kpi__icon,
+  .teacher-courses-summary-card__icon,
+  .exam-summary-pill__icon,
+  .course-content-icon,
+  .app-empty-state__icon,
+  .auth-message__icon,
+  .auth-admin-access-card__icon,
+  .app-title-icon
+):has(:where(svg[data-app-icon="wallet"], svg[data-app-icon="receipt"], svg[data-app-icon="credit-card"], svg[data-app-icon="ticket"], svg[data-app-icon="coins"], i.fa-wallet, i.fa-receipt, i.fa-credit-card, i.fa-money-bill, i.fa-money-bill-wave, i.fa-shopping-cart, i.fa-ticket-alt, i.fa-coins, svg[data-app-icon="check"], svg[data-app-icon="check-circle"], i.fa-check, i.fa-check-circle, i.fa-check-double)) {
+  --app-icon-color: var(--icon-commerce);
+  --app-icon-soft: var(--icon-commerce-soft);
+  --app-icon-border: var(--icon-commerce-border);
+}
+
+:is(
+  .app-kpi-card__icon,
+  .admin-dashboard-kpi-icon,
+  .admin-course-stats-kpi__icon,
+  .admin-category-card__icon,
+  .admin-category-stat__icon,
+  .admin-stats-v2-kpi__icon,
+  .admin-finance-kpi__icon,
+  .admin-settings-kpi__icon,
+  .teacher-courses-summary-card__icon,
+  .exam-summary-pill__icon,
+  .course-content-icon,
+  .app-empty-state__icon,
+  .auth-message__icon,
+  .auth-admin-access-card__icon,
+  .app-title-icon
+):has(:where(svg[data-app-icon="award"], svg[data-app-icon="star"], svg[data-app-icon="heart"], svg[data-app-icon="gift"], i.fa-award, i.fa-certificate, i.fa-trophy, i.fa-star, i.fa-star-half-alt, i.fa-heart, i.fa-gift, i.fa-crown)) {
+  --app-icon-color: var(--icon-achievement);
+  --app-icon-soft: var(--icon-achievement-soft);
+  --app-icon-border: var(--icon-achievement-border);
+}
+
+:is(
+  .app-kpi-card__icon,
+  .admin-dashboard-kpi-icon,
+  .admin-course-stats-kpi__icon,
+  .admin-category-card__icon,
+  .admin-category-stat__icon,
+  .admin-stats-v2-kpi__icon,
+  .admin-finance-kpi__icon,
+  .admin-settings-kpi__icon,
+  .teacher-courses-summary-card__icon,
+  .exam-summary-pill__icon,
+  .course-content-icon,
+  .app-empty-state__icon,
+  .auth-message__icon,
+  .auth-admin-access-card__icon,
+  .app-title-icon
+):has(:where(svg[data-app-icon="alert-triangle"], svg[data-app-icon="alert-circle"], i.fa-exclamation-triangle, i.fa-exclamation-circle, i.fa-triangle-exclamation, i.fa-circle-exclamation)) {
+  --app-icon-color: var(--icon-warning);
+  --app-icon-soft: var(--icon-warning-soft);
+  --app-icon-border: var(--icon-warning-border);
+}
+
+:is(
+  .app-kpi-card__icon,
+  .admin-dashboard-kpi-icon,
+  .admin-course-stats-kpi__icon,
+  .admin-category-card__icon,
+  .admin-category-stat__icon,
+  .admin-stats-v2-kpi__icon,
+  .admin-finance-kpi__icon,
+  .admin-settings-kpi__icon,
+  .teacher-courses-summary-card__icon,
+  .exam-summary-pill__icon,
+  .course-content-icon,
+  .app-empty-state__icon,
+  .auth-message__icon,
+  .auth-admin-access-card__icon,
+  .app-title-icon
+):has(:where(svg[data-app-icon="trash-2"], svg[data-app-icon="x"], i.fa-trash, i.fa-trash-alt, i.fa-times, i.fa-ban, i.fa-times-circle)) {
+  --app-icon-color: var(--icon-danger);
+  --app-icon-soft: var(--icon-danger-soft);
+  --app-icon-border: var(--icon-danger-border);
+}
+
+:is(
+  .app-kpi-card__icon,
+  .admin-dashboard-kpi-icon,
+  .admin-course-stats-kpi__icon,
+  .admin-category-card__icon,
+  .admin-category-stat__icon,
+  .admin-stats-v2-kpi__icon,
+  .admin-finance-kpi__icon,
+  .admin-settings-kpi__icon,
+  .teacher-courses-summary-card__icon,
+  .exam-summary-pill__icon,
+  .course-content-icon,
+  .app-empty-state__icon,
+  .auth-message__icon,
+  .auth-admin-access-card__icon,
+  .app-title-icon
+):has(:where(svg[data-app-icon="bell"], svg[data-app-icon="mail"], svg[data-app-icon="message-circle"], svg[data-app-icon="comment-dots"], svg[data-app-icon="headset"], svg[data-app-icon="lifebuoy"], i.fa-bell, i.fa-envelope, i.fa-mail-bulk, i.fa-comment, i.fa-comments, i.fa-headset, i.fa-life-ring, i.fa-phone)) {
+  --app-icon-color: var(--icon-communication);
+  --app-icon-soft: var(--icon-communication-soft);
+  --app-icon-border: var(--icon-communication-border);
+}
+
+:is(
+  .app-kpi-card__icon,
+  .admin-dashboard-kpi-icon,
+  .admin-course-stats-kpi__icon,
+  .admin-category-card__icon,
+  .admin-category-stat__icon,
+  .admin-stats-v2-kpi__icon,
+  .admin-finance-kpi__icon,
+  .admin-settings-kpi__icon,
+  .teacher-courses-summary-card__icon,
+  .exam-summary-pill__icon,
+  .course-content-icon,
+  .app-empty-state__icon,
+  .auth-message__icon,
+  .auth-admin-access-card__icon,
+  .app-title-icon
+):has(:where(svg[data-app-icon="user"], svg[data-app-icon="users"], svg[data-app-icon="user-plus"], svg[data-app-icon="building"], svg[data-app-icon="briefcase"], i.fa-user, i.fa-user-plus, i.fa-user-check, i.fa-user-shield, i.fa-users, i.fa-building, i.fa-briefcase)) {
+  --app-icon-color: var(--icon-people);
+  --app-icon-soft: var(--icon-people-soft);
+  --app-icon-border: var(--icon-people-border);
+}
+
+:is(
+  .app-kpi-card__icon,
+  .admin-dashboard-kpi-icon,
+  .admin-course-stats-kpi__icon,
+  .admin-category-card__icon,
+  .admin-category-stat__icon,
+  .admin-stats-v2-kpi__icon,
+  .admin-finance-kpi__icon,
+  .admin-settings-kpi__icon,
+  .teacher-courses-summary-card__icon,
+  .exam-summary-pill__icon,
+  .course-content-icon,
+  .app-empty-state__icon,
+  .auth-message__icon,
+  .auth-admin-access-card__icon,
+  .app-title-icon
+):has(:where(svg[data-app-icon="calendar"], svg[data-app-icon="clock"], svg[data-app-icon="help-circle"], svg[data-app-icon="shield"], svg[data-app-icon="lock"], svg[data-app-icon="key"], svg[data-app-icon="settings"], svg[data-app-icon="search"], svg[data-app-icon="filter"], svg[data-app-icon="download"], svg[data-app-icon="printer"], svg[data-app-icon="save"], svg[data-app-icon="external-link"], svg[data-app-icon="repeat"], svg[data-app-icon="menu"], svg[data-app-icon="chevron-left"], svg[data-app-icon="chevron-right"], svg[data-app-icon="chevron-down"], svg[data-app-icon="more-vertical"], i.fa-calendar, i.fa-calendar-alt, i.fa-calendar-check, i.fa-calendar-day, i.fa-calendar-plus, i.fa-clock, i.fa-hourglass, i.fa-hourglass-half, i.fa-info-circle, i.fa-circle-info, i.fa-circle-notch, i.fa-question-circle, i.fa-shield-alt, i.fa-lock, i.fa-lock-open, i.fa-key, i.fa-cog, i.fa-cogs, i.fa-search, i.fa-filter, i.fa-download, i.fa-print, i.fa-save, i.fa-external-link-alt, i.fa-redo-alt, i.fa-sync-alt, i.fa-bars, i.fa-chevron-left, i.fa-chevron-right, i.fa-chevron-down, i.fa-ellipsis-v)) {
+  --app-icon-color: var(--icon-system);
+  --app-icon-soft: var(--icon-system-soft);
+  --app-icon-border: var(--icon-system-border);
+}
+
+:where(
+  .text-white,
+  .app-button-primary,
+  .admin-shell-nav-link--active,
+  .teacher-dashboard-support-fab,
+  .web-scroll-top,
+  .app-scroll-top,
+  .text-white
+) :where(svg[data-app-icon], i[class*=" fa-"]) {
+  color: inherit;
+}
+
+.app-icon-tone-dashboard { --app-icon-color: var(--icon-dashboard); }
+.app-icon-tone-learning { --app-icon-color: var(--icon-learning); }
+.app-icon-tone-commerce { --app-icon-color: var(--icon-commerce); }
+.app-icon-tone-achievement { --app-icon-color: var(--icon-achievement); }
+.app-icon-tone-warning { --app-icon-color: var(--icon-warning); }
+.app-icon-tone-danger { --app-icon-color: var(--icon-danger); }
+.app-icon-tone-communication { --app-icon-color: var(--icon-communication); }
+.app-icon-tone-people { --app-icon-color: var(--icon-people); }
+.app-icon-tone-system { --app-icon-color: var(--icon-system); }
+
+/* Keep teacher sidebar navigation icons aligned with the link color. */
+body.app-role-teacher .teacher-dashboard-sidebar :is(i[class*=" fa-"], svg[data-app-icon]) {
+  --app-icon-color: currentColor;
+  color: currentColor;
+}
+
+/* Shared heading icons for page heroes and section heads. */
+.app-title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2.35rem;
+  height: 2.35rem;
+  border: 1px solid var(--app-icon-border, rgba(37, 99, 235, 0.24));
+  border-radius: 0.9rem;
+  color: var(--app-icon-color, currentColor);
+  background-color: var(--app-icon-soft, rgba(37, 99, 235, 0.12));
+  box-shadow: 0 14px 30px -24px currentColor;
+}
+
+.app-title-icon :where(svg[data-app-icon], i[class*=" fa-"]) {
+  width: 1.14rem;
+  height: 1.14rem;
+  flex: 0 0 auto;
+}
+
+/* Let card-level icon tiles keep the color defined by their component. */
+:is(
+  .app-kpi-card__icon,
+  .admin-dashboard-kpi-icon,
+  .student-dashboard-icon-tile,
+  .teacher-courses-summary-card__icon,
+  .teacher-promotions-metric-icon,
+  .teacher-promotions-tab-icon,
+  .exam-summary-pill__icon,
+  .app-empty-state__icon,
+  .auth-message__icon,
+  .auth-admin-access-card__icon,
+  .app-title-icon
+) :where(svg[data-app-icon], i[class*=" fa-"]) {
+  color: inherit;
+}
+
+.app-page-hero__lead,
+.app-section-head__lead {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.app-section-head__lead {
+  flex: 1 1 26rem;
+}
+
+.app-page-hero__copy,
+.app-section-head__copy {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.app-section-head__copy {
+  gap: 0.35rem;
+}
+
+.app-page-hero__icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 1rem;
+  margin-top: 0.05rem;
+}
+
+.app-section-head__icon {
+  margin-top: 0.05rem;
+}
+
+@media (max-width: 520px) {
+  .app-title-icon {
+    width: 2.15rem;
+    height: 2.15rem;
+    border-radius: 0.8rem;
+  }
+
+  .app-page-hero__icon {
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 0.9rem;
+  }
+
+  .app-page-hero__lead,
+  .app-section-head__lead {
+    gap: 0.7rem;
+  }
+}
+.app-title-icon--sm {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 0.72rem;
+}
+
+.app-title-icon--sm :where(svg[data-app-icon], i[class*=" fa-"]) {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.app-inline-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.app-inline-title > :last-child {
+  min-width: 0;
+}

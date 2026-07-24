@@ -1,0 +1,44 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Controllers\Admin\Auth;
+
+use App\Core\Controller;
+use App\Models\AdminLoginModel;
+use App\Services\Admin\Auth\SecondaryLoginService;
+
+final class SecondaryLoginController extends Controller
+{
+    public function __invoke(): void
+    {
+        $siteLogoUrl = $this->siteLogoUrl();
+
+        if ($this->isAuthenticated()) {
+            header('Location: ' . $this->siteUrl('admin/dashboard'));
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->requireCsrf();
+        }
+
+        /** @var \PDO $pdo */
+        $pdo = $this->pdo();
+        $service = new SecondaryLoginService(new AdminLoginModel($pdo));
+        $result = $service->handle(
+            (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'),
+            $_POST
+        );
+
+        if (!empty($result['redirectTo'])) {
+            header('Location: ' . (string) $result['redirectTo']);
+            exit;
+        }
+
+        $this->render('admin/auth/secondary_login', array_merge(
+            ['siteLogoUrl' => $siteLogoUrl],
+            is_array($result['view'] ?? null) ? $result['view'] : []
+        ));
+    }
+}
+

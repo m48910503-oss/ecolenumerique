@@ -1,0 +1,21 @@
+# Production .htaccess for https://www.slidecenter.bj/
+
+Options -Indexes
+
+RewriteEngine On
+
+# Site exposed at the root of the domain.
+RewriteBase /
+
+# Block sensitive paths and files before passthrough.
+RewriteRule ^(storage/drive|storage/webpush|storage/tmp|database)/ - [F,L,NC]
+RewriteRule ^storage/mail\.log$ - [F,L,NC]
+RewriteRule \.(env|sql|log|bak)$ - [F,L,NC]
+
+# Keep real files/folders accessible (assets, uploads, etc.).
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Front controller fallback.
+RewriteRule ^ index.php [L,QSA]

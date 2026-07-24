@@ -1,0 +1,22 @@
+# Disable directory indexing
+Options -Indexes
+
+# URL rewriting
+RewriteEngine On
+
+# Project base path (adjust if needed)
+RewriteBase /ecolenumerique/
+
+# 1) Block sensitive paths and files before any passthrough
+RewriteRule ^(storage/drive|storage/webpush|storage/tmp|database)/ - [F,L,NC]
+RewriteRule ^storage/mail\.log$ - [F,L,NC]
+RewriteRule \.(env|sql|log|bak)$ - [F,L,NC]
+
+# 2) Keep existing files/folders (assets, uploads, etc.)
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# 3) Fallback to MVC front controller
+RewriteRule ^ index.php [L,QSA]
+ 
