@@ -7,6 +7,8 @@
 *.crt
 oauth_token*.json
 service-account*.json
+client_secret_*.json
+ecole-numerique-drive-*.json
 
 # Runtime storage
 /storage/*
